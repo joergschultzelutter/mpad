@@ -8,8 +8,8 @@
 import requests
 from utility_modules import read_program_config
 
+# APRS.fi access key (we get this value from the config file settings)
 aprsdotfi_apikey = None
-
 
 def get_position_on_aprsfi(aprsfi_callsign):
     """

@@ -7,8 +7,6 @@
 # Reimplements portions of Martin Nile's WXBOT code (KI6WJP)
 #
 
-#
-
 from regex_decoder import parsemessage
 from openweathermap_modules import get_daily_weather_from_openweathermapdotorg, parse_daily_weather_from_openweathermapdotorg
 from apscheduler.schedulers.background import BackgroundScheduler
