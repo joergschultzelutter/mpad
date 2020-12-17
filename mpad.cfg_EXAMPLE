@@ -1,0 +1,7 @@
+[mpad_config]
+
+# API key for www.openweathermap.org
+openweathermapdotorg_api_key = POPULATE_ME
+
+# API key for www.aprs.fi
+aprsdotfi_api_key = POPULATE_ME
