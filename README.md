@@ -18,6 +18,8 @@ Reimplements and uses programs and services:
 - MGRS coordinate converter (https://github.com/aydink/pymgrs)
 - aprs.fi for call sign's location retrieval
 - openweathermap.org for wx data
+- findu.com for CWOP and METAR data
+- repeatermap.de for for repeater information
 - APRSlib (https://pypi.org/project/aprslib/) for sending and receiving data
 
 APRS is a registered trademark Bob Bruninga, WB4APR
