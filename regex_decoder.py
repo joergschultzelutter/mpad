@@ -338,10 +338,12 @@ def parsemessage(aprs_message: str, users_callsign: str):
     # riseset (Sunrise/Sunset and moonrise/moonset info)
     # metar (nearest METAR data for the user's position)
     #
-    # First, string will be checked for info WITH SSID, followed by a
-    # check for call sign withOUT SSID and finally a plain check for the
-    # command word, indicating that the user wants his own callsign
-    # to be the source of origin
+    # First check the APRS message and see if the user has submitted
+    # a call sign with the message (we will first check for a call
+    # sign with SSID, followed by a check for the call sign without
+    # SSID). If no SSID was found, then just check for the command
+    # sequence and -if found- use the user's call sign
+    #
     if not found_my_duty_roster and not err:
         regex_string=r"(wx|whereis|riseset|metar)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[0-9]{1,2})"
         matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
@@ -406,6 +408,60 @@ def parsemessage(aprs_message: str, users_callsign: str):
             human_readable_message = f'SatPass of {satellite}'
             found_my_duty_roster = True
             aprs_message = re.sub(regex_string, "", aprs_message, flags=re.IGNORECASE).strip()
+
+    # Check if the user wants us to search for the nearest repeater
+    # this function always relates to the user's own call sign and not to
+    # foreign ones. The user can ask us for the nearest repeater in
+    # optional combination with band and/or mode (FM, C4FM, DSTAR et al)
+    #
+    # Search for repeater-mode-band
+    if not found_my_duty_roster and not err:
+        regex_string = r"repeater\s*([a-z4]+)\s*(\d.?\d*(?:cm|m)\b)"
+        matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+        if matches:
+            radio_mode = matches[1].upper()
+            radio_band = matches[2].lower()
+            found_my_duty_roster = True
+            aprs_message = re.sub(regex_string, "", aprs_message, flags=re.IGNORECASE).strip()
+        # If not found, search for repeater-band-mode
+        if not found_my_duty_roster:
+            regex_string = r"repeater\s*(\d.?\d*(?:cm|m)\b)\s*([a-z4]+)\b"
+            matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+            if matches:
+                radio_mode = matches[2].upper()
+                radio_band = matches[1].lower()
+                found_my_duty_roster = True
+                aprs_message = re.sub(regex_string, "", aprs_message, flags=re.IGNORECASE).strip()
+        # if not found, search for repeater - mode
+        if not found_my_duty_roster:
+            regex_string = r"repeater\s*([a-z4]+)\b"
+            matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+            if matches:
+                radio_mode = matches[1].upper()
+                radio_band = None
+                found_my_duty_roster = True
+                aprs_message = re.sub(regex_string, "", aprs_message, flags=re.IGNORECASE).strip()
+        # if not found, search for repeater-band
+        if not found_my_duty_roster:
+            regex_string = r"repeater\s*(\d.?\d*(?:cm|m)\b)"
+            matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+            if matches:
+                radio_band = matches[1].lower()
+                radio_mode = None
+                found_my_duty_roster = True
+                aprs_message = re.sub(regex_string, "", aprs_message, flags=re.IGNORECASE).strip()
+        # If not found, just search for the repeater keyword
+        if not found_my_duty_roster:
+            regex_string = r"repeater"
+            matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+            if matches:
+                radio_band = None
+                radio_mode = None
+                found_my_duty_roster = True
+                aprs_message = re.sub(regex_string, "", aprs_message, flags=re.IGNORECASE).strip()
+        if found_my_duty_roster:
+            what = "repeater"
+            human_readable_message = "Repeater"
 
     #
     # We have reached the end of the 'standard' position data processing

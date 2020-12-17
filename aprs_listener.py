@@ -236,6 +236,8 @@ def mycallback(packet):
                     print('Riseset')
                 elif what == "whereis":
                     print("Eigene Position ermitteln")
+                elif what == "repeater":
+                    print("Repeater ermitteln")
                 else:
                     # nichts gefunden; Fehlermeldung an User senden
                     SendSingleAprsMessage(AIS, aprsis_simulate_send, requested_address, from_string, msg_no_supported)
