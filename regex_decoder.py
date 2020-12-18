@@ -95,7 +95,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
     latitude = longitude = altitude = 0.0
     date_offset = -1
     when = when_daytime = what = city = state = country = zipcode = None
-    icao = human_readable_message = satellite = radio_band = radio_mode = None
+    icao = human_readable_message = satellite = repeater_band = repeater_mode = None
 
     # Call sign reference (either the user's call sign or someone
     # else's call sign
@@ -423,8 +423,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
         regex_string = r"repeater\s*(fm|dstar|dmr|c4fm|tetra|atv)\s*(\d.?\d*(?:cm|m)\b)"
         matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
         if matches:
-            radio_mode = matches[1].upper()
-            radio_band = matches[2].lower()
+            repeater_mode = matches[1].upper()
+            repeater_band = matches[2].lower()
             found_my_duty_roster = True
             aprs_message = re.sub(regex_string, "", aprs_message, flags=re.IGNORECASE).strip()
         # If not found, search for repeater-band-mode
@@ -432,8 +432,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             regex_string = r"repeater\s*(\d.?\d*(?:cm|m)\b)\s*(fm|dstar|dmr|c4fm|tetra|atv)\b"
             matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
             if matches:
-                radio_mode = matches[2].upper()
-                radio_band = matches[1].lower()
+                repeater_mode = matches[2].upper()
+                repeater_band = matches[1].lower()
                 found_my_duty_roster = True
                 aprs_message = re.sub(regex_string, "", aprs_message, flags=re.IGNORECASE).strip()
         # if not found, search for repeater - mode
@@ -441,8 +441,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             regex_string = r"repeater\s*(fm|dstar|dmr|c4fm|tetra|atv)\b"
             matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
             if matches:
-                radio_mode = matches[1].upper()
-                radio_band = None
+                repeater_mode = matches[1].upper()
+                repeater_band = None
                 found_my_duty_roster = True
                 aprs_message = re.sub(regex_string, "", aprs_message, flags=re.IGNORECASE).strip()
         # if not found, search for repeater-band
@@ -450,8 +450,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             regex_string = r"repeater\s*(\d.?\d*(?:cm|m)\b)"
             matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
             if matches:
-                radio_band = matches[1].lower()
-                radio_mode = None
+                repeater_band = matches[1].lower()
+                repeater_mode = None
                 found_my_duty_roster = True
                 aprs_message = re.sub(regex_string, "", aprs_message, flags=re.IGNORECASE).strip()
         # If not found, just search for the repeater keyword
@@ -459,8 +459,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             regex_string = r"repeater"
             matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
             if matches:
-                radio_band = None
-                radio_mode = None
+                repeater_band = None
+                repeater_mode = None
                 found_my_duty_roster = True
                 aprs_message = re.sub(regex_string, "", aprs_message, flags=re.IGNORECASE).strip()
         if found_my_duty_roster:
@@ -531,7 +531,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                         call_sign = matches[0].upper()
                         found_my_duty_roster = True
                 if found_my_duty_roster:
-                    latitude,longitude,altitude,call_sign,success = get_position_on_aprsfi(call_sign, aprsdotfi_api_key)
+                    latitude, longitude, altitude, call_sign, success = get_position_on_aprsfi(call_sign, aprsdotfi_api_key)
                     if not success:
                         human_readable_message = f"{errmsg_cannot_find_coords_for_user} {call_sign}"
                         err = True
@@ -713,9 +713,10 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
     if human_readable_message:
         human_readable_message = convert_to_plain_ascii(human_readable_message)
 
-    return_parameters = {
+    response_parameters = {
         'latitude': latitude,
         'longitude': longitude,
+        'altitude': altitude,
         'when': when,
         'when_daytime': when_daytime,
         'what': what,
@@ -726,19 +727,18 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
         'human_readable_message': human_readable_message,
         'date_offset': date_offset,
         'satellite': satellite,
-        'repeater_band': radio_band,
-        'repeater_mode': radio_mode,
+        'repeater_band': repeater_band,
+        'repeater_mode': repeater_mode,
         'city': city,
         'state': state,
         'country': country,
         'zipcode': zipcode
     }
+    __success = True
+    if err:
+        _success = False
 
-
-
-
-
-    return latitude, longitude, when, when_daytime, what, units, call_sign, language, icao, human_readable_message, date_offset, satellite, err
+    return __success, response_parameters
 
 def parse_when(word: str):
     """

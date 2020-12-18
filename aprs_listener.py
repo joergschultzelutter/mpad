@@ -197,6 +197,7 @@ def mycallback(packet):
     message_text_string = parse_aprs_data(packet, "message_text")
     msgNo_string = parse_aprs_data(packet, 'msgNo')  # für Acknowledgment der initialen Nachricht
     from_string = parse_aprs_data(packet, 'from')
+    from_string = from_string.upper()
     format_string = parse_aprs_data(packet, 'format')
 
     # Wenn keine MsgNo gefunden, dann prüfen, ob die Message selbst noch eine (ungültige) Message+MessageNo beinhaltet. Falls ja: extrahieren
@@ -217,31 +218,53 @@ def mycallback(packet):
             # ack senden, falls msgNo vorhanden (siehe S. 71ff.)
             SendAck(AIS,aprsis_simulate_send,from_string, msgNo_string)
             # Content parsen
-            lat, lon, when, when_dt, what, units, callsign, language, metar, requested_address, date_offset, satellite, err = parsemessage(
-                message_text_string, from_string.upper(), aprsdotfi_apikey)
-            if (not err):
-                log_to_stderr("Angefragt;When;WhenDaytime;What;DateOffset;Lat;Lon;Units;Language;Callsign;Satellite")
-                log_to_stderr(f"{requested_address};{when};{when_dt};{what};{date_offset};{lat};{lon}{units};{language};{callsign};{satellite}")
+            success, response_parameters = parsemessage(message_text_string, from_string.upper(), aprsdotfi_apikey)
+            if success:
+                log_to_stderr(response_parameters)
+                what = response_parameters['what']
                 if what == "wx":
-                    success, myweather, tz_offset, tz = get_daily_weather_from_openweathermapdotorg(latitude=lat, longitude=lon, units=units, days_offset=date_offset,openweathermap_api_key=openweathermapdotorg_api_key)
+                    latitude = response_parameters['latitude']
+                    longitude = response_parameters['longitude']
+                    units = response_parameters['units']
+                    date_offset = response_parameters['date_offset']
+                    success, myweather, tz_offset, tz = get_daily_weather_from_openweathermapdotorg(latitude=latitude, longitude=longitude, units=units, date_offset=date_offset,openweathermap_api_key=openweathermapdotorg_api_key)
                     if success:
                         weather_forecast_array = parse_daily_weather_from_openweathermapdotorg(myweather, units, requested_address, when, when_dt)
                         SendAprsMessageList(AIS,aprsis_simulate_send,weather_forecast_array,from_string,msg_no_supported)
                 elif what == "help":
                         SendAprsMessageList(AIS,aprsis_simulate_send,help_text_array,from_string,msg_no_supported)
                 elif what == "metar":
-                        metar_response, found = get_metar_data(metar)
+                        icao_code = response_parameters['icao']
+                        metar_response, found = get_metar_data(icao_code=icao_code)
                         if found:
                             SendSingleAprsMessage(AIS,aprsis_simulate_send,metar_response,from_string,msg_no_supported)
                         else:
                             print ("metar nicht gefunden; noch Suche anhand Geokoordinaten implementieren")
                 elif what == 'satpass':
+                    satellite = response_parameters['satellite']
+                    latitude = response_parameters['latitude']
+                    longitude = response_parameters['longitude']
+                    altitude = response_parameters['altitude']
+                    when_daytime = response_parameters['when_daytime']
+                    when = response_parameters['when']
                     print("Satpass")
                 elif what == 'riseset':
+                    latitude = response_parameters['latitude']
+                    longitude = response_parameters['longitude']
+                    altitude = response_parameters['altitude']
                     print('Riseset')
                 elif what == "whereis":
+                    latitude = response_parameters['latitude']
+                    longitude = response_parameters['longitude']
+                    altitude = response_parameters['altitude']
+                    when_daytime = response_parameters['when_daytime']
                     print("Eigene Position ermitteln")
                 elif what == "repeater":
+                    latitude = response_parameters['latitude']
+                    longitude = response_parameters['longitude']
+                    altitude = response_parameters['altitude']
+                    repeater_band = response_parameters['repeater_band']
+                    repeater_mode = response_parameters['repeater_mode']
                     print("Repeater ermitteln")
                 else:
                     # nichts gefunden; Fehlermeldung an User senden
