@@ -14,6 +14,7 @@ from airport_data_modules import read_icao_and_iata_data, get_metar_data
 from utility_modules import log_to_stderr
 import apscheduler.schedulers.base
 import re
+import sys
 
 import aprslib
 import datetime
@@ -37,6 +38,10 @@ mycallsigns_to_parse = ['WXBOT', 'WXYO']
 
 myaprs_filename = "wxtng_served.txt"    # Number of served packages
 myicaoiata_filename = "stations.txt"    # ICAO & IATA data; https://www.aviationweather.gov/docs/metar/stations.txt
+
+# will be prepopulated through config file
+aprsdotfi_apikey = None
+owm_api_key = None
 
 ########################################
 help_text_array = [
@@ -250,6 +255,10 @@ def mycallback(packet):
 aprsis_callsign, aprsis_passcode,aprsis_simulate_send = get_aprsis_passcode(myaprsis_login_callsign)
 number_of_served_packages = read_number_of_served_packages()
 read_icao_and_iata_data()
+success, aprsdotfi_apikey, owm_api_key = read_program_config()
+if not success:
+    print ("Cannot find config file; aborting")
+    sys.exit(0)
 
 try:
     while True:
