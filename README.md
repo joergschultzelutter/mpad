@@ -6,6 +6,7 @@ Python implementation of an APRS Multi-Purpose Daemon
 Supported features:
 - Wordwide wx forecast for address / zip code / lat/lon / maidenhead / ..., supporting both imperial and metric data with auto-detection of the respective standard based on the user's call sign
 - METAR data for IATA/ICAO codes or the nearest airport to the user's position
+- CWOP data for a specific CWOP station (or the nearest one)
 - sunrise/set and moonrise/set for a given call sign
 - position data for a given call sign (human readable address, MGRS, maidenhead, dms)
 - satellite pass data (e.g. next pass of the ISS)
