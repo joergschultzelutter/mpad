@@ -12,7 +12,7 @@ Supported features:
 - satellite pass data (e.g. next pass of the ISS)
 - find the nearest repeater with optional query parameters on band and query (c4fm, dstar, fm, ...)
 - very low cpu/traffic foot print
-- Pretty printing; whenever necessary, the program tries to split up the text in a legible format. This means that e.g. temperature information will not be ripped apart whenever you receive more than 1 aprs message
+- Pretty printing; whenever necessary, the program tries to split up the text in a legible format. This means that e.g. temperature information will not be ripped apart whenever the program needs to send out more than one APRS message to the user
 - Can be easily extended with additional functionality
 
 Reimplements and uses programs and services:
