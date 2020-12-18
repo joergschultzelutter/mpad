@@ -15,6 +15,10 @@ from airport_data_modules import validate_icao, validate_iata, get_nearest_icao
 from utility_modules import convert_to_plain_ascii, getdaysuntil, log_to_stderr
 from aprsdotfi_modules import get_position_on_aprsfi
 
+
+from utility_modules import read_program_config
+global aprsdotfi_apikey
+
 errmsg_cannot_find_coords_for_address: str = 'Cannot find coordinates for requested address'
 errmsg_cannot_find_coords_for_user: str = 'Cannot find coordinates for user'
 errmsg_invalid_country: str = 'Invalid country code (need ISO3166-a2)'
@@ -57,7 +61,7 @@ def parsemessage(aprs_message: str, users_callsign: str):
         Unit of measure. Can either be "metric" (default) or
         "imperial"
     call_sign: 'str'
-        Call sign if some content was requested in relatitudeion to
+        Call sign if some content was requested in relation to
         a call sign (either the user's call sign or a foreign one)
     language: 'str'
         ISO 639-2 country code (currently unused)
@@ -91,7 +95,7 @@ def parsemessage(aprs_message: str, users_callsign: str):
     latitude = longitude = altitude = 0.0
     date_offset = -1
     when = when_daytime = what = city = state = country = zipcode = None
-    icao = human_readable_message = satellite = None
+    icao = human_readable_message = satellite = radio_band = radio_mode = None
 
     # Call sign reference (either the user's call sign or someone
     # else's call sign
@@ -462,6 +466,10 @@ def parsemessage(aprs_message: str, users_callsign: str):
         if found_my_duty_roster:
             what = "repeater"
             human_readable_message = "Repeater"
+            latitude, longitude, altitude, call_sign, success = get_position_on_aprsfi(users_callsign)
+            if not success:
+                err = True
+                human_readable_message = f"{errmsg_cannot_find_coords_for_user} {call_sign}"
 
     #
     # We have reached the end of the 'standard' position data processing
@@ -705,6 +713,31 @@ def parsemessage(aprs_message: str, users_callsign: str):
     if human_readable_message:
         human_readable_message = convert_to_plain_ascii(human_readable_message)
 
+    return_parameters = {
+        'latitude': latitude,
+        'longitude': longitude,
+        'when': when,
+        'when_daytime': when_daytime,
+        'what': what,
+        'units': units,
+        'call_sign': call_sign,
+        'language': language,
+        'icao': icao,
+        'human_readable_message': human_readable_message,
+        'date_offset': date_offset,
+        'satellite': satellite,
+        'repeater_band': radio_band,
+        'repeater_mode': radio_mode,
+        'city': city,
+        'state': state,
+        'country': country,
+        'zipcode': zipcode
+    }
+
+
+
+
+
     return latitude, longitude, when, when_daytime, what, units, call_sign, language, icao, human_readable_message, date_offset, satellite, err
 
 def parse_when(word: str):
@@ -835,4 +868,5 @@ def parse_when_daytime(word: str):
 
 
 if __name__ == '__main__':
+    success, aprsdotfi_apikey, owm_api_key = read_program_config()
     print(parsemessage('repeater 70cm dmr','df1jsl-1'))

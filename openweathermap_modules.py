@@ -10,9 +10,12 @@ from datetime import datetime
 from utility_modules import make_pretty_aprs_messages
 from utility_modules import read_program_config
 
-owm_api_key = None
 
-def get_daily_weather_from_openweathermapdotorg(latitude: float, longitude: float, days_offset: int, units: str='metric'):
+def get_daily_weather_from_openweathermapdotorg(latitude: float,
+                                                longitude: float,
+                                                days_offset: int,
+                                                openweathermap_api_key: str,
+                                                units: str = 'metric'):
     """
     Gets the OWM 'onecall' weather forecast for a given latitide 
     and longitude and tries to extract the raw weather data for 
@@ -26,6 +29,12 @@ def get_daily_weather_from_openweathermapdotorg(latitude: float, longitude: floa
         latitude position
     longitude: 'float'
         longitude position
+    days_offset: 'int'
+        numeric offset from 'today' to the desired
+        target day; e.g. today = tuesday and desired
+        day = thursday, then days_offset = 2
+    openweathermap_api_key: str
+        API key for accessing openweathermap.org api
     units: 'str'
         Unit of measure. Can either be 'metric' or 'imperial'
 
@@ -54,7 +63,7 @@ def get_daily_weather_from_openweathermapdotorg(latitude: float, longitude: floa
         return success, weather_tuple, timezone_offset, timezone_offset
 
     # Issue the request to OWN
-    url = f"https://api.openweathermap.org/data/2.5/onecall?lat={latitude}&lon={longitude}&units={units}&exclude=hourly,minutely&appid={owm_api_key}"
+    url = f"https://api.openweathermap.org/data/2.5/onecall?lat={latitude}&lon={longitude}&units={units}&exclude=hourly,minutely&appid={openweathermap_api_key}"
     resp = requests.get(url)
     if resp.status_code == 200:
         x = resp.json()
@@ -223,10 +232,9 @@ def parse_daily_weather_from_openweathermapdotorg(weather_tuple: dict,units: str
 
 
 if __name__ == '__main__':
-    if not owm_api_key:
-        success, aprsdotfi_apikey, owm_api_key = read_program_config()
+    success, aprsdotfi_api_key, openweathermap_api_key = read_program_config()
+    if success:
+        success, weather_tuple, timezone_offset, timezone = get_daily_weather_from_openweathermapdotorg(51.8458575,8.2997425,0, openweathermap_api_key, 'metric')
         if success:
-            success, weather_tuple, timezone_offset, timezone = get_daily_weather_from_openweathermapdotorg(51.8458575,8.2997425,0,'metric')
-            if success:
-                my_weather_forecast_array = parse_daily_weather_from_openweathermapdotorg(weather_tuple,'metric','Und jetzt das Wetter',"Samstag","full")
-                print (my_weather_forecast_array)
+            my_weather_forecast_array = parse_daily_weather_from_openweathermapdotorg(weather_tuple,'metric','Und jetzt das Wetter',"Samstag","full")
+            print (my_weather_forecast_array)

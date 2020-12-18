@@ -9,9 +9,8 @@ import requests
 from utility_modules import read_program_config
 
 # APRS.fi access key (we get this value from the config file settings)
-aprsdotfi_apikey = None
 
-def get_position_on_aprsfi(aprsfi_callsign):
+def get_position_on_aprsfi(aprsfi_callsign:str, aprsdotfi_api_key: str):
     """
     Get the position of the given call sign on aprs.fi
     Call sign is taken 'as is', e.g. with or without SSID.
@@ -24,6 +23,8 @@ def get_position_on_aprsfi(aprsfi_callsign):
     ==========
     aprsfi_callsign: 'str'
         Call sign that we want to get the lat/lon coordinates for
+    aprsdotfi_api_key: 'str'
+        aprs.fi api access key
 
     Returns
     =======
@@ -49,7 +50,7 @@ def get_position_on_aprsfi(aprsfi_callsign):
     aprsfi_callsign = aprsfi_callsign.upper()
 
     try:
-        resp = requests.get(f"https://api.aprs.fi/api/get?name={aprsfi_callsign}&what=loc&apikey={aprsdotfi_apikey}&format=json", headers = headers)
+        resp = requests.get(f"https://api.aprs.fi/api/get?name={aprsfi_callsign}&what=loc&apikey={aprsdotfi_api_key}&format=json", headers = headers)
     except:
         resp = None
     if resp:
@@ -78,7 +79,6 @@ def get_position_on_aprsfi(aprsfi_callsign):
 
 
 if __name__ == '__main__':
-    if not aprsdotfi_apikey:
-        success, aprsdotfi_apikey, openweathermapdotorg_api_key = read_program_config()
-        if success:
-            print(get_position_on_aprsfi('DF1JSL-1'))
+    success, aprsdotfi_api_key, openweathermapdotorg_api_key = read_program_config()
+    if success:
+        print(get_position_on_aprsfi('DF1JSL-1',aprsdotfi_api_key))
