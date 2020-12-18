@@ -18,7 +18,7 @@ Supported features:
 Reimplements and uses programs and services:
 - portions from WXBOT (Martin Nile, KI6WJP)
 - MGRS coordinate converter (https://github.com/aydink/pymgrs)
-- aprs.fi for call sign's location retrieval
+- aprs.fi for call sign location retrieval
 - openweathermap.org for wx data
 - findu.com for CWOP and METAR data
 - repeatermap.de for for repeater information
