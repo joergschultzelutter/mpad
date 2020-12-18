@@ -40,8 +40,8 @@ myaprs_filename = "wxtng_served.txt"    # Number of served packages
 myicaoiata_filename = "stations.txt"    # ICAO & IATA data; https://www.aviationweather.gov/docs/metar/stations.txt
 
 # will be prepopulated through config file
-aprsdotfi_apikey = None
-owm_api_key = None
+aprsdotfi_api_key = None
+openweathermapdotorg_api_key = None
 
 ########################################
 help_text_array = [
@@ -218,12 +218,12 @@ def mycallback(packet):
             SendAck(AIS,aprsis_simulate_send,from_string, msgNo_string)
             # Content parsen
             lat, lon, when, when_dt, what, units, callsign, language, metar, requested_address, date_offset, satellite, err = parsemessage(
-                message_text_string, from_string.upper())
+                message_text_string, from_string.upper(), aprsdotfi_apikey)
             if (not err):
                 log_to_stderr("Angefragt;When;WhenDaytime;What;DateOffset;Lat;Lon;Units;Language;Callsign;Satellite")
                 log_to_stderr(f"{requested_address};{when};{when_dt};{what};{date_offset};{lat};{lon}{units};{language};{callsign};{satellite}")
                 if what == "wx":
-                    success, myweather, tz_offset, tz = get_daily_weather_from_openweathermapdotorg(latitude=lat, longitude=lon, units=units, days_offset=date_offset)
+                    success, myweather, tz_offset, tz = get_daily_weather_from_openweathermapdotorg(latitude=lat, longitude=lon, units=units, days_offset=date_offset,openweathermap_api_key=openweathermapdotorg_api_key)
                     if success:
                         weather_forecast_array = parse_daily_weather_from_openweathermapdotorg(myweather, units, requested_address, when, when_dt)
                         SendAprsMessageList(AIS,aprsis_simulate_send,weather_forecast_array,from_string,msg_no_supported)
@@ -255,7 +255,7 @@ def mycallback(packet):
 aprsis_callsign, aprsis_passcode,aprsis_simulate_send = get_aprsis_passcode(myaprsis_login_callsign)
 number_of_served_packages = read_number_of_served_packages()
 read_icao_and_iata_data()
-success, aprsdotfi_apikey, owm_api_key = read_program_config()
+success, aprsdotfi_api_key, openweathermapdotorg_api_key = read_program_config()
 if not success:
     print ("Cannot find config file; aborting")
     sys.exit(0)
