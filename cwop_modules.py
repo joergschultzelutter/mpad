@@ -23,8 +23,11 @@ def get_cwop_findu(cwop_id: str, units: str = 'metric'):
 
     Returns
     =======
-    time : 'str'
-        time in YYYYMMDDHHMMSS ('None' if not found, see 'success' parameter)
+
+    Returns a dict, consisting of the following fields:
+
+    time : 'int'
+        Unix timestamp
     temp: 'str'
         temperature in Celsius or Fahrenheit (dependent on 'units' parameter) ('None' if not found, see 'success' parameter)
     wind_direction: 'str'
@@ -43,6 +46,9 @@ def get_cwop_findu(cwop_id: str, units: str = 'metric'):
         humidity in percent  ('None' if not found, see 'success' parameter)
     air_pressure: 'str'
         air pressure in mBar  ('None' if not found, see 'success' parameter)
+
+    plus a separate parameter:
+
     success: 'bool'
         True if operation was successful
     """
