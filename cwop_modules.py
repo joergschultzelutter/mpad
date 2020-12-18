@@ -54,6 +54,18 @@ def get_cwop_findu(cwop_id: str, units: str = 'metric'):
 
     time = temp = wind_direction = wind_speed = wind_gust = rain_1h = rain_24h = rain_mn = humidity = air_pressure = None
 
+    humidity_uom = '%'
+    air_pressure_uom = 'mb'
+
+    temp_uom = 'C'
+    speedgust_uom = 'km/h'
+    rain_uom = 'cm'
+    air_pressure_uom = 'mb'
+    if units == 'imperial':
+        temp_uom = 'F'
+        speedgust_uom = 'mph'
+        rain_uom = 'in'
+
     resp = requests.get(f"http://www.findu.com/cgi-bin/wx.cgi?call={cwop_id}&last=1&units={units}")
     if resp.status_code == 200:
         soup = BeautifulSoup(resp.text, features="html.parser")
@@ -81,17 +93,24 @@ def get_cwop_findu(cwop_id: str, units: str = 'metric'):
                     humidity = output_rows[1][8]
                     air_pressure = output_rows[1][9]
                     success = True
-    return cwop_id, time, \
-           temp, \
-           wind_direction, \
-           wind_speed, \
-           wind_gust, \
-           rain_1h, \
-           rain_24h, \
-           rain_mn, \
-           humidity, \
-           air_pressure, \
-           success
+    cwop_response = {
+        'time': time,
+        'temp': temp,
+        'temp_uom': temp_uom,
+        'wind_direction': wind_direction,
+        'wind_speed': wind_speed,
+        'wind_gust': wind_gust,
+        'speedgust_uom': speedgust_uom,
+        'rain_1h': rain_1h,
+        'rain_24h': rain_24h,
+        'rain_mn': rain_mn,
+        'rain_uom': rain_uom,
+        'humidity': humidity,
+        'humidity_uom': humidity_uom,
+        'air_pressure': air_pressure,
+        'air_pressure_uom': air_pressure_uom
+    }
+    return success, cwop_response
 
 
 def get_nearest_cwop_findu(latitude: float, longitude: float, units: str = 'metric'):
@@ -136,7 +155,19 @@ def get_nearest_cwop_findu(latitude: float, longitude: float, units: str = 'metr
 
     success = False
 
-    cwop_id = time = temp = wind_direction = wind_speed = wind_gust = rain_1h = rain_24h = rain_mn = humidity = air_pressure = None
+    time = temp = wind_direction = wind_speed = wind_gust = rain_1h = rain_24h = rain_mn = humidity = air_pressure = None
+
+    humidity_uom = '%'
+    air_pressure_uom = 'mb'
+
+    temp_uom = 'C'
+    speedgust_uom = 'km/h'
+    rain_uom = 'cm'
+    air_pressure_uom = 'mb'
+    if units == 'imperial':
+        temp_uom = 'F'
+        speedgust_uom = 'mph'
+        rain_uom = 'in'
 
     resp = requests.get(f"http://www.findu.com/cgi-bin/wxnear.cgi?lat={latitude}&lon={longitude}&noold=1&limits=1")
     if resp.status_code == 200:
@@ -152,14 +183,30 @@ def get_nearest_cwop_findu(latitude: float, longitude: float, units: str = 'metr
                 for column in columns:
                     output_row.append(column.text.strip())
                 output_rows.append(output_row)
-            if (len(output_rows) > 0):
-                if (len(output_rows[0]) >= 13):
+            if len(output_rows) > 0:
+                if len(output_rows[0]) >= 13:
                     # erneuter Call notwendig, da wxnear keine Units unterstützt
                     return get_cwop_findu(output_rows[1][0], units)
-
-    return cwop_id, time, temp, wind_direction, wind_speed, wind_gust, rain_1h, rain_24h, rain_mn, humidity, air_pressure, success
+    cwop_response = {
+        'time': time,
+        'temp': temp,
+        'temp_uom': temp_uom,
+        'wind_direction': wind_direction,
+        'wind_speed': wind_speed,
+        'wind_gust': wind_gust,
+        'speedgust_uom': speedgust_uom,
+        'rain_1h': rain_1h,
+        'rain_24h': rain_24h,
+        'rain_mn': rain_mn,
+        'rain_uom': rain_uom,
+        'humidity': humidity,
+        'humidity_uom': humidity_uom,
+        'air_pressure': air_pressure,
+        'air_pressure_uom': air_pressure_uom
+    }
+    return success, cwop_response
 
 
 if __name__ == '__main__':
-    print(get_nearest_cwop_findu(51.838720, 08.326819, "metric"))
+    print(get_nearest_cwop_findu(51.838720, 08.326819, "imperial"))
     print(get_cwop_findu("AT166", "metric"))
