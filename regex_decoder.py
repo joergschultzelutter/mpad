@@ -416,7 +416,7 @@ def parsemessage(aprs_message: str, users_callsign: str):
     #
     # Search for repeater-mode-band
     if not found_my_duty_roster and not err:
-        regex_string = r"repeater\s*([a-z4]+)\s*(\d.?\d*(?:cm|m)\b)"
+        regex_string = r"repeater\s*(fm|dstar|dmr|c4fm|tetra|atv)\s*(\d.?\d*(?:cm|m)\b)"
         matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
         if matches:
             radio_mode = matches[1].upper()
@@ -425,7 +425,7 @@ def parsemessage(aprs_message: str, users_callsign: str):
             aprs_message = re.sub(regex_string, "", aprs_message, flags=re.IGNORECASE).strip()
         # If not found, search for repeater-band-mode
         if not found_my_duty_roster:
-            regex_string = r"repeater\s*(\d.?\d*(?:cm|m)\b)\s*([a-z4]+)\b"
+            regex_string = r"repeater\s*(\d.?\d*(?:cm|m)\b)\s*(fm|dstar|dmr|c4fm|tetra|atv)\b"
             matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
             if matches:
                 radio_mode = matches[2].upper()
@@ -434,7 +434,7 @@ def parsemessage(aprs_message: str, users_callsign: str):
                 aprs_message = re.sub(regex_string, "", aprs_message, flags=re.IGNORECASE).strip()
         # if not found, search for repeater - mode
         if not found_my_duty_roster:
-            regex_string = r"repeater\s*([a-z4]+)\b"
+            regex_string = r"repeater\s*(fm|dstar|dmr|c4fm|tetra|atv)\b"
             matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
             if matches:
                 radio_mode = matches[1].upper()
@@ -835,4 +835,4 @@ def parse_when_daytime(word: str):
 
 
 if __name__ == '__main__':
-    print(parsemessage('hurrz gsdfg','df1jsl-1'))
+    print(parsemessage('repeater 70cm dmr','df1jsl-1'))
