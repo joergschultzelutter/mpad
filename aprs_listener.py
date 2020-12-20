@@ -25,19 +25,18 @@ myversion = "0.01"
 mylat = "51.8388N"                          # 8 chars fixed length, ddmm.mmN, see chapter 6 pg. 23
 mylon = "008.3266E"                         # 9 chars fixed length, dddmm.mmE, see chapter 6 pg. 23
 mytable = "/"                               # my symbol table (/=primary \=secondary, or overlay)
-mysymbol = "?"                              # Symbol: Server
-myalias = "DF1JSL-10"                       # We're going to listen to APRS traffic with this address
-myaprstocall = "APRS"                       # siehe http://aprs.org/aprs11/tocalls.txt
+mysymbol = "?"                              # APRS symbol: Server
+myalias = "MPAD"                            # Identifier for sending data to APRS-IS
+myaprstocall = "APRS"                       # see http://aprs.org/aprs11/tocalls.txt
 myaprsis_login_callsign="n0call"            # APRS-IS-Login; Passcode wird automatisch errechnet
 
-myaprs_server_name = "euro.aprs2.net"       # Login-Server
-myaprs_server_port = 14580                  # Port
-myaprs_server_filter = "g/WXBOT/WXYO"       # Server-Filter. alt: t/m
-#myaprs_server_filter = "t/m"   # Server-Filter. alt: t/m
-mycallsigns_to_parse = ['WXBOT', 'WXYO']
+myaprs_server_name = "euro.aprs2.net"       # our login server
+myaprs_server_port = 14580                  # server port
+myaprs_server_filter = "g/WXBOT/WXYO"       # server filter criteria for aprs.is
+mycallsigns_to_parse = ['WXBOT', 'WXYO']    # (additional) call sign filter
 
-myaprs_filename = "wxtng_served.txt"    # Number of served packages
-myicaoiata_filename = "stations.txt"    # ICAO & IATA data; https://www.aviationweather.gov/docs/metar/stations.txt
+served_packages_filename = "served_packages.mpad"    # Number of served packages
+myicaoiata_filename = "stations.mpad"    # ICAO & IATA data; https://www.aviationweather.gov/docs/metar/stations.txt
 
 # will be prepopulated through config file
 aprsdotfi_api_key = None
@@ -76,36 +75,87 @@ def parse_aprs_data(packet_data_dict, item):
     except Exception:
         return None
 
-def read_number_of_served_packages():
-    sp = 1
+def read_number_of_served_packages(file_name: str = served_packages_filename):
+    """
+    Read the number of served packages from a file
+
+    If file is not present, we will start with '1'
+
+    Parameters
+    ==========
+    file_name: 'str'
+        Name of the file we are going to read the data from
+
+    Returns
+    =======
+    served_packages: 'int'
+        number of previously served packages (or '1')
+    """
+    served_packages = 1
     try:
-        with open(f'{myaprs_filename}', 'r') as f:
+        with open(f'{file_name}', 'r') as f:
             if f.mode == 'r':
                 contents = f.read()
                 f.close()
-                sp = int(contents)
+                served_packages = int(contents)
     except:
-        sp = 1
-        log_to_stderr(f"Cannot read {myaprs_filename}; creating new file")
-    return sp
+        served_packages = 1
+        log_to_stderr(f"Cannot read content from {file_name}")
+    return served_packages
 
-def write_number_of_served_packages(sp):
+def write_number_of_served_packages(served_packages: int,
+                                    file_name: str = served_packages_filename):
+    """
+    Writes the number of served packages to a file
+
+    Parameters
+    ==========
+    served_packages: 'int'
+        number of previously served packages
+    file_name: 'str'
+        Name of the file we are going to read the data from
+
+    Returns
+    =======
+    None
+    """
     try:
-        with open(f'{myaprs_filename}', 'w') as f:
+        with open(f'{file_name}', 'w') as f:
             f.write('%d' % sp)
             f.close()
     except:
-        log_to_stderr(f"Cannot write number of served packages to {myaprs_filename}")
+        log_to_stderr(f"Cannot write number of served packages to {file_name}")
 
-def get_aprsis_passcode(mycallsign):
-    mycallsign = mycallsign.upper()
-    if mycallsign == "N0CALL":
-        mypasscode = "-1"
+def get_aprsis_passcode(call_sign: str):
+    """
+    Get the APRS passcode for the given call sign
+    If call sign = 'N0CALL', we will return:
+
+    a) a passcode of -1 (see aprslib.is)
+    b) a flag which tells MPAD that it is only to simulate the send process
+
+    Parameters
+    ==========
+    call_sign: 'str'
+        Call sign string that we want to use for connecting to aprs-is
+
+    Returns
+    =======
+    call_sign: 'str'
+        Same as input parameter; converted to uppercase
+    passcode: 'str'
+        passcode for the call_sign data; -1 if call sign = 'N0CALL'
+    simulate_send_process: 'bool'
+        We will only simulate the send process if this field is True
+    """
+    call_sign = call_sign.upper()
+    if call_sign == "N0CALL":
+        passcode = "-1"         # read only, see aprslib
         simulate_send_process = True
     else:
-        mypasscode = aprslib.passcode(mycallsign)
+        passcode = aprslib.passcode(call_sign)
         simulate_send_process = False
-    return  mycallsign, mypasscode, simulate_send_process
+    return call_sign, passcode, simulate_send_process
 
 def SendBeaconAndStatusMsg(myaprsis,simulate_send):
     global number_of_served_packages
@@ -275,7 +325,12 @@ def mycallback(packet):
                 SendSingleAprsMessage(AIS,aprsis_simulate_send, requested_address,from_string,msg_no_supported)
                 log_to_stderr(f"Unable to grok packet {packet}")
 
-aprsis_callsign, aprsis_passcode,aprsis_simulate_send = get_aprsis_passcode(myaprsis_login_callsign)
+
+#
+# main
+#
+
+aprsis_callsign, aprsis_passcode, aprsis_simulate_send = get_aprsis_passcode(myaprsis_login_callsign)
 number_of_served_packages = read_number_of_served_packages()
 read_icao_and_iata_data()
 success, aprsdotfi_api_key, openweathermapdotorg_api_key = read_program_config()
