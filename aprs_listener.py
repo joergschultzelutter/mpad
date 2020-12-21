@@ -298,6 +298,11 @@ def mycallback(packet):
                     when_daytime = response_parameters['when_daytime']
                     when = response_parameters['when']
                     print("Satpass")
+                elif what == 'cwop':
+                    latitude = response_parameters['latitude']
+                    longitude = response_parameters['longitude']
+                    cwop_id = response_parameters['cwop_id']
+                    print("CWOP")
                 elif what == 'riseset':
                     latitude = response_parameters['latitude']
                     longitude = response_parameters['longitude']

@@ -94,7 +94,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
 
     latitude = longitude = altitude = 0.0
     date_offset = -1
-    when = when_daytime = what = city = state = country = zipcode = None
+    when = when_daytime = what = city = state = country = zipcode = cwop_id = None
     icao = human_readable_message = satellite = repeater_band = repeater_mode = None
 
     # Call sign reference (either the user's call sign or someone
@@ -341,6 +341,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
     # whereis (location information for the user's position)
     # riseset (Sunrise/Sunset and moonrise/moonset info)
     # metar (nearest METAR data for the user's position)
+    # CWOP (nearest CWOP data for user's position)
     #
     # First check the APRS message and see if the user has submitted
     # a call sign with the message (we will first check for a call
@@ -349,7 +350,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
     # sequence and -if found- use the user's call sign
     #
     if not found_my_duty_roster and not err:
-        regex_string=r"(wx|whereis|riseset|metar)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[0-9]{1,2})"
+        regex_string=r"(wx|whereis|riseset|cwop|metar)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[0-9]{1,2})"
         matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
         if matches:
             what = matches[1].lower()
@@ -357,7 +358,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             aprs_message = re.sub(regex_string, "", aprs_message).strip()
             found_my_duty_roster = True
         if not found_my_duty_roster:
-            regex_string = r"(wx|whereis|riseset|metar)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3})"
+            regex_string = r"(wx|whereis|riseset|cwop|metar)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3})"
             matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
             if matches:
                 what = matches[1].lower()
@@ -365,7 +366,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                 found_my_duty_roster = True
                 aprs_message = re.sub(regex_string, "", aprs_message).strip()
         if not found_my_duty_roster:
-            regex_string = r"(wx|whereis|riseset|metar)"
+            regex_string = r"(wx|whereis|riseset|cwop|metar)"
             matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
             if matches:
                 what = matches[1].lower()
@@ -381,6 +382,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                     human_readable_message = f'Rise/Set for {call_sign}'
                 elif what == 'whereis':
                     human_readable_message = f'Pos for {call_sign}'
+                elif what == 'cwop':
+                    human_readable_message = f'CWOP for {call_sign}'
                 elif what == 'metar':
                     icao = get_nearest_icao(latitude, longitude)
                     if icao:
@@ -401,6 +404,17 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             else:
                 human_readable_message = f"{errmsg_cannot_find_coords_for_user} {call_sign}"
                 err = True
+
+    # Check if the user wants information about aspecific CWOP ID
+    if not found_my_duty_roster and not err:
+        regex_string = r"cwop\s*(\w*)"
+        matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+        if matches:
+            cwop_id = matches[1].upper()
+            what = 'cwop'
+            human_readable_message = f'CWOP for {cwop_id}'
+            found_my_duty_roster = True
+            aprs_message = re.sub(regex_string, "", aprs_message, flags=re.IGNORECASE).strip()
 
     # Check if the user wants to gain information about an upcoming satellite pass
     if not found_my_duty_roster and not err:
@@ -736,7 +750,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
         'city': city,
         'state': state,
         'country': country,
-        'zipcode': zipcode
+        'zipcode': zipcode,
+        'cwop_id': cwop_id
     }
     __success = True
     if err:
