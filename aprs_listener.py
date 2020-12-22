@@ -4,7 +4,7 @@
 #
 # Core process
 #
-# Reimplements portions of Martin Nile's WXBOT code (KI6WJP)
+# Reimplements parts of the WXBOT code from Martin Nile (KI6WJP)
 #
 
 from regex_decoder import parsemessage

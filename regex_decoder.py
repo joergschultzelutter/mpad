@@ -178,8 +178,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             # Everything seems to be ok. Try to retrieve
             # lat/lon for the given data
             if not err:
-                __success, latitude, longitude = get_geocode_geopy_data(geopy_query)
-                if __success:
+                _success, latitude, longitude = get_geocode_geopy_data(geopy_query)
+                if _success:
                     human_readable_message = city
                     if state and country == "US":
                         human_readable_message += f',{state}'
@@ -224,8 +224,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                 human_readable_message = f"{errmsg_invalid_country}: '{country}'"
                 err = True
                 if not err:
-                    __success, latitude, longitude = get_geocode_geopy_data(geopy_query)
-                    if __success:
+                    _success, latitude, longitude = get_geocode_geopy_data(geopy_query)
+                    if _success:
                         human_readable_message = f'Zip {zipcode};{country}'
                     else:
                         err = True
@@ -261,8 +261,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             (_, icao) = matches[0]
             aprs_message = re.sub(regex_string, "", aprs_message).strip()
             # try to look up the airport coordinates based on the ICAO code
-            latitude, longitude, metar_capable, icao, __success = validate_icao(icao)
-            if __success:
+            latitude, longitude, metar_capable, icao, _success = validate_icao(icao)
+            if _success:
                 what = "metar"
                 found_my_duty_roster = True
                 human_readable_message = f"METAR for '{icao}'"
@@ -287,8 +287,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             (_, iata) = matches[0]
             aprs_message = re.sub(regex_string, "", aprs_message).strip()
             # try to look up the airport coordinates based on the IATA code
-            latitude, longitude, metar_capable, icao, __success = validate_iata(iata)
-            if __success:
+            latitude, longitude, metar_capable, icao, _success = validate_iata(iata)
+            if _success:
                 what = "metar"
                 found_my_duty_roster = True
                 human_readable_message = f"METAR for '{icao}'"
@@ -306,17 +306,17 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
         regex_string = r"([\d\.,\-]+)\/([\d\.,\-]+)"
         matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
         if matches:
-            __success = True
+            _success = True
             try:
                 latitude = float(matches[1])
                 longitude = float(matches[2])
             except:
                 latitude = longitude = 0
-                __success = False
-            if __success:
+                _success = False
+            if _success:
                 # try to get human-readable coordinates
-                __success, city, state, country, zipcode = get_reverse_geopy_data(latitude=latitude, longitude=longitude, language=language)
-                if __success:
+                _success, city, state, country, zipcode = get_reverse_geopy_data(latitude=latitude, longitude=longitude, language=language)
+                if _success:
                     if city:
                         human_readable_message = city
                         if country:
@@ -374,8 +374,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                 found_my_duty_roster = True
                 aprs_message = re.sub(regex_string, "", aprs_message).strip()
         if found_my_duty_roster:
-            latitude, longitude, altitude, call_sign, __success = get_position_on_aprsfi(call_sign, aprsdotfi_api_key)
-            if __success:
+            latitude, longitude, altitude, call_sign, _success = get_position_on_aprsfi(call_sign, aprsdotfi_api_key)
+            if _success:
                 if what =='wx':
                     human_readable_message = f'Wx of {call_sign}'
                 elif what == 'riseset':
@@ -387,8 +387,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                 elif what == 'metar':
                     icao = get_nearest_icao(latitude, longitude)
                     if icao:
-                        latitude, longitude, metar_capable, icao, __success = validate_icao(icao)
-                        if __success:
+                        latitude, longitude, metar_capable, icao, _success = validate_icao(icao)
+                        if _success:
                             what = "metar"
                             found_my_duty_roster = True
                             human_readable_message = f"METAR for '{icao}'"
@@ -484,8 +484,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                 human_readable_message+= f' {repeater_band}'
             if repeater_mode:
                 human_readable_message += f' {repeater_mode}'
-            latitude, longitude, altitude, call_sign, __success = get_position_on_aprsfi(users_callsign, aprsdotfi_api_key)
-            if not __success:
+            latitude, longitude, altitude, call_sign, _success = get_position_on_aprsfi(users_callsign, aprsdotfi_api_key)
+            if not _success:
                 err = True
                 human_readable_message = f"{errmsg_cannot_find_coords_for_user} {call_sign}"
 
@@ -520,8 +520,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                     country = "US"
                     found_my_duty_roster = True
                     human_readable_message = f"Zip {zipcode};{country}"
-                    __success, latitude, longitude = get_geocode_geopy_data({"postalcode": zipcode, "country": country})
-                    if not __success:
+                    _success, latitude, longitude = get_geocode_geopy_data({"postalcode": zipcode, "country": country})
+                    if not _success:
                         err = True
                         human_readable_message = errmsg_cannot_find_coords_for_address
                         break
@@ -549,8 +549,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                         call_sign = matches[0].upper()
                         found_my_duty_roster = True
                 if found_my_duty_roster:
-                    latitude, longitude, altitude, call_sign, __success = get_position_on_aprsfi(call_sign, aprsdotfi_api_key)
-                    if not __success:
+                    latitude, longitude, altitude, call_sign, _success = get_position_on_aprsfi(call_sign, aprsdotfi_api_key)
+                    if not _success:
                         human_readable_message = f"{errmsg_cannot_find_coords_for_user} {call_sign}"
                         err = True
                     else:
@@ -563,8 +563,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             if not found_my_duty_roster and not err:
                 matches = re.search(pattern=r"^([a-zA-Z0-9]{4})$", string=word)
                 if matches:
-                    latitude, longitude, metar_capable, icao, __success = validate_icao(word)
-                    if __success:
+                    latitude, longitude, metar_capable, icao, _success = validate_icao(word)
+                    if _success:
                         what = "metar"
                         found_my_duty_roster = True
                         human_readable_message = f"METAR for '{icao}'"
@@ -582,8 +582,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             if not found_my_duty_roster:
                 matches = re.search(pattern=r"^([a-zA-Z0-9]{3})$", string=word)
                 if matches:
-                    latitude, longitude, metar_capable, icao, __success = validate_iata(word)
-                    if __success:
+                    latitude, longitude, metar_capable, icao, _success = validate_iata(word)
+                    if _success:
                         found_my_duty_roster = True
                         what = "metar"
                         found_my_duty_roster = True
@@ -600,12 +600,12 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             # the user's own call sign position
             matches = re.search(r"^(metar)$", word,re.IGNORECASE)
             if matches:
-                latitude, longitude, altitude, call_sign, __success = get_position_on_aprsfi(users_callsign, aprsdotfi_api_key)
-                if __success:
+                latitude, longitude, altitude, call_sign, _success = get_position_on_aprsfi(users_callsign, aprsdotfi_api_key)
+                if _success:
                     icao = get_nearest_icao(latitude, longitude)
                     if icao:
-                        latitude, longitude, metar_capable, icao, __success = validate_icao(icao)
-                        if __success:
+                        latitude, longitude, metar_capable, icao, _success = validate_icao(icao)
+                        if _success:
                             what = "metar"
                             human_readable_message = f"METAR for '{icao}'"
                             found_my_duty_roster = True
@@ -633,8 +633,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                     call_sign = users_callsign
                     found_my_duty_roster = True
                     human_readable_message = f'Pos for {call_sign}'
-                    latitude, longitude, altitude, call_sign, __success = get_position_on_aprsfi(users_callsign, aprsdotfi_api_key)
-                    if not __success:
+                    latitude, longitude, altitude, call_sign, _success = get_position_on_aprsfi(users_callsign, aprsdotfi_api_key)
+                    if not _success:
                         err = True
                         human_readable_message = f"{errmsg_cannot_find_coords_for_user} {call_sign}"
 
@@ -691,8 +691,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
         if when:
             # First, have a look at the user's complete call sign
             #including SSID
-            latitude, longitude, altitude, call_sign, __success = get_position_on_aprsfi(users_callsign, aprsdotfi_api_key)
-            if __success:
+            latitude, longitude, altitude, call_sign, _success = get_position_on_aprsfi(users_callsign, aprsdotfi_api_key)
+            if _success:
                 human_readable_message = f"{call_sign}"
                 found_my_duty_roster = True
             else:
@@ -701,8 +701,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                 # then we will give up
                 matches = re.search(r"^(([A-Z0-9]{1,3}[0123456789][A-Z0-9]{0,3})-([A-Z0-9]{1,2}))$", users_callsign)
                 if matches:
-                    latitude, longitude, altitude, call_sign, __success = get_position_on_aprsfi(matches[2].upper(), aprsdotfi_api_key)
-                    if __success:
+                    latitude, longitude, altitude, call_sign, _success = get_position_on_aprsfi(matches[2].upper(), aprsdotfi_api_key)
+                    if _success:
                         found_my_duty_roster = True
                         human_readable_message = f"{call_sign}"
                     else:
@@ -753,11 +753,11 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
         'zipcode': zipcode,
         'cwop_id': cwop_id
     }
-    __success = True
+    _success = True
     if err:
         _success = False
 
-    return __success, response_parameters
+    return _success, response_parameters
 
 def parse_when(word: str):
     """
