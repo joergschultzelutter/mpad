@@ -24,7 +24,7 @@ Reimplements and uses programs and services:
 - MGRS coordinate converter (https://github.com/aydink/pymgrs)
 - aprs.fi for call sign location retrieval
 - openweathermap.org for wx data
-- Openstreetmap / geopy for address
+- Openstreetmap / geopy for address data retrieval and conversion
 - findu.com for CWOP and METAR data
 - repeatermap.de for for repeater information
 - APRSlib (https://pypi.org/project/aprslib/) for sending and receiving data
