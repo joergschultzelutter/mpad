@@ -3,7 +3,7 @@ Multi-Purpose APRS Daemon
 
 Python implementation of an APRS Multi-Purpose Daemon (wx forecast, sat data, get your nearest repeater ...)
 
-Supported features:
+## Supported features:
 - Wordwide wx forecast for address / zip code / lat/lon / maidenhead / ..., supporting both imperial and metric data with auto-detection of the respective standard based on the sender's call sign. By default, a user in the U.S. will receive his data in imperial format whereas international users' default will be the metric system. 
 - METAR data for IATA/ICAO codes or the nearest airport to the user's position. If an airport is specified/found that does NOT support METAR, the program automatically switches to a standard WX report
 - CWOP data for a specific CWOP station (or the nearest one)
@@ -13,13 +13,14 @@ Supported features:
 - find your nearest repeater with optional query parameters on band and query (c4fm, dstar, fm, ...)
 - Can be easily extended with additional functionality
 
-Program features:
+## Program features:
 - very low cpu/traffic foot print (APRS filters)
-- Pretty printing; whenever it is necessary to send more than one APRS message (e.g. text too long), the program tries to split up the text in a legible way. Rather than e.g. truncating the message after the 67th character, MPAD tries to keep the information groups intact. This means that e.g. if you receive temperature information, that data won't be split up into multiple messages where e.g. your first teperature digit is in message 1 and the 2nd one is in message 2.
-- human-friendly keyword parser
-- external (static) resources such as the list of airports, repeaters e.g. is only retrieved in e.g. weekly intervals and then stored on the local hard drive
+- Pretty printing; whenever it is necessary to send more than one APRS message (e.g. text exceeds APRS msg len), the program tries to split up the text in a legible way. Rather than applying a 'hard' truncate  of the message after the 67th character, MPAD tries to keep the information groups intact. This means that e.g. if you receive temperature information, that data won't be split up into multiple messages where e.g. your first teperature digit is in message 1 and the 2nd one is in message 2.
+- human-friendly parser with keywords
+- external (static) resources such as the list of airports, repeaters e.g. are  only retrieved in e.g. weekly intervals and then stored on the local hard drive
+- supports msg acknowledgment, beacons et al. Also tries to extract APRS msg IDs from APRS messages which do not follow the APRS standards
 
-Reimplements and uses programs and services:
+## Reimplements and uses programs and services:
 - portions from WXBOT (Martin Nile, KI6WJP)
 - MGRS coordinate converter (https://github.com/aydink/pymgrs)
 - aprs.fi for call sign location retrieval
@@ -30,9 +31,67 @@ Reimplements and uses programs and services:
 - APRSlib (https://pypi.org/project/aprslib/) for sending and receiving data
 - and various other Python modules
 
-Currently out of scope / known issues:
+## Currently out of scope / known issues:
 - OUTERNET logic from WXBOT is not implemented
 - With its current implementation, the Openweathermap Onecall API does not return the human-readable address. Therefore, additional calls to e.g. Openstreetmap etc. are necessary.
 - The available repeater data is very much EU-centric (the program uses data from repeatermap.de). Additional _free_ data sources can be added whereas available.
+- Wx alert data from openweathermap.org is not returned to the user. This can be added in a later version but keep in mind that the text is very long and would result in multiple APRS messages
+- Access to openweathermap.org requires an API key which has a certain traffic limit
+- 
 
+## Usage examples
+### WX data inquiries
+
+One or multiple spaces between the respective separators are permitted
+
+#### City, State and/or Country
+Format: 
+<city>, <state>; <country> or
+<city>, <state> or
+<city>; <country>
+
+Country = iso3166-a2 country
+
+Examples:
+
+Los Angeles, CA
+Mountain View, CA; US
+Holzminden; de
+
+#### Zip Codes
+Format: zip <zipcode>[;iso3166-a2 country code]. Alternatively, a 5 digit code without any prefix will assume a US zip code
+
+Examples:
+zip 94043
+zip 85609; de
+94043
+
+A 5-digit zip code with no iso-3166-a2 qualifier automatically sets the country setting to "US". 
+Zip codes can be of 3..10 characters
+
+#### numeric coordinates
+Format: latitude/longitude (can be positive or negative)
+
+example:
+51.8458575/8.2997425
+Whereas possible, the program will try to turn these coordinates into a human readable address
+
+#### Maidenhead / Grid locator
+Format: grid <4-or 6-character grid locator> or mh <4-or 6-character grid locator>
+
+example:
+grid jo41du
+mh jo41
+
+Note: When a maidenhead locator is specified, the program will not try to translate this information to a human readable address
+
+
+
+
+
+
+
+# The fine print
 APRS is a registered trademark Bob Bruninga, WB4APR
+
+
