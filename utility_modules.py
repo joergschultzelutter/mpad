@@ -9,10 +9,17 @@ import configparser
 import os.path
 from timezonefinder import TimezoneFinder
 
-def make_pretty_aprs_messages(message_to_add: str, destination_list: list, max_len: int = 67, separator_char: str = ',', add_sep: bool = True):
+
+def make_pretty_aprs_messages(
+    message_to_add: str,
+    destination_list: list,
+    max_len: int = 67,
+    separator_char: str = ",",
+    add_sep: bool = True,
+):
     """
     Pretty Printer for APRS messages. As APRS messages are likely to be split
-    up (due to the 67 chars message len limitation), this function prevents 
+    up (due to the 67 chars message len limitation), this function prevents
     'hard cuts'. Any information that is to be injected into message
     destination list is going to be checked wrt its length. If
     len(current content) + len(message_to_add) exceeds the max_len value,
@@ -27,7 +34,7 @@ def make_pretty_aprs_messages(message_to_add: str, destination_list: list, max_l
 
     Add the string the 'conventional' way:
 
-    Message changes to 
+    Message changes to
     Line 1 = 1111111111222222222233333333333444444444455555555556666666666Hello W
     Line 2 = orld !!!!
 
@@ -35,19 +42,19 @@ def make_pretty_aprs_messages(message_to_add: str, destination_list: list, max_l
     Line 1 = 1111111111222222222233333333333444444444455555555556666666666
     Line 2 = Hello World !!!!
 
-    Constraints: function assumes that the message which is to be added is 
+    Constraints: function assumes that the message which is to be added is
     67 chars in size. If user tries to submit longer content, we will truncate
     the input string to 27 chars. No data will get lost, but it will not look
     as pretty as for the standard case
 
     Parameters
     ==========
-    message_to_add: 'str' 
+    message_to_add: 'str'
         message string that is to be added to the list in a pretty way
         If string is longer than 67 chars, we will truncate the information
     destination_list: 'list'
         List with string elements which will be enriched with the
-        'mesage_to_add' string 
+        'mesage_to_add' string
     max_len: 'int':
         Max length of the list's string len. 67 for APRS messages
     separator_char: 'str'
@@ -67,23 +74,26 @@ def make_pretty_aprs_messages(message_to_add: str, destination_list: list, max_l
         the parsed wx data
     """
     # Dummy handler in case the list is completely empty
+    # In this case, create an empty list
     if not destination_list:
         destination_list.append("")
 
-    # If new message is longer than max len then split it up with 
+    # If new message is longer than max len then split it up with
     # max chunks of max_len bytes and add it to the array.
-    # This should never happen but better safe than sorry. 
+    # This should never happen but better safe than sorry.
     # Keep in mind that we only transport plain text anyway.
     if len(message_to_add) > max_len:
-        string_list = split_string_to_string_list(message_string=message_to_add,max_len=max_len)
+        string_list = split_string_to_string_list(
+            message_string=message_to_add, max_len=max_len
+        )
         for msg in string_list:
             destination_list.append(msg)
-    else:   # try to insert
+    else:  # try to insert
         # Get very last element from list
         string_from_list = destination_list[-1]
 
         # element + new string > max len? no: add to existing string, else create new element in list
-        if len(string_from_list)+len(message_to_add)+1 <= max_len:
+        if len(string_from_list) + len(message_to_add) + 1 <= max_len:
             delimiter = ""
             if len(string_from_list) > 0 and add_sep:
                 delimiter = separator_char
@@ -95,20 +105,21 @@ def make_pretty_aprs_messages(message_to_add: str, destination_list: list, max_l
         # Special treatment hack for the very first line of text
         # This will eliminate the additional comma which might end up in here
         # Code is not pretty but it works
-        if (len(destination_list) == 1):
+        if len(destination_list) == 1:
             string_from_list = destination_list[0]
-            string_from_list = string_from_list.replace(f": {separator_char}",": ")
-            destination_list[0]=string_from_list
+            string_from_list = string_from_list.replace(f": {separator_char}", ": ")
+            destination_list[0] = string_from_list
 
     return destination_list
+
 
 def split_string_to_string_list(message_string: str, max_len: int = 67):
     """
     Force-split the string into chunks of max_len size and return a list of
     strings. This function is going to be called if the string that the user
     wants to insert exceeds more than e.g. 67 characters. In this unlikely
-    case, we may not be able to add the string in a pretty format - but 
-    we will split it up for the user and  
+    case, we may not be able to add the string in a pretty format - but
+    we will split it up for the user and
 
 
     Parameters
@@ -124,7 +135,10 @@ def split_string_to_string_list(message_string: str, max_len: int = 67):
     split_strings: 'list'
         List array, containing 1..n strings with a max len of 'max_len'
     """
-    split_strings = [message_string[index : index + max_len] for index in range(0, len(message_string), max_len)]
+    split_strings = [
+        message_string[index : index + max_len]
+        for index in range(0, len(message_string), max_len)
+    ]
     return split_strings
 
 
@@ -139,7 +153,7 @@ def log_to_stderr(message: str):
     """
 
     current_timestamp = datetime.datetime.now()
-    print(current_timestamp, ": ",message, file=sys.stderr)
+    print(current_timestamp, ": ", message, file=sys.stderr)
 
 
 def check_if_file_exists(file_name: str):
@@ -159,7 +173,8 @@ def check_if_file_exists(file_name: str):
 
     return os.path.isfile(file_name)
 
-def read_program_config(config_file_name: str = 'mpad.cfg'):
+
+def read_program_config(config_file_name: str = "mpad.cfg"):
     """
     Read the configuration file and extract the parameter values
 
@@ -185,14 +200,17 @@ def read_program_config(config_file_name: str = 'mpad.cfg'):
     if check_if_file_exists(config_file_name):
         try:
             config.read(config_file_name)
-            aprsdotfi_cfg_key=config.get('mpad_config', 'aprsdotfi_api_key')
-            openweathermapdotorg_api_key = config.get('mpad_config', 'openweathermapdotorg_api_key')
+            aprsdotfi_cfg_key = config.get("mpad_config", "aprsdotfi_api_key")
+            openweathermapdotorg_api_key = config.get(
+                "mpad_config", "openweathermapdotorg_api_key"
+            )
             success = True
         except:
             success = False
     return success, aprsdotfi_cfg_key, openweathermapdotorg_api_key
 
-def convert_to_plain_ascii (source_string):
+
+def convert_to_plain_ascii(source_string):
     """
     Tries to convert any content to plain ascii
     Also removes German Umlauts
@@ -207,9 +225,20 @@ def convert_to_plain_ascii (source_string):
     _: 'str'
         Converted string
     """
-    return source_string.replace("Ü","Ue").replace("Ä","Ae").replace("Ö","Oe").replace("ü","ue").replace("ä","ae").replace("ö","oe").replace("ß","ss").encode('ascii', errors='ignore').decode()
+    return (
+        source_string.replace("Ü", "Ue")
+        .replace("Ä", "Ae")
+        .replace("Ö", "Oe")
+        .replace("ü", "ue")
+        .replace("ä", "ae")
+        .replace("ö", "oe")
+        .replace("ß", "ss")
+        .encode("ascii", errors="ignore")
+        .decode()
+    )
 
-def getdaysuntil (theweekday):
+
+def getdaysuntil(theweekday):
     """
     Calculate offset index between system date and the requested date offset,
     based on 'calendar' presets (e.g. calendar.MONDAY, calender.TUESDAY)
@@ -234,11 +263,12 @@ def getdaysuntil (theweekday):
     """
 
     today = datetime.date.today()
-    target_date = today + datetime.timedelta( (theweekday-today.weekday()) % 7 )
+    target_date = today + datetime.timedelta((theweekday - today.weekday()) % 7)
     if today != target_date:
-        return (target_date-today).days
+        return (target_date - today).days
     else:
         return 7
+
 
 def determine_timezone(latitude: float, longitude: float):
     """
@@ -265,16 +295,20 @@ def determine_timezone(latitude: float, longitude: float):
     return timezone
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     my_array = []
 
-    my_array = make_pretty_aprs_messages("Hello World: ",my_array,separator_char='|',add_sep=False)
-    my_array = make_pretty_aprs_messages("Wie geht es Dir", my_array,separator_char='|')
-    my_array = make_pretty_aprs_messages('jdsfhjdshfjhjkshdfjhdsjfhjhdsfhjdshfjdhsfhdhsf',my_array)
-    my_array = make_pretty_aprs_messages('aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeffffffffffgggggggggghhhhhhhhhh',my_array)
-    my_array = make_pretty_aprs_messages('Alter Schwede',my_array)
-    print (my_array)
+    my_array = make_pretty_aprs_messages("Hello World: ", my_array)
+    my_array = make_pretty_aprs_messages("Wie geht es Dir", my_array)
+    my_array = make_pretty_aprs_messages(
+        "jdsfhjdshfjhjkshdfjhdsjfhjhdsfhjdshfjdhsfhdhsf", my_array
+    )
+    my_array = make_pretty_aprs_messages(
+        "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeffffffffffgggggggggghhhhhhhhhh",
+        my_array,
+    )
+    my_array = make_pretty_aprs_messages("Alter Schwede", my_array)
+    print(my_array)
 
     log_to_stderr("Scheisse")
-    print (read_program_config())
-
+    print(read_program_config())
