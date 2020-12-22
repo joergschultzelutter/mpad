@@ -65,7 +65,7 @@ Holzminden; de
 #### Zip Codes
 Formats:
 ```
-**zip** <zipcode>[;iso3166-a2 country code]
+zip <zipcode>[;iso3166-a2 country code]
 <5-digit code>
 ```
 A zip code with keyword but without a country setting OR a 5-digit zip code without keyword will automatically assume that the given zip code is a U.S. zip code
@@ -96,8 +96,8 @@ Whereas possible, the program will try to turn these coordinates into a human re
 #### Maidenhead / Grid locator
 Formats:
 ```
-**grid** <4-or 6-character grid locator>
-**mh** <4-or 6-character grid locator>
+grid <4-or 6-character grid locator>
+mh <4-or 6-character grid locator>
 ```
 
 Examples:
