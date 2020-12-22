@@ -27,34 +27,34 @@ def get_cwop_findu(cwop_id: str, units: str = "metric"):
     time : 'int'
         Unix timestamp
     temp: 'str'
-        temperature in Celsius or Fahrenheit (dependent on 'units' parameter) ('None' if not found, see '_success' parameter)
+        temperature in Celsius or Fahrenheit (dependent on 'units' parameter) ('None' if not found, see 'success' parameter)
     wind_direction: 'str'
-        Wind direction (degrees) ('None' if not found, see '_success' parameter)
+        Wind direction (degrees) ('None' if not found, see 'success' parameter)
     wind_speed: 'str'
-        Wind speed in km/h or mph (dependent on 'units' parameter) ('None' if not found, see '_success' parameter)
+        Wind speed in km/h or mph (dependent on 'units' parameter) ('None' if not found, see 'success' parameter)
     wind_gust: 'str'
-        Wind Gust in km/h or mph (dependent on 'units' parameter) ('None' if not found, see '_success' parameter)
+        Wind Gust in km/h or mph (dependent on 'units' parameter) ('None' if not found, see 'success' parameter)
     rain_1h: 'str'
-        Rain in cm or inch within the last 1h (dependent on 'units' parameter) ('None' if not found, see '_success' parameter)
+        Rain in cm or inch within the last 1h (dependent on 'units' parameter) ('None' if not found, see 'success' parameter)
     rain_24h: 'str'
-        Rain in cm or inch within the last 24h (dependent on 'units' parameter) ('None' if not found, see '_success' parameter)
+        Rain in cm or inch within the last 24h (dependent on 'units' parameter) ('None' if not found, see 'success' parameter)
     rain_mn: 'str'
-        Rain in cm or inch minimal (dependent on 'units' parameter) ('None' if not found, see '_success' parameter)
+        Rain in cm or inch minimal (dependent on 'units' parameter) ('None' if not found, see 'success' parameter)
     humidity: 'str'
-        humidity in percent  ('None' if not found, see '_success' parameter)
+        humidity in percent  ('None' if not found, see 'success' parameter)
     air_pressure: 'str'
-        air pressure in mBar  ('None' if not found, see '_success' parameter)
+        air pressure in mBar  ('None' if not found, see 'success' parameter)
 
     plus a separate parameter:
 
-    _success: 'bool'
+    success: 'bool'
         True if operation was successful
     """
     cwop_id = cwop_id.upper()
     units = units.lower()
     assert units in ["imperial", "metric"]
 
-    _success: bool = False
+    success: bool = False
 
     time = temp = wind_direction = wind_speed = None
     wind_gust = rain_1h = rain_24h = rain_mn = None
@@ -102,7 +102,7 @@ def get_cwop_findu(cwop_id: str, units: str = "metric"):
                     rain_mn = output_rows[1][7]
                     humidity = output_rows[1][8]
                     air_pressure = output_rows[1][9]
-                    _success = True
+                    success = True
     cwop_response = {
         "time": time,
         "temp": temp,
@@ -120,7 +120,7 @@ def get_cwop_findu(cwop_id: str, units: str = "metric"):
         "air_pressure": air_pressure,
         "air_pressure_uom": air_pressure_uom,
     }
-    return _success, cwop_response
+    return success, cwop_response
 
 
 def get_nearest_cwop_findu(latitude: float, longitude: float, units: str = "metric"):
@@ -138,32 +138,32 @@ def get_nearest_cwop_findu(latitude: float, longitude: float, units: str = "metr
     Returns
     =======
     cwop_id : 'str'
-        CWOP ID whose data is to be retrieved ('None' if not found, see '_success' parameter)
+        CWOP ID whose data is to be retrieved ('None' if not found, see 'success' parameter)
     time : 'str'
-        time in YYYYMMDDHHMMSS ('None' if not found, see '_success' parameter)
+        time in YYYYMMDDHHMMSS ('None' if not found, see 'success' parameter)
     temp: 'str'
-        temperature in Celsius or Fahrenheit (dependent on 'units' parameter) ('None' if not found, see '_success' parameter)
+        temperature in Celsius or Fahrenheit (dependent on 'units' parameter) ('None' if not found, see 'success' parameter)
     wind_direction: 'str'
-        Wind direction (degrees) ('None' if not found, see '_success' parameter)
+        Wind direction (degrees) ('None' if not found, see 'success' parameter)
     wind_speed: 'str'
-        Wind speed in km/h or mph (dependent on 'units' parameter) ('None' if not found, see '_success' parameter)
+        Wind speed in km/h or mph (dependent on 'units' parameter) ('None' if not found, see 'success' parameter)
     wind_gust: 'str'
-        Wind Gust in km/h or mph (dependent on 'units' parameter) ('None' if not found, see '_success' parameter)
+        Wind Gust in km/h or mph (dependent on 'units' parameter) ('None' if not found, see 'success' parameter)
     rain_1h: 'str'
-        Rain in cm or inch within the last 1h (dependent on 'units' parameter) ('None' if not found, see '_success' parameter)
+        Rain in cm or inch within the last 1h (dependent on 'units' parameter) ('None' if not found, see 'success' parameter)
     rain_24h: 'str'
-        Rain in cm or inch within the last 24h (dependent on 'units' parameter) ('None' if not found, see '_success' parameter)
+        Rain in cm or inch within the last 24h (dependent on 'units' parameter) ('None' if not found, see 'success' parameter)
     rain_mn: 'str'
-        Rain in cm or inch minimal (dependent on 'units' parameter) ('None' if not found, see '_success' parameter)
+        Rain in cm or inch minimal (dependent on 'units' parameter) ('None' if not found, see 'success' parameter)
     humidity: 'str'
-        humidity in percent  ('None' if not found, see '_success' parameter)
+        humidity in percent  ('None' if not found, see 'success' parameter)
     air_pressure: 'str'
-        air pressure in mBar  ('None' if not found, see '_success' parameter)
-    _success: 'bool'
+        air pressure in mBar  ('None' if not found, see 'success' parameter)
+    success: 'bool'
         True if operation was successful
     """
 
-    _success = False
+    success = False
 
     time = temp = wind_direction = wind_speed = None
     wind_gust = rain_1h = rain_24h = rain_mn = None
@@ -218,7 +218,7 @@ def get_nearest_cwop_findu(latitude: float, longitude: float, units: str = "metr
         "air_pressure": air_pressure,
         "air_pressure_uom": air_pressure_uom,
     }
-    return _success, cwop_response
+    return success, cwop_response
 
 
 if __name__ == "__main__":
