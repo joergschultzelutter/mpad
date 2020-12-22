@@ -14,6 +14,7 @@ from skyfield.api import EarthSatellite
 tle_data = dict()
 tle_data_last_download = datetime.datetime.now()
 
+
 def refresh_tle_file(tle_filename: str = "amateur.tle"):
     """
     Download the amateur radio satellite TLE data
@@ -33,7 +34,7 @@ def refresh_tle_file(tle_filename: str = "amateur.tle"):
     """
 
     # This is the fixed name of the file that we are going to download
-    tle_data_file_url = 'http://www.celestrak.com/NORAD/elements/amateur.txt'
+    tle_data_file_url = "http://www.celestrak.com/NORAD/elements/amateur.txt"
     global tle_data_last_download
     success: bool = False
 
@@ -46,7 +47,7 @@ def refresh_tle_file(tle_filename: str = "amateur.tle"):
     if r:
         if r.status_code == 200:
             try:
-                with open(tle_filename, 'wb') as f:
+                with open(tle_filename, "wb") as f:
                     f.write(r.content)
                     f.close()
                     # Update the time stamp so that we know
@@ -86,10 +87,10 @@ def read_tle_data(tle_filename: str = "amateur.tle"):
 
     Returns
     =======
-    tle_data: 'dict'
-        dictionary which contains the parsed data. Global variable
     success: 'bool'
         True if operation was successful
+    tle_data: 'dict'
+        dictionary which contains the parsed data. Global variable
     """
 
     success: bool = False
@@ -97,8 +98,8 @@ def read_tle_data(tle_filename: str = "amateur.tle"):
 
     # Open the local file and read it
     try:
-        with open(f'{tle_filename}', 'r') as f:
-            if f.mode == 'r':
+        with open(f"{tle_filename}", "r") as f:
+            if f.mode == "r":
                 lines = f.readlines()
                 f.close()
     except:
@@ -106,8 +107,9 @@ def read_tle_data(tle_filename: str = "amateur.tle"):
 
     if lines:
         if len(lines) % 3 != 0:
-            print ("Invalid file structure")
-            return success
+            print("Invalid file structure")
+            success = False
+            return success, tle_data
         lc = 1
         tle_data.clear()
         # Retrieve the data and create the dictionary
@@ -120,24 +122,25 @@ def read_tle_data(tle_filename: str = "amateur.tle"):
             if matches:
                 tle_key = matches[2]
             else:
-                tle_key = tle_satellite.replace(' ', '-')
+                tle_key = tle_satellite.replace(" ", "-")
             # Convenience mapping
-            if tle_key == 'ZARYA':
-                tle_key = 'ISS'
+            if tle_key == "ZARYA":
+                tle_key = "ISS"
             # Get the actual TLE data
             tle_line1 = lines[lc].rstrip()
-            tle_line2 = lines[lc+1].rstrip()
+            tle_line2 = lines[lc + 1].rstrip()
             lc += 3
-            tle_data[f'{tle_key}'] = {'tle_satellite': tle_satellite,
-                                      'tle_line1': tle_line1,
-                                      'tle_line2': tle_line2}
+            tle_data[f"{tle_key}"] = {
+                "tle_satellite": tle_satellite,
+                "tle_line1": tle_line1,
+                "tle_line2": tle_line2,
+            }
     # Did we manage to download something?
     success: bool = True if len(tle_data) != 0 else False
-    return tle_data, success
+    return success, tle_data
 
 
-def get_tle_data(satellite_name: str,
-                 tle_data_ttl: int = 1):
+def get_tle_data(satellite_name: str, tle_data_ttl: int = 1):
     """
     Try to look up the given (partial) satellite name
     and return its TLE data. Prior to performing the lookup,
@@ -169,33 +172,34 @@ def get_tle_data(satellite_name: str,
     tle_data_line1 = tle_data_line2 = tle_satellite = None
     satellite_name = satellite_name.upper()
     # Convenience mapping
-    if satellite_name == 'ZARYA':
-        satellite_name = 'ISS'
+    if satellite_name == "ZARYA":
+        satellite_name = "ISS"
 
-    last_download = datetime.datetime.now() - \
-                    tle_data_last_download
+    last_download = datetime.datetime.now() - tle_data_last_download
 
     if last_download.days > tle_data_ttl:
-        success = refresh_tle_file('amateur.tle')
+        success = refresh_tle_file("amateur.tle")
         if not success:
             return success, None, None, None
-        success = read_tle_data('amateur.tle')
+        success, tle_data = read_tle_data("amateur.tle")
         if not success:
             return success, None, None, None
 
     if satellite_name in tle_data:
-        tle_satellite = tle_data[satellite_name]['tle_satellite']
-        tle_data_line1 = tle_data[satellite_name]['tle_line1']
-        tle_data_line2 = tle_data[satellite_name]['tle_line2']
+        tle_satellite = tle_data[satellite_name]["tle_satellite"]
+        tle_data_line1 = tle_data[satellite_name]["tle_line1"]
+        tle_data_line2 = tle_data[satellite_name]["tle_line2"]
         success = True
     return success, tle_satellite, tle_data_line1, tle_data_line2
 
 
-def get_next_satellite_pass_for_latlon(latitude: float,
-                                       longitude: float,
-                                       requested_date: datetime.datetime,
-                                       tle_satellite_name: str,
-                                       elevation: float = 0.0):
+def get_next_satellite_pass_for_latlon(
+    latitude: float,
+    longitude: float,
+    requested_date: datetime.datetime,
+    tle_satellite_name: str,
+    elevation: float = 0.0,
+):
     """
     Determine the next pass of the ISS for a given set
     of coordinates for a certain date
@@ -234,45 +238,50 @@ def get_next_satellite_pass_for_latlon(latitude: float,
 
     # Try to get the satellite information from the dictionary
     # Return error settings if not found
-    success, tle_satellite, tle_data_line1, tle_data_line2 =\
-        get_tle_data(tle_satellite_name)
+    success, tle_satellite, tle_data_line1, tle_data_line2 = get_tle_data(
+        tle_satellite_name
+    )
     if not success:
         return False, None, None, None, None, None, None
 
     ts = api.load.timescale()
-    satellite = EarthSatellite(tle_data_line1,
-                               tle_data_line2,
-                               tle_satellite,
-                               ts)
+    satellite = EarthSatellite(tle_data_line1, tle_data_line2, tle_satellite, ts)
 
-    pos = api.Topos(latitude_degrees=latitude,
-                    longitude_degrees=longitude,
-                    elevation_m=elevation)
+    pos = api.Topos(
+        latitude_degrees=latitude, longitude_degrees=longitude, elevation_m=elevation
+    )
 
     today = requested_date
     tomorrow = requested_date + datetime.timedelta(days=1)
 
-    t = ts.utc(year=today.year, month=today.month,
-               day=today.day, hour=today.hour,
-               minute=today.minute, second=today.second)
+    t = ts.utc(
+        year=today.year,
+        month=today.month,
+        day=today.day,
+        hour=today.hour,
+        minute=today.minute,
+        second=today.second,
+    )
     days = t - satellite.epoch
-    print('{:.3f} days away from epoch'.format(days))
+    print("{:.3f} days away from epoch".format(days))
 
     t0 = ts.utc(today.year, today.month, today.day)
     t1 = ts.utc(tomorrow.year, tomorrow.month, tomorrow.day)
 
     t, events = satellite.find_events(pos, t0, t1, altitude_degrees=10.0)
     for ti, event in zip(t, events):
-        name = ('rise above 30°', 'culminate', 'set below 15°')[event]
-        print(ti.utc_strftime('%Y %b %d %H:%M:%S'), name)
+        name = ("rise above 30°", "culminate", "set below 15°")[event]
+        print(ti.utc_strftime("%Y %b %d %H:%M:%S"), name)
 
-    #return True, rise_time, rise_azimuth, maximum_altitude_time, maximum_altitude, set_time, set_azimuth, duration
+    # return True, rise_time, rise_azimuth, maximum_altitude_time, maximum_altitude, set_time, set_azimuth, duration
 
 
-def get_sun_moon_rise_set_for_latlon(latitude: float,
-                                     longitude: float,
-                                     requested_date: datetime.datetime,
-                                     elevation: float = 0.0):
+def get_sun_moon_rise_set_for_latlon(
+    latitude: float,
+    longitude: float,
+    requested_date: datetime.datetime,
+    elevation: float = 0.0,
+):
     """
     Determine sunrise/sunset and moonrise/moonset for a given set of coordinates
     for a certain date
@@ -310,14 +319,16 @@ def get_sun_moon_rise_set_for_latlon(latitude: float,
     """
 
     ts = api.load.timescale()
-    eph = api.load('de421.bsp')
+    eph = api.load("de421.bsp")
 
     sunrise = sunset = moonrise = moonset = None
 
     today = requested_date
     tomorrow = requested_date + datetime.timedelta(days=1)
 
-    pos = api.Topos(latitude_degrees=latitude, longitude_degrees=longitude, elevation_m=elevation)
+    pos = api.Topos(
+        latitude_degrees=latitude, longitude_degrees=longitude, elevation_m=elevation
+    )
 
     t0 = ts.utc(today.year, today.month, today.day)
     t1 = ts.utc(tomorrow.year, tomorrow.month, tomorrow.day)
@@ -329,7 +340,7 @@ def get_sun_moon_rise_set_for_latlon(latitude: float,
         else:
             sunset = ti.utc_datetime()
 
-    f = almanac.risings_and_settings(eph, eph['Moon'], pos)
+    f = almanac.risings_and_settings(eph, eph["Moon"], pos)
     t, y = almanac.find_discrete(t0, t1, f)
 
     for ti, yi in zip(t, y):
@@ -340,16 +351,22 @@ def get_sun_moon_rise_set_for_latlon(latitude: float,
     return sunrise, sunset, moonrise, moonset
 
 
-if __name__ == '__main__':
-    print(get_sun_moon_rise_set_for_latlon(51.838860, 8.326871, datetime.datetime.now()))
+if __name__ == "__main__":
+    print(
+        get_sun_moon_rise_set_for_latlon(51.838860, 8.326871, datetime.datetime.now())
+    )
 
     tle_data_last_download = None
     print("Download TLE Data")
     refresh_tle_file()
     print("Import TLE Data")
-    read_tle_data()
-    print("Get TLE data for Es\'Hail2")
-    print(get_tle_data('ES\'HAIL-2'))
+    success, tle_data = read_tle_data()
+    print("Get TLE data for Es'Hail2")
+    print(get_tle_data("ES'HAIL-2"))
     print("Get next ISS pass")
     thedate = datetime.datetime.now()
-    print(get_next_satellite_pass_for_latlon(51.838890,8.326747,thedate+datetime.timedelta(days=0),'ISS'))
+    print(
+        get_next_satellite_pass_for_latlon(
+            51.838890, 8.326747, thedate + datetime.timedelta(days=0), "ISS"
+        )
+    )
