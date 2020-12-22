@@ -46,8 +46,8 @@ One or multiple spaces between the respective separators are permitted
 #### City, State and/or Country
 Formats: 
 ```
-<city>, <state>; <country> or
-<city>, <state> or
+<city>, <state>; <country>
+<city>, <state>
 <city>; <country>
 ```
 
