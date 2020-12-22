@@ -45,7 +45,7 @@ Python implementation of an APRS Multi-Purpose Daemon (wx forecast, sat data, ge
 One or multiple spaces between the respective separators are permitted
 
 #### City, State and/or Country
-Format: 
+Formats: 
 ```
 <city>, <state>; <country> or
 <city>, <state> or
@@ -61,14 +61,19 @@ Mountain View, CA; US
 Holzminden; de
 
 #### Zip Codes
+Formats:
 ```
-Format: zip <zipcode>[;iso3166-a2 country code]. Alternatively, a 5 digit code without any prefix will assume a US zip code
+zip <zipcode>[;iso3166-a2 country code]
+<5-digit code>
 ```
+A zip code with keyword but without a country setting OR a 5-digit zip code without keyword will automatically assume that the given zip code is a U.S. zip code
 
 Examples:
-zip 94043
-zip 85609; de
-94043
+zip 94043 --> Mountain View, CA, United States
+zip 85609 --> Dragoon, AZ, United States
+zip 85609; us --> Dragoon, AZ, United States
+zip 85609; de --> Aschheim, Germany
+94043 --> Mountain View, CA, United States
 
 A 5-digit zip code with no iso-3166-a2 qualifier automatically sets the country setting to "US". 
 Zip codes can be of 3..10 characters
@@ -76,16 +81,20 @@ Zip codes can be of 3..10 characters
 #### numeric coordinates
 Format: latitude/longitude (can be positive or negative)
 
-example:
+Example:
+```
 51.8458575/8.2997425
+```
 Whereas possible, the program will try to turn these coordinates into a human readable address
 
 #### Maidenhead / Grid locator
+Formats:
 ```
-Format: grid <4-or 6-character grid locator> or mh <4-or 6-character grid locator>
+grid <4-or 6-character grid locator>
+mh <4-or 6-character grid locator>
 ```
 
-example:
+Examples:
 grid jo41du
 mh jo41
 
