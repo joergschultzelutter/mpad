@@ -41,7 +41,8 @@ Python implementation of an APRS Multi-Purpose Daemon (wx forecast, sat data, ge
 ## Usage examples
 ### WX data inquiries
 
-One or multiple spaces between the respective separators are permitted
+- One or multiple spaces between the respective separators are permitted
+- Commands and keywords are case insensitive
 
 #### City, State and/or Country
 Formats: 
