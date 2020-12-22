@@ -261,7 +261,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             (_, icao) = matches[0]
             aprs_message = re.sub(regex_string, "", aprs_message).strip()
             # try to look up the airport coordinates based on the ICAO code
-            latitude, longitude, metar_capable, icao, _success = validate_icao(icao)
+            _success, latitude, longitude, metar_capable, icao = validate_icao(icao)
             if _success:
                 what = "metar"
                 found_my_duty_roster = True
@@ -287,7 +287,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             (_, iata) = matches[0]
             aprs_message = re.sub(regex_string, "", aprs_message).strip()
             # try to look up the airport coordinates based on the IATA code
-            latitude, longitude, metar_capable, icao, _success = validate_iata(iata)
+            _success, latitude, longitude, metar_capable, icao = validate_iata(iata)
             if _success:
                 what = "metar"
                 found_my_duty_roster = True
@@ -387,7 +387,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                 elif what == 'metar':
                     icao = get_nearest_icao(latitude, longitude)
                     if icao:
-                        latitude, longitude, metar_capable, icao, _success = validate_icao(icao)
+                        _success, latitude, longitude, metar_capable, icao = validate_icao(icao)
                         if _success:
                             what = "metar"
                             found_my_duty_roster = True
@@ -563,7 +563,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             if not found_my_duty_roster and not err:
                 matches = re.search(pattern=r"^([a-zA-Z0-9]{4})$", string=word)
                 if matches:
-                    latitude, longitude, metar_capable, icao, _success = validate_icao(word)
+                    _success, latitude, longitude, metar_capable, icao = validate_icao(word)
                     if _success:
                         what = "metar"
                         found_my_duty_roster = True
@@ -582,7 +582,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             if not found_my_duty_roster:
                 matches = re.search(pattern=r"^([a-zA-Z0-9]{3})$", string=word)
                 if matches:
-                    latitude, longitude, metar_capable, icao, _success = validate_iata(word)
+                    _success, latitude, longitude, metar_capable, icao = validate_iata(word)
                     if _success:
                         found_my_duty_roster = True
                         what = "metar"
@@ -604,7 +604,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                 if _success:
                     icao = get_nearest_icao(latitude, longitude)
                     if icao:
-                        latitude, longitude, metar_capable, icao, _success = validate_icao(icao)
+                        _success, latitude, longitude, metar_capable, icao = validate_icao(icao)
                         if _success:
                             what = "metar"
                             human_readable_message = f"METAR for '{icao}'"

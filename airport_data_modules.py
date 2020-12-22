@@ -123,11 +123,11 @@ def get_metar_data(icao_code: str):
 
     Returns
     =======
+    success: 'bool'
+        True if operation was successful
     response: 'str'
         METAR string for the given airport
         (or "NOTFOUND" if no data was found)
-    _success: 'bool'
-        True if operation was successful
     """
 
     resp = requests.get(
@@ -137,7 +137,7 @@ def get_metar_data(icao_code: str):
         f"&hoursStr=most+recent+only&submitmet=Submit"
     )
     response: str = "NOTFOUND"
-    _success: bool = False
+    success: bool = False
     if resp.status_code == 200:
         soup = BeautifulSoup(resp.text, features="html.parser")
         meintext = re.sub(" {2,}", " ", soup.get_text())
@@ -149,8 +149,8 @@ def get_metar_data(icao_code: str):
                 remainder = meintext[pos:]
                 blah = remainder.splitlines()
                 response = blah[0]
-                _success = True
-    return response, _success
+                success = True
+    return success, response
 
 
 def validate_iata(iata_code: str):
@@ -175,25 +175,25 @@ def validate_iata(iata_code: str):
         (True = METAR capable)
     icao_code: 'str'
         ICAO airport code for the given IATA code
-    _success: 'bool'
+    success: 'bool'
         True if operation was successful
     """
 
     latitude: float = 0.0
     longitude: float = 0.0
     metar_capable: bool = False
-    _success: bool = False
+    success: bool = False
     icao_code: str = None
 
     iata_code = iata_code.upper()
     if iata_code in iata_dict:
         if iata_code in iata_dict:
             icao_code = iata_dict[iata_code]["icao"]
-            latitude, longitude, metar_capable, icao_code, _success = validate_icao(
+            latitude, longitude, metar_capable, icao_code, success = validate_icao(
                 icao_code
             )
 
-    return latitude, longitude, metar_capable, icao_code, _success
+    return success, latitude, longitude, metar_capable, icao_code
 
 
 def validate_icao(icao_code: str):
@@ -209,6 +209,8 @@ def validate_icao(icao_code: str):
 
     Returns
     =======
+    success: 'bool'
+        True if operation was successful
     latitude: 'float'
         Latitude of the airport (or 0.0 if not found)
     longitude: 'float'
@@ -218,22 +220,20 @@ def validate_icao(icao_code: str):
         (True = METAR capable)
     icao_code: 'str'
         ICAO airport code, Same as input parameter
-    _success: 'bool'
-        True if operation was successful
     """
     latitude: float = 0.0
     longitude: float = 0.0
     metar_capable: bool = False
-    _success: bool = False
+    success: bool = False
 
     icao_code = icao_code.upper()
     if icao_code in icao_dict:
         latitude = icao_dict[icao_code]["latitude"]
         longitude = icao_dict[icao_code]["longitude"]
         metar_capable = icao_dict[icao_code]["metar_capable"]
-        _success = True
+        success = True
 
-    return latitude, longitude, metar_capable, icao_code, _success
+    return success, latitude, longitude, metar_capable, icao_code
 
 
 def refresh_icao_file(icaoiata_filename: str = "stations.txt"):
@@ -249,13 +249,13 @@ def refresh_icao_file(icaoiata_filename: str = "stations.txt"):
 
     Returns
     =======
-    _success: 'bool'
+    success: 'bool'
         True if operation was successful
     """
 
     # This is the fixed name of the URL Source that we are going to download
     file_url = "https://www.aviationweather.gov/docs/metar/stations.txt"
-    _success: bool = False
+    success: bool = False
 
     # try to get the file
     try:
@@ -269,10 +269,10 @@ def refresh_icao_file(icaoiata_filename: str = "stations.txt"):
                 with open(icaoiata_filename, "wb") as f:
                     f.write(r.content)
                     f.close()
-                    _success = True
+                    success = True
             except:
                 print(f"Cannot update ICAO data to file {icaoiata_filename}")
-    return _success
+    return success
 
 
 def get_nearest_icao(latitude: float, longitude: float):
