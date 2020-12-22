@@ -138,9 +138,7 @@ def calculate_band_name(frequency: float):
         "1.2mm": {"from": 241000.0, "to": 250000.0},
     }
     for band in band_dictionary:
-        if (
-                band_dictionary[band]["from"] <= frequency <= band_dictionary[band]["to"]
-        ):
+        if band_dictionary[band]["from"] <= frequency <= band_dictionary[band]["to"]:
             human_readable_band_name = band
             _success = True
             break
