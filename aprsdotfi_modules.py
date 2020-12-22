@@ -10,7 +10,8 @@ from utility_modules import read_program_config
 
 # APRS.fi access key (we get this value from the config file settings)
 
-def get_position_on_aprsfi(aprsfi_callsign:str, aprsdotfi_api_key: str):
+
+def get_position_on_aprsfi(aprsfi_callsign: str, aprsdotfi_api_key: str):
     """
     Get the position of the given call sign on aprs.fi
     Call sign is taken 'as is', e.g. with or without SSID.
@@ -28,6 +29,8 @@ def get_position_on_aprsfi(aprsfi_callsign:str, aprsdotfi_api_key: str):
 
     Returns
     =======
+    success: 'bool'
+        True if call was successful
     latitude: 'float'
         latitude position if user was found on aprs.fi
     longitude: 'float'
@@ -36,49 +39,51 @@ def get_position_on_aprsfi(aprsfi_callsign:str, aprsdotfi_api_key: str):
         altitude in meters if user was found on aprs.fi
     aprsfi_callsign: 'str'
         Call sign converted to uppercase
-    success: 'bool'
-        True if call was successful
     """
-    # change later according to format User-Agent: findlinks/1.1.6-beta1 (+http://wortschatz.uni-leipzig.de/findlinks/)
-    headers = {'User-Agent': 'multi-purpose-aprs-daemon/0.0.1-internal-alpha'}
+    headers = {
+        "User-Agent": "multi-purpose-aprs-daemon/0.0.1-internal-alpha (+https://github.com/joergschultzelutter/mpad/)"
+    }
 
     success = False
     latitude = longitude = altitude = 0.0
-    result = 'fail'
+    result = "fail"
     found = 0
 
     aprsfi_callsign = aprsfi_callsign.upper()
 
     try:
-        resp = requests.get(f"https://api.aprs.fi/api/get?name={aprsfi_callsign}&what=loc&apikey={aprsdotfi_api_key}&format=json", headers = headers)
+        resp = requests.get(
+            f"https://api.aprs.fi/api/get?name={aprsfi_callsign}&what=loc&apikey={aprsdotfi_api_key}&format=json",
+            headers=headers,
+        )
     except:
         resp = None
     if resp:
         if resp.status_code == 200:
             json_content = resp.json()
             # extract web service result. Can either be 'ok' or 'fail'
-            if 'result' in json_content:
-                result = json_content['result']
-            if result == 'ok':
+            if "result" in json_content:
+                result = json_content["result"]
+            if result == "ok":
                 # extract number of result sets in the response. Must be > 0
                 # regardless of the available number of results, we will only
                 # use the first result
-                if 'found' in json_content:
-                    found = json_content['found']
+                if "found" in json_content:
+                    found = json_content["found"]
                 if found > 0:
                     # let's assume that all is good
                     success = True
                     # now extract lat/lon/altitude
-                    if 'lat' in json_content['entries'][0]:
-                        latitude = float(json_content['entries'][0]['lat'])
-                    if 'lng' in json_content['entries'][0]:
-                        longitude = float(json_content['entries'][0]['lng'])
-                    if 'altitude' in json_content['entries'][0]:
-                        altitude = float(json_content['entries'][0]['altitude'])
-        return latitude, longitude, altitude, aprsfi_callsign, success
+                    if "lat" in json_content["entries"][0]:
+                        latitude = float(json_content["entries"][0]["lat"])
+                    if "lng" in json_content["entries"][0]:
+                        longitude = float(json_content["entries"][0]["lng"])
+                    if "altitude" in json_content["entries"][0]:
+                        altitude = float(json_content["entries"][0]["altitude"])
+        return success, latitude, longitude, altitude, aprsfi_callsign
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     success, aprsdotfi_api_key, openweathermapdotorg_api_key = read_program_config()
     if success:
-        print(get_position_on_aprsfi('DF1JSL-1',aprsdotfi_api_key))
+        print(get_position_on_aprsfi("DF1JSL-1", aprsdotfi_api_key))
