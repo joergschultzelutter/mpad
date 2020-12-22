@@ -10,8 +10,8 @@ import maidenhead
 from mgrs import MGRStoLL, LLtoMGRS
 from math import radians, cos, sin, asin, sqrt, atan2, degrees
 
-def convert_latlon_to_utm(latitude: float,
-                          longitude: float):
+
+def convert_latlon_to_utm(latitude: float, longitude: float):
     """
     Convert latitude / longitude coordinates to UTM
     (Universal Transverse Mercator) coordinates
@@ -38,13 +38,16 @@ def convert_latlon_to_utm(latitude: float,
     easting, northing, zone_number, zone_letter = utm.from_latlon(latitude, longitude)
     easting: int = round(easting)
     northing: int = round(northing)
-    return zone_number, \
-           zone_letter, \
-           easting, \
-           northing
+    return zone_number, zone_letter, easting, northing
 
 
-def convert_utm_to_latlon(zone_number: int, zone_letter: str, easting: int, northing: int):
+def convert_utm_to_latlon(
+    zone_number: int,
+    zone_letter: str,
+    easting: int,
+    northing: int,
+    output_precision: int = 6,
+):
     """
     Convert TM (Universal Transverse Mercator) coordinates
     to latitude / longitude
@@ -59,6 +62,8 @@ def convert_utm_to_latlon(zone_number: int, zone_letter: str, easting: int, nort
         UTM easting coordinates for the given set of lat/lon coordinates
     northing: 'int'
         UTM northing coordinates for the given set of lat/lon coordinates
+    output_precision: 'int'
+        Rounds the lat/lon value after the given position after the comma
 
     Returns
     =======
@@ -69,16 +74,15 @@ def convert_utm_to_latlon(zone_number: int, zone_letter: str, easting: int, nort
     """
 
     latitude, longitude = utm.to_latlon(easting, northing, zone_number, zone_letter)
-    latitude: float = round(latitude, 6)
-    longitude: float = round(longitude, 6)
+    latitude: float = round(latitude, output_precision)
+    longitude: float = round(longitude, output_precision)
 
-    return latitude, \
-           longitude
+    return latitude, longitude
 
 
-def convert_latlon_to_maidenhead(latitude: float,
-                                 longitude: float,
-                                 output_precision: int = 4):
+def convert_latlon_to_maidenhead(
+    latitude: float, longitude: float, output_precision: int = 4
+):
     """
     Convert latitude / longitude coordinates to Maidenhead coordinates
 
@@ -89,7 +93,7 @@ def convert_latlon_to_maidenhead(latitude: float,
     longitude : 'float'
         Longitude value
     output_precision: 'int'
-        Output precision for the Maidenhead calculation
+        Output precision for lat/lon
 
     Returns
     =======
@@ -98,11 +102,15 @@ def convert_latlon_to_maidenhead(latitude: float,
         the specified precision
     """
 
-    maidenhead_coordinates: str = maidenhead.to_maiden(latitude, longitude, precision=output_precision)
+    maidenhead_coordinates: str = maidenhead.to_maiden(
+        latitude, longitude, precision=output_precision
+    )
     return maidenhead_coordinates
 
 
-def convert_maidenhead_to_latlon(maidenhead_coordinates: str):
+def convert_maidenhead_to_latlon(
+    maidenhead_coordinates: str, output_precision: int = 6
+):
     """
     Convert latitude / longitude coordinates to Maidenhead coordinates
 
@@ -111,6 +119,8 @@ def convert_maidenhead_to_latlon(maidenhead_coordinates: str):
     maidenhead_coordinates: 'str'
         Maidenhead coordinates for the given lat/lon with
         the specified precision
+    output_precision: 'int'
+        Output precision for the lat/lon values (rounding)
 
     Returns
     =======
@@ -122,13 +132,12 @@ def convert_maidenhead_to_latlon(maidenhead_coordinates: str):
     assert len(maidenhead_coordinates) % 2 == 0
 
     latitude, longitude = maidenhead.to_location(maidenhead_coordinates)
-    latitude: float = round(latitude, 6)
-    longitude: float = round(longitude, 6)
+    latitude: float = round(latitude, output_precision)
+    longitude: float = round(longitude, output_precision)
     return latitude, longitude
 
 
-def convert_latlon_to_mgrs(latitude: float,
-                           longitude: float):
+def convert_latlon_to_mgrs(latitude: float, longitude: float):
     """
     Convert latitude / longitude coordinates to MGRS (Military Grid
     Reference System) coordinates
@@ -150,7 +159,7 @@ def convert_latlon_to_mgrs(latitude: float,
     return mgrs_coordinates
 
 
-def convert_mgrs_to_latlon(mgrs_coordinates: str):
+def convert_mgrs_to_latlon(mgrs_coordinates: str, output_precision: int = 6):
     """
     Convert MGRS (Military Grid Reference System) coordinates
     to latitude / longitude coordinates
@@ -159,6 +168,8 @@ def convert_mgrs_to_latlon(mgrs_coordinates: str):
     ==========
     mgrs_coordinates: 'str'
         MGRS coordinates for the given set of lat/lon coordinates
+    output_precision: 'int'
+        Output precision for the Maidenhead calculation
 
     Returns
     =======
@@ -169,13 +180,12 @@ def convert_mgrs_to_latlon(mgrs_coordinates: str):
     """
 
     response = MGRStoLL(mgrs_coordinates)
-    latitude = round(response['lat'], 6)
-    longitude = round(response['lon'], 6)
+    latitude = round(response["lat"], output_precision)
+    longitude = round(response["lon"], output_precision)
     return latitude, longitude
 
 
-def convert_latlon_to_dms(latitude: float,
-                          longitude: float):
+def convert_latlon_to_dms(latitude: float, longitude: float, output_precision: int = 4):
     """
     Convert latitude / longitude coordinates
     to DMS (Degrees, Minutes, Seconds) coordinates
@@ -186,6 +196,8 @@ def convert_latlon_to_dms(latitude: float,
         Latitude value
     longitude : 'float'
         Longitude value
+    output_precision: 'int'
+        Output precision for '_deg_sec' values
 
     Returns
     =======
@@ -222,34 +234,38 @@ def convert_latlon_to_dms(latitude: float,
     latitude_deg = latitude_deg if is_positive_lat else -latitude_deg
     longitude_deg = longitude_deg if is_positive_lon else -longitude_deg
 
-    latitude_direction: str = 'S' if latitude_deg < 0 else 'N'
+    latitude_direction: str = "S" if latitude_deg < 0 else "N"
     latitude_deg: int = int(abs(latitude_deg))
     latitude_min: int = int(latitude_min)
-    latitude_sec: float = round(latitude_sec, 4)
+    latitude_sec: float = round(latitude_sec, output_precision)
 
-    longitude_direction: str = 'W' if longitude_deg < 0 else 'E'
+    longitude_direction: str = "W" if longitude_deg < 0 else "E"
     longitude_deg: int = int(abs(longitude_deg))
     longitude_min: int = int(longitude_min)
-    longitude_sec: float = round(longitude_sec, 4)
+    longitude_sec: float = round(longitude_sec, output_precision)
 
-    return latitude_deg, \
-           latitude_min, \
-           latitude_sec, \
-           latitude_direction, \
-           longitude_deg, \
-           longitude_min, \
-           longitude_sec, \
-           longitude_direction
+    return (
+        latitude_deg,
+        latitude_min,
+        latitude_sec,
+        latitude_direction,
+        longitude_deg,
+        longitude_min,
+        longitude_sec,
+        longitude_direction,
+    )
 
 
-def convert_dms_to_latlon(latitude_deg: float,
-                          latitude_min: float,
-                          latitude_sec: float,
-                          latitude_direction: str,
-                          longitude_deg: float,
-                          longitude_min: float,
-                          longitude_sec: float,
-                          longitude_direction: str):
+def convert_dms_to_latlon(
+    latitude_deg: float,
+    latitude_min: float,
+    latitude_sec: float,
+    latitude_direction: str,
+    longitude_deg: float,
+    longitude_min: float,
+    longitude_sec: float,
+    longitude_direction: str,
+):
     """
     Convert DMS (Degrees, Minutes, Seconds) coordinates to
     latitude / longitude coordinates
@@ -286,19 +302,25 @@ def convert_dms_to_latlon(latitude_deg: float,
     latitude_direction = latitude_direction.upper()
     longitude_direction = longitude_direction.upper()
 
-    assert latitude_direction in ['N', 'S']
-    assert longitude_direction in ['E', 'W']
+    assert latitude_direction in ["N", "S"]
+    assert longitude_direction in ["E", "W"]
 
     latitude = latitude_deg + latitude_min / 60 + latitude_sec / (60 * 60)
     longitude = longitude_deg + longitude_min / 60 + longitude_sec / (60 * 60)
 
-    latitude: float = latitude if latitude_direction == 'N' else -latitude
-    longitude: float = longitude if longitude_direction == 'E' else -longitude
+    latitude: float = latitude if latitude_direction == "N" else -latitude
+    longitude: float = longitude if longitude_direction == "E" else -longitude
 
-    return latitude, \
-           longitude
+    return latitude, longitude
 
-def Haversine(latitude1: float, longitude1: float, latitude2:float, longitude2: float, units: str = 'metric'):
+
+def Haversine(
+    latitude1: float,
+    longitude1: float,
+    latitude2: float,
+    longitude2: float,
+    units: str = "metric",
+):
     """
     Calculate distance between two points (degrees)
     using the Haversine formula
@@ -328,48 +350,71 @@ def Haversine(latitude1: float, longitude1: float, latitude2:float, longitude2: 
     """
 
     units = units.lower()
-    assert units in ['imperial', 'metric']
+    assert units in ["imperial", "metric"]
 
-    directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
+    directions = [
+        "N",
+        "NNE",
+        "NE",
+        "ENE",
+        "E",
+        "ESE",
+        "SE",
+        "SSE",
+        "S",
+        "SSW",
+        "SW",
+        "WSW",
+        "W",
+        "WNW",
+        "NW",
+        "NNW",
+    ]
 
     # convert decimal degrees to radians
-    longitude1, latitude1, longitude2, latitude2 = \
-        map(radians, [longitude1, latitude1, longitude2, latitude2])
+    longitude1, latitude1, longitude2, latitude2 = map(
+        radians, [longitude1, latitude1, longitude2, latitude2]
+    )
 
     # Calculate distance in km
     dlon = longitude2 - longitude1
     dlat = latitude2 - latitude1
-    a = sin(dlat/2)**2 + cos(latitude1) * cos(latitude2) * sin(dlon/2)**2
+    a = sin(dlat / 2) ** 2 + cos(latitude1) * cos(latitude2) * sin(dlon / 2) ** 2
     c = 2 * asin(sqrt(a))
+
     # Earth radius in km
     r = 6371
     distance = c * r
 
     # change to miles if user has requested imperial system
-    if units == 'imperial':
+    if units == "imperial":
         distance *= 0.621371
 
-    bearing = atan2(sin(longitude2 - longitude1) * cos(latitude2),
-                    cos(latitude1) * sin(latitude2) - sin(latitude1) * cos(latitude2) * cos(longitude2 - longitude1))
+    bearing = atan2(
+        sin(longitude2 - longitude1) * cos(latitude2),
+        cos(latitude1) * sin(latitude2)
+        - sin(latitude1) * cos(latitude2) * cos(longitude2 - longitude1),
+    )
     bearing = degrees(bearing)
     bearing = (bearing + 360) % 360
 
-    pos = round(bearing / (360. / len(directions)))
+    pos = round(bearing / (360.0 / len(directions)))
     direction = directions[pos % len(directions)]
 
     return distance, bearing, direction
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     print(convert_latlon_to_utm(48, -122))
-    print(convert_utm_to_latlon(10, 'U', 574595, 5316784))
+    print(convert_utm_to_latlon(10, "U", 574595, 5316784))
 
     print(convert_latlon_to_maidenhead(51.838720, 08.326819))
     print(convert_maidenhead_to_latlon("JO41du91"))
 
     print(convert_latlon_to_mgrs(51.838720, 08.326819))
-    print(convert_mgrs_to_latlon('32UMC5362043315'))
+    print(convert_mgrs_to_latlon("32UMC5362043315"))
 
     print(convert_latlon_to_dms(51.838720, 08.326819))
-    print(convert_dms_to_latlon(48, 0, 0, 'N', 122, 0, 0, 'W'))
+    print(convert_dms_to_latlon(48, 0, 0, "N", 122, 0, 0, "W"))
 
-    print (Haversine(51.8458575,8.2997425,51.96564,9.79817,'metric'))
+    print(Haversine(51.8458575, 8.2997425, 51.96564, 9.79817, "metric"))
