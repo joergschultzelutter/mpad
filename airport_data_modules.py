@@ -1,7 +1,7 @@
 #
 # Multi-Purpose APRS Daemon: Airport Data Modules
 # Author: Joerg Schultze-Lutter, 2020
-# Reimplements portions of Martin Nile's WXBOT code (KI6WJP)
+# Reimplements parts of the WXBOT code from Martin Nile (KI6WJP)
 #
 # Purpose: Find nearest airport (or based on the given airport code)
 #
@@ -40,8 +40,8 @@ def read_icao_and_iata_data(icao_filename: str = "stations.txt"):
 
     # Open the local file and read it
     try:
-        with open(f'{icao_filename}', 'r') as f:
-            if f.mode == 'r':
+        with open(f"{icao_filename}", "r") as f:
+            if f.mode == "r":
                 lines = f.readlines()
                 f.close()
     except:
@@ -59,7 +59,7 @@ def read_icao_and_iata_data(icao_filename: str = "stations.txt"):
 
         for line in lines:
             line = line.rstrip()
-            if (len(line) > 63):
+            if len(line) > 63:
                 if line[0] != "!" and line[0:11] != "CD  STATION":
                     # Extract all fields
                     icao = line[20:24]
@@ -76,32 +76,34 @@ def read_icao_and_iata_data(icao_filename: str = "stations.txt"):
                     metar = line[62:63]
 
                     # set to 'METAR capable if content is present
-                    if metar in ['X', 'Z']:
+                    if metar in ["X", "Z"]:
                         metar = True
                     else:
                         metar = False
 
                     # Convert DMS coordinates latitude
                     latitude = int(latdeg) + int(latmin) * (1 / 60)
-                    if latns == 'S':
+                    if latns == "S":
                         latitude = latitude * -1
 
                     # Convert DMS coordinates latitude
                     longitude = int(londeg) + int(lonmin) * (1 / 60)
-                    if lonns == 'W':
+                    if lonns == "W":
                         longitude = longitude * -1
 
                     # Create IATA - ICAO relationship in dictionary
                     # if ICAO entry exists
                     if len(iata) != 0:
-                        iata_dict[f'{iata}'] = {'icao': f'{icao}'}
+                        iata_dict[f"{iata}"] = {"icao": f"{icao}"}
 
                     # Create an entry for the IATA data
                     if len(icao) != 0:
-                        icao_dict[f'{icao}'] = {'latitude': latitude,
-                                                'longitude': longitude,
-                                                'metar_capable': metar,
-                                                'airport_name': airport_name}
+                        icao_dict[f"{icao}"] = {
+                            "latitude": latitude,
+                            "longitude": longitude,
+                            "metar_capable": metar,
+                            "airport_name": airport_name,
+                        }
 
     return iata_dict, icao_dict
 
@@ -124,29 +126,31 @@ def get_metar_data(icao_code: str):
     response: 'str'
         METAR string for the given airport
         (or "NOTFOUND" if no data was found)
-    success: 'bool'
+    _success: 'bool'
         True if operation was successful
     """
 
-    resp = requests.get(f'https://www.aviationweather.gov/'
-                        f'adds/metars/?station_ids={icao_code}'
-                        f'&std_trans=standard&chk_metars=on'
-                        f'&hoursStr=most+recent+only&submitmet=Submit')
+    resp = requests.get(
+        f"https://www.aviationweather.gov/"
+        f"adds/metars/?station_ids={icao_code}"
+        f"&std_trans=standard&chk_metars=on"
+        f"&hoursStr=most+recent+only&submitmet=Submit"
+    )
     response: str = "NOTFOUND"
-    success: bool = False
+    _success: bool = False
     if resp.status_code == 200:
         soup = BeautifulSoup(resp.text, features="html.parser")
-        meintext = re.sub(' {2,}', ' ', soup.get_text())
+        meintext = re.sub(" {2,}", " ", soup.get_text())
 
         matches = re.search(r"\b(sorry)\b", meintext, re.IGNORECASE)
         if not matches:
             pos = meintext.find(icao_code)
-            if (pos != -1):
+            if pos != -1:
                 remainder = meintext[pos:]
                 blah = remainder.splitlines()
                 response = blah[0]
-                success = True
-    return response, success
+                _success = True
+    return response, _success
 
 
 def validate_iata(iata_code: str):
@@ -171,24 +175,25 @@ def validate_iata(iata_code: str):
         (True = METAR capable)
     icao_code: 'str'
         ICAO airport code for the given IATA code
-    success: 'bool'
+    _success: 'bool'
         True if operation was successful
     """
 
     latitude: float = 0.0
     longitude: float = 0.0
     metar_capable: bool = False
-    success: bool = False
+    _success: bool = False
     icao_code: str = None
 
     iata_code = iata_code.upper()
     if iata_code in iata_dict:
         if iata_code in iata_dict:
-            icao_code = iata_dict[iata_code]['icao']
-            latitude, longitude, metar_capable, icao_code, success\
-                = validate_icao(icao_code)
+            icao_code = iata_dict[iata_code]["icao"]
+            latitude, longitude, metar_capable, icao_code, _success = validate_icao(
+                icao_code
+            )
 
-    return latitude, longitude, metar_capable, icao_code, success
+    return latitude, longitude, metar_capable, icao_code, _success
 
 
 def validate_icao(icao_code: str):
@@ -213,22 +218,22 @@ def validate_icao(icao_code: str):
         (True = METAR capable)
     icao_code: 'str'
         ICAO airport code, Same as input parameter
-    success: 'bool'
+    _success: 'bool'
         True if operation was successful
     """
     latitude: float = 0.0
     longitude: float = 0.0
     metar_capable: bool = False
-    success: bool = False
+    _success: bool = False
 
     icao_code = icao_code.upper()
     if icao_code in icao_dict:
-        latitude = icao_dict[icao_code]['latitude']
-        longitude = icao_dict[icao_code]['longitude']
-        metar_capable = icao_dict[icao_code]['metar_capable']
-        success = True
+        latitude = icao_dict[icao_code]["latitude"]
+        longitude = icao_dict[icao_code]["longitude"]
+        metar_capable = icao_dict[icao_code]["metar_capable"]
+        _success = True
 
-    return latitude, longitude, metar_capable, icao_code, success
+    return latitude, longitude, metar_capable, icao_code, _success
 
 
 def refresh_icao_file(icaoiata_filename: str = "stations.txt"):
@@ -244,13 +249,13 @@ def refresh_icao_file(icaoiata_filename: str = "stations.txt"):
 
     Returns
     =======
-    success: 'bool'
+    _success: 'bool'
         True if operation was successful
     """
 
     # This is the fixed name of the URL Source that we are going to download
     file_url = "https://www.aviationweather.gov/docs/metar/stations.txt"
-    success: bool = False
+    _success: bool = False
 
     # try to get the file
     try:
@@ -261,13 +266,13 @@ def refresh_icao_file(icaoiata_filename: str = "stations.txt"):
     if r:
         if r.status_code == 200:
             try:
-                with open(icaoiata_filename, 'wb') as f:
+                with open(icaoiata_filename, "wb") as f:
                     f.write(r.content)
                     f.close()
-                    success = True
+                    _success = True
             except:
                 print(f"Cannot update ICAO data to file {icaoiata_filename}")
-    return success
+    return _success
 
 
 def get_nearest_icao(latitude: float, longitude: float):
@@ -299,9 +304,9 @@ def get_nearest_icao(latitude: float, longitude: float):
     # loop through all of the ICAO stations and calculate the distance from $lat/$lon
     # remember the one that is closest.
     for icao_elem in icao_dict:
-        lat2 = icao_dict[icao_elem]['latitude'] * 0.0174533
-        lon2 = icao_dict[icao_elem]['longitude'] * 0.0174533
-        metar_capable = icao_dict[icao_elem]['metar_capable']
+        lat2 = icao_dict[icao_elem]["latitude"] * 0.0174533
+        lon2 = icao_dict[icao_elem]["longitude"] * 0.0174533
+        metar_capable = icao_dict[icao_elem]["metar_capable"]
 
         # use equirectangular approximation of distance
         x = (lon2 - lon1) * math.cos((lat1 + lat2) / 2)
@@ -314,10 +319,11 @@ def get_nearest_icao(latitude: float, longitude: float):
             nearesticao = icao_elem
     return nearesticao
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     print(read_icao_and_iata_data("stations.txt"))
-    print(get_metar_data('EDDF'))
-    print(validate_iata('FRA'))
-    print(validate_icao('EDDF'))
+    print(get_metar_data("EDDF"))
+    print(validate_iata("FRA"))
+    print(validate_icao("EDDF"))
     print(refresh_icao_file())
-    print(get_nearest_icao(51.538882,8.32679))
+    print(get_nearest_icao(51.538882, 8.32679))
