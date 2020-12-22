@@ -37,7 +37,6 @@ Python implementation of an APRS Multi-Purpose Daemon (wx forecast, sat data, ge
 - The available repeater data is very much EU-centric (the program uses data from repeatermap.de). Additional _free_ data sources can be added whereas available.
 - Wx alert data from openweathermap.org is not returned to the user. This can be added in a later version but keep in mind that the text is very long and would result in multiple APRS messages
 - Access to openweathermap.org requires an API key which has a certain traffic limit
-- 
 
 ## Usage examples
 ### WX data inquiries
