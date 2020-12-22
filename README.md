@@ -46,9 +46,11 @@ One or multiple spaces between the respective separators are permitted
 
 #### City, State and/or Country
 Format: 
+```
 <city>, <state>; <country> or
 <city>, <state> or
 <city>; <country>
+```
 
 Country = iso3166-a2 country
 
@@ -59,7 +61,9 @@ Mountain View, CA; US
 Holzminden; de
 
 #### Zip Codes
+```
 Format: zip <zipcode>[;iso3166-a2 country code]. Alternatively, a 5 digit code without any prefix will assume a US zip code
+```
 
 Examples:
 zip 94043
@@ -77,7 +81,9 @@ example:
 Whereas possible, the program will try to turn these coordinates into a human readable address
 
 #### Maidenhead / Grid locator
+```
 Format: grid <4-or 6-character grid locator> or mh <4-or 6-character grid locator>
+```
 
 example:
 grid jo41du
