@@ -56,9 +56,11 @@ Country = iso3166-a2 country
 
 Examples:
 
+```
 Los Angeles, CA
 Mountain View, CA; US
 Holzminden; de
+```
 
 #### Zip Codes
 Formats:
@@ -69,11 +71,13 @@ zip <zipcode>[;iso3166-a2 country code]
 A zip code with keyword but without a country setting OR a 5-digit zip code without keyword will automatically assume that the given zip code is a U.S. zip code
 
 Examples:
+```
 zip 94043 --> Mountain View, CA, United States
 zip 85609 --> Dragoon, AZ, United States
 zip 85609; us --> Dragoon, AZ, United States
 zip 85609; de --> Aschheim, Germany
 94043 --> Mountain View, CA, United States
+```
 
 A 5-digit zip code with no iso-3166-a2 qualifier automatically sets the country setting to "US". 
 Zip codes can be of 3..10 characters
@@ -95,8 +99,10 @@ mh <4-or 6-character grid locator>
 ```
 
 Examples:
+```
 grid jo41du
 mh jo41
+```
 
 Note: When a maidenhead locator is specified, the program will not try to translate this information to a human readable address
 
