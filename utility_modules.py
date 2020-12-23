@@ -14,7 +14,7 @@ def make_pretty_aprs_messages(
     message_to_add: str,
     destination_list: list,
     max_len: int = 67,
-    separator_char: str = ",",
+    separator_char: str = " ",
     add_sep: bool = True,
 ):
     """
@@ -42,10 +42,17 @@ def make_pretty_aprs_messages(
     Line 1 = 1111111111222222222233333333333444444444455555555556666666666
     Line 2 = Hello World !!!!
 
-    Constraints: function assumes that the message which is to be added is
-    67 chars in size. If user tries to submit longer content, we will truncate
-    the input string to 27 chars. No data will get lost, but it will not look
-    as pretty as for the standard case
+    In case the to-be-added text exceeds 67 characters due to whatever reason,
+    this function first tries to split up the content based on space characters
+    in the text and insert the resulting elements word by word, thus preventing
+    the program from ripping the content apart. However, if the content consists
+    of one or multiple strings which _do_ exceed the maximum text len, then there
+    is nothing that we can do. In this case, we will split up the text into 1..n
+    chunks of text and add it to the list element.
+
+    Known issues: if the separator_char is different from its default setting
+    (space), the second element that is inserted into the list may have an
+    additional separator char in the text
 
     Parameters
     ==========
@@ -83,11 +90,25 @@ def make_pretty_aprs_messages(
     # This should never happen but better safe than sorry.
     # Keep in mind that we only transport plain text anyway.
     if len(message_to_add) > max_len:
-        string_list = split_string_to_string_list(
-            message_string=message_to_add, max_len=max_len
-        )
-        for msg in string_list:
-            destination_list.append(msg)
+        split_data = message_to_add.split()
+        for split in split_data:
+            # if string is short enough then add it by calling ourself
+            # with the smaller text chunk
+            if len(split) < max_len:
+                destination_list = make_pretty_aprs_messages(
+                    message_to_add=split,
+                    destination_list=destination_list,
+                    max_len=max_len,
+                    separator_char=separator_char,
+                    add_sep=add_sep,
+                )
+            else:
+                # string exceeds max len; split it up and add it as is
+                string_list = split_string_to_string_list(
+                    message_string=split, max_len=max_len
+                )
+                for msg in string_list:
+                    destination_list.append(msg)
     else:  # try to insert
         # Get very last element from list
         string_from_list = destination_list[-1]
@@ -105,10 +126,10 @@ def make_pretty_aprs_messages(
         # Special treatment hack for the very first line of text
         # This will eliminate the additional comma which might end up in here
         # Code is not pretty but it works
-        if len(destination_list) == 1:
-            string_from_list = destination_list[0]
-            string_from_list = string_from_list.replace(f": {separator_char}", ": ")
-            destination_list[0] = string_from_list
+        # if len(destination_list) == 1:
+        #    string_from_list = destination_list[0]
+        #    string_from_list = string_from_list.replace(f": {separator_char}", ": ")
+        #    destination_list[0] = string_from_list
 
     return destination_list
 
@@ -298,7 +319,7 @@ def determine_timezone(latitude: float, longitude: float):
 if __name__ == "__main__":
     my_array = []
 
-    my_array = make_pretty_aprs_messages("Hello World: ", my_array)
+    my_array = make_pretty_aprs_messages("Hello World", my_array)
     my_array = make_pretty_aprs_messages("Wie geht es Dir", my_array)
     my_array = make_pretty_aprs_messages(
         "jdsfhjdshfjhjkshdfjhdsjfhjhdsfhjdshfjdhsfhdhsf", my_array
@@ -307,8 +328,13 @@ if __name__ == "__main__":
         "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeffffffffffgggggggggghhhhhhhhhh",
         my_array,
     )
+    my_array = make_pretty_aprs_messages(
+        "1111111111 2222222222 3333333333 4444444444 5555555555 6666666666 7777777777 8888888888 9999999999 0000000000 1111111111 2222222222",
+        my_array,
+    )
+
     my_array = make_pretty_aprs_messages("Alter Schwede", my_array)
     print(my_array)
 
-    log_to_stderr("Scheisse")
+    log_to_stderr("Logtext erfolgreich")
     print(read_program_config())
