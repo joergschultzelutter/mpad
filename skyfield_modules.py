@@ -171,13 +171,22 @@ def get_tle_data(satellite_name: str, tle_data_ttl: int = 1):
 
     tle_data_line1 = tle_data_line2 = tle_satellite = None
     satellite_name = satellite_name.upper()
-    # Convenience mapping
+    # Convenience mapping :-)
     if satellite_name == "ZARYA":
         satellite_name = "ISS"
 
-    last_download = datetime.datetime.now() - tle_data_last_download
+    # check if the file's time-to-live period has expired
+    ttl_expired: bool = False
+    if tle_data_last_download:
+        last_download = datetime.datetime.now() - tle_data_last_download
+        if last_download.days > tle_data_ttl:
+            ttl_expired = True
+    # in case the variable was initialized with 'None'
+    else:
+        ttl_expired = True
 
-    if last_download.days > tle_data_ttl:
+    # Re-acquire and re-read new data if the TLE data has expired
+    if ttl_expired:
         success = refresh_tle_file("amateur.tle")
         if not success:
             return success, None, None, None
@@ -353,7 +362,7 @@ def get_sun_moon_rise_set_for_latlon(
 
 if __name__ == "__main__":
     print(
-        get_sun_moon_rise_set_for_latlon(51.838860, 8.326871, datetime.datetime.now())
+        get_sun_moon_rise_set_for_latlon(51.838860, 8.326871, datetime.datetime.now() + datetime.timedelta(days=1), 74.0)
     )
 
     tle_data_last_download = None
@@ -367,6 +376,6 @@ if __name__ == "__main__":
     thedate = datetime.datetime.now()
     print(
         get_next_satellite_pass_for_latlon(
-            51.838890, 8.326747, thedate + datetime.timedelta(days=0), "ISS"
+            51.838890, 8.326747, thedate + datetime.timedelta(days=0), "ISS", 74.0
         )
     )
