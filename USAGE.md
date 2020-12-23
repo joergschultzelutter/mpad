@@ -1,6 +1,6 @@
 # mpad - Usage and Command Syntax
 
-Rupe of thumb: The program's default is __always__ a wx report for the given address/coordinates. This assumption is valid as long as the user has not specified a keyword that tells the program to do something different.
+Rule of thumb: The program's default is __always__ a wx report for the given address/coordinates. This assumption is valid as long as the user has not specified a keyword that tells the program to do something different.
 
 
 ## WX data inquiries
