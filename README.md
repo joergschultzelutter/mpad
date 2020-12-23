@@ -17,11 +17,11 @@ Python implementation of an APRS Multi-Purpose Daemon (wx forecast, sat data, ge
 
 ## Program features
 
-- very low cpu/traffic foot print (APRS filters)
+- very low cpu/traffic foot print (APRS filters and cached disc data)
 - Pretty printing; whenever it is necessary to send more than one APRS message (e.g. text exceeds APRS msg len), the program tries to split up the text in a legible way. Rather than applying a 'hard' truncate  of the message after the 67th character, MPAD tries to keep the information groups intact. This means that e.g. if you receive temperature information, that data won't be split up into multiple messages where e.g. your first temperature digit is in message 1 and the 2nd one is in message 2.
 - human-friendly parser with keywords
 - external (static) resources such as the list of airports, repeaters e.g. are  only retrieved in e.g. weekly intervals and then stored on the local hard drive
-- supports msg acknowledgment, beacons et al. Also tries to extract APRS msg IDs from APRS messages which do not follow the APRS standards
+- supports APRS msg acknowledgments, beacons et al. Also tries to extract APRS msg IDs from APRS messages which do not follow the APRS standards
 
 ## Reimplements and uses programs and services
 
@@ -44,6 +44,7 @@ Python implementation of an APRS Multi-Purpose Daemon (wx forecast, sat data, ge
 - Wx alert data from openweathermap.org is not returned to the user. This can be added in a later version but keep in mind that the text is very long and would result in multiple (10-15) APRS messages per alert!
 - Access to openweathermap.org requires an API key which has a certain traffic limit
 - All timestamps which are returned by the program are in UTC. Implicitly, this constraint also applies to program keyword (see [USAGE.md](USAGE.md)) which instructs the program to return data for a certain time of the day. When in doubt, do not limit your data to a certain time slot of the day ('full' day is the default)
+- APRS 'TOCALL' identifier is currently still set to default; needs its own identifier (see http://www.aprs.org/tocalls.txt)
 
 ## Usage examples and command syntax
 
