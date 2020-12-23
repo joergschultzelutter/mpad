@@ -29,6 +29,7 @@ Python implementation of an APRS Multi-Purpose Daemon (wx forecast, sat data, ge
 - findu.com for CWOP and METAR data
 - repeatermap.de for for repeater information
 - APRSlib (https://pypi.org/project/aprslib/) for sending and receiving data
+- Celestrak for TLE data retrieval
 - and various other Python modules
 
 ## Currently out of scope / known issues:
