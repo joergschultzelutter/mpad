@@ -1,6 +1,6 @@
 # mpad - Usage and Command Syntax
 
-## What you need to know as a progran user
+## What you need to know as a program user
 
 - The program's default __action__ is to retrieve a __wx report__ for the given address/coordinates. This assumption is valid as long as the user has not specified a keyword that tells the program to do something different. This means that you can a single datetime-related keyword like e.g. 'tomorrow' and the program will try to return the wx report for you.
 
