@@ -1,147 +1,25 @@
 # mpad - Usage and Command Syntax
 
-Rule of thumb: The program's default is __always__ a wx report for the given address/coordinates. This assumption is valid as long as the user has not specified a keyword that tells the program to do something different.
+## What you need to know as a progran user
 
+- The program's default __action__ is to retrieve a __wx report__ for the given address/coordinates. This assumption is valid as long as the user has not specified a keyword that tells the program to do something different. This means that you can a single datetime-related keyword like e.g. 'tomorrow' and the program will try to return the wx report for you.
 
-## WX data inquiries
+- Default __date__ is always 'today'. If you omit any date-related information, 'today' will be the default.
 
-- One or multiple spaces between the respective separators are permitted
-- Commands and keywords are case insensitive
-- For most of the cases, wx inquiries can be specified without any specific keyword; just specify the address. Unless any other keyword has been specified, wx is always assumed as default.
+- Default __daytime__ is always 'full', meaning that you will get e.g. the wx report for the whole day. See the next paragraph on limitations wrt keywords and time zones.
 
-### City, State and/or Country
+- All __time stamps__ are returned in __UTC__ time zone settings. If time-specific inquiries are issued (e.g. 'give me the wx report for tomorrow afternoon'), the 'afternoon' part also applies to UTC time zone settings. Dependent on where you are located in the world, that setting might be a different experience for you. Limiting the output to UTC may or may not change in future versions of this program but in general, time zones are a mess. And taking into consideration that daylight saving times may or may not be applicable to the user's position, sticking to UTC is the safest option for now. Therefore, all times reported by the program come with a zulu time qualifier, e.g. 12:03Z
 
-Formats:
+- Certain action command keywords can be specified in combination with a date setting and a daytime setting, e.g. request a wx report for the next day. The respective keyword documentation settings state if the keyword can be used in conjunction with a date/daytime keyword. All restrictions wrt UTC time settings do apply - see previous paragraph.
 
-```
-<city>, <state>; <country>
-<city>, <state>
-<city>; <country>
-```
+## Commands
 
-Country = iso3166-a2 country (de, us, fr, uk, ...)
+- [Action commands](01_actions.md)
 
-Examples:
+- [Date settings](02_date_settings.md)
 
-```
-Los Angeles, CA
-Mountain View, CA; US
-Holzminden; de
-```
+- [Daytime settings](03_daytime_settings.md)
 
-### Zip Codes
+## The fine print
 
-Formats:
-```
-zip <zipcode>[;iso3166-a2 country code]
-<5-digit code>
-```
-A zip code __with__ keyword but __without__ a country setting OR a 5-digit zip code __without__ keyword will automatically assume that the given zip code is a U.S. zip code. 
-
-Examples:
-```
-zip 94043 --> Mountain View, CA, United States
-zip 85609 --> Dragoon, AZ, United States
-zip 85609; us --> Dragoon, AZ, United States
-zip 85609; de --> Aschheim, Germany
-94043 --> Mountain View, CA, United States
-```
-
-A 5-digit zip code with no iso-3166-a2 qualifier automatically sets the country setting to "US". 
-Zip codes can be of 3..10 characters
-
-### numeric coordinates
-Format: latitude/longitude (can be positive or negative)
-
-Examples:
-```
-51.8458575/8.2997425
-37.773972/-122.431297
--33.447487/-70.673676
-```
-Whereas possible, the program will try to turn these coordinates into a human readable address
-
-### Maidenhead / Grid locator
-Formats:
-```
-grid <4-or 6-character grid locator>
-mh <4-or 6-character grid locator>
-```
-
-Examples:
-```
-grid jo41du
-mh jo41
-```
-Note: When a maidenhead locator is specified, the program will _not_ try to translate this information to a human readable address
-
-### Call sign
-
-Formats:
-```
-wx <call sign>[-ssid]
-wx
-<call sign>[-ssid]
-```
-
-## Airport data WX inquiries
-
-You have three options:
-
-- specify a specific ICAO code
-- specify a specific IATA code
-- specify the METAR keyword, which instructs the program to look for the nearest airport. That position can either be based on the user's own call sign or alternatively on a different user's call sign.
-
-If the given airport or the nearest one has been found but does __not__ support METAR data, the program will try to provide you with a standard WX report for the airport's coordinates instead.
-
-### ICAO wx inquiries
-
-Formats:
-```
-icao <4-character ICAO code>
-<4-character ICAO code>
-```
-
-Examples:
-```
-icao eddf
-eddf
-```
-
-Hint: the non-keyword approach may or may not be successful as it is processed at the end of the parser's process chain.
-
-### IATA wx inquiries
-
-Formats:
-```
-iata <3-character IATA code>
-<3-character IATA code>
-```
-
-Examples:
-```
-iata fra
-fra
-```
-If the IATA keyword is used, it will always return (and use) the respective ICAO code.
-
-Hint: the non-keyword approach may or may not be successful as it is processed at the end of the parser's process chain.
-
-### METAR data
-
-Formats:
-```
-metar <callsign>[-ssid]
-metar
-```
-If no call sign is specified, then the user's own call sign (the one that he has send us the message with) is used
-
-Examples:
-```
-metar ko4jvr-9
-metar lb7ji
-metar 
-```
-
-Based on the user's lat/lon, the program will then try to find the nearest airport for you. If that airport supports METAR data, the program is going to return METAR data to the user. Otherwise, it will try to pull a standard wx report for the airport's coordinates.
-
+lorem ipsum
