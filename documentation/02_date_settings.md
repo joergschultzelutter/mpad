@@ -27,7 +27,7 @@ If you request the same weekday that is today, then the program assumes that you
 Whereas noted for the respective [action keyword](01_actions.md), these date setting keywords (and also the [daytime](03_daytime_settings.md) setting keywords) can be combined with the action keywords. Examples:
 
 ```
-San Francisco, CA tomorrow --> returns a wx report for location 'San Francisco' and date setting 'tomorrow'
-satpass iss fri --> returns the first pass of the ISS on Friday
+San Francisco, CA tomorrow full --> returns a full wx report for location 'San Francisco' and date setting 'tomorrow'
+satpass iss friday morning --> returns the first pass of the ISS on Friday morning
 riseset thursday --> returns sunrise/sunset and moonrise / moonset values for Thursday.
 ```

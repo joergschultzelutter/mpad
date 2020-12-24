@@ -18,7 +18,7 @@ All references are to UTC time zone settings.
 Whereas noted for the respective [action keyword](01_actions.md), these daytime setting keywords (and also the [date](02_date_settings.md) setting keywords) can be combined with the action keywords. Examples:
 
 ```
-San Francisco, CA tomorrow --> returns a wx report for location 'San Francisco' and date setting 'tomorrow'
-satpass iss fri --> returns the first pass of the ISS on Friday
+San Francisco, CA tomorrow full --> returns a full wx report for location 'San Francisco' and date setting 'tomorrow'
+satpass iss friday morning --> returns the first pass of the ISS on Friday morning
 riseset thursday --> returns sunrise/sunset and moonrise / moonset values for Thursday.
 ```
