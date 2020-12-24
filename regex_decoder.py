@@ -421,11 +421,16 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
         regex_string = r"satpass\s*(\w*)"
         matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
         if matches:
-            satellite = matches[1].upper()
-            what = 'satpass'
-            human_readable_message = f'SatPass of {satellite}'
-            found_my_duty_roster = True
-            aprs_message = re.sub(regex_string, "", aprs_message, flags=re.IGNORECASE).strip()
+            _success, latitude, longitude, altitude, call_sign = get_position_on_aprsfi(users_callsign, aprsdotfi_api_key)
+            if _success:
+                satellite = matches[1].upper()
+                what = 'satpass'
+                human_readable_message = f'SatPass of {satellite}'
+                found_my_duty_roster = True
+                aprs_message = re.sub(regex_string, "", aprs_message, flags=re.IGNORECASE).strip()
+            else:
+                human_readable_message = f"{errmsg_cannot_find_coords_for_user} {users_callsign}"
+                err = True
 
     # Check if the user wants us to search for the nearest repeater
     # this function always relates to the user's own call sign and not to
@@ -784,7 +789,7 @@ def parse_when(word: str):
     when = None
     date_offset = -1
 
-    matches = re.search(r"^(tonite|tonight)$", word, re.IGNORECASE)
+    matches = re.search(r"^(nite|night|tonite|tonight)$", word, re.IGNORECASE)
     if matches and not found_when:
         when = "today"
         found_when = True
@@ -885,7 +890,6 @@ def parse_when_daytime(word: str):
     return found_when_daytime, when_daytime
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     success, aprsdotfi_api_key, openweathermap_api_key = read_program_config()
     print(parsemessage('repeater 70cm dmr','df1jsl-1', aprsdotfi_api_key))

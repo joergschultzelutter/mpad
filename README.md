@@ -48,7 +48,7 @@ Python implementation of an APRS Multi-Purpose Daemon (wx forecast, sat data, ge
 
 ## Usage examples and command syntax
 
-[USAGE.md](USAGE.md)
+[USAGE.md](documentation/USAGE.md)
 
 ## The fine print
 
