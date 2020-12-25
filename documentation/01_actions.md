@@ -229,6 +229,8 @@ Retrieves the next pass of the given satellite ID for the user's position. Satel
 
 - Only the data for the next statellite pass is returned.
 
+EXPERIMENTAL - STILL IN DEVELOPMENT
+
 Can be combined with [date](02_date_settings.md) / [daytime](03_daytime_settings.md) keyword parameters: __YES__
 
 Formats:
