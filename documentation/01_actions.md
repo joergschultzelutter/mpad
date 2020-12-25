@@ -284,3 +284,26 @@ Examples:
 info
 help
 ```
+
+### Switching between the metric and imperial system
+
+By default, the program will automatically switch from the metric system (default) to the imperial system if the __sender's__ call sign is from Liberia, Myanmar or the United States (per Wikipedia, these are the only three countries which still use the imperial system over the metric system).
+
+- metric system (__default__): temperatures in degrees Celsius, speed in km/h, rain levels in cm etc.
+- imperial system: temperatures in degress Fahrenheit, speed in mph, rain levels in inch etc.
+
+Can be combined with [date](02_date_settings.md) / [daytime](03_daytime_settings.md) keyword parameters: __YES__. The automated process is part of the program core and even overriding the setting by one of the imperial/metric keywords can be done at any time. Dependent on the information that you have requested, the program may or may not honor the information.
+
+If you don't want to rely on the automatic mode, you can override the automated setting by specifying the following keywords:
+
+Formats:
+```
+mtr, metric
+imp, imperial
+```
+
+Examples:
+```
+metric
+imperial
+```
