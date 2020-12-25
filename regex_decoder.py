@@ -111,14 +111,21 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
 
     # Start the parsing process
     #
+
+    # Check if we need to switch to the imperial system
     # Have a look at the user's call sign who has sent me the message.
-    # Ignore the SSID data.
+    # Ignore any SSID data.
     # If my user is located in the U.S., then assume that user wants data
     # not in metric but in imperial format. Note: this is an auto-prefix
     # which can be overridden by the user at a later point in time
     # Note: we do NOT examine any call sign within the APRS message text but
     # have a look at the (source) user's call sign
     matches = re.search(r"^[AKNW][a-zA-Z]{0,2}[0-9][A-Z]{1,3}", users_callsign,re.IGNORECASE)
+    if matches:
+        units = "imperial"
+    # Now do the same thing for users in Liberia and Myanmar - per Wikipedia,
+    # these two countries also use the imperial system
+    matches = re.search(r"^(A8|D5|EL|5L|5M|6Z|XY|XZ)", users_callsign,re.IGNORECASE)
     if matches:
         units = "imperial"
 
