@@ -274,12 +274,12 @@ def get_next_satellite_pass_for_latlon(
     days = t - satellite.epoch
     print("{:.3f} days away from epoch".format(days))
 
-    t0 = ts.utc(today.year, today.month, today.day)
-    t1 = ts.utc(tomorrow.year, tomorrow.month, tomorrow.day)
+    t0 = ts.utc(today.year, today.month, today.day, today.hour, today.minute, today.second)
+    t1 = ts.utc(tomorrow.year, tomorrow.month, tomorrow.day, tomorrow.hour, tomorrow.minute, tomorrow.second)
 
     t, events = satellite.find_events(pos, t0, t1, altitude_degrees=10.0)
     for ti, event in zip(t, events):
-        name = ("rise above 30°", "culminate", "set below 15°")[event]
+        name = ("rise above 10°", "culminate", "set below 10°")[event]
         print(ti.utc_strftime("%Y %b %d %H:%M:%S"), name)
 
     # return True, rise_time, rise_azimuth, maximum_altitude_time, maximum_altitude, set_time, set_azimuth, duration
