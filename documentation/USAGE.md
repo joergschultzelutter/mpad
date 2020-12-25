@@ -40,14 +40,14 @@ In reference to the European Union's GDPR regulations:
 
 - No transaction data with the exception of the following cases is stored:
 
--- Number of transactions in total
+  - Number of transactions in total
 
--- Program exceptions and/or crashes may be stored to log files for debug purposes
+  - Program exceptions and/or crashes may be stored to log files for debug purposes
 
 - If you intend to run your own instance of MPAD, you need to provide API access keys to the following services (both are usually free of charge but may come with a transaction limit):
 
--- aprs.fi
+  - aprs.fi
 
--- openweathermap.org
+  - openweathermap.org
 
 If you use this program, then you agree to these terms and conditions. Thank you.
