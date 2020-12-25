@@ -43,12 +43,6 @@ aprsdotfi_api_key = None
 openweathermapdotorg_api_key = None
 
 ########################################
-help_text_array = [
-    '(default=wx for pos of sending callsign). Position commands:',
-    'city,state;country OR city,state OR city;country OR zip;country OR',
-    'zip with/wo country OR grid|mh+4..6 char OR lat/lon OR callsign',
-    'time: mon..sun(day),today,tomorrow.Extra: mtr|metric imp|imperial'
-]
 
 # Bulletindaten (Versand alle 4h)
 bulletin_texts = {

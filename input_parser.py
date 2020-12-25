@@ -2,8 +2,8 @@
 # Multi-Purpose APRS Daemon: Command parser
 # Author: Joerg Schultze-Lutter, 2020
 #
-# Purpose: Core parser. Takes a look at the command that the user
-# has sent to us and then tries to figure out what to do
+# Purpose: Core input parser. Takes a look at the command that the user
+# the user has sent to us and then tries to figure out what to do
 #
 
 import re
@@ -55,16 +55,20 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
         "morning"). If no specific daytime is requested, the default setting
         is "full" (returning all values for the requested day)
     what: 'str'
-        Contains the actual command that the user has requested. Possible
-        content: wx, help, metar, ....
+        Contains the actual action command that the user has requested.
+        Possible content: wx, help, metar, ....
     units: 'str'
-        Unit of measure. Can either be "metric" (default) or
-        "imperial"
-    call_sign: 'str'
+        Unit of measure. Can either be "metric" or "imperial"
+        Default value is always "metric"
+    message_callsign: 'str'
         Call sign if some content was requested in relation to
         a call sign (either the user's call sign or a foreign one)
+        Can also be set implicitly
+    users_callsign: 'str'
+        Call sign of the user that has sent the message to us
+        Same value as the input value
     language: 'str'
-        ISO 639-2 country code (currently unused)
+        ISO 639-2 country code (currently unused and set to "en")
     icao: 'str'
         ICAO code (mainly used in combination with METAR reports)
     human_readable_message: 'str'
@@ -99,7 +103,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
 
     # Call sign reference (either the user's call sign or someone
     # else's call sign
-    call_sign = None
+    message_callsign = None
 
     # This is the general 'we have found something and we know what to do'
     # marker. If set to true, it will prevent any further attempts to parse other
@@ -185,8 +189,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             # Everything seems to be ok. Try to retrieve
             # lat/lon for the given data
             if not err:
-                _success, latitude, longitude = get_geocode_geopy_data(geopy_query)
-                if _success:
+                success, latitude, longitude = get_geocode_geopy_data(geopy_query)
+                if success:
                     human_readable_message = city
                     if state and country == "US":
                         human_readable_message += f',{state}'
@@ -231,8 +235,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                 human_readable_message = f"{errmsg_invalid_country}: '{country}'"
                 err = True
                 if not err:
-                    _success, latitude, longitude = get_geocode_geopy_data(geopy_query)
-                    if _success:
+                    success, latitude, longitude = get_geocode_geopy_data(geopy_query)
+                    if success:
                         human_readable_message = f'Zip {zipcode};{country}'
                     else:
                         err = True
@@ -268,8 +272,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             (_, icao) = matches[0]
             aprs_message = re.sub(regex_string, "", aprs_message).strip()
             # try to look up the airport coordinates based on the ICAO code
-            _success, latitude, longitude, metar_capable, icao = validate_icao(icao)
-            if _success:
+            success, latitude, longitude, metar_capable, icao = validate_icao(icao)
+            if success:
                 what = "metar"
                 found_my_duty_roster = True
                 human_readable_message = f"METAR for '{icao}'"
@@ -294,8 +298,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             (_, iata) = matches[0]
             aprs_message = re.sub(regex_string, "", aprs_message).strip()
             # try to look up the airport coordinates based on the IATA code
-            _success, latitude, longitude, metar_capable, icao = validate_iata(iata)
-            if _success:
+            success, latitude, longitude, metar_capable, icao = validate_iata(iata)
+            if success:
                 what = "metar"
                 found_my_duty_roster = True
                 human_readable_message = f"METAR for '{icao}'"
@@ -313,17 +317,17 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
         regex_string = r"([\d\.,\-]+)\/([\d\.,\-]+)"
         matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
         if matches:
-            _success = True
+            success = True
             try:
                 latitude = float(matches[1])
                 longitude = float(matches[2])
             except:
                 latitude = longitude = 0
-                _success = False
-            if _success:
+                success = False
+            if success:
                 # try to get human-readable coordinates
-                _success, city, state, country, zipcode = get_reverse_geopy_data(latitude=latitude, longitude=longitude, language=language)
-                if _success:
+                success, city, state, country, zipcode = get_reverse_geopy_data(latitude=latitude, longitude=longitude, language=language)
+                if success:
                     if city:
                         human_readable_message = city
                         if country:
@@ -361,7 +365,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
         matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
         if matches:
             what = matches[1].lower()
-            call_sign = matches[2].upper()
+            message_callsign = matches[2].upper()
             aprs_message = re.sub(regex_string, "", aprs_message).strip()
             found_my_duty_roster = True
         if not found_my_duty_roster:
@@ -369,7 +373,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
             if matches:
                 what = matches[1].lower()
-                call_sign = matches[2].upper()
+                message_callsign = matches[2].upper()
                 found_my_duty_roster = True
                 aprs_message = re.sub(regex_string, "", aprs_message).strip()
         if not found_my_duty_roster:
@@ -377,25 +381,26 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
             if matches:
                 what = matches[1].lower()
-                call_sign = users_callsign
+                message_callsign = users_callsign
                 found_my_duty_roster = True
                 aprs_message = re.sub(regex_string, "", aprs_message).strip()
         if found_my_duty_roster:
-            _success, latitude, longitude, altitude, call_sign = get_position_on_aprsfi(call_sign, aprsdotfi_api_key)
-            if _success:
+            success, latitude, longitude, altitude, message_callsign = get_position_on_aprsfi(message_callsign, aprsdotfi_api_key)
+            if success:
                 if what =='wx':
-                    human_readable_message = f'Wx of {call_sign}'
+                    human_readable_message = f'Wx of {message_callsign}'
                 elif what == 'riseset':
-                    human_readable_message = f'Rise/Set for {call_sign}'
+                    human_readable_message = f'Rise/Set for {message_callsign}'
                 elif what == 'whereis':
-                    human_readable_message = f'Pos for {call_sign}'
+                    human_readable_message = f'Pos for {message_callsign}'
                 elif what == 'cwop':
-                    human_readable_message = f'CWOP for {call_sign}'
+                    human_readable_message = f'CWOP for {message_callsign}'
+                    what = 'cwop_by_latlon'
                 elif what == 'metar':
                     icao = get_nearest_icao(latitude, longitude)
                     if icao:
-                        _success, latitude, longitude, metar_capable, icao = validate_icao(icao)
-                        if _success:
+                        success, latitude, longitude, metar_capable, icao = validate_icao(icao)
+                        if success:
                             what = "metar"
                             found_my_duty_roster = True
                             human_readable_message = f"METAR for '{icao}'"
@@ -409,7 +414,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                         else:
                             icao = None
             else:
-                human_readable_message = f"{errmsg_cannot_find_coords_for_user} {call_sign}"
+                human_readable_message = f"{errmsg_cannot_find_coords_for_user} {message_callsign}"
                 err = True
 
     # Check if the user wants information about aspecific CWOP ID
@@ -418,7 +423,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
         matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
         if matches:
             cwop_id = matches[1].upper()
-            what = 'cwop'
+            what = 'cwop_by_cwop_id'
             human_readable_message = f'CWOP for {cwop_id}'
             found_my_duty_roster = True
             aprs_message = re.sub(regex_string, "", aprs_message, flags=re.IGNORECASE).strip()
@@ -428,8 +433,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
         regex_string = r"satpass\s*(\w*)"
         matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
         if matches:
-            _success, latitude, longitude, altitude, call_sign = get_position_on_aprsfi(users_callsign, aprsdotfi_api_key)
-            if _success:
+            success, latitude, longitude, altitude, message_callsign = get_position_on_aprsfi(users_callsign, aprsdotfi_api_key)
+            if success:
                 satellite = matches[1].upper()
                 what = 'satpass'
                 human_readable_message = f'SatPass of {satellite}'
@@ -496,10 +501,10 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                 human_readable_message+= f' {repeater_band}'
             if repeater_mode:
                 human_readable_message += f' {repeater_mode}'
-            _success, latitude, longitude, altitude, call_sign = get_position_on_aprsfi(users_callsign, aprsdotfi_api_key)
-            if not _success:
+            success, latitude, longitude, altitude, message_callsign = get_position_on_aprsfi(users_callsign, aprsdotfi_api_key)
+            if not success:
                 err = True
-                human_readable_message = f"{errmsg_cannot_find_coords_for_user} {call_sign}"
+                human_readable_message = f"{errmsg_cannot_find_coords_for_user} {message_callsign}"
 
     #
     # We have reached the end of the 'standard' position data processing
@@ -532,8 +537,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                     country = "US"
                     found_my_duty_roster = True
                     human_readable_message = f"Zip {zipcode};{country}"
-                    _success, latitude, longitude = get_geocode_geopy_data({"postalcode": zipcode, "country": country})
-                    if not _success:
+                    success, latitude, longitude = get_geocode_geopy_data({"postalcode": zipcode, "country": country})
+                    if not success:
                         err = True
                         human_readable_message = errmsg_cannot_find_coords_for_address
                         break
@@ -553,20 +558,20 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             if not found_my_duty_roster and not err:
                 matches = re.search(pattern=r"^([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[0-9]{1,2})$", string=word)
                 if matches:
-                    call_sign = matches[0].upper()
+                    message_callsign = matches[0].upper()
                     found_my_duty_roster = True
                 if not found_my_duty_roster:
                     matches = re.search(pattern=r"^([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3})$", string=word)
                     if matches:
-                        call_sign = matches[0].upper()
+                        message_callsign = matches[0].upper()
                         found_my_duty_roster = True
                 if found_my_duty_roster:
-                    _success, latitude, longitude, altitude, call_sign = get_position_on_aprsfi(call_sign, aprsdotfi_api_key)
-                    if not _success:
-                        human_readable_message = f"{errmsg_cannot_find_coords_for_user} {call_sign}"
+                    success, latitude, longitude, altitude, message_callsign = get_position_on_aprsfi(message_callsign, aprsdotfi_api_key)
+                    if not success:
+                        human_readable_message = f"{errmsg_cannot_find_coords_for_user} {message_callsign}"
                         err = True
                     else:
-                        human_readable_message = call_sign
+                        human_readable_message = message_callsign
 
             # Try to check if the user has submitted an IATA code without
             # submitting a specific pre- qualifier prefix
@@ -575,8 +580,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             if not found_my_duty_roster and not err:
                 matches = re.search(pattern=r"^([a-zA-Z0-9]{4})$", string=word)
                 if matches:
-                    _success, latitude, longitude, metar_capable, icao = validate_icao(word)
-                    if _success:
+                    success, latitude, longitude, metar_capable, icao = validate_icao(word)
+                    if success:
                         what = "metar"
                         found_my_duty_roster = True
                         human_readable_message = f"METAR for '{icao}'"
@@ -594,8 +599,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             if not found_my_duty_roster:
                 matches = re.search(pattern=r"^([a-zA-Z0-9]{3})$", string=word)
                 if matches:
-                    _success, latitude, longitude, metar_capable, icao = validate_iata(word)
-                    if _success:
+                    success, latitude, longitude, metar_capable, icao = validate_iata(word)
+                    if success:
                         found_my_duty_roster = True
                         what = "metar"
                         found_my_duty_roster = True
@@ -612,12 +617,12 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             # the user's own call sign position
             matches = re.search(r"^(metar)$", word,re.IGNORECASE)
             if matches:
-                _success, latitude, longitude, altitude, call_sign = get_position_on_aprsfi(users_callsign, aprsdotfi_api_key)
-                if _success:
+                success, latitude, longitude, altitude, message_callsign = get_position_on_aprsfi(users_callsign, aprsdotfi_api_key)
+                if success:
                     icao = get_nearest_icao(latitude, longitude)
                     if icao:
-                        _success, latitude, longitude, metar_capable, icao = validate_icao(icao)
-                        if _success:
+                        success, latitude, longitude, metar_capable, icao = validate_icao(icao)
+                        if success:
                             what = "metar"
                             human_readable_message = f"METAR for '{icao}'"
                             found_my_duty_roster = True
@@ -627,8 +632,6 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                                 what = "wx"
                                 icao = None
                                 human_readable_message = f"Wx for '{icao}'"
-            #
-            #
             #
             # At this point, we should know now what data the user wants
             # from us and have retrieved the associated lat/lon information
@@ -642,13 +645,13 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                 matches = re.search(r"^(whereami)$", word, re.IGNORECASE)
                 if matches:
                     what = 'whereis'
-                    call_sign = users_callsign
+                    message_callsign = users_callsign
                     found_my_duty_roster = True
-                    human_readable_message = f'Pos for {call_sign}'
-                    _success, latitude, longitude, altitude, call_sign = get_position_on_aprsfi(users_callsign, aprsdotfi_api_key)
-                    if not _success:
+                    human_readable_message = f'Pos for {message_callsign}'
+                    success, latitude, longitude, altitude, message_callsign = get_position_on_aprsfi(users_callsign, aprsdotfi_api_key)
+                    if not success:
                         err = True
-                        human_readable_message = f"{errmsg_cannot_find_coords_for_user} {call_sign}"
+                        human_readable_message = f"{errmsg_cannot_find_coords_for_user} {message_callsign}"
 
             # Parse the "when" information if we don't have an error
             # and if we haven't retrieved the command data in a previous run
@@ -703,9 +706,9 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
         if when:
             # First, have a look at the user's complete call sign
             #including SSID
-            _success, latitude, longitude, altitude, call_sign = get_position_on_aprsfi(users_callsign, aprsdotfi_api_key)
-            if _success:
-                human_readable_message = f"{call_sign}"
+            success, latitude, longitude, altitude, message_callsign = get_position_on_aprsfi(users_callsign, aprsdotfi_api_key)
+            if success:
+                human_readable_message = f"{message_callsign}"
                 found_my_duty_roster = True
             else:
                 # we haven't found anything? Let's get rid of the SSID and
@@ -713,10 +716,10 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                 # then we will give up
                 matches = re.search(r"^(([A-Z0-9]{1,3}[0123456789][A-Z0-9]{0,3})-([A-Z0-9]{1,2}))$", users_callsign)
                 if matches:
-                    _success, latitude, longitude, altitude, call_sign = get_position_on_aprsfi(matches[2].upper(), aprsdotfi_api_key)
-                    if _success:
+                    success, latitude, longitude, altitude, message_callsign = get_position_on_aprsfi(matches[2].upper(), aprsdotfi_api_key)
+                    if success:
                         found_my_duty_roster = True
-                        human_readable_message = f"{call_sign}"
+                        human_readable_message = f"{message_callsign}"
                     else:
                         human_readable_message = errmsg_cannot_find_coords_for_user
                         err = True
@@ -743,6 +746,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
     if human_readable_message:
         human_readable_message = convert_to_plain_ascii(human_readable_message)
 
+    # Generate dictionary which contains what we have fund out about the user's request
     response_parameters = {
         'latitude': latitude,
         'longitude': longitude,
@@ -751,7 +755,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
         'when_daytime': when_daytime,
         'what': what,
         'units': units,
-        'call_sign': call_sign,
+        'message_callsign': message_callsign,
+        'users_callsign': users_callsign,
         'language': language,
         'icao': icao,
         'human_readable_message': human_readable_message,
@@ -765,11 +770,16 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
         'zipcode': zipcode,
         'cwop_id': cwop_id
     }
-    _success = True
-    if err:
-        _success = False
 
-    return _success, response_parameters
+    # Finally, set the return code. Unless there was an error, we return a True status
+    # The 'human_readable_message' contains either the error text or the reference to
+    # the data that the user has requested from us (the actual data such as the wx data
+    # is retrieved in the next step.
+    success = True
+    if err:
+        success = False
+
+    return success, response_parameters
 
 def parse_when(word: str):
     """
