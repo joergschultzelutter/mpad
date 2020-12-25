@@ -197,13 +197,13 @@ def parse_daily_weather_from_openweathermapdotorg(weather_tuple: dict,units: str
         if w_sunset and w_sunrise:
             tmp1 = datetime.fromtimestamp(w_sunrise)
             tmp2 = datetime.fromtimestamp(w_sunset)
-            weather_forecast_array = make_pretty_aprs_messages(f"sunrise/set {tmp1.hour:02d}:{tmp1.minute:02d}/{tmp2.hour:02d}:{tmp2.minute:02d}Z", weather_forecast_array)
+            weather_forecast_array = make_pretty_aprs_messages(f"sunrise/set {tmp1.hour:02d}:{tmp1.minute:02d}/{tmp2.hour:02d}:{tmp2.minute:02d}UTC", weather_forecast_array)
         elif w_sunrise and not w_sunset:
             tmp = datetime.fromtimestamp(w_sunrise)
-            weather_forecast_array = make_pretty_aprs_messages(f"sunrise {tmp.hour}:{tmp.minute}Z",weather_forecast_array)
+            weather_forecast_array = make_pretty_aprs_messages(f"sunrise {tmp.hour}:{tmp.minute}UTC",weather_forecast_array)
         else:
             tmp = datetime.fromtimestamp(w_sunset)
-            weather_forecast_array = make_pretty_aprs_messages(f"sunset {tmp.hour}:{tmp.minute}Z",weather_forecast_array)
+            weather_forecast_array = make_pretty_aprs_messages(f"sunset {tmp.hour}:{tmp.minute}UTC",weather_forecast_array)
 
         # Add remaining parameters
         if w_rain:
