@@ -7,7 +7,7 @@
 # Reimplements parts of the WXBOT code from Martin Nile (KI6WJP)
 #
 
-from regex_decoder import parsemessage
+from input_parser import parsemessage
 from openweathermap_modules import get_daily_weather_from_openweathermapdotorg, parse_daily_weather_from_openweathermapdotorg
 from apscheduler.schedulers.background import BackgroundScheduler
 from airport_data_modules import read_icao_and_iata_data, get_metar_data
@@ -268,7 +268,7 @@ def mycallback(packet):
             # ack senden, falls msgNo vorhanden (siehe S. 71ff.)
             SendAck(AIS,aprsis_simulate_send,from_string, msgNo_string)
             # Content parsen
-            success, response_parameters = parsemessage(message_text_string, from_string.upper(), aprsdotfi_apikey)
+            success, response_parameters = parsemessage(message_text_string, from_string, aprsdotfi_apikey)
             if success:
                 log_to_stderr(response_parameters)
                 what = response_parameters['what']
