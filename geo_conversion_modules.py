@@ -207,16 +207,16 @@ def convert_latlon_to_dms(latitude: float, longitude: float, output_precision: i
         latitude minutes for the given set of lat/lon coordinates
     latitude_sec: 'int'
         latitude seconds for the given set of lat/lon coordinates
-    latitude_direction: 'str'
-        latitude direction ('N','S') for the given set of lat/lon coordinates
+    latitude_heading: 'str'
+        latitude heading ('N','S') for the given set of lat/lon coordinates
     longitude_deg: 'int'
         longitude_deg degrees for the given set of lat/lon coordinates
     longitude_deg_min: 'int'
         longitude_deg minutes for the given set of lat/lon coordinates
     longitude_deg_sec: 'int'
         longitude_deg seconds for the given set of lat/lon coordinates
-    longitude_deg_direction: 'str'
-        longitude_deg direction ('E','W') for the given set of
+    longitude_deg_heading: 'str'
+        longitude_deg heading ('E','W') for the given set of
         lat/lon coordinates
     """
 
@@ -234,12 +234,12 @@ def convert_latlon_to_dms(latitude: float, longitude: float, output_precision: i
     latitude_deg = latitude_deg if is_positive_lat else -latitude_deg
     longitude_deg = longitude_deg if is_positive_lon else -longitude_deg
 
-    latitude_direction: str = "S" if latitude_deg < 0 else "N"
+    latitude_heading: str = "S" if latitude_deg < 0 else "N"
     latitude_deg: int = int(abs(latitude_deg))
     latitude_min: int = int(latitude_min)
     latitude_sec: float = round(latitude_sec, output_precision)
 
-    longitude_direction: str = "W" if longitude_deg < 0 else "E"
+    longitude_heading: str = "W" if longitude_deg < 0 else "E"
     longitude_deg: int = int(abs(longitude_deg))
     longitude_min: int = int(longitude_min)
     longitude_sec: float = round(longitude_sec, output_precision)
@@ -248,11 +248,11 @@ def convert_latlon_to_dms(latitude: float, longitude: float, output_precision: i
         latitude_deg,
         latitude_min,
         latitude_sec,
-        latitude_direction,
+        latitude_heading,
         longitude_deg,
         longitude_min,
         longitude_sec,
-        longitude_direction,
+        longitude_heading,
     )
 
 
@@ -260,11 +260,11 @@ def convert_dms_to_latlon(
     latitude_deg: float,
     latitude_min: float,
     latitude_sec: float,
-    latitude_direction: str,
+    latitude_heading: str,
     longitude_deg: float,
     longitude_min: float,
     longitude_sec: float,
-    longitude_direction: str,
+    longitude_heading: str,
 ):
     """
     Convert DMS (Degrees, Minutes, Seconds) coordinates to
@@ -278,8 +278,8 @@ def convert_dms_to_latlon(
         latitude minutes for the given set of lat/lon coordinates
     latitude_sec: 'int'
         latitude seconds for the given set of lat/lon coordinates
-    latitude_direction: 'str'
-        latitude direction ('N','S') for the given set of
+    latitude_heading: 'str'
+        latitude heading ('N','S') for the given set of
         lat/lon coordinates
     longitude_deg: 'int'
         longitude_deg degrees for the given set of lat/lon coordinates
@@ -287,8 +287,8 @@ def convert_dms_to_latlon(
         longitude minutes for the given set of lat/lon coordinates
     longitude_sec: 'int'
         longitude seconds for the given set of lat/lon coordinates
-    longitude_direction: 'str'
-        longitude_deg direction ('E','W') for the given set of
+    longitude_heading: 'str'
+        longitude_deg heading ('E','W') for the given set of
         lat/lon coordinates
 
     Returns
@@ -299,17 +299,17 @@ def convert_dms_to_latlon(
         Longitude value
     """
 
-    latitude_direction = latitude_direction.upper()
-    longitude_direction = longitude_direction.upper()
+    latitude_heading = latitude_heading.upper()
+    longitude_heading = longitude_heading.upper()
 
-    assert latitude_direction in ["N", "S"]
-    assert longitude_direction in ["E", "W"]
+    assert latitude_heading in ["N", "S"]
+    assert longitude_heading in ["E", "W"]
 
     latitude = latitude_deg + latitude_min / 60 + latitude_sec / (60 * 60)
     longitude = longitude_deg + longitude_min / 60 + longitude_sec / (60 * 60)
 
-    latitude: float = latitude if latitude_direction == "N" else -latitude
-    longitude: float = longitude if longitude_direction == "E" else -longitude
+    latitude: float = latitude if latitude_heading == "N" else -latitude
+    longitude: float = longitude if longitude_heading == "E" else -longitude
 
     return latitude, longitude
 
@@ -345,14 +345,14 @@ def Haversine(
         (dependent on requested 'units' parameter)
     bearing: 'float'
         bearing in degrees
-    direction: 'str'
+    heading: 'str'
         human-readable bearing value (e.g. 'N','SSW' etc)
     """
 
     units = units.lower()
     assert units in ["imperial", "metric"]
 
-    directions = [
+    headings = [
         "N",
         "NNE",
         "NE",
@@ -398,10 +398,10 @@ def Haversine(
     bearing = degrees(bearing)
     bearing = (bearing + 360) % 360
 
-    pos = round(bearing / (360.0 / len(directions)))
-    direction = directions[pos % len(directions)]
+    pos = round(bearing / (360.0 / len(headings)))
+    heading = headings[pos % len(headings)]
 
-    return distance, bearing, direction
+    return distance, bearing, heading
 
 
 if __name__ == "__main__":
