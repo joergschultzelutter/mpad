@@ -388,7 +388,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             success, latitude, longitude, altitude, message_callsign = get_position_on_aprsfi(message_callsign, aprsdotfi_api_key)
             if success:
                 if what =='wx':
-                    human_readable_message = f'Wx of {message_callsign}'
+                    human_readable_message = f'Wx for {message_callsign}'
                 elif what == 'riseset':
                     human_readable_message = f'Rise/Set for {message_callsign}'
                 elif what == 'whereis':
