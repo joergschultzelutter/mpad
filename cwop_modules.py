@@ -104,6 +104,7 @@ def get_cwop_findu(cwop_id: str, units: str = "metric"):
                     air_pressure = output_rows[1][9]
                     success = True
     cwop_response = {
+        "cwop_id": cwop_id,
         "time": time,
         "temp": temp,
         "temp_uom": temp_uom,
@@ -167,7 +168,7 @@ def get_nearest_cwop_findu(latitude: float, longitude: float, units: str = "metr
 
     time = temp = wind_direction = wind_speed = None
     wind_gust = rain_1h = rain_24h = rain_mn = None
-    humidity = air_pressure = None
+    humidity = air_pressure = cwop_id = None
 
     humidity_uom = "%"
     air_pressure_uom = "mb"
@@ -202,6 +203,7 @@ def get_nearest_cwop_findu(latitude: float, longitude: float, units: str = "metr
                     return get_cwop_findu(output_rows[1][0], units)
     # This code will only be triggered in the event of a failure
     cwop_response = {
+        "cwop_id": cwop_id,
         "time": time,
         "temp": temp,
         "temp_uom": temp_uom,
