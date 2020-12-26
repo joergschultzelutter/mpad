@@ -25,7 +25,7 @@ Python implementation of an APRS Multi-Purpose Daemon (wx forecast, sat data, ge
 
 ## Reimplements and uses programs and services
 
-- ideas and portions of the code are taken from WXBOT (Martin Nile, KI6WJP)
+- Portions of the code from WXBOT (Martin Nile, KI6WJP)
 - [MGRS coordinate converter](https://github.com/aydink/pymgrs)
 - aprs.fi for call sign location retrieval
 - openweathermap.org for wx data
@@ -42,9 +42,9 @@ Python implementation of an APRS Multi-Purpose Daemon (wx forecast, sat data, ge
 - With its current implementation of its 'OneCall' API, Openweathermap does not return the human-readable address in case a query is performed for lat/lon coordinates. Therefore, additional calls to e.g. Openstreetmap etc. are necessary in order to provide the user with a human readable address.
 - The repeater data is very much EU-centric (the program uses its data from repeatermap.de). Additional _free_ repeater data sources can be added in future versions of the program if such sources are available. Alternatively, please get in touch with DK3ML and add your missing local repeaters to that list.
 - Wx alert data from openweathermap.org is not returned to the user. This can be added in a later version but keep in mind that the text is very long and would result in multiple (10-15) APRS messages per alert!
-- Access to openweathermap.org requires an API key which has a certain traffic limit
+- Access to openweathermap.org requires an API key which comes with a certain traffic limit
 - All timestamps which are returned by the program are in UTC. Implicitly, this constraint also applies to program keyword (see [USAGE.md](USAGE.md)) which instructs the program to return data for a certain time of the day. When in doubt, do not limit your data to a certain time slot of the day ('full' day is the default)
-- APRS 'TOCALL' identifier is currently still set to default; MPAD needs its own identifier (see http://www.aprs.org/tocalls.txt)
+- APRS 'TOCALL' identifier is currently still set to default 'APRS' (see WXBOT implementation); MPAD needs its own identifier (see http://www.aprs.org/tocalls.txt)
 
 ## Usage examples and command syntax
 
