@@ -321,7 +321,7 @@ def get_sun_moon_rise_set_for_latlon(
         Datetime object of the next moonrise
         for the given coordinates and date
         Timezone = UTC
-    _moonset: 'datetime'
+    moonset: 'datetime'
         Datetime object of the next moonset
         for the given coordinates and date
         Timezone = UTC
