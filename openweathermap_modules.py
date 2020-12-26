@@ -13,7 +13,7 @@ from utility_modules import read_program_config
 
 def get_daily_weather_from_openweathermapdotorg(latitude: float,
                                                 longitude: float,
-                                                days_offset: int,
+                                                date_offset: int,
                                                 openweathermap_api_key: str,
                                                 units: str = 'metric'):
     """
@@ -29,10 +29,10 @@ def get_daily_weather_from_openweathermapdotorg(latitude: float,
         latitude position
     longitude: 'float'
         longitude position
-    days_offset: 'int'
+    date_offset: 'int'
         numeric offset from 'today' to the desired
         target day; e.g. today = tuesday and desired
-        day = thursday, then days_offset = 2
+        day = thursday, then date_offset = 2
     openweathermap_api_key: str
         API key for accessing openweathermap.org api
     units: 'str'
@@ -56,7 +56,7 @@ def get_daily_weather_from_openweathermapdotorg(latitude: float,
     success = False
 
     # return 'false' if user has requested a day that is out of bounds
-    if days_offset < 0 or days_offset > 7:
+    if date_offset < 0 or date_offset > 7:
         return success, weather_tuple, timezone_offset, timezone_offset
 
     if units not in ['imperial','metric']:
@@ -69,7 +69,7 @@ def get_daily_weather_from_openweathermapdotorg(latitude: float,
         x = resp.json()
         # get weather for the given day offset
         if 'daily' in x:
-            weather_tuple = x['daily'][days_offset]
+            weather_tuple = x['daily'][date_offset]
             success = True
         if 'timezone_offset' in x:
             timezone_offset = x['timezone_offset']
