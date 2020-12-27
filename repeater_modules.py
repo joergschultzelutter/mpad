@@ -33,22 +33,22 @@ def download_repeatermap_raw_data_and_write_it_to_disc(
 
     Returns
     =======
-    _success: 'bool'
-        True if operation was _successful
+    success: 'bool'
+        True if operation was successful
     """
-    _success = False
+    success = False
     resp = requests.get(url)
     if resp.status_code == 200:
         try:
             with open(f"{repeatermap_raw_data_file}", "w") as f:
                 f.write(resp.text)
                 f.close()
-            _success = True
+            success = True
         except:
             log_to_stderr(
                 f"Cannot write repeatermap.de data to local disc file '{repeatermap_raw_data_file}'"
             )
-    return _success
+    return success
 
 
 def read_repeatermap_raw_data_from_disk(
@@ -65,22 +65,22 @@ def read_repeatermap_raw_data_from_disk(
 
     Returns
     =======
-    _success: 'bool'
-        True if operation was _successful
+    success: 'bool'
+        True if operation was successful
     repeatermap_raw_json_content: 'str'
         Contains the file's raw JSON content (otherwise 'None')
     """
-    _success = False
+    success = False
     repeatermap_dot_de_json_content = None
     try:
         with open(f"{repeatermap_raw_data_file}", "r") as f:
             if f.mode == "r":
                 repeatermap_raw_json_content = f.read()
                 f.close()
-                _success = True
+                success = True
     except:
         log_to_stderr(f"Cannot read '{repeatermap_raw_data_file}' from disc")
-    return _success, repeatermap_raw_json_content
+    return success, repeatermap_raw_json_content
 
 
 def calculate_band_name(frequency: float):
@@ -96,15 +96,15 @@ def calculate_band_name(frequency: float):
 
     Returns
     =======
-    _success: 'bool'
-        True if operation was _successful
+    success: 'bool'
+        True if operation was successful
     human_readable_band_name: 'str'
         Human-readable band name for the given frequency, e.g. '2m'
         'None' if no entry was found
     """
 
     human_readable_band_name = None
-    _success = False
+    success = False
     band_dictionary = {
         "2200m": {"from": 0.13, "to": 0.14},
         "630m": {"from": 0.47, "to": 0.48},
@@ -140,10 +140,10 @@ def calculate_band_name(frequency: float):
     for band in band_dictionary:
         if band_dictionary[band]["from"] <= frequency <= band_dictionary[band]["to"]:
             human_readable_band_name = band
-            _success = True
+            success = True
             break
 
-    return _success, human_readable_band_name
+    return success, human_readable_band_name
 
 
 def create_enriched_mpad_repeatermap_data(repeatermap_raw_json_content: str):
@@ -165,17 +165,17 @@ def create_enriched_mpad_repeatermap_data(repeatermap_raw_json_content: str):
 
     Returns
     =======
-    _success: 'bool'
-        True if operation was _successful
+    success: 'bool'
+        True if operation was successful
     mpad_repeatermap_json: 'str'
         Contains the MPAD-specific JSON dictionary format
         (or 'None' if there was an error)
     """
-    _success = False
-    mpad_repeater_dict = dict()
+    success = False
+    mpad_repeater_dict = {}  # Create empty dict
     try:
         raw_repeatermap_dictionary = json.loads(repeatermap_raw_json_content)
-        _success = True
+        success = True
     except:
         return False, None
 
@@ -235,7 +235,7 @@ def create_enriched_mpad_repeatermap_data(repeatermap_raw_json_content: str):
 
     mpad_repeatermap_json = json.dumps(mpad_repeater_dict)
 
-    return _success, mpad_repeatermap_json
+    return success, mpad_repeatermap_json
 
 
 def write_mpad_repeatermap_data_to_disc(
@@ -254,20 +254,20 @@ def write_mpad_repeatermap_data_to_disc(
 
     Returns
     =======
-    _success: 'bool'
-        True if operation was _successful
+    success: 'bool'
+        True if operation was successful
     """
-    _success = False
+    success = False
     try:
         with open(f"{mpad_repeatermap_filename}", "w") as f:
             f.write(mpad_repeatermap_json)
             f.close()
-        _success = True
+        success = True
     except:
         log_to_stderr(
             f"Cannot write native repeatermap data to local disc file '{mpad_repeatermap_filename}'"
         )
-    return _success
+    return success
 
 
 def read_mpad_repeatermap_data_from_disc(
@@ -284,24 +284,25 @@ def read_mpad_repeatermap_data_from_disc(
 
     Returns
     =======
-    _success: 'bool'
-        True if operation was _successful
-    mpad_repeatermap_json: 'str'
-        json string which contains the preprocessed repeatermap data
-        None if file was not found
+    success: 'bool'
+        True if operation was successful
+    mpad_repeatermap: 'dict'
+        dictionary which contains the preprocessed repeatermap data
+        (or empty dictionary if nothing was found)
     """
-    _success = False
-    mpad_repeatermap_json = None
+    success = False
+    mpad_repeatermap = {}  # create empty dict
     if check_if_file_exists(mpad_repeatermap_filename):
         try:
             with open(f"{mpad_repeatermap_filename}", "r") as f:
                 if f.mode == "r":
                     mpad_repeatermap_json = f.read()
                     f.close()
-                    _success = True
+                    success = True
+                    mpad_repeatermap = json.loads(mpad_repeatermap_json)
         except:
             log_to_stderr(f"Cannot read '{mpad_repeatermap_filename}' from disc")
-    return _success, mpad_repeatermap_json
+    return success, mpad_repeatermap
 
 
 def get_nearest_repeater(
@@ -310,6 +311,7 @@ def get_nearest_repeater(
     mpad_repeatermap_dictionary: dict,
     mode: str = None,
     band: str = None,
+    units: str = "metric",
 ):
     """
     For a given set of lat/lon cooordinates, return nearest
@@ -328,15 +330,20 @@ def get_nearest_repeater(
         optional query parameter. Can be used for querying e.g. for DSTAR, C4FM, ...
     band: 'str'
         optional query parameter. Can be used for querying e.g. for 2m, 70cm, ...
+    units: 'str'
+        either "imperial" or "metric". Default: "metric"
 
     Returns
     =======
-    nearest_repeater_id: 'int'
-        ID of the repeatermap.de entry
-        (or 'None' if nothing was found)
+    success: 'bool'
+        True if request was successful
+    nearest_repeater: 'dict'
+        Either empty (if success=False) or contains the data for the nearest repeater
     """
 
     nearest_repeater_id = None
+    nearest_repeater = []
+    success = False
     nearest = 12000
 
     mode = mode.upper()
@@ -363,54 +370,91 @@ def get_nearest_repeater(
         if d < nearest:
             # if the user has selected additional query parameters, check them too
             if mode:
-                mode2 = mpad_repeatermap_dictionary[repeater]["mode"]
-                if mode != mode2:
+                mode_from_dict = mpad_repeatermap_dictionary[repeater]["mode"]
+                if mode != mode_from_dict:
                     continue
             if band:
-                band2 = mpad_repeatermap_dictionary[repeater]["band_name"]
-                if band != band2:
+                band_from_dict = mpad_repeatermap_dictionary[repeater]["band_name"]
+                if band != band_from_dict:
                     continue
             nearest = d
             nearest_repeater_id = repeater
-    return nearest_repeater_id
+
+    # Did we find something?
+    if nearest_repeater_id:
+
+        # Yes; extract the content from the dictionary
+        locator = mpad_repeater_dictionary[nearest_repeater_id]["locator"]
+        latitude_repeater = mpad_repeater_dictionary[nearest_repeater_id]["latitude"]
+        longitude_repeater = mpad_repeater_dictionary[nearest_repeater_id]["longitude"]
+        mode = mpad_repeater_dictionary[nearest_repeater_id]["mode"]
+        rx_frequency = mpad_repeater_dictionary[nearest_repeater_id]["rx_frequency"]
+        tx_frequency = mpad_repeater_dictionary[nearest_repeater_id]["tx_frequency"]
+        band = mpad_repeater_dictionary[nearest_repeater_id]["band_name"]
+        elevation = mpad_repeater_dictionary[nearest_repeater_id]["elevation"]
+        remarks = mpad_repeater_dictionary[nearest_repeater_id]["remarks"]
+        qth = mpad_repeater_dictionary[nearest_repeater_id]["qth"]
+        callsign = mpad_repeater_dictionary[nearest_repeater_id]["callsign"]
+
+        # Calculate distance/bearing/direction between user's position and repeater position
+        distance, bearing, direction = Haversine(
+            latitude, longitude, latitude_repeater, longitude_repeater, units
+        )
+        # Round both distance and bearing values
+        distance = round(distance)
+        bearing = round(bearing)
+
+        # set the unit of measure for the distance variable
+        distance_uom = "km"
+        if units == "imperial":
+            distance_uom = "mi"
+
+        # Build the 'list' response object
+        nearest_repeater = {
+            "id": nearest_repeater_id,
+            "locator": locator,
+            "latitude": latitude_repeater,
+            "longitude": longitude_repeater,
+            "mode": mode,
+            "band": band,
+            "rx_frequency": rx_frequency,
+            "tx_frequency": tx_frequency,
+            "elevation": elevation,
+            "remarks": remarks,
+            "qth": qth,
+            "callsign": callsign,
+            "distance": distance,
+            "distance_uom": distance_uom,
+            "bearing": bearing,
+            "direction": direction,
+        }
+
+        # set the success marker
+        success = True
+
+    return success, nearest_repeater
 
 
 if __name__ == "__main__":
     download_repeatermap_raw_data_and_write_it_to_disc()
-    _success, repeatermap_dot_de_content = read_repeatermap_raw_data_from_disk()
-    if _success:
-        _success, local_repeatermap_json = create_enriched_mpad_repeatermap_data(
+    success, repeatermap_dot_de_content = read_repeatermap_raw_data_from_disk()
+    if success:
+        success, local_repeatermap_json = create_enriched_mpad_repeatermap_data(
             repeatermap_dot_de_content
         )
-        if _success:
-            _success = write_mpad_repeatermap_data_to_disc(local_repeatermap_json)
+        if success:
+            success = write_mpad_repeatermap_data_to_disc(local_repeatermap_json)
 
-    _success, mpad_repeatermap_content = read_mpad_repeatermap_data_from_disc()
-    if _success:
-        mpad_repeater_dictionary = json.loads(mpad_repeatermap_content)
-
-        id = get_nearest_repeater(
+    success, mpad_repeater_dictionary = read_mpad_repeatermap_data_from_disc()
+    if success:
+        success, nearest_repeater = get_nearest_repeater(
             latitude=51.8458575,
             longitude=8.2997425,
             mpad_repeatermap_dictionary=mpad_repeater_dictionary,
             mode="dstar",
             band="70cm",
         )
-        if id:
-            qth = mpad_repeater_dictionary[id]["qth"]
-            latitude = mpad_repeater_dictionary[id]["latitude"]
-            longitude = mpad_repeater_dictionary[id]["longitude"]
-            rx = mpad_repeater_dictionary[id]["rx_frequency"]
-            tx = mpad_repeater_dictionary[id]["tx_frequency"]
-            remarks = mpad_repeater_dictionary[id]["remarks"]
-
-            distance, bearing, direction = Haversine(
-                51.8458575, 8.2997425, latitude, longitude, "metric"
-            )
-            print(
-                f"Nearest repeater: {qth} {round(latitude,2)}/{round(longitude,2)}, "
-                f"distance {round(distance,2)} km bearing {round(bearing)} "
-                f"deg. ({direction}) rx {rx} tx {tx} {remarks}"
-            )
+        if success:
+            print(nearest_repeater)
         else:
             print("Nothing found!")
