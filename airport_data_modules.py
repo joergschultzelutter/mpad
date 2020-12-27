@@ -13,8 +13,8 @@ import math
 
 # icao https://www.aviationweather.gov/docs/metar/stations.txt
 
-icao_dict = dict()
-iata_dict = dict()
+icao_dict = {}  # create empty dict
+iata_dict = {}  # create empty dict
 
 
 def read_icao_and_iata_data(icao_filename: str = "stations.txt"):

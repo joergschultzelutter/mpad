@@ -11,7 +11,7 @@ import requests
 from skyfield import api, almanac
 from skyfield.api import EarthSatellite
 
-tle_data = dict()
+tle_data = {}   # create empty dict
 tle_data_last_download = datetime.datetime.now()
 
 
