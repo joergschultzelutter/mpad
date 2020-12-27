@@ -8,11 +8,12 @@ import sys
 import configparser
 import os.path
 from timezonefinder import TimezoneFinder
+import re
 
 
 def make_pretty_aprs_messages(
     message_to_add: str,
-    destination_list: list = [],
+    destination_list: list = None,
     max_len: int = 67,
     separator_char: str = " ",
     add_sep: bool = True,
@@ -81,9 +82,17 @@ def make_pretty_aprs_messages(
         the parsed wx data
     """
     # Dummy handler in case the list is completely empty
+    # or a reference to a list item has not been specified at all
     # In this case, create an empty list
     if not destination_list:
-        destination_list.append("")
+        destination_list = [""]
+
+    # replace non-permitted APRS characters from message
+    # see APRS specification pg. 71
+    message_to_add = re.sub('[{}|~]+', '',message_to_add)
+
+    # Convert the message to plain ascii
+    message_to_add = convert_to_plain_ascii(message_to_add)
 
     # If new message is longer than max len then split it up with
     # max chunks of max_len bytes and add it to the array.
