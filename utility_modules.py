@@ -12,7 +12,7 @@ from timezonefinder import TimezoneFinder
 
 def make_pretty_aprs_messages(
     message_to_add: str,
-    destination_list: list,
+    destination_list: list = [],
     max_len: int = 67,
     separator_char: str = " ",
     add_sep: bool = True,
@@ -61,7 +61,7 @@ def make_pretty_aprs_messages(
         If string is longer than 67 chars, we will truncate the information
     destination_list: 'list'
         List with string elements which will be enriched with the
-        'mesage_to_add' string
+        'mesage_to_add' string. Default: empty list aka user wants new list
     max_len: 'int':
         Max length of the list's string len. 67 for APRS messages
     separator_char: 'str'
@@ -317,9 +317,7 @@ def determine_timezone(latitude: float, longitude: float):
 
 
 if __name__ == "__main__":
-    my_array = []
-
-    my_array = make_pretty_aprs_messages("Hello World", my_array)
+    my_array = make_pretty_aprs_messages("Hello World")
     my_array = make_pretty_aprs_messages("Wie geht es Dir", my_array)
     my_array = make_pretty_aprs_messages(
         "jdsfhjdshfjhjkshdfjhdsjfhjhdsfhjdshfjdhsfhdhsf", my_array
