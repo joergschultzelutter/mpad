@@ -7,6 +7,7 @@
 import requests
 import re
 from bs4 import BeautifulSoup
+import datetime
 
 
 def get_cwop_findu(cwop_id: str, units: str = "metric"):
@@ -59,6 +60,7 @@ def get_cwop_findu(cwop_id: str, units: str = "metric"):
     time = temp = wind_direction = wind_speed = None
     wind_gust = rain_1h = rain_24h = rain_mn = None
     humidity = air_pressure = None
+    my_timestamp = datetime.datetime.utcnow()
 
     humidity_uom = "%"
     air_pressure_uom = "mb"
@@ -93,6 +95,13 @@ def get_cwop_findu(cwop_id: str, units: str = "metric"):
             if len(output_rows) > 0:
                 if len(output_rows[0]) >= 10:
                     time = output_rows[1][0]
+                    time_year=int(time[0:4])
+                    time_month=int(time[4:6])
+                    time_day=int(time[6:8])
+                    time_hh=int(time[8:10])
+                    time_mm = int(time[10:12])
+                    time_ss = int(time[12:14])
+                    my_timestamp = datetime.datetime(year = time_year, month= time_month, day = time_day, hour=time_hh, minute=time_mm, second=time_ss)
                     temp = output_rows[1][1]
                     wind_direction = output_rows[1][2]
                     wind_speed = output_rows[1][3]
@@ -105,7 +114,7 @@ def get_cwop_findu(cwop_id: str, units: str = "metric"):
                     success = True
     cwop_response = {
         "cwop_id": cwop_id,
-        "time": time,
+        "time": my_timestamp,
         "temp": temp,
         "temp_uom": temp_uom,
         "wind_direction": wind_direction,
@@ -169,6 +178,8 @@ def get_nearest_cwop_findu(latitude: float, longitude: float, units: str = "metr
     time = temp = wind_direction = wind_speed = None
     wind_gust = rain_1h = rain_24h = rain_mn = None
     humidity = air_pressure = cwop_id = None
+    my_timestamp = datetime.datetime.utcnow()
+
 
     humidity_uom = "%"
     air_pressure_uom = "mb"
@@ -204,7 +215,7 @@ def get_nearest_cwop_findu(latitude: float, longitude: float, units: str = "metr
     # This code will only be triggered in the event of a failure
     cwop_response = {
         "cwop_id": cwop_id,
-        "time": time,
+        "time": my_timestamp,
         "temp": temp,
         "temp_uom": temp_uom,
         "wind_direction": wind_direction,
