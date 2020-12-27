@@ -26,6 +26,8 @@ from geo_conversion_modules import (
     convert_latlon_to_dms,
 )
 
+from repeater_modules import read_mpad_repeatermap_data_from_disc, get_nearest_repeater
+
 import datetime
 
 ###
@@ -413,11 +415,66 @@ def generate_output_message(
     if what == "repeater":
         latitude = response_parameters["latitude"]
         longitude = response_parameters["longitude"]
-        altitude = response_parameters["altitude"]
+        units = response_parameters["units"]
         repeater_band = response_parameters["repeater_band"]
         repeater_mode = response_parameters["repeater_mode"]
-        output_list = ["repeater"]
-        success = True
+
+        # Static file solution; needs dynamic refresh
+        success, repeater_dict = read_mpad_repeatermap_data_from_disc()
+        if success:
+            success, nearest_repeater = get_nearest_repeater(
+                latitude=latitude,
+                longitude=longitude,
+                mpad_repeatermap_dictionary=repeater_dict,
+                mode=repeater_mode,
+                band=repeater_band,
+                units=units,
+            )
+            if success:
+                locator = nearest_repeater["locator"]
+                latitude = nearest_repeater["latitude"]
+                longitude = nearest_repeater["longitude"]
+                mode = nearest_repeater["mode"]
+                band = nearest_repeater["band"]
+                rx_frequency = nearest_repeater["rx_frequency"]
+                tx_frequency = nearest_repeater["tx_frequency"]
+                elevation = nearest_repeater["elevation"]
+                remarks = nearest_repeater["remarks"]
+                qth = nearest_repeater["qth"]
+                callsign = nearest_repeater["callsign"]
+                distance = nearest_repeater["distance"]
+                distance_uom = nearest_repeater["distance_uom"]
+                bearing = nearest_repeater["bearing"]
+                direction = nearest_repeater["direction"]
+
+                # Build the output message
+                output_list = make_pretty_aprs_messages(f"Nearest repeater {qth}")
+                output_list = make_pretty_aprs_messages(
+                    f"{distance} {distance_uom}", output_list
+                )
+                output_list = make_pretty_aprs_messages(
+                    f"{bearing} deg {direction}", output_list
+                )
+                output_list = make_pretty_aprs_messages(
+                    f"Rx {rx_frequency}", output_list
+                )
+                output_list = make_pretty_aprs_messages(
+                    f"Tx {tx_frequency}", output_list
+                )
+                output_list = make_pretty_aprs_messages(f"{remarks}", output_list)
+                output_list = make_pretty_aprs_messages(f"{mode}", output_list)
+                output_list = make_pretty_aprs_messages(f"{band}", output_list)
+                output_list = make_pretty_aprs_messages(f"{locator}", output_list)
+            else:
+                output_list = make_pretty_aprs_messages(
+                    "Cannot locate nearest repeater"
+                )
+                success = True
+        else:
+            output_list = make_pretty_aprs_messages(
+                "Cannot read repeater directory from disc"
+            )
+            success = True
         return success, output_list
 
     # No keyword found
