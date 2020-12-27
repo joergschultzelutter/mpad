@@ -121,6 +121,9 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
     # Start the parsing process
     #
 
+    # Convert user's call sign to uppercase
+    users_callsign = users_callsign.upper()
+
     # Check if we need to switch to the imperial system
     # Have a look at the user's call sign who has sent me the message.
     # Ignore any SSID data.
