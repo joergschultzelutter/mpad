@@ -12,11 +12,9 @@ from geopy_modules import get_reverse_geopy_data, get_geocode_geopy_data, valida
 import calendar
 import string
 from airport_data_modules import validate_icao, validate_iata, get_nearest_icao
-from utility_modules import convert_to_plain_ascii, getdaysuntil, log_to_stderr
+from utility_modules import getdaysuntil, read_program_config
 from aprsdotfi_modules import get_position_on_aprsfi
 
-
-from utility_modules import read_program_config
 aprsdotfi_api_key = openweathermap_api_key = None
 
 errmsg_cannot_find_coords_for_address: str = 'Cannot find coordinates for requested address'
@@ -750,10 +748,6 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
     # apply default to 'what' if still not populated
     if not what and not err:
         what = 'wx'
-
-    # finally, convert the requested address to plain ascii
-    if human_readable_message:
-        human_readable_message = convert_to_plain_ascii(human_readable_message)
 
     # Generate dictionary which contains what we have fund out about the user's request
     response_parameters = {
