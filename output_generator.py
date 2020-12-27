@@ -85,9 +85,8 @@ def create_cwop_content(cwop_dict: dict):
             message_to_add=f"CWOP for {cwop_id}", destination_list=output_list
         )
     if time:
-        ts = datetime.datetime.fromtimestamp(time)
         output_list = make_pretty_aprs_messages(
-            message_to_add=datetime.datetime.strftime(ts, "%d-%b-%y"),
+            message_to_add=datetime.datetime.strftime(time, "%d-%b-%y"),
             destination_list=output_list,
         )
     if temp:
@@ -322,6 +321,7 @@ def generate_output_message(
         output_list = make_pretty_aprs_messages(
             message_to_add=datetime.datetime.strftime(sunset, "-%H:%M"),
             destination_list=output_list,
+            add_sep=False
         )
         output_list = make_pretty_aprs_messages(
             message_to_add="moon set/rise", destination_list=output_list
@@ -333,6 +333,7 @@ def generate_output_message(
         output_list = make_pretty_aprs_messages(
             message_to_add=datetime.datetime.strftime(moonrise, "-%H:%M"),
             destination_list=output_list,
+            add_sep=False,
         )
         success = True
         return success, output_list
