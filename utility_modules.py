@@ -89,7 +89,7 @@ def make_pretty_aprs_messages(
 
     # replace non-permitted APRS characters from message
     # see APRS specification pg. 71
-    message_to_add = re.sub('[{}|~]+', '',message_to_add)
+    message_to_add = re.sub("[{}|~]+", "", message_to_add)
 
     # Convert the message to plain ascii
     message_to_add = convert_to_plain_ascii(message_to_add)
