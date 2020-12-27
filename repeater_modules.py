@@ -11,7 +11,10 @@ import requests
 from utility_modules import log_to_stderr
 import json
 import math
-from geo_conversion_modules import convert_maidenhead_to_latlon
+from geo_conversion_modules import (
+    convert_maidenhead_to_latlon,
+    convert_latlon_to_maidenhead,
+)
 from utility_modules import check_if_file_exists
 from geo_conversion_modules import Haversine
 
@@ -185,8 +188,6 @@ def create_enriched_mpad_repeatermap_data(repeatermap_raw_json_content: str):
         mode = rx_frequency = tx_frequency = elevation = None
         latitude = longitude = remarks = qth = id = None
         locator = callsign = band_name = None
-        if "locator" in raw_entry:
-            locator = raw_entry["locator"]
         if "id" in raw_entry:
             id = raw_entry["id"]
         if "mode" in raw_entry:
@@ -208,17 +209,23 @@ def create_enriched_mpad_repeatermap_data(repeatermap_raw_json_content: str):
             qth = raw_entry["qth"]
         if "call" in raw_entry:
             callsign = raw_entry["call"]
+        if rx_frequency:
+            # get the human readable band name
+            success, band_name = calculate_band_name(rx_frequency)
+            if not success:
+                band_name = ""
         if "locator" in raw_entry:
             locator = raw_entry["locator"]
-            if latitude == None or longitude == None:
+            if not latitude or not longitude:
                 latitude, longitude = convert_maidenhead_to_latlon(locator)
-        if rx_frequency:
-            ok, band_name = calculate_band_name(rx_frequency)
-            if not ok:
-                band_name = ""
-
+        # Build locator from lat/lon if not present
+        if not locator:
+            if latitude and longitude:
+                locator = convert_latlon_to_maidenhead(
+                    latitude=latitude, longitude=longitude
+                )
         # don't add MMDVM hotspots
-        if id and not "mmdvm" in remarks.lower():
+        if id and not "mmdvm" in remarks.lower() and not "hotspot" in remarks.lower():
             mpad_repeater_dict[f"{id}"] = {
                 "locator": locator,
                 "latitude": latitude,
@@ -234,7 +241,7 @@ def create_enriched_mpad_repeatermap_data(repeatermap_raw_json_content: str):
             }
 
     mpad_repeatermap_json = json.dumps(mpad_repeater_dict)
-
+    success = True
     return success, mpad_repeatermap_json
 
 
