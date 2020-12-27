@@ -351,7 +351,7 @@ def generate_output_message(
         # human-readable data was reverse-lookup'ed and can be 'None'
         city = response_parameters["city"]
         state = response_parameters["state"]
-        zip = response_parameters["zip"]
+        zipcode = response_parameters["zipcode"]
         country = response_parameters["country"]
 
         output_list = make_pretty_aprs_messages(message_to_add=human_readable_message)
@@ -372,7 +372,7 @@ def generate_output_message(
             lon_hdg,
         ) = convert_latlon_to_dms(latitude=latitude, longitude=longitude)
         output_list = make_pretty_aprs_messages(
-            message_to_add=f"DMS: {lat_deg}.{lat_min}'{lat_sec}\" {lat_hdg} {lon_deg}.{lon_min}'{lon_sec}\" {lon_hdg}",
+            message_to_add=f"DMS:{lat_deg}.{lat_min}'{lat_sec} {lat_hdg} {lon_deg}.{lon_min}'{lon_sec} {lon_hdg}",
             destination_list=output_list,
         )
 
@@ -380,7 +380,7 @@ def generate_output_message(
             latitude=latitude, longitude=longitude
         )
         output_list = make_pretty_aprs_messages(
-            message_to_add=f"UTM: {zone_number}{zone_letter} {easting} {northing}",
+            message_to_add=f"UTM:{zone_number}{zone_letter} {easting} {northing}",
             destination_list=output_list,
         )
 
@@ -390,15 +390,15 @@ def generate_output_message(
         )
 
         output_list = make_pretty_aprs_messages(
-            message_to_add=f"Lat/Lon: {latitude}/{longitude}",
+            message_to_add=f"Lat/Lon:{latitude}/{longitude}",
             destination_list=output_list,
         )
 
         human_readable_address = None
         if city:
             human_readable_address = city
-            if zip:
-                human_readable_address += f", {zip}"
+            if zipcode:
+                human_readable_address += f", {zipcode}"
             if country:
                 human_readable_address += f", {country}"
 
