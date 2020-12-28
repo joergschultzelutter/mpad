@@ -58,6 +58,9 @@ def create_cwop_content(cwop_dict: dict):
         to send back to the user
     """
 
+    # Get the values from the dictionary. All
+    # values with the exception of 'time' are strings
+    # and are processed as is for simplicity reasons
     cwop_id = cwop_dict["cwop_id"]
     time = cwop_dict["time"]
     temp = cwop_dict["temp"]
@@ -75,6 +78,15 @@ def create_cwop_content(cwop_dict: dict):
     air_pressure = cwop_dict["air_pressure"]
     air_pressure_uom = cwop_dict["air_pressure_uom"]
 
+    # shorten the output date if there is none
+    # reminder: these are strings
+    if rain_1h == "0.00":
+        rain_1h = "0.0"
+    if rain_24h == "0.00":
+        rain_24h = "0.0"
+    if rain_mn == "0.00":
+        rain_mn = "0.0"
+
     # Generate the output. We need to declare a dummy list here as some -or all-
     # of these elements are missing (and we don't know which ones will that be)
     output_list = []
@@ -82,7 +94,7 @@ def create_cwop_content(cwop_dict: dict):
     # as it did not yet contain the respective CWOP ID
     if cwop_id:
         output_list = make_pretty_aprs_messages(
-            message_to_add=f"CWOP for {cwop_id}", destination_list=output_list
+            message_to_add=f"CWOP {cwop_id}", destination_list=output_list
         )
     if time:
         output_list = make_pretty_aprs_messages(
@@ -99,7 +111,7 @@ def create_cwop_content(cwop_dict: dict):
         )
     if wind_speed:
         output_list = make_pretty_aprs_messages(
-            message_to_add=f"Spd. {wind_speed}{speedgust_uom}",
+            message_to_add=f"Spd {wind_speed}{speedgust_uom}",
             destination_list=output_list,
         )
     if wind_gust:
@@ -107,28 +119,32 @@ def create_cwop_content(cwop_dict: dict):
             message_to_add=f"Gust {wind_gust}{speedgust_uom}",
             destination_list=output_list,
         )
-    if rain_1h:
-        output_list = make_pretty_aprs_messages(
-            message_to_add=f"Rain 1h {rain_1h}{rain_uom}", destination_list=output_list
-        )
-    if rain_24h:
-        output_list = make_pretty_aprs_messages(
-            message_to_add=f"Rain 24h {rain_24h}{rain_uom}",
-            destination_list=output_list,
-        )
-    if rain_mn:
-        output_list = make_pretty_aprs_messages(
-            message_to_add=f"Rain mn {rain_mn}{rain_uom}", destination_list=output_list
-        )
     if humidity:
         output_list = make_pretty_aprs_messages(
-            message_to_add=f"Hum. {humidity}{humidity_uom}",
+            message_to_add=f"Hum {humidity}{humidity_uom}",
             destination_list=output_list,
         )
     if air_pressure:
         output_list = make_pretty_aprs_messages(
-            message_to_add=f"Press. {air_pressure}{air_pressure_uom}",
+            message_to_add=f"Pres {air_pressure}{air_pressure_uom}",
             destination_list=output_list,
+        )
+    if rain_1h:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"Rain({rain_uom}) 1h={rain_1h}",
+            destination_list=output_list,
+        )
+    if rain_24h:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f", 24h={rain_24h}",
+            destination_list=output_list,
+            add_sep=False,
+        )
+    if rain_mn:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f", mn={rain_mn}",
+            destination_list=output_list,
+            add_sep=False,
         )
 
     return output_list
@@ -226,7 +242,7 @@ def generate_output_message(
         else:
             success = True
             output_list = make_pretty_aprs_messages(
-                message_to_add=f"Unable to get METAR date for {icao_code}"
+                message_to_add=f"No METAR data present for {icao_code}"
             )
             return success, output_list
     #
@@ -321,7 +337,7 @@ def generate_output_message(
         output_list = make_pretty_aprs_messages(
             message_to_add=datetime.datetime.strftime(sunset, "-%H:%M"),
             destination_list=output_list,
-            add_sep=False
+            add_sep=False,
         )
         output_list = make_pretty_aprs_messages(
             message_to_add="moon set/rise", destination_list=output_list
@@ -375,8 +391,12 @@ def generate_output_message(
             lon_hdg,
         ) = convert_latlon_to_dms(latitude=latitude, longitude=longitude)
 
-        human_readable_address = f"DMS:{lat_hdg}{lat_deg:02d}.{lat_min:02d}'{round(lat_sec):02d}"
-        human_readable_address += f", {lon_hdg}{lon_deg:02d}.{lon_min:02d}'{round(lon_sec):02d}"
+        human_readable_address = (
+            f"DMS:{lat_hdg}{lat_deg:02d}.{lat_min:02d}'{round(lat_sec):02d}"
+        )
+        human_readable_address += (
+            f", {lon_hdg}{lon_deg:02d}.{lon_min:02d}'{round(lon_sec):02d}"
+        )
 
         output_list = make_pretty_aprs_messages(
             message_to_add=human_readable_address,
@@ -430,7 +450,6 @@ def generate_output_message(
             output_list = make_pretty_aprs_messages(
                 message_to_add=human_readable_address, destination_list=output_list
             )
-
 
         success = True
         return success, output_list
