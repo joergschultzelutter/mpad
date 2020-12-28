@@ -105,7 +105,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
     date_offset = -1
     when = when_daytime = what = city = state = country = zipcode = cwop_id = None
     icao = human_readable_message = satellite = repeater_band = repeater_mode = None
-    street = street_number = None
+    street = street_number = county = None
 
     # Call sign reference (either the user's call sign or someone
     # else's call sign
@@ -376,6 +376,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                     country = response_data["country"]
                     zipcode = response_data["zipcode"]
                     street = response_data["street"]
+                    country = response_data["county"]
                     street_number = response_data["street_number"]
                     if city:
                         human_readable_message = city
@@ -470,6 +471,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                     state = response_data["state"]
                     country = response_data["country"]
                     zipcode = response_data["zipcode"]
+                    county = response_data["county"]
                     street = response_data["street"]
                     street_number = response_data["street_number"]
                 elif what == "cwop":
@@ -856,6 +858,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                         state = response_data["state"]
                         country = response_data["country"]
                         zipcode = response_data["zipcode"]
+                        county = response_data["county"]
                         street = response_data["street"]
                         street_number = response_data["street_number"]
 
@@ -989,6 +992,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
         "city": city,
         "state": state,
         "country": country,
+        "county": county,
         "zipcode": zipcode,
         "cwop_id": cwop_id,
         "street": street,
