@@ -8,7 +8,13 @@ class MyTestCase(unittest.TestCase):
     def test123(self):
         success, aprsdotfi_api_key, openweathermapdotorg_api_key = read_program_config()
         assert (success == True)
-        success, response_parameters = parsemessage("whereis df1jsl-8", "df1jsl-1", aprsdotfi_api_key)
+
+        message_text="whereis kk6dac-14"
+        from_callsign = "df1jsl-1"
+
+        print(f"parsing message '{message_text}' for callsign '{from_callsign}")
+
+        success, response_parameters = parsemessage(message_text,from_callsign, aprsdotfi_api_key)
         if success:
             print (generate_output_message(response_parameters, openweathermapdotorg_api_key))
         else:

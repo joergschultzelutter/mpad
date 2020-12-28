@@ -358,7 +358,7 @@ def generate_output_message(
 
         grid = convert_latlon_to_maidenhead(latitude=latitude, longitude=longitude)
         output_list = make_pretty_aprs_messages(
-            message_to_add=f"Grid {grid}", destination_list=output_list
+            message_to_add=f"Grid:{grid}", destination_list=output_list
         )
 
         (
@@ -372,7 +372,7 @@ def generate_output_message(
             lon_hdg,
         ) = convert_latlon_to_dms(latitude=latitude, longitude=longitude)
         output_list = make_pretty_aprs_messages(
-            message_to_add=f"DMS:{lat_deg}.{lat_min}'{lat_sec} {lat_hdg} {lon_deg}.{lon_min}'{lon_sec} {lon_hdg}",
+            message_to_add=f"DMS:{lat_deg}.{lat_min}'{round(lat_sec)} {lat_hdg}/{lon_deg}.{lon_min}'{round(lon_sec)} {lon_hdg}",
             destination_list=output_list,
         )
 
@@ -390,7 +390,7 @@ def generate_output_message(
         )
 
         output_list = make_pretty_aprs_messages(
-            message_to_add=f"Lat/Lon:{latitude}/{longitude}",
+            message_to_add=f"LatLon:{latitude}/{longitude}",
             destination_list=output_list,
         )
 
