@@ -10,9 +10,10 @@ from iso3166 import countries
 from geopy.geocoders import Nominatim
 import us
 
-def get_geocode_geopy_data(query_data: dict,
-                           language: str = 'en',
-                           user_agent: str = 'MultiPurposeAPRSDaemon'):
+
+def get_geocode_geopy_data(
+    query_data: dict, language: str = "en", user_agent: str = "MultiPurposeAPRSDaemon"
+):
     """
     Issue a GeoPy 'geocode' request (e.g. qyery for an address,
     zip code etc) and return lat/lon to the user
@@ -50,10 +51,12 @@ def get_geocode_geopy_data(query_data: dict,
     return success, latitude, longitude
 
 
-def get_reverse_geopy_data(latitude: float,
-                           longitude: float,
-                           language: str = 'en',
-                           user_agent: str = 'MultiPurposeAPRSDaemon'):
+def get_reverse_geopy_data(
+    latitude: float,
+    longitude: float,
+    language: str = "en",
+    user_agent: str = "MultiPurposeAPRSDaemon",
+):
     """
     Get human-readable address data for a lat/lon combination
     ==========
@@ -70,52 +73,63 @@ def get_reverse_geopy_data(latitude: float,
     =======
     success: 'bool'
         True if query was successful
-    city: 'str'
-        City for the lat/lon combination (or 'None' if not found)
-    state: 'str'
-        State for the lat/lon combination (or 'None' if not found)
-    country: 'str'
-        ISO-3166 country for the lat/lon combination (or 'None' if not found)
-    zipcode: 'str'
-        zipcode for the lat/lon combination (or 'None' if not found)
+    response_data: 'dict'
+        Response dict with city, country, ...
     """
 
-    city = country = zipcode = state = None
+    city = country = zipcode = state = street = street_number = None
 
     # Geopy Nominatim user agent
     geolocator = Nominatim(user_agent=user_agent)
 
     success = False
     try:
-        # Lookup with zoom level 14 (suburb)
-        location = geolocator.reverse(f"{latitude} {longitude}", language=language, zoom=14)
+        # Lookup with zoom level 18 (building)
+        location = geolocator.reverse(
+            f"{latitude} {longitude}", language=language, zoom=18
+        )
     except TypeError:
         location = None
     if location:
-        if 'address' in location.raw:
+        if "address" in location.raw:
             success = True
-            if 'city' in location.raw['address']:
-                city = location.raw['address']['city']
-            if 'town' in location.raw['address']:
-                city = location.raw['address']['town']
-            if 'village' in location.raw['address']:
-                city = location.raw['address']['village']
-            if 'hamlet' in location.raw['address']:
-                city = location.raw['address']['hamlet']
-            if 'country_code' in location.raw['address']:
-                country = location.raw['address']['country_code']
+            if "city" in location.raw["address"]:
+                city = location.raw["address"]["city"]
+            if "town" in location.raw["address"]:
+                city = location.raw["address"]["town"]
+            if "village" in location.raw["address"]:
+                city = location.raw["address"]["village"]
+            if "hamlet" in location.raw["address"]:
+                city = location.raw["address"]["hamlet"]
+            if "country_code" in location.raw["address"]:
+                country = location.raw["address"]["country_code"]
                 country = country.upper()
-            if 'postcode' in location.raw['address']:
-                zipcode = location.raw['address']['postcode']
-            if 'state' in location.raw['address']:
-                state = location.raw['address']['state']
+            if "postcode" in location.raw["address"]:
+                zipcode = location.raw["address"]["postcode"]
+            if "road" in location.raw["address"]:
+                street = location.raw["address"]["road"]
+            if "house_number" in location.raw["address"]:
+                street_number = location.raw["address"]["house_number"]
+            if "state" in location.raw["address"]:
+                state = location.raw["address"]["state"]
                 if country == "US":  # State is returned in full; shorten it
                     try:
                         x = us.states.lookup(state)
                         state = x.abbr
                     except:
                         state = None
-    return success, city, state, country, zipcode
+
+    response_data = {
+        "city": city,
+        "state": state,
+        "country": country,
+        "zipcode": zipcode,
+        "street": street,
+        "street_number": street_number,
+    }
+
+    return success, response_data
+
 
 def validate_country(country: str):
     """
@@ -136,5 +150,6 @@ def validate_country(country: str):
         success = False
     return success
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     print(get_reverse_geopy_data(37.7790262, -122.4199061))
