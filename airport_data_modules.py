@@ -130,6 +130,11 @@ def get_metar_data(icao_code: str):
         (or "NOTFOUND" if no data was found)
     """
 
+    # dictionary exists but is empty? Then read content from disc
+    # ignore any errors; in that case, the modes simply won't work
+    if not icao_dict or not iata_dict:
+        read_icao_and_iata_data()
+
     resp = requests.get(
         f"https://www.aviationweather.gov/"
         f"adds/metars/?station_ids={icao_code}"
@@ -166,6 +171,8 @@ def validate_iata(iata_code: str):
 
     Returns
     =======
+    success: 'bool'
+        True if operation was successful
     latitude: 'float'
         Latitude of the airport (or 0.0 if not found)
     longitude: 'float'
@@ -174,9 +181,8 @@ def validate_iata(iata_code: str):
         Identifies if the airport is METAR capable or not
         (True = METAR capable)
     icao_code: 'str'
-        ICAO airport code for the given IATA code
-    success: 'bool'
-        True if operation was successful
+        ICAO airport code for the given IATA code (the
+        original iata code is not returned)
     """
 
     latitude: float = 0.0
@@ -185,11 +191,16 @@ def validate_iata(iata_code: str):
     success: bool = False
     icao_code: str = None
 
+    # dictionary exists but is empty? Then read content from disc
+    # ignore any errors; in that case, the modes simply won't work
+    if not icao_dict or not iata_dict:
+        read_icao_and_iata_data()
+
     iata_code = iata_code.upper()
     if iata_code in iata_dict:
         if iata_code in iata_dict:
             icao_code = iata_dict[iata_code]["icao"]
-            latitude, longitude, metar_capable, icao_code, success = validate_icao(
+            success, latitude, longitude, metar_capable, icao_code = validate_icao(
                 icao_code
             )
 
@@ -225,6 +236,11 @@ def validate_icao(icao_code: str):
     longitude: float = 0.0
     metar_capable: bool = False
     success: bool = False
+
+    # dictionary exists but is empty? Then read content from disc
+    # ignore any errors; in that case, the modes simply won't work
+    if not icao_dict or not iata_dict:
+        read_icao_and_iata_data()
 
     icao_code = icao_code.upper()
     if icao_code in icao_dict:
@@ -297,6 +313,11 @@ def get_nearest_icao(latitude: float, longitude: float):
     nearesticao: str = None
     nearest = 12000
 
+    # dictionary exists but is empty? Then read content from disc
+    # ignore any errors; in that case, the modes simply won't work
+    if not icao_dict or not iata_dict:
+        read_icao_and_iata_data()
+
     # convert lat/lon degrees to radians
     lat1 = latitude * 0.0174533
     lon1 = longitude * 0.0174533
@@ -321,7 +342,6 @@ def get_nearest_icao(latitude: float, longitude: float):
 
 
 if __name__ == "__main__":
-    print(read_icao_and_iata_data("stations.txt"))
     print(get_metar_data("EDDF"))
     print(validate_iata("FRA"))
     print(validate_icao("EDDF"))
