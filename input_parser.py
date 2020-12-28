@@ -456,11 +456,11 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             )
             if success:
                 if what == "wx":
-                    human_readable_message = f"Wx for {message_callsign}"
+                    human_readable_message = f"Wx {message_callsign}"
                 elif what == "riseset":
-                    human_readable_message = f"Rise/Set for {message_callsign}"
+                    human_readable_message = f"RiseSet {message_callsign}"
                 elif what == "whereis":
-                    human_readable_message = f"Pos for {message_callsign}"
+                    human_readable_message = f"Pos {message_callsign}"
                     # Try to get the user's human readable address based on lat/lon
                     # we ignore any errors as all output fields will be properly initialized with default values
                     success, response_data = get_reverse_geopy_data(
