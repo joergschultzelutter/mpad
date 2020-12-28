@@ -11,15 +11,17 @@ from utility_modules import make_pretty_aprs_messages
 from utility_modules import read_program_config
 
 
-def get_daily_weather_from_openweathermapdotorg(latitude: float,
-                                                longitude: float,
-                                                date_offset: int,
-                                                openweathermap_api_key: str,
-                                                units: str = 'metric'):
+def get_daily_weather_from_openweathermapdotorg(
+    latitude: float,
+    longitude: float,
+    date_offset: int,
+    openweathermap_api_key: str,
+    units: str = "metric",
+):
     """
-    Gets the OWM 'onecall' weather forecast for a given latitide 
-    and longitude and tries to extract the raw weather data for 
-    a certain date. Unit (imperial or metric) is forwarded to 
+    Gets the OWM 'onecall' weather forecast for a given latitide
+    and longitude and tries to extract the raw weather data for
+    a certain date. Unit (imperial or metric) is forwarded to
     OpenWeatherMap in order to get the user's wx forecast
     in his desired unit of measure
 
@@ -43,10 +45,10 @@ def get_daily_weather_from_openweathermapdotorg(latitude: float,
     success: 'bool'
         True if we were able to download the data
     weather_tuple: 'dict'
-        JSON weather tuple for the requested day. 
+        JSON weather tuple for the requested day.
         Format: see https://openweathermap.org/api/one-call-api
     timezone_offset: 'int'
-        Shift in seconds from UTC.  
+        Shift in seconds from UTC.
         Format: see https://openweathermap.org/api/one-call-api
     timezone: 'str'
         Timezone name for the requested location
@@ -59,7 +61,7 @@ def get_daily_weather_from_openweathermapdotorg(latitude: float,
     if date_offset < 0 or date_offset > 7:
         return success, weather_tuple, timezone_offset, timezone_offset
 
-    if units not in ['imperial','metric']:
+    if units not in ["imperial", "metric"]:
         return success, weather_tuple, timezone_offset, timezone_offset
 
     # Issue the request to OWN
@@ -68,28 +70,31 @@ def get_daily_weather_from_openweathermapdotorg(latitude: float,
     if resp.status_code == 200:
         x = resp.json()
         # get weather for the given day offset
-        if 'daily' in x:
-            weather_tuple = x['daily'][date_offset]
+        if "daily" in x:
+            weather_tuple = x["daily"][date_offset]
             success = True
-        if 'timezone_offset' in x:
-            timezone_offset = x['timezone_offset']
-        if 'timezone' in x:
-            timezone = x['timezone']
+        if "timezone_offset" in x:
+            timezone_offset = x["timezone_offset"]
+        if "timezone" in x:
+            timezone = x["timezone"]
 
     return success, weather_tuple, timezone_offset, timezone
 
-def parse_daily_weather_from_openweathermapdotorg(weather_tuple: dict,units: str,requested_address: str,when: str, when_dt: str):
+
+def parse_daily_weather_from_openweathermapdotorg(
+    weather_tuple: dict, units: str, requested_address: str, when: str, when_dt: str
+):
     """
     Parses the wx data for a given day (as returned by function
     get_daily_weather_from_openweathermapdotorg). Once the data has been
     parsed, it will build a human-readable text array, consisting of
     1..n text messages with 1..67 characters in length. This is the data
-    that will ultimately be sent to the user.  
+    that will ultimately be sent to the user.
 
     Parameters
     ==========
     weather_tuple: 'dict'
-        JSON weather tuple substring for the requested day. 
+        JSON weather tuple substring for the requested day.
         Format: see https://openweathermap.org/api/one-call-api
     units: 'str'
         Unit of measure. Can either be 'metric' or 'imperial'
@@ -98,11 +103,11 @@ def parse_daily_weather_from_openweathermapdotorg(weather_tuple: dict,units: str
         has requested the wx forecast
     when: 'str':
         Contains the human-readable date/time for which the user
-        has requested the wx forecast. 
+        has requested the wx forecast.
     when_dt: 'str'
         Parameter that tells the daytime for the wx forcast. Can
         be 'full', 'morning', 'daytime', 'evening', 'night'
-    
+
 
     Returns
     =======
@@ -123,127 +128,175 @@ def parse_daily_weather_from_openweathermapdotorg(weather_tuple: dict,units: str
     # Set some unit-of-measure defaults...
     temp_uom = "c"
     wind_speed_uom = "m/s"
-    rain_uom="mm"
-    snow_uom="mm"
+    rain_uom = "mm"
+    snow_uom = "mm"
     pressure_uom = "hPa"
-    humidity_uom="%"
-    wind_deg_uom=""
-    clouds_uom="%"
-    visibility_uom="m"
+    humidity_uom = "%"
+    wind_deg_uom = ""
+    clouds_uom = "%"
+    visibility_uom = "m"
 
     # Contains either the 'when' command string or
     # a real date (if present in the wx data)
     when_text = when
 
     # and override some of these settings if the user has requested imperial UOM over metric defaults
-    if (units == "imperial"):
+    if units == "imperial":
         temp_uom = "f"
         wind_speed_uom = "mph"
 
     # Now extract content from the JSON import (if present)
     if weather_tuple:
         # If we have a time stamp, then let's provide a real date to the user
-        if 'dt' in weather_tuple:
-            w_dt = weather_tuple['dt']
+        if "dt" in weather_tuple:
+            w_dt = weather_tuple["dt"]
             tmp_dt = datetime.fromtimestamp(w_dt)
             when_text = datetime.strftime(tmp_dt, "%d-%b-%y")
-        if 'sunrise' in weather_tuple:
-            w_sunrise = weather_tuple['sunrise']
-        if 'sunset' in weather_tuple:
-            w_sunset = weather_tuple['sunset']
-        if 'temp' in weather_tuple:
-            w_temp_day = weather_tuple['temp']['day']
-            w_temp_night = weather_tuple['temp']['night']
-            w_temp_eve = weather_tuple['temp']['eve']
-            w_temp_morn = weather_tuple['temp']['morn']
-        if 'pressure' in weather_tuple:
-            w_pressure = weather_tuple['pressure']
-        if 'humidity' in weather_tuple:
-            w_humidity = weather_tuple['humidity']
-        if 'dew_point' in weather_tuple:
-            w_dew_point = weather_tuple['dew_point']
-        if 'wind_speed' in weather_tuple:
-            w_wind_speed = weather_tuple['wind_speed']
-        if 'wind_deg' in weather_tuple:
-            w_wind_deg = weather_tuple['wind_deg']
-        if 'weather' in weather_tuple:
-            w_weather_description = weather_tuple['weather'][0]['description']
-        if 'uvi' in weather_tuple:
-            w_uvi = weather_tuple['uvi']
-        if 'clouds' in weather_tuple:
-            w_clouds = weather_tuple['clouds']
-        if 'rain' in weather_tuple:
-            w_rain = weather_tuple['rain']
-        if 'snow' in weather_tuple:
-            w_snow = weather_tuple['snow']
-        if 'visibility' in weather_tuple:
-            w_visibility = weather_tuple['visibility']
+        if "sunrise" in weather_tuple:
+            w_sunrise = weather_tuple["sunrise"]
+        if "sunset" in weather_tuple:
+            w_sunset = weather_tuple["sunset"]
+        if "temp" in weather_tuple:
+            w_temp_day = weather_tuple["temp"]["day"]
+            w_temp_night = weather_tuple["temp"]["night"]
+            w_temp_eve = weather_tuple["temp"]["eve"]
+            w_temp_morn = weather_tuple["temp"]["morn"]
+        if "pressure" in weather_tuple:
+            w_pressure = weather_tuple["pressure"]
+        if "humidity" in weather_tuple:
+            w_humidity = weather_tuple["humidity"]
+        if "dew_point" in weather_tuple:
+            w_dew_point = weather_tuple["dew_point"]
+        if "wind_speed" in weather_tuple:
+            w_wind_speed = weather_tuple["wind_speed"]
+        if "wind_deg" in weather_tuple:
+            w_wind_deg = weather_tuple["wind_deg"]
+        if "weather" in weather_tuple:
+            w_weather_description = weather_tuple["weather"][0]["description"]
+        if "uvi" in weather_tuple:
+            w_uvi = weather_tuple["uvi"]
+        if "clouds" in weather_tuple:
+            w_clouds = weather_tuple["clouds"]
+        if "rain" in weather_tuple:
+            w_rain = weather_tuple["rain"]
+        if "snow" in weather_tuple:
+            w_snow = weather_tuple["snow"]
+        if "visibility" in weather_tuple:
+            w_visibility = weather_tuple["visibility"]
 
         # Now we have everything we need. Build the content that we
         # want to return back to the user. We use a function that
         # prevents the final messages from being split up in the
-        # middle of the respective substrings. 
+        # middle of the respective substrings.
 
         # Start with the human-readable address that the user has requested.
-        weather_forecast_array = make_pretty_aprs_messages(f"{requested_address} {when_text}",weather_forecast_array)
+        weather_forecast_array = make_pretty_aprs_messages(
+            f"{when_text} {requested_address}", weather_forecast_array
+        )
 
         # Add the forecast string
         if w_weather_description:
-            weather_forecast_array = make_pretty_aprs_messages(w_weather_description,weather_forecast_array)
+            weather_forecast_array = make_pretty_aprs_messages(
+                w_weather_description, weather_forecast_array
+            )
 
         # Add temperatures whereas applicable per 'when_dt' parameters
         if w_temp_day or w_temp_morn or w_temp_eve or w_temp_night:
-            if w_temp_morn and when_dt in ['full','morning']:
-                weather_forecast_array = make_pretty_aprs_messages(f"morn:{w_temp_morn:.0f}{temp_uom}",weather_forecast_array)
-            if w_temp_day and when_dt in ['full','daytime']:
-                weather_forecast_array = make_pretty_aprs_messages(f"day:{w_temp_day:.0f}{temp_uom}", weather_forecast_array)
-            if w_temp_eve and when_dt in ['full','evening']:
-                weather_forecast_array = make_pretty_aprs_messages(f"eve:{w_temp_eve:.0f}{temp_uom}", weather_forecast_array)
-            if w_temp_night and when_dt in ['full', 'night']:
-                weather_forecast_array = make_pretty_aprs_messages(f"nite:{w_temp_night:.0f}{temp_uom}", weather_forecast_array)
+            if w_temp_morn and when_dt in ["full", "morning"]:
+                weather_forecast_array = make_pretty_aprs_messages(
+                    f"morn:{w_temp_morn:.0f}{temp_uom}", weather_forecast_array
+                )
+            if w_temp_day and when_dt in ["full", "daytime"]:
+                weather_forecast_array = make_pretty_aprs_messages(
+                    f"day:{w_temp_day:.0f}{temp_uom}", weather_forecast_array
+                )
+            if w_temp_eve and when_dt in ["full", "evening"]:
+                weather_forecast_array = make_pretty_aprs_messages(
+                    f"eve:{w_temp_eve:.0f}{temp_uom}", weather_forecast_array
+                )
+            if w_temp_night and when_dt in ["full", "night"]:
+                weather_forecast_array = make_pretty_aprs_messages(
+                    f"nite:{w_temp_night:.0f}{temp_uom}", weather_forecast_array
+                )
 
         # Sunrise and Sunset
         if w_sunset and w_sunrise:
             tmp1 = datetime.fromtimestamp(w_sunrise)
             tmp2 = datetime.fromtimestamp(w_sunset)
-            weather_forecast_array = make_pretty_aprs_messages(f"sunrise/set {tmp1.hour:02d}:{tmp1.minute:02d}/{tmp2.hour:02d}:{tmp2.minute:02d}UTC", weather_forecast_array)
+            weather_forecast_array = make_pretty_aprs_messages(
+                f"sunrise/set {tmp1.hour:02d}:{tmp1.minute:02d}/{tmp2.hour:02d}:{tmp2.minute:02d}UTC",
+                weather_forecast_array,
+            )
         elif w_sunrise and not w_sunset:
             tmp = datetime.fromtimestamp(w_sunrise)
-            weather_forecast_array = make_pretty_aprs_messages(f"sunrise {tmp.hour}:{tmp.minute}UTC",weather_forecast_array)
+            weather_forecast_array = make_pretty_aprs_messages(
+                f"sunrise {tmp.hour}:{tmp.minute}UTC", weather_forecast_array
+            )
         else:
             tmp = datetime.fromtimestamp(w_sunset)
-            weather_forecast_array = make_pretty_aprs_messages(f"sunset {tmp.hour}:{tmp.minute}UTC",weather_forecast_array)
+            weather_forecast_array = make_pretty_aprs_messages(
+                f"sunset {tmp.hour}:{tmp.minute}UTC", weather_forecast_array
+            )
 
         # Add remaining parameters
         if w_rain:
-            weather_forecast_array = make_pretty_aprs_messages(f"rain:{w_rain:.0f}{rain_uom}",weather_forecast_array)
+            weather_forecast_array = make_pretty_aprs_messages(
+                f"rain:{w_rain:.0f}{rain_uom}", weather_forecast_array
+            )
         if w_snow:
-            weather_forecast_array = make_pretty_aprs_messages(f"snow:{w_snow:.0f}{snow_uom}", weather_forecast_array)
+            weather_forecast_array = make_pretty_aprs_messages(
+                f"snow:{w_snow:.0f}{snow_uom}", weather_forecast_array
+            )
         if w_clouds:
-            weather_forecast_array = make_pretty_aprs_messages(f"clouds:{w_clouds}{clouds_uom}", weather_forecast_array)
+            weather_forecast_array = make_pretty_aprs_messages(
+                f"clouds:{w_clouds}{clouds_uom}", weather_forecast_array
+            )
         if w_uvi:
-            weather_forecast_array = make_pretty_aprs_messages(f"uvi:{w_uvi:.1f}",weather_forecast_array)
+            weather_forecast_array = make_pretty_aprs_messages(
+                f"uvi:{w_uvi:.1f}", weather_forecast_array
+            )
         if w_pressure:
-            weather_forecast_array = make_pretty_aprs_messages(f"{pressure_uom}:{w_pressure}",weather_forecast_array)
+            weather_forecast_array = make_pretty_aprs_messages(
+                f"{pressure_uom}:{w_pressure}", weather_forecast_array
+            )
         if w_humidity:
-            weather_forecast_array = make_pretty_aprs_messages(f"hum:{w_humidity}{humidity_uom}",weather_forecast_array)
+            weather_forecast_array = make_pretty_aprs_messages(
+                f"hum:{w_humidity}{humidity_uom}", weather_forecast_array
+            )
         if w_dew_point:
-            weather_forecast_array = make_pretty_aprs_messages(f"dewpt:{w_dew_point:.0f}{temp_uom}",weather_forecast_array)
+            weather_forecast_array = make_pretty_aprs_messages(
+                f"dewpt:{w_dew_point:.0f}{temp_uom}", weather_forecast_array
+            )
         if w_wind_speed:
-            weather_forecast_array = make_pretty_aprs_messages(f"wndspd:{w_wind_speed:.0f}{wind_speed_uom}",weather_forecast_array)
+            weather_forecast_array = make_pretty_aprs_messages(
+                f"wndspd:{w_wind_speed:.0f}{wind_speed_uom}", weather_forecast_array
+            )
         if w_wind_deg:
-            weather_forecast_array = make_pretty_aprs_messages(f"wnddeg:{w_wind_deg}{wind_deg_uom}",weather_forecast_array)
+            weather_forecast_array = make_pretty_aprs_messages(
+                f"wnddeg:{w_wind_deg}{wind_deg_uom}", weather_forecast_array
+            )
         if w_visibility:
-            weather_forecast_array = make_pretty_aprs_messages(f"vis:{w_visibility}{visibility_uom}",weather_forecast_array)
+            weather_forecast_array = make_pretty_aprs_messages(
+                f"vis:{w_visibility}{visibility_uom}", weather_forecast_array
+            )
 
-        # Ultimately, return the array 
+        # Ultimately, return the array
         return weather_forecast_array
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     success, aprsdotfi_api_key, openweathermap_api_key = read_program_config()
     if success:
-        success, weather_tuple, timezone_offset, timezone = get_daily_weather_from_openweathermapdotorg(51.8458575,8.2997425,0, openweathermap_api_key, 'metric')
+        (
+            success,
+            weather_tuple,
+            timezone_offset,
+            timezone,
+        ) = get_daily_weather_from_openweathermapdotorg(
+            51.8458575, 8.2997425, 0, openweathermap_api_key, "metric"
+        )
         if success:
-            my_weather_forecast_array = parse_daily_weather_from_openweathermapdotorg(weather_tuple,'metric','Und jetzt das Wetter',"Samstag","full")
-            print (my_weather_forecast_array)
+            my_weather_forecast_array = parse_daily_weather_from_openweathermapdotorg(
+                weather_tuple, "metric", "Und jetzt das Wetter", "Samstag", "full"
+            )
+            print(my_weather_forecast_array)
