@@ -225,18 +225,16 @@ def generate_output_message(
     # METAR data?
     # At this point in time, we know for sure that the airport is METAR
     # capable. If we are still unable to retrieve that METAR data, then
-    # this is a error for us
+    # output the error message to the user
+    # (human_readable_message) from imput parser is ignored in order to
+    # shorten the user message
     #
     if what == "metar":
         icao_code = response_parameters["icao"]
-        human_readable_message = response_parameters["human_readable_message"]
         success, metar_response = get_metar_data(icao_code=icao_code)
         if success:
             output_list = make_pretty_aprs_messages(
-                message_to_add=human_readable_message
-            )
-            output_list = make_pretty_aprs_messages(
-                message_to_add=metar_response, destination_list=output_list
+                message_to_add=metar_response,
             )
             return success, output_list
         else:
