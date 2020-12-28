@@ -406,7 +406,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
     # sequence and -if found- use the user's call sign
     #
     if not found_my_duty_roster and not err:
-        regex_string = r"(wx|whereis|riseset|cwop|metar)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[0-9]{1,2})"
+        regex_string = r"(wx|whereis|riseset|cwop|metar)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[a-zA-Z0-9]{1,2})"
         matches = re.search(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
