@@ -737,7 +737,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                     else:
                         human_readable_message = message_callsign
 
-            # Try to check if the user has submitted an IATA code without
+            # Try to check if the user has submitted an ICAO code without
             # submitting a specific pre- qualifier prefix
             # If yes, then assume that we want METAR data unless the airport
             # does not support METAR (in that case, we will go for standard wx)
@@ -996,7 +996,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
         "zipcode": zipcode,
         "cwop_id": cwop_id,
         "street": street,
-        "street_number": street_number
+        "street_number": street_number,
     }
 
     # Finally, set the return code. Unless there was an error, we return a True status
