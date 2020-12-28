@@ -326,7 +326,7 @@ def generate_output_message(
             destination_list=output_list,
         )
         output_list = make_pretty_aprs_messages(
-            message_to_add="GMT sun rise/set", destination_list=output_list
+            message_to_add="GMT sun_rs", destination_list=output_list
         )
         output_list = make_pretty_aprs_messages(
             message_to_add=datetime.datetime.strftime(sunrise, "%H:%M"),
@@ -338,7 +338,7 @@ def generate_output_message(
             add_sep=False,
         )
         output_list = make_pretty_aprs_messages(
-            message_to_add="moon set/rise", destination_list=output_list
+            message_to_add="mn_sr", destination_list=output_list
         )
         output_list = make_pretty_aprs_messages(
             message_to_add=datetime.datetime.strftime(moonset, "%H:%M"),
@@ -504,7 +504,9 @@ def generate_output_message(
                 output_list = make_pretty_aprs_messages(
                     f"Tx {tx_frequency}", output_list
                 )
-                output_list = make_pretty_aprs_messages(f"{remarks}", output_list)
+                # Remarks können leer sein
+                if remarks:
+                    output_list = make_pretty_aprs_messages(f"{remarks}", output_list)
                 output_list = make_pretty_aprs_messages(f"{mode}", output_list)
                 output_list = make_pretty_aprs_messages(f"{band}", output_list)
                 output_list = make_pretty_aprs_messages(f"{locator}", output_list)
