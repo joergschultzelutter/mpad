@@ -45,6 +45,7 @@ Python implementation of an APRS Multi-Purpose Daemon (wx forecast, sat data, ge
 - Access to openweathermap.org requires an API key which comes with a certain traffic limit
 - Currently, all timestamps returned by the program use UTC as time zone. Implicitly, this constraint also applies to the time-related program keywords (see [USAGE.md](USAGE.md)) which instructs the program to return data for a certain time of the day. When in doubt, do NOT limit your data to a certain time slot of the day ('full' day is the program default).
 - APRS 'TOCALL' identifier is currently still set to default 'APRS' (see WXBOT implementation); MPAD needs its own identifier (see http://www.aprs.org/aprs11/tocalls.txt)
+- Call signs which deviate from a 'normal' call sign pattern may currently not be recognised (e.g. call signs for bots etc)
 
 ## Usage examples and command syntax
 
