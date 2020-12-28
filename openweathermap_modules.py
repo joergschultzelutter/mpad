@@ -131,6 +131,10 @@ def parse_daily_weather_from_openweathermapdotorg(weather_tuple: dict,units: str
     clouds_uom="%"
     visibility_uom="m"
 
+    # Contains either the 'when' command string or
+    # a real date (if present in the wx data)
+    when_text = when
+
     # and override some of these settings if the user has requested imperial UOM over metric defaults
     if (units == "imperial"):
         temp_uom = "f"
@@ -138,6 +142,11 @@ def parse_daily_weather_from_openweathermapdotorg(weather_tuple: dict,units: str
 
     # Now extract content from the JSON import (if present)
     if weather_tuple:
+        # If we have a time stamp, then let's provide a real date to the user
+        if 'dt' in weather_tuple:
+            w_dt = weather_tuple['dt']
+            tmp_dt = datetime.fromtimestamp(w_dt)
+            when_text = datetime.strftime(tmp_dt, "%d-%b-%y")
         if 'sunrise' in weather_tuple:
             w_sunrise = weather_tuple['sunrise']
         if 'sunset' in weather_tuple:
@@ -176,7 +185,7 @@ def parse_daily_weather_from_openweathermapdotorg(weather_tuple: dict,units: str
         # middle of the respective substrings. 
 
         # Start with the human-readable address that the user has requested.
-        weather_forecast_array = make_pretty_aprs_messages(f"{requested_address} {when}: ",weather_forecast_array)
+        weather_forecast_array = make_pretty_aprs_messages(f"{requested_address} {when_text}",weather_forecast_array)
 
         # Add the forecast string
         if w_weather_description:
