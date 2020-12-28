@@ -353,8 +353,11 @@ def get_nearest_repeater(
     success = False
     nearest = 12000
 
-    mode = mode.upper()
-    band = band.lower()
+    # apply some convenience settings
+    if mode:
+        mode = mode.upper()
+    if band:
+        band = band.lower()
     if mode == "D-STAR":
         mode = "DSTAR"
 
@@ -391,17 +394,19 @@ def get_nearest_repeater(
     if nearest_repeater_id:
 
         # Yes; extract the content from the dictionary
-        locator = mpad_repeater_dictionary[nearest_repeater_id]["locator"]
-        latitude_repeater = mpad_repeater_dictionary[nearest_repeater_id]["latitude"]
-        longitude_repeater = mpad_repeater_dictionary[nearest_repeater_id]["longitude"]
-        mode = mpad_repeater_dictionary[nearest_repeater_id]["mode"]
-        rx_frequency = mpad_repeater_dictionary[nearest_repeater_id]["rx_frequency"]
-        tx_frequency = mpad_repeater_dictionary[nearest_repeater_id]["tx_frequency"]
-        band = mpad_repeater_dictionary[nearest_repeater_id]["band_name"]
-        elevation = mpad_repeater_dictionary[nearest_repeater_id]["elevation"]
-        remarks = mpad_repeater_dictionary[nearest_repeater_id]["remarks"]
-        qth = mpad_repeater_dictionary[nearest_repeater_id]["qth"]
-        callsign = mpad_repeater_dictionary[nearest_repeater_id]["callsign"]
+        locator = mpad_repeatermap_dictionary[nearest_repeater_id]["locator"]
+        latitude_repeater = mpad_repeatermap_dictionary[nearest_repeater_id]["latitude"]
+        longitude_repeater = mpad_repeatermap_dictionary[nearest_repeater_id][
+            "longitude"
+        ]
+        mode = mpad_repeatermap_dictionary[nearest_repeater_id]["mode"]
+        rx_frequency = mpad_repeatermap_dictionary[nearest_repeater_id]["rx_frequency"]
+        tx_frequency = mpad_repeatermap_dictionary[nearest_repeater_id]["tx_frequency"]
+        band = mpad_repeatermap_dictionary[nearest_repeater_id]["band_name"]
+        elevation = mpad_repeatermap_dictionary[nearest_repeater_id]["elevation"]
+        remarks = mpad_repeatermap_dictionary[nearest_repeater_id]["remarks"]
+        qth = mpad_repeatermap_dictionary[nearest_repeater_id]["qth"]
+        callsign = mpad_repeatermap_dictionary[nearest_repeater_id]["callsign"]
 
         # Calculate distance/bearing/direction between user's position and repeater position
         distance, bearing, direction = Haversine(
