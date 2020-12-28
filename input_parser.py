@@ -105,6 +105,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
     date_offset = -1
     when = when_daytime = what = city = state = country = zipcode = cwop_id = None
     icao = human_readable_message = satellite = repeater_band = repeater_mode = None
+    street = street_number = None
 
     # Call sign reference (either the user's call sign or someone
     # else's call sign
@@ -365,10 +366,17 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                 success = False
             if success:
                 # try to get human-readable coordinates
-                success, city, state, country, zipcode = get_reverse_geopy_data(
+                success, response_data = get_reverse_geopy_data(
                     latitude=latitude, longitude=longitude, language=language
                 )
                 if success:
+                    # extract response fields; one/all can be 'None'
+                    city = response_data["city"]
+                    state = response_data["state"]
+                    country = response_data["country"]
+                    zipcode = response_data["zipcode"]
+                    street = response_data["street"]
+                    street_number = response_data["street_number"]
                     if city:
                         human_readable_message = city
                         if country:
@@ -454,9 +462,16 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                     human_readable_message = f"Pos for {message_callsign}"
                     # Try to get the user's human readable address based on lat/lon
                     # we ignore any errors as all output fields will be properly initialized with default values
-                    success, city, state, country, zipcode = get_reverse_geopy_data(
+                    success, response_data = get_reverse_geopy_data(
                         latitude=latitude, longitude=longitude
                     )
+                    # extract response fields; one/all can be 'None'
+                    city = response_data["city"]
+                    state = response_data["state"]
+                    country = response_data["country"]
+                    zipcode = response_data["zipcode"]
+                    street = response_data["street"]
+                    street_number = response_data["street_number"]
                 elif what == "cwop":
                     human_readable_message = f"CWOP for {message_callsign}"
                     what = "cwop_by_latlon"
@@ -833,9 +848,16 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                     else:
                         # Finally, try to get the user's human readable address
                         # we ignore any errors as all output fields will be properly initialized with default values
-                        success, city, state, country, zipcode = get_reverse_geopy_data(
+                        success, response_data = get_reverse_geopy_data(
                             latitude=latitude, longitude=longitude
                         )
+                        # extract response fields; one/all can be 'None'
+                        city = response_data["city"]
+                        state = response_data["state"]
+                        country = response_data["country"]
+                        zipcode = response_data["zipcode"]
+                        street = response_data["street"]
+                        street_number = response_data["street_number"]
 
             # Parse the "when" information if we don't have an error
             # and if we haven't retrieved the command data in a previous run
@@ -969,6 +991,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
         "country": country,
         "zipcode": zipcode,
         "cwop_id": cwop_id,
+        "street": street,
+        "street_number": street_number
     }
 
     # Finally, set the return code. Unless there was an error, we return a True status

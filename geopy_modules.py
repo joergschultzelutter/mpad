@@ -77,7 +77,7 @@ def get_reverse_geopy_data(
         Response dict with city, country, ...
     """
 
-    city = country = zipcode = state = street = street_number = None
+    city = country = zipcode = state = street = street_number = county = None
 
     # Geopy Nominatim user agent
     geolocator = Nominatim(user_agent=user_agent)
@@ -101,6 +101,8 @@ def get_reverse_geopy_data(
                 city = location.raw["address"]["village"]
             if "hamlet" in location.raw["address"]:
                 city = location.raw["address"]["hamlet"]
+            if "county" in location.raw["address"]:
+                county = location.raw["address"]["county"]
             if "country_code" in location.raw["address"]:
                 country = location.raw["address"]["country_code"]
                 country = country.upper()
@@ -118,10 +120,14 @@ def get_reverse_geopy_data(
                         state = x.abbr
                     except:
                         state = None
+            if not city:
+                if "man_made" in location.raw["address"]:
+                    city = location.raw["address"]["man_made"]
 
     response_data = {
         "city": city,
         "state": state,
+        "county": county,
         "country": country,
         "zipcode": zipcode,
         "street": street,

@@ -353,6 +353,8 @@ def generate_output_message(
         state = response_parameters["state"]
         zipcode = response_parameters["zipcode"]
         country = response_parameters["country"]
+        street = response_parameters["street"]
+        street_number = response_parameters["street_number"]
 
         output_list = make_pretty_aprs_messages(message_to_add=human_readable_message)
 
@@ -386,7 +388,7 @@ def generate_output_message(
 
         mgrs = convert_latlon_to_mgrs(latitude=latitude, longitude=longitude)
         output_list = make_pretty_aprs_messages(
-            message_to_add=f"MGRS: {mgrs}", destination_list=output_list
+            message_to_add=f"MGRS:{mgrs}", destination_list=output_list
         )
 
         output_list = make_pretty_aprs_messages(
@@ -401,11 +403,21 @@ def generate_output_message(
                 human_readable_address += f", {zipcode}"
             if country:
                 human_readable_address += f", {country}"
-
         if human_readable_address:
             output_list = make_pretty_aprs_messages(
                 message_to_add=human_readable_address, destination_list=output_list
             )
+
+        human_readable_address = None
+        if street:
+            human_readable_address = street
+            if street_number:
+                human_readable_address += f" {street_number}"
+        if human_readable_address:
+            output_list = make_pretty_aprs_messages(
+                message_to_add=human_readable_address, destination_list=output_list
+            )
+
 
         success = True
         return success, output_list

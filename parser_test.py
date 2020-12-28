@@ -9,10 +9,11 @@ class MyTestCase(unittest.TestCase):
         success, aprsdotfi_api_key, openweathermapdotorg_api_key = read_program_config()
         assert (success == True)
 
-        message_text="whereis kk6dac-14"
+#        message_text="whereis CA5NIW-R"
+        message_text="whereis k6cdf-6"
         from_callsign = "df1jsl-1"
 
-        print(f"parsing message '{message_text}' for callsign '{from_callsign}")
+        print(f"parsing message '{message_text}' for callsign '{from_callsign}'")
 
         success, response_parameters = parsemessage(message_text,from_callsign, aprsdotfi_api_key)
         if success:
