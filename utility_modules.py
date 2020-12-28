@@ -9,6 +9,7 @@ import configparser
 import os.path
 from timezonefinder import TimezoneFinder
 import re
+from unidecode import unidecode
 
 
 def make_pretty_aprs_messages(
@@ -92,7 +93,7 @@ def make_pretty_aprs_messages(
     message_to_add = re.sub("[{}|~]+", "", message_to_add)
 
     # Convert the message to plain ascii
-    message_to_add = convert_to_plain_ascii(message_to_add)
+    message_to_add = unidecode(message_to_add)
 
     # If new message is longer than max len then split it up with
     # max chunks of max_len bytes and add it to the array.
@@ -238,34 +239,6 @@ def read_program_config(config_file_name: str = "mpad.cfg"):
         except:
             success = False
     return success, aprsdotfi_cfg_key, openweathermapdotorg_api_key
-
-
-def convert_to_plain_ascii(source_string):
-    """
-    Tries to convert any content to plain ascii
-    Also removes German Umlauts
-
-    Parameters
-    ==========
-    source_string: 'str'
-        string that we want to convert to plain ascii
-
-    Returns
-    =======
-    _: 'str'
-        Converted string
-    """
-    return (
-        source_string.replace("Ü", "Ue")
-        .replace("Ä", "Ae")
-        .replace("Ö", "Oe")
-        .replace("ü", "ue")
-        .replace("ä", "ae")
-        .replace("ö", "oe")
-        .replace("ß", "ss")
-        .encode("ascii", errors="ignore")
-        .decode()
-    )
 
 
 def getdaysuntil(theweekday):
