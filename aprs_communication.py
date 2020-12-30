@@ -8,4 +8,6 @@
 import aprslib
 import datetime
 import time
+import logging
+
 

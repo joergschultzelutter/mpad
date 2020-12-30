@@ -9,6 +9,7 @@
 from iso3166 import countries
 from geopy.geocoders import Nominatim
 import us
+import logging
 
 
 def get_geocode_geopy_data(
@@ -158,4 +159,6 @@ def validate_country(country: str):
 
 
 if __name__ == "__main__":
-    print(get_reverse_geopy_data(37.7790262, -122.4199061))
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s -%(levelname)s - %(message)s')
+
+    logging.debug(get_reverse_geopy_data(37.7790262, -122.4199061))

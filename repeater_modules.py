@@ -8,7 +8,6 @@
 #
 
 import requests
-from utility_modules import log_to_stderr
 import json
 import math
 from geo_conversion_modules import (
@@ -17,6 +16,7 @@ from geo_conversion_modules import (
 )
 from utility_modules import check_if_file_exists
 from geo_conversion_modules import Haversine
+import logging
 
 
 def download_repeatermap_raw_data_and_write_it_to_disc(
@@ -48,7 +48,7 @@ def download_repeatermap_raw_data_and_write_it_to_disc(
                 f.close()
             success = True
         except:
-            log_to_stderr(
+            logging.debug(
                 f"Cannot write repeatermap.de data to local disc file '{repeatermap_raw_data_file}'"
             )
     return success
@@ -82,7 +82,7 @@ def read_repeatermap_raw_data_from_disk(
                 f.close()
                 success = True
     except:
-        log_to_stderr(f"Cannot read '{repeatermap_raw_data_file}' from disc")
+        logging.debug(f"Cannot read '{repeatermap_raw_data_file}' from disc")
     return success, repeatermap_raw_json_content
 
 
@@ -271,7 +271,7 @@ def write_mpad_repeatermap_data_to_disc(
             f.close()
         success = True
     except:
-        log_to_stderr(
+        logging.debug(
             f"Cannot write native repeatermap data to local disc file '{mpad_repeatermap_filename}'"
         )
     return success
@@ -308,7 +308,7 @@ def read_mpad_repeatermap_data_from_disc(
                     success = True
                     mpad_repeatermap = json.loads(mpad_repeatermap_json)
         except:
-            log_to_stderr(f"Cannot read '{mpad_repeatermap_filename}' from disc")
+            logging.debug(f"Cannot read '{mpad_repeatermap_filename}' from disc")
     return success, mpad_repeatermap
 
 
@@ -448,6 +448,7 @@ def get_nearest_repeater(
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s -%(levelname)s - %(message)s')
     download_repeatermap_raw_data_and_write_it_to_disc()
     success, repeatermap_dot_de_content = read_repeatermap_raw_data_from_disk()
     if success:
@@ -467,6 +468,6 @@ if __name__ == "__main__":
             band="70cm",
         )
         if success:
-            print(nearest_repeater)
+            logging.debug(nearest_repeater)
         else:
-            print("Nothing found!")
+            logging.debug("Nothing found!")

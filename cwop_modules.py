@@ -8,6 +8,7 @@ import requests
 import re
 from bs4 import BeautifulSoup
 import datetime
+import logging
 
 
 def get_cwop_findu(cwop_id: str, units: str = "metric"):
@@ -235,5 +236,6 @@ def get_nearest_cwop_findu(latitude: float, longitude: float, units: str = "metr
 
 
 if __name__ == "__main__":
-    print(get_nearest_cwop_findu(51.838720, 08.326819, "imperial"))
-    print(get_cwop_findu("AT166", "metric"))
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s -%(levelname)s - %(message)s')
+    logging.debug(get_nearest_cwop_findu(51.838720, 08.326819, "imperial"))
+    logging.debug(get_cwop_findu("AT166", "metric"))

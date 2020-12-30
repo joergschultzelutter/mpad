@@ -6,6 +6,7 @@
 import requests
 import re
 from geo_conversion_modules import convert_dms_to_latlon
+import logging
 
 def get_ysf_repeater_list(url: str = "https://www.yaesu.com/jp/en/wires-x/id/active_node.php"):
     success = False

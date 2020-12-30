@@ -9,6 +9,7 @@ import requests
 from datetime import datetime
 from utility_modules import make_pretty_aprs_messages
 from utility_modules import read_program_config
+import logging
 
 
 def get_daily_weather_from_openweathermapdotorg(
@@ -285,6 +286,8 @@ def parse_daily_weather_from_openweathermapdotorg(
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s -%(levelname)s - %(message)s')
+
     success, aprsdotfi_api_key, openweathermap_api_key = read_program_config()
     if success:
         (
@@ -299,4 +302,4 @@ if __name__ == "__main__":
             my_weather_forecast_array = parse_daily_weather_from_openweathermapdotorg(
                 weather_tuple, "metric", "Und jetzt das Wetter", "Samstag", "full"
             )
-            print(my_weather_forecast_array)
+            logging.debug(my_weather_forecast_array)

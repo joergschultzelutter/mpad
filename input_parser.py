@@ -18,6 +18,7 @@ import string
 from airport_data_modules import validate_icao, validate_iata, get_nearest_icao
 from utility_modules import getdaysuntil, read_program_config
 from aprsdotfi_modules import get_position_on_aprsfi
+import logging
 
 aprsdotfi_api_key = openweathermap_api_key = None
 
@@ -1138,5 +1139,7 @@ def parse_when_daytime(word: str):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s -%(levelname)s - %(message)s')
+
     success, aprsdotfi_api_key, openweathermap_api_key = read_program_config()
-    print(parsemessage("repeater 70cm dmr", "df1jsl-1", aprsdotfi_api_key))
+    logging.debug(parsemessage("repeater 70cm dmr", "df1jsl-1", aprsdotfi_api_key))

@@ -13,6 +13,7 @@ from skyfield.api import EarthSatellite
 
 tle_data = {}   # create empty dict
 tle_data_last_download = datetime.datetime.now()
+import logging
 
 
 def refresh_tle_file(tle_filename: str = "amateur.tle"):
@@ -42,7 +43,7 @@ def refresh_tle_file(tle_filename: str = "amateur.tle"):
     try:
         r = requests.get(tle_data_file_url)
     except:
-        print(f"Cannot download TLE data from {tle_data_file_url}")
+        logging.debug(f"Cannot download TLE data from {tle_data_file_url}")
         r = None
     if r:
         if r.status_code == 200:
@@ -55,7 +56,7 @@ def refresh_tle_file(tle_filename: str = "amateur.tle"):
                     tle_data_last_download = datetime.datetime.now()
                     success = True
             except:
-                print(f"Cannot update TLE data to file {tle_filename}")
+                logging.debug(f"Cannot update TLE data to file {tle_filename}")
     return success
 
 
@@ -107,7 +108,7 @@ def read_tle_data(tle_filename: str = "amateur.tle"):
 
     if lines:
         if len(lines) % 3 != 0:
-            print("Invalid file structure")
+            logging.debug(f"Invalid TLE file structure for file {tle_filename}")
             success = False
             return success, tle_data
         lc = 1
@@ -272,7 +273,7 @@ def get_next_satellite_pass_for_latlon(
         second=today.second,
     )
     days = t - satellite.epoch
-    print("{:.3f} days away from epoch".format(days))
+    logging.debug("{:.3f} days away from epoch".format(days))
 
     t0 = ts.utc(today.year, today.month, today.day, today.hour, today.minute, today.second)
     t1 = ts.utc(tomorrow.year, tomorrow.month, tomorrow.day, tomorrow.hour, tomorrow.minute, tomorrow.second)
@@ -361,20 +362,22 @@ def get_sun_moon_rise_set_for_latlon(
 
 
 if __name__ == "__main__":
-    print(
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s -%(levelname)s - %(message)s')
+
+    logging.debug(
         get_sun_moon_rise_set_for_latlon(51.838860, 8.326871, datetime.datetime.now() + datetime.timedelta(days=1), 74.0)
     )
 
     tle_data_last_download = None
-    print("Download TLE Data")
+    logging.debug("Download TLE Data")
     refresh_tle_file()
-    print("Import TLE Data")
+    logging.debug("Import TLE Data")
     success, tle_data = read_tle_data()
-    print("Get TLE data for Es'Hail2")
-    print(get_tle_data("ES'HAIL-2"))
-    print("Get next ISS pass")
+    logging.debug("Get TLE data for Es'Hail2")
+    logging.debug(get_tle_data("ES'HAIL-2"))
+    logging.debug("Get next ISS pass")
     thedate = datetime.datetime.now()
-    print(
+    logging.debug(
         get_next_satellite_pass_for_latlon(
             51.838890, 8.326747, thedate + datetime.timedelta(days=0), "ISS", 74.0
         )

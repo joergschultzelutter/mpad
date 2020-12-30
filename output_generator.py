@@ -16,7 +16,7 @@ from cwop_modules import (
 )
 
 
-from utility_modules import make_pretty_aprs_messages, log_to_stderr
+from utility_modules import make_pretty_aprs_messages, read_program_config
 from airport_data_modules import get_metar_data
 from skyfield_modules import get_sun_moon_rise_set_for_latlon
 from geo_conversion_modules import (
@@ -29,6 +29,7 @@ from geo_conversion_modules import (
 from repeater_modules import read_mpad_repeatermap_data_from_disc, get_nearest_repeater
 
 import datetime
+import logging
 
 ###
 # Help text that the user receives in case he has requested help
@@ -525,5 +526,13 @@ def generate_output_message(
     # No keyword found
     success = False
     output_list = ["Unable to parse packet"]
-    log_to_stderr(f"Unable to parse packet")
+    logging.debug(f"Unable to parse packet: {response_parameters}")
+
     return success, output_list
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s -%(levelname)s - %(message)s')
+
+    success, aprsdotfi_api_key, openweathermap_api_key = read_program_config()
+    if success:
+        logging.debug("Further actions are executed here")

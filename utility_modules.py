@@ -10,6 +10,7 @@ import os.path
 from timezonefinder import TimezoneFinder
 import re
 from unidecode import unidecode
+import logging
 
 
 def make_pretty_aprs_messages(
@@ -173,20 +174,6 @@ def split_string_to_string_list(message_string: str, max_len: int = 67):
     return split_strings
 
 
-def log_to_stderr(message: str):
-    """
-    Simple print-to-stderr-console with a time stamp
-
-    Parameters
-    ==========
-    message: 'str'
-        message string that is going to be printed to stderr
-    """
-
-    current_timestamp = datetime.datetime.now()
-    print(current_timestamp, ": ", message, file=sys.stderr)
-
-
 def check_if_file_exists(file_name: str):
     """
     Simple wrapper for whether a file exists or not
@@ -299,6 +286,8 @@ def determine_timezone(latitude: float, longitude: float):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s -%(levelname)s - %(message)s')
+
     my_array = make_pretty_aprs_messages("Hello World")
     my_array = make_pretty_aprs_messages("Wie geht es Dir", my_array)
     my_array = make_pretty_aprs_messages(
@@ -314,7 +303,7 @@ if __name__ == "__main__":
     )
 
     my_array = make_pretty_aprs_messages("Alter Schwede", my_array)
-    print(my_array)
+    logging.debug(my_array)
 
-    log_to_stderr("Logtext erfolgreich")
-    print(read_program_config())
+    logging.debug("Logtext erfolgreich")
+    logging.debug(read_program_config())

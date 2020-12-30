@@ -10,6 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import math
+import logging
 
 # icao https://www.aviationweather.gov/docs/metar/stations.txt
 
@@ -277,7 +278,7 @@ def refresh_icao_file(icaoiata_filename: str = "stations.txt"):
     try:
         r = requests.get(file_url)
     except:
-        print(f"Cannot download ICAO data from {file_url}")
+        logging.debug(f"Cannot download ICAO data from {file_url}")
         r = None
     if r:
         if r.status_code == 200:
@@ -287,7 +288,7 @@ def refresh_icao_file(icaoiata_filename: str = "stations.txt"):
                     f.close()
                     success = True
             except:
-                print(f"Cannot update ICAO data to file {icaoiata_filename}")
+                logging.debug(f"Cannot update ICAO data to file {icaoiata_filename}")
     return success
 
 
@@ -342,8 +343,9 @@ def get_nearest_icao(latitude: float, longitude: float):
 
 
 if __name__ == "__main__":
-    print(get_metar_data("EDDF"))
-    print(validate_iata("FRA"))
-    print(validate_icao("EDDF"))
-    print(refresh_icao_file())
-    print(get_nearest_icao(51.538882, 8.32679))
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s -%(levelname)s - %(message)s')
+    logging.debug(get_metar_data("EDDF"))
+    logging.debug(validate_iata("FRA"))
+    logging.debug(validate_icao("EDDF"))
+    logging.debug(refresh_icao_file())
+    logging.debug(get_nearest_icao(51.538882, 8.32679))
