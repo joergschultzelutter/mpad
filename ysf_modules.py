@@ -56,4 +56,5 @@ def get_ysf_repeater_list(url: str = "https://www.yaesu.com/jp/en/wires-x/id/act
     print (counter)
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
     get_ysf_repeater_list()
