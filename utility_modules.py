@@ -4,7 +4,6 @@
 #
 
 import datetime
-import sys
 import configparser
 import os.path
 from timezonefinder import TimezoneFinder
@@ -285,8 +284,61 @@ def determine_timezone(latitude: float, longitude: float):
     return timezone
 
 
+def read_number_of_served_packages(file_name: str = "served_packages.mpad"):
+    """
+    Read the number of served packages from a file
+
+    If file is not present, we will start with '1'
+
+    Parameters
+    ==========
+    file_name: 'str'
+        Name of the file we are going to read the data from
+
+    Returns
+    =======
+    served_packages: 'int'
+        number of previously served packages (or '1')
+    """
+    served_packages = 1
+    try:
+        with open(f'{file_name}', 'r') as f:
+            if f.mode == 'r':
+                contents = f.read()
+                f.close()
+                served_packages = int(contents)
+    except:
+        served_packages = 1
+        logging.debug(f"Cannot read content from {file_name}")
+    return served_packages
+
+
+def write_number_of_served_packages(served_packages: int,
+                                    file_name: str = "served_packages.mpad"):
+    """
+    Writes the number of served packages to a file
+
+    Parameters
+    ==========
+    served_packages: 'int'
+        number of previously served packages
+    file_name: 'str'
+        Name of the file we are going to read the data from
+
+    Returns
+    =======
+    Nothing
+    """
+    try:
+        with open(f'{file_name}', 'w') as f:
+            f.write('%d' % served_packages)
+            f.close()
+    except:
+        logging.debug(f"Cannot write number of served packages to {file_name}")
+
+
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s -%(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
 
     my_array = make_pretty_aprs_messages("Hello World")
     my_array = make_pretty_aprs_messages("Wie geht es Dir", my_array)
