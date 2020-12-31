@@ -27,7 +27,7 @@ class MyTestCase(unittest.TestCase):
             logging.debug(response_parameters)
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s -%(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
     logging.debug('Start of program')
     unittest.main()
     logging.debug('Start of program')

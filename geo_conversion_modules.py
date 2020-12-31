@@ -406,7 +406,7 @@ def Haversine(
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s -%(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
 
     logging.debug(convert_latlon_to_utm(48, -122))
     logging.debug(convert_utm_to_latlon(10, "U", 574595, 5316784))

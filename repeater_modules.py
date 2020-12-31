@@ -448,7 +448,7 @@ def get_nearest_repeater(
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s -%(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
     download_repeatermap_raw_data_and_write_it_to_disc()
     success, repeatermap_dot_de_content = read_repeatermap_raw_data_from_disk()
     if success:

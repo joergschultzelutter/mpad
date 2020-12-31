@@ -343,7 +343,7 @@ def get_nearest_icao(latitude: float, longitude: float):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s -%(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
     logging.debug(get_metar_data("EDDF"))
     logging.debug(validate_iata("FRA"))
     logging.debug(validate_icao("EDDF"))

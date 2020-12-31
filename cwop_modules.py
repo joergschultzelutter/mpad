@@ -236,6 +236,6 @@ def get_nearest_cwop_findu(latitude: float, longitude: float, units: str = "metr
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s -%(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
     logging.debug(get_nearest_cwop_findu(51.838720, 08.326819, "imperial"))
     logging.debug(get_cwop_findu("AT166", "metric"))

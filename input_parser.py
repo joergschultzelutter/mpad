@@ -1139,7 +1139,7 @@ def parse_when_daytime(word: str):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s -%(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
 
     success, aprsdotfi_api_key, openweathermap_api_key = read_program_config()
     logging.debug(parsemessage("repeater 70cm dmr", "df1jsl-1", aprsdotfi_api_key))

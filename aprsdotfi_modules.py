@@ -85,7 +85,7 @@ def get_position_on_aprsfi(aprsfi_callsign: str, aprsdotfi_api_key: str):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s -%(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
     success, aprsdotfi_api_key, openweathermapdotorg_api_key = read_program_config()
     if success:
         logging.debug(get_position_on_aprsfi("DF1JSL-1", aprsdotfi_api_key))

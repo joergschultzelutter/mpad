@@ -362,7 +362,7 @@ def get_sun_moon_rise_set_for_latlon(
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s -%(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
 
     logging.debug(
         get_sun_moon_rise_set_for_latlon(51.838860, 8.326871, datetime.datetime.now() + datetime.timedelta(days=1), 74.0)

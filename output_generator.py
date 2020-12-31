@@ -531,7 +531,7 @@ def generate_output_message(
     return success, output_list
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s -%(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
 
     success, aprsdotfi_api_key, openweathermap_api_key = read_program_config()
     if success:
