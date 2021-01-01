@@ -31,15 +31,6 @@ import aprslib
 import datetime
 import time
 
-# Beacon / Bulletin config settings
-myaprsis_login_callsign = "n0call"  # APRS-IS-Login; Passcode wird automatisch errechnet
-
-myaprs_server_name = "euro.aprs2.net"  # our login server
-myaprs_server_port = 14580  # server port
-myaprs_server_filter = "g/WXBOT/WXYO"  # server filter criteria for aprs.is
-mycallsigns_to_parse = ["WXBOT", "WXYO"]  # (additional) call sign filter
-
-myicaoiata_filename = "stations.mpad"  # ICAO & IATA data; https://www.aviationweather.gov/docs/metar/stations.txt
 
 # will be prepopulated through config file
 aprsdotfi_api_key = None
@@ -59,8 +50,8 @@ def mycallback(packet):
     msgNo_string = parse_aprs_data(
         packet, "msgNo"
     )  # für Acknowledgment der initialen Nachricht
-    from_string = parse_aprs_data(packet, "from")
-    from_string = from_string.upper()
+    from_callsign = parse_aprs_data(packet, "from")
+    from_callsign = from_callsign.upper()
     format_string = parse_aprs_data(packet, "format")
 
     # Wenn keine MsgNo gefunden, dann prüfen, ob die Message selbst noch eine (ungültige) Message+MessageNo beinhaltet. Falls ja: extrahieren
@@ -81,10 +72,10 @@ def mycallback(packet):
             # Diese Nachricht ist für uns. Es kann losgehen
             logging.debug(f"received packet: {packet}")
             # ack senden, falls msgNo vorhanden (siehe S. 71ff.)
-            sned_ack(AIS, aprsis_simulate_send, from_string, msgNo_string)
+            sned_ack(AIS, aprsis_simulate_send, from_callsign, msgNo_string)
             # Content parsen
             success, response_parameters = parsemessage(
-                message_text_string, from_string, aprsdotfi_apikey
+                message_text_string, from_callsign, aprsdotfi_apikey
             )
             if success:
                 success, output_message = generate_output_message(
@@ -92,12 +83,13 @@ def mycallback(packet):
                     openweathermapdotorg_api_key=openweathermapdotorg_api_key,
                 )
                 if success:
-                    send_aprs_message_list(
+                    number_of_served_packages=send_aprs_message_list(
                         AIS,
                         aprsis_simulate_send,
                         output_message,
                         from_string,
                         msg_no_supported,
+                        number_of_served_packages,
                     )
                 else:
                     # nichts gefunden; Fehlermeldung an User senden
