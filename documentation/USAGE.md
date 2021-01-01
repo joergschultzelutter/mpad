@@ -16,11 +16,11 @@
 
 ## Commands
 
-- [Action commands](01_actions.md)
+- [Action commands](command_keywords/action_commands.md)
 
-- [Date settings](02_date_settings.md)
+- [Date settings](command_keywords/date_keywords.md)
 
-- [Daytime settings](03_daytime_settings.md)
+- [Daytime settings](command_keywords/daytime_keywords.md)
 
 ## Legal mumbo-jumbo
 
@@ -52,4 +52,4 @@ In reference to the European Union's GDPR regulations:
 
   - openweathermap.org
 
-If you use this program, then you agree to these terms and conditions. Thank you.
+Finally, this program is only to be used by licensed ham radio operators. If you use this program, then you agree to these terms and conditions. Thank you.
