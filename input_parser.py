@@ -42,6 +42,8 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
         up to 67 bytes of content that the user has submitted to us
     users_callsign : 'str'
         User's ham radio call sign that was used to submit the message to us
+    aprsdotfi_api_key: 'str'
+        APRS.fi access key
 
     Returns
     =======
@@ -362,7 +364,7 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
             try:
                 latitude = float(matches[1])
                 longitude = float(matches[2])
-            except:
+            except ValueError:
                 latitude = longitude = 0
                 success = False
             if success:
@@ -377,7 +379,6 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                     country = response_data["country"]
                     zipcode = response_data["zipcode"]
                     street = response_data["street"]
-                    country = response_data["county"]
                     street_number = response_data["street_number"]
                     if city:
                         human_readable_message = city
@@ -772,7 +773,6 @@ def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str)
                     if success:
                         found_my_duty_roster = True
                         what = "metar"
-                        found_my_duty_roster = True
                         human_readable_message = f"METAR for '{icao}'"
                         # If we did find the airport but it is not METAR-capable,
                         # then supply a wx report instead

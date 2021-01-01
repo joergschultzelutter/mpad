@@ -260,7 +260,7 @@ def send_single_aprs_message(
 def extract_msgno_from_defective_message(message_text: str):
     msg = msgno = None
 
-    matches = re.search(r"(.*)\{([a-zA-Z0-9]{1,5})\}", message_text, re.IGNORECASE)
+    matches = re.search(r"(.*){([a-zA-Z0-9]{1,5})}", message_text, re.IGNORECASE)
     if matches:
         try:
             msg = matches[1]
