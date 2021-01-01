@@ -97,7 +97,7 @@ If the given airport or the nearest one has been found but does __not__ support 
 
 Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__. If WX data is returned, 'today'/'full' settings will be applied.
 
-### ICAO wx inquiries
+### ICAO METAR / wx inquiries
 
 Get a METAR report for a specific ICAO code. If the ICAO code is valid but the airport does not provide METAR data, a default wx report is returned instead.
 
@@ -115,7 +115,7 @@ eddf
 
 Specifying an ICAO code without keyword may or may not be successful as it is processed at the end of the parser's process chain.
 
-### IATA wx inquiries
+### IATA METAR / wx inquiries
 
 Get a METAR report for a specific IATA code by retrieving its associated ICAO code (and then performing an ICAO metar inquiry). If the IATA code is valid but the airport does not provide METAR data, a default wx report is returned instead.
 
