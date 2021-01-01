@@ -6,7 +6,7 @@
 - ALL Commands and keywords are case __insensitive__
 - For most of the cases, wx inquiries can be specified without any specific keyword; just specify the address. Unless any other keyword has been specified, wx is always assumed as default.
 
-Can be combined with [date](02_date_settings.md) / [daytime](03_daytime_settings.md) keyword parameters: __YES__
+Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __YES__
 
 ### City, State and/or Country
 
@@ -95,7 +95,7 @@ You have three options:
 
 If the given airport or the nearest one has been found but does __not__ support METAR data, the program will try to provide you with a standard WX report for the airport's coordinates instead.
 
-Can be combined with [date](02_date_settings.md) / [daytime](03_daytime_settings.md) keyword parameters: __NO__. If WX data is returned, 'today'/'full' settings will be applied.
+Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__. If WX data is returned, 'today'/'full' settings will be applied.
 
 ### ICAO wx inquiries
 
@@ -163,7 +163,7 @@ Returns the geocoordinates/address info of the sender's position or a specific c
 - UTM coordinates
 - Human-readable address (whereas such data is available)
 
-Can be combined with [date](02_date_settings.md) / [daytime](03_daytime_settings.md) keyword parameters: __NO__
+Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
 
 Formats:
 ```
@@ -181,7 +181,7 @@ whereis df1jsl-1
 
 Returns the sunrise/sunset and moonrise/moonset info of the sender's position or a specific call sign. Note: values are calculated for the given day. In case the moonSET value overlaps from the previous date, then this is not taken into consideration.
 
-Can be combined with [date](02_date_settings.md) / [daytime](03_daytime_settings.md) keyword parameters: __YES__
+Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __YES__
 
 Formats:
 ```
@@ -199,7 +199,7 @@ riseset df1jsl-1
 
 Returns the nearest CWOP station's weather report (related to the sender's call sign or a different call sign) OR a specific CWOP ID's weather report to the user.
 
-Can be combined with [date](02_date_settings.md) / [daytime](03_daytime_settings.md) keyword parameters: __NO__
+Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
 
 Formats:
 ```
@@ -231,7 +231,7 @@ Retrieves the next pass of the given satellite ID for the user's position. Satel
 
 EXPERIMENTAL - STILL IN DEVELOPMENT
 
-Can be combined with [date](02_date_settings.md) / [daytime](03_daytime_settings.md) keyword parameters: __YES__
+Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __YES__
 
 Formats:
 ```
@@ -249,7 +249,7 @@ satpass saudisat-1c
 
 Retrieves the nearest repeater, based on the user's position. In addition, 'band' and 'mode' filters can be specified.
 
-Can be combined with [date](02_date_settings.md) / [daytime](03_daytime_settings.md) keyword parameters: __NO__
+Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
 
 Formats:
 ```
@@ -273,7 +273,7 @@ repeater 70cm c4fm --> same command as in the previous example
 
 Returns general program help to the user. 
 
-Can be combined with [date](02_date_settings.md) / [daytime](03_daytime_settings.md) keyword parameters: __NO__
+Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
 
 Formats:
 ```
@@ -294,7 +294,7 @@ By default, the program will automatically switch from the metric system (defaul
 - metric system (__default__): temperatures in degrees Celsius, speed in km/h, rain levels in cm etc.
 - imperial system: temperatures in degress Fahrenheit, speed in mph, rain levels in inch etc.
 
-Can be combined with [date](02_date_settings.md) / [daytime](03_daytime_settings.md) keyword parameters: __YES__. The automated process is part of the program core and even overriding the setting by one of the imperial/metric keywords can be done at any time. Dependent on the information that you have requested, the program may or may not honor the information.
+Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __YES__. The automated process is part of the program core and even overriding the setting by one of the imperial/metric keywords can be done at any time. Dependent on the information that you have requested, the program may or may not honor the information.
 
 If you don't want to rely on the automatic mode, you can override the automated setting by specifying the following keywords:
 
