@@ -14,7 +14,7 @@
 
 - Certain action command keywords can be specified in combination with a date setting and a daytime setting, e.g. request a wx report for the next day. The respective keyword documentation settings state if the keyword can be used in conjunction with a date/daytime keyword. All restrictions wrt UTC time settings do apply - see previous paragraph.
 
-## Commands
+## Command keyset
 
 - [Action commands](command_keywords/action_commands.md)
 
