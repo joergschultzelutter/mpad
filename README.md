@@ -43,9 +43,10 @@ Python implementation of an APRS Multi-Purpose Daemon (wx forecast, sat data, ge
 - The repeater data is very much EU-centric (the program uses its data from repeatermap.de). Additional _free_ repeater data sources can be added in future versions of the program if such sources are available. Alternatively, please get in touch with DK3ML and add your missing local repeaters to that web site.
 - Wx alert data from openweathermap.org is not returned to the user. This can be added in a later version but keep in mind that the text is very long and would result in multiple (10-15) APRS messages per alert!
 - Access to openweathermap.org requires an API key which comes with a certain traffic limit
-- Currently, all timestamps returned by the program use UTC as time zone. Implicitly, this constraint also applies to the time-related program keywords (see [USAGE.md](USAGE.md)) which instructs the program to return data for a certain time of the day. When in doubt, do NOT limit your data to a certain time slot of the day ('full' day is the program default).
-- APRS 'TOCALL' identifier is currently still set to default 'APRS' (see WXBOT implementation); MPAD needs its own identifier (see http://www.aprs.org/aprs11/tocalls.txt)
-- Call signs which deviate from a 'normal' call sign pattern may currently not be recognised (e.g. call signs for bots etc)
+- Currently, all timestamps returned by the program use UTC as time zone. Implicitly, this constraint also applies to the time-related program keywords (see [USAGE.md](USAGE.md)) which instructs the program to return data for a certain time of the day. Dependent on your geographical location, a 'give me a wx report for today noon' may result in unwanted effects as the 'noon' part is based on GMT. When in doubt, do NOT limit your data to a certain time slot of the day ('full' day is the program default).
+- APRS 'TOCALL' identifier is currently still set to default 'APRS' (see WXBOT implementation); in the long run, MPAD needs its own identifier (see http://www.aprs.org/aprs11/tocalls.txt)
+- Call signs which deviate from a 'normal' call sign pattern may currently not be recognised (e.g. APRS bot call signs etc)
+
 
 ## Usage examples and command syntax
 
@@ -53,4 +54,5 @@ Python implementation of an APRS Multi-Purpose Daemon (wx forecast, sat data, ge
 
 ## The fine print
 
-APRS is a registered trademark Bob Bruninga, WB4APR
+- If you intend host an instance of this program, you need to be a licensed ham radio operator
+- APRS is a registered trademark Bob Bruninga, WB4APR
