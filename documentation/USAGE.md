@@ -28,6 +28,8 @@ In reference to the European Union's GDPR regulations:
 
 - This is a hobby project. It has no commercial background whatsoever. Source files are freely accessible.
 
+- if you intend to host this software and submit data to APRS-IS, you need to be a licensed ham radio operator.
+
 - The main purpose of this program is to provide you (the user) with information that is based on either your own location or someone else's position data on the APRS network. 
 
 - The position information itself is acquired from freely accessible data sources such as the APRS-IS network, aprs.fi et al. These data sources gather APRS information from ham radio users who did decide to have their position information actively submitted to the APRS network. Any of these information sources can already be used for a various user's position inquiry.
@@ -44,7 +46,7 @@ In reference to the European Union's GDPR regulations:
 
   - Program exceptions and/or crashes may be stored to log files for debug purposes
 
-- If you intend to run your own instance of MPAD, you need to provide API access keys to the following services (both are usually free of charge but may come with a transaction limit):
+- If you intend to host your own instance of MPAD, you need to provide API access keys to the following services (both are usually free of charge but may come with a transaction limit):
 
   - aprs.fi
 
