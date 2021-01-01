@@ -52,4 +52,4 @@ In reference to the European Union's GDPR regulations:
 
   - openweathermap.org
 
-Finally, this program is only to be used by licensed ham radio operators. If you use this program, then you agree to these terms and conditions. Thank you.
+If you use this program, then you agree to these terms and conditions. Thank you.
