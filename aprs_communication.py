@@ -9,7 +9,6 @@ import aprslib
 import logging
 import time
 import re
-from utility_modules import write_number_of_served_packages
 
 import mpad_config
 
@@ -204,7 +203,6 @@ def send_aprs_message_list(
         else:
             logging.debug(stringtosend)
         time.sleep(mpad_config.packet_delay_short)
-    write_number_of_served_packages(number_of_served_packages)
     return number_of_served_packages
 
 
@@ -256,7 +254,6 @@ def send_single_aprs_message(
         else:
             logging.debug(stringtosend)
         time.sleep(mpad_config.packet_delay_short)
-    write_number_of_served_packages(number_of_served_packages)
     return number_of_served_packages
 
 
