@@ -191,7 +191,7 @@ def check_if_file_exists(file_name: str):
     return os.path.isfile(file_name)
 
 
-def read_program_config(config_file_name: str = "mpad.cfg"):
+def read_program_config(config_file_name: str = "mpad_api_access_keys.cfg"):
     """
     Read the configuration file and extract the parameter values
 

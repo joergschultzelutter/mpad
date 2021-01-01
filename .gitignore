@@ -1,7 +1,7 @@
 __pycache__
 amateur.tle
 de421.bsp
-mpad.cfg
+mpad_api_access_keys.cfg
 repeatermap.mpad
 repeatermap.raw
 stations.txt
