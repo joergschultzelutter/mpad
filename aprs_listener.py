@@ -189,6 +189,7 @@ try:
             AIS.close()
         else:
             logging.debug("Konnte Verbindung nicht neu aufbauen")
+        write_number_of_served_packages(served_packages=number_of_served_packages)
         logging.debug("Schlafe 5 sec")
         time.sleep(5)
 #        AIS.close()
@@ -200,4 +201,4 @@ except (KeyboardInterrupt, SystemExit):
         except:
             logging.debug("Fehler beim Shutdown APRS-Scheduler")
     AIS.close()
-    write_number_of_served_packages(number_of_served_packages)
+    write_number_of_served_packages(served_packages=number_of_served_packages)
