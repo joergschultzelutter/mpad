@@ -74,7 +74,7 @@ def read_repeatermap_raw_data_from_disk(
         Contains the file's raw JSON content (otherwise 'None')
     """
     success = False
-    repeatermap_dot_de_json_content = None
+    repeatermap_raw_json_content = None
     try:
         with open(f"{repeatermap_raw_data_file}", "r") as f:
             if f.mode == "r":
@@ -186,10 +186,10 @@ def create_enriched_mpad_repeatermap_data(repeatermap_raw_json_content: str):
 
     for raw_entry in raw_repeatermap_dictionary["relais"]:
         mode = rx_frequency = tx_frequency = elevation = None
-        latitude = longitude = remarks = qth = id = None
+        latitude = longitude = remarks = qth = repeater_id = None
         locator = callsign = band_name = None
         if "id" in raw_entry:
-            id = raw_entry["id"]
+            repeater_id = raw_entry["id"]
         if "mode" in raw_entry:
             mode = raw_entry["mode"]
             mode = mode.upper()
@@ -225,8 +225,8 @@ def create_enriched_mpad_repeatermap_data(repeatermap_raw_json_content: str):
                     latitude=latitude, longitude=longitude
                 )
         # don't add MMDVM hotspots
-        if id and not "mmdvm" in remarks.lower() and not "hotspot" in remarks.lower():
-            mpad_repeater_dict[f"{id}"] = {
+        if id and "mmdvm" not in remarks.lower() and "hotspot" not in remarks.lower():
+            mpad_repeater_dict[f"{repeater_id}"] = {
                 "locator": locator,
                 "latitude": latitude,
                 "longitude": longitude,
@@ -448,7 +448,9 @@ def get_nearest_repeater(
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
+    logging.basicConfig(
+        level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+    )
     download_repeatermap_raw_data_and_write_it_to_disc()
     success, repeatermap_dot_de_content = read_repeatermap_raw_data_from_disk()
     if success:
