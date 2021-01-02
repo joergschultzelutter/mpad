@@ -90,17 +90,45 @@ def mycallback(packet):
 
     #
     # Now let's have a look at the message that we have received
+    # addresse_string is the sender's TARGET address (read: the target that he
+    # has sent the message to). In an ideal world, this should be 'MPAD' or any
+    # other call sign that the program is supposed to listen to.
+    #
+    # NOTE: this is a SECONDARY filter. The PRIMARY filter is defined through
+    # the APRS_IS filter settings. Both filter settings can be found in the
+    # mpad_config.py module. Normally, this secondary filter is obviously not
+    # required as the primary aprs_is filter does a great job. If however that
+    # primary filter fails, then this acts as a safe guard as we only want to
+    # process and respond to messages which actually belong to us. By keeping
+    # these 2 layers, you can decide to allow to pass certain packages for
+    # debugging purposes.
+    #
+    # Is our address in the target list of call signs that we claim as owner?
     if addresse_string in mpad_config.mycallsigns_to_parse:
-        # Format = message und message_text gefüllt? (sollte dann keine Response sein)
+        # Lets examine what we've got:
+        # 1. Message format should always be 'message' and not 'response'
+        # 2. Actual message should be populated with some content
+        # Continue if both assumptions are correct
         if format_string == "message" and message_text_string:
-            # Diese Nachricht ist für uns. Es kann losgehen
+            # This is a message that belongs to us
             logging.debug(f"received packet: {packet}")
-            # ack senden, falls msgNo vorhanden (siehe S. 71ff.)
-            send_ack(AIS, aprsis_simulate_send, from_callsign, msgno_string)
-            # Content parsen
+            # Send an ack if we did receive a message number
+            # see aprs101.pdf pg. 71ff.
+            if msg_no_supported:
+                send_ack(AIS, aprsis_simulate_send, from_callsign, msgno_string)
+            #
+            # This is where the magic happens: Try to figure out what the user
+            # wants from us. If we were able to understand the user's message,
+            # 'success' will be true. In any case, the 'response_parameters'
+            # dictionary will give us a hint about what to do next (and even
+            # contains the parser's error message if 'success' != True)
+            # input parameters: the actual message, the user's call sign and
+            # the aprs.fi API access key for location lookups
             success, response_parameters = parsemessage(
                 message_text_string, from_callsign, aprsdotfi_api_key
             )
+            #
+            # Now we should know what the user wants from us
             if success:
                 success, output_message = generate_output_message(
                     response_parameters=response_parameters,
