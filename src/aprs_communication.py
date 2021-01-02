@@ -14,7 +14,7 @@ import mpad_config
 
 # bulletin messages (will be sent every 4 hrs)
 bulletin_texts: dict = {
-    "BLN0": f"{mpad_config.mpad_alias} {mpad_config.mpad_version} APRS WX Bot (Prototype)",
+    "BLN0": f"{mpad_config.mpad_alias} {mpad_config.mpad_version} Multi-Purpose APRS Bot",
     "BLN1": f"I have just hatched and am still in alpha test mode. More useful",
     "BLN2": f"information is going to be added here very soon. Thank you.",
 }
@@ -275,3 +275,6 @@ if __name__ == "__main__":
     logging.basicConfig(
         level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
     )
+    send_beacon_and_status_msg(None)
+    send_bulletin_messages(None)
+    logging.debug(get_aprsis_passcode("N0CALL"))
