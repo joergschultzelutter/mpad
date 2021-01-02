@@ -228,10 +228,13 @@ try:
             logging.debug(msg="Send initial beacon after establishing the connection to APRS_IS")
             send_beacon_and_status_msg(AIS, aprsis_simulate_send)
 
-
-
-
-            # Scheduler einrichten und starten
+            # Install two schedulers
+            # The first scheduler is responsible for sending out beacon messages
+            # to APRS; it will be triggered every 30 mins
+            # The 2nd scheduler is responsible for sending out bulletin messages
+            # to APRS; it will be triggered every 4 hours
+            #
+            # Install scheduler 1 - beacons
             aprs_scheduler = BackgroundScheduler()
             aprs_scheduler.add_job(
                 send_beacon_and_status_msg,
@@ -240,6 +243,7 @@ try:
                 minutes=30,
                 args=[AIS, aprsis_simulate_send],
             )
+            # Install scheduler 2 - bulletins
             aprs_scheduler.add_job(
                 send_bulletin_messages,
                 "interval",
@@ -247,6 +251,7 @@ try:
                 minutes=4 * 60,
                 args=[AIS, aprsis_simulate_send],
             )
+            # start both schedulers
             aprs_scheduler.start()
 
             logging.debug("Starte Callback-Consumer")
