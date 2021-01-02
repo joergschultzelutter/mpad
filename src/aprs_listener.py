@@ -237,7 +237,9 @@ try:
             logging.debug(msg="Established the connection to APRS_IS")
 
             # Send initial beacon after establishing the connection to APRS_IS
-            logging.debug(msg="Send initial beacon after establishing the connection to APRS_IS")
+            logging.debug(
+                msg="Send initial beacon after establishing the connection to APRS_IS"
+            )
             send_beacon_and_status_msg(AIS, aprsis_simulate_send)
 
             # Install two schedulers
@@ -287,7 +289,9 @@ try:
                 try:
                     aprs_scheduler.shutdown()
                 except:
-                    logging.debug(msg="Exception during scheduler shutdown eternal loop")
+                    logging.debug(
+                        msg="Exception during scheduler shutdown eternal loop"
+                    )
 
             # Verbindung schließen
             logging.debug(msg="Closing APRS connection to APRS_IS")
