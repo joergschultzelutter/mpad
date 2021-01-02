@@ -31,7 +31,7 @@ errmsg_invalid_state: str = "Invalid US state"
 errmsg_invalid_command: str = "Cannot grok command"
 
 
-def parsemessage(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str):
+def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str):
     """
     Core parser. Takes care of analyzing the user's request and tries to
     figure out what has been requested (weather report, position report, ..)
