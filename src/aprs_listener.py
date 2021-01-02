@@ -80,9 +80,10 @@ def mycallback(raw_aprs_packet):
     # is. Our convenience handler takes care of the issue and returns a 'clean'
     # message text and a separated message_no whereas present
     if not msgno_string:
-        message_text_string, msgno_string = extract_msgno_from_defective_message(
-            message_text_string
-        )
+        if message_text_string:
+            message_text_string, msgno_string = extract_msgno_from_defective_message(
+                message_text_string
+            )
 
     # Based on whether we have received a message number, we now set a session
     # parameter which tells MPAD for _this_ message whether an ACK is required
