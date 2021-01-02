@@ -119,7 +119,12 @@ def mycallback(raw_aprs_packet):
                 # Send an ack if we did receive a message number
                 # see aprs101.pdf pg. 71ff.
                 if msg_no_supported:
-                    send_ack(AIS, aprsis_simulate_send, from_callsign, msgno_string)
+                    send_ack(
+                        myaprsis=AIS,
+                        simulate_send=aprsis_simulate_send,
+                        users_callsign=from_callsign,
+                        source_msg_no=msgno_string,
+                    )
                 #
                 # This is where the magic happens: Try to figure out what the user
                 # wants from us. If we were able to understand the user's message,
@@ -129,7 +134,9 @@ def mycallback(raw_aprs_packet):
                 # input parameters: the actual message, the user's call sign and
                 # the aprs.fi API access key for location lookups
                 success, response_parameters = parse_input_message(
-                    message_text_string, from_callsign, aprsdotfi_api_key
+                    aprs_message=message_text_string,
+                    users_callsign=from_callsign,
+                    aprsdotfi_api_key=aprsdotfi_api_key,
                 )
                 #
                 # If the 'success' parameter is True, then we should know
@@ -144,33 +151,35 @@ def mycallback(raw_aprs_packet):
                         response_parameters=response_parameters,
                         openweathermapdotorg_api_key=openweathermapdotorg_api_key,
                     )
-                    # Regardless of a success, fire the messages to the user
+                    # Regardless of a success status, fire the messages to the user
                     # in case of a failure, the list item already does contain
                     # the error message to the user.
                     number_of_served_packages = send_aprs_message_list(
-                        AIS,
-                        aprsis_simulate_send,
-                        output_message,
-                        from_callsign,
-                        msg_no_supported,
-                        number_of_served_packages,
+                        myaprsis=AIS,
+                        simulate_send=aprsis_simulate_send,
+                        message_text_array=output_message,
+                        src_call_sign=from_callsign,
+                        send_with_msg_no=msg_no_supported,
+                        number_of_served_packages=number_of_served_packages,
                     )
                     if not success:
-                        logging.debug(msg=f"Unable to grok packet {raw_aprs_packet}")
-                # darn - we failed!
+                        logging.debug(
+                            msg=f"I was unable to grok packet {raw_aprs_packet}"
+                        )
+                # darn - we failed to hail the Tripods
                 else:
-                    output_list = [
+                    output_message = [
                         "Sorry, I am unable to parse your request. I have logged a copy of",
                         "your request to my log file which will help my author to understand",
                         "what you asked me to do. Thank you",
                     ]
                     number_of_served_packages = send_aprs_message_list(
-                        AIS,
-                        aprsis_simulate_send,
-                        output_list,
-                        from_callsign,
-                        msg_no_supported,
-                        number_of_served_packages,
+                        myaprsis=AIS,
+                        simulate_send=aprsis_simulate_send,
+                        message_text_array=output_message,
+                        src_call_sign=from_callsign,
+                        send_with_msg_no=msg_no_supported,
+                        number_of_served_packages=number_of_served_packages,
                     )
                     logging.debug(msg=f"Unable to grok packet {raw_aprs_packet}")
 
@@ -230,7 +239,9 @@ try:
 
         # Debug what we are trying to do
         logging.debug(
-            msg=f"Establish connection to APRS_IS: server={mpad_config.myaprs_server_name}, port={mpad_config.myaprs_server_port}, filter={mpad_config.myaprs_server_filter}, APRS-IS User: {aprsis_callsign}, APRS-IS passcode: {aprsis_passcode}"
+            msg=f"Establish connection to APRS_IS: server={mpad_config.myaprs_server_name},"
+            "port={mpad_config.myaprs_server_port}, filter={mpad_config.myaprs_server_filter},"
+            "APRS-IS User: {aprsis_callsign}, APRS-IS passcode: {aprsis_passcode}"
         )
         AIS.connect(blocking=True)
         if AIS._connected == True:
