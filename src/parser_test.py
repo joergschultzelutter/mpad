@@ -11,7 +11,7 @@ class MyTestCase(unittest.TestCase):
         assert success == True
 
         # message_text = APRS-Message excluding any message IDs etc
-        message_text = "satpass iss"
+        message_text = "where=43085{0l}"
         # from_callsign = Sender's callsign
         from_callsign = "df1jsl-1"
 
