@@ -108,13 +108,13 @@ def send_beacon_and_status_msg(myaprsis: aprslib.inet.IS, simulate_send: bool = 
     =======
     none
     """
-    logging.debug("Beacon-Intervall erreicht; sende Beacons")
+    logging.debug("Reached beacon interval; sending beacons")
     for bcn in beacon_text_array:
         stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}:{bcn}"
         if not simulate_send:
             logging.debug(f"echtes Senden: {stringtosend}")
         else:
-            logging.debug(f"Sende: {stringtosend}")
+            logging.debug(f"Simulating beacons: {stringtosend}")
 
 
 def send_bulletin_messages(myaprsis: aprslib.inet.IS, simulate_send: bool = True):
@@ -134,13 +134,13 @@ def send_bulletin_messages(myaprsis: aprslib.inet.IS, simulate_send: bool = True
     =======
     none
     """
-    logging.debug("Bulletin-Intervall erreicht; sende Bulletins")
+    logging.debug("reached bulletin interval; sending bulletins")
     for recipient_id, bln in bulletin_texts.items():
         stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}::{recipient_id:9}:{bln}"
         if not simulate_send:
             logging.debug(f"echtes Senden: {stringtosend}")
         else:
-            logging.debug(f"Sende: {stringtosend}")
+            logging.debug(f"simulating bulletins: {stringtosend}")
 
 
 def send_ack(
@@ -172,12 +172,12 @@ def send_ack(
     """
 
     if source_msg_no:
-        logging.debug("Preparing acknowledgment")
+        logging.debug("Preparing acknowledgment receipt")
         stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}::{users_callsign:9}:ack{source_msg_no}"
         if not simulate_send:
             logging.debug(f"echtes Senden: {stringtosend}")
         else:
-            logging.debug(f"Sende: {stringtosend}")
+            logging.debug(f"Simulating acknowledgment receipt: {stringtosend}")
 
 
 def send_aprs_message_list(
@@ -226,58 +226,7 @@ def send_aprs_message_list(
         if not simulate_send:
             logging.debug("Echtes Senden")
         else:
-            logging.debug(stringtosend)
-        time.sleep(mpad_config.packet_delay_short)
-    return number_of_served_packages
-
-
-def send_single_aprs_message(
-    myaprsis: aprslib.inet.IS,
-    message_text: str,
-    src_call_sign: str,
-    send_with_msg_no: bool,
-    number_of_served_packages: int,
-    simulate_send: bool = True,
-):
-    """
-    Send a single line of text to APRS_IS
-    Split message up into 1..n chunks of 67 character string if content is too long
-    If 'simulate_send'= True, we still prepare the message but only send it to our log file
-
-    Parameters
-    ==========
-    myaprsis: 'aprslib.inet.IS'
-        Our aprslib object that we will use for the communication part
-    message_text: 'str'
-        Contains 1..n entries of the content that we want to send to the user
-    src_call_sign: 'str'
-        Call sign of the user that has sent us the message
-    send_with_msg_no: 'bool'
-        If True, each outgoing message will have its own message ID attached to the outgoing content
-        If False, no message ID is added
-    number_of_served_packages: int
-        number of packages sent to aprs_is
-    simulate_send: 'bool'
-        If True: Prepare string but only send it to logger
-
-    Returns
-    =======
-    number_of_served_packages: 'int'
-        number of packages sent to aprs_is
-    """
-    maxlen = 67  # max. size of APRS message
-    chunks = [message_text[i : i + maxlen] for i in range(0, len(message_text), maxlen)]
-    for chunk in chunks:
-        stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}::{src_call_sign:9}:{chunk}"
-        if send_with_msg_no:
-            stringtosend = stringtosend + "}" + f"{number_of_served_packages:05}"
-            number_of_served_packages = number_of_served_packages + 1
-            if number_of_served_packages > 99999:  # max 5 digits
-                number_of_served_packages = 1
-        if not simulate_send:
-            logging.debug("Echtes Senden")
-        else:
-            logging.debug(stringtosend)
+            logging.debug(f"Simulating response message '{stringtosend}'")
         time.sleep(mpad_config.packet_delay_short)
     return number_of_served_packages
 
