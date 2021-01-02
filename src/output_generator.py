@@ -525,13 +525,20 @@ def generate_output_message(
 
     # No keyword found
     success = False
-    output_list = ["Unable to parse packet"]
+    output_list = [
+        "Sorry, I am unable to parse your request. I have logged a copy of",
+        "your request to my log file which will help my author to understand",
+        "what you asked me to do. Thank you",
+    ]
     logging.debug(f"Unable to parse packet: {response_parameters}")
 
     return success, output_list
 
+
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
+    logging.basicConfig(
+        level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+    )
 
     success, aprsdotfi_api_key, openweathermap_api_key = read_program_config()
     if success:
