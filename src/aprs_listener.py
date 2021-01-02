@@ -5,7 +5,7 @@
 # Core process
 #
 
-from input_parser import parsemessage
+from input_parser import parse_input_message
 from apscheduler.schedulers.background import BackgroundScheduler
 from output_generator import generate_output_message
 from utility_modules import (
@@ -37,7 +37,7 @@ import mpad_config
 # APRSlib callback
 # Extract the fields from the APRS message, start the parsing process,
 # execute the command and send the command output back to the user
-def mycallback(packet):
+def mycallback(raw_aprs_packet):
 
     global number_of_served_packages
 
@@ -52,18 +52,18 @@ def mycallback(packet):
     # addresse_string contains the APRS id that the user has sent the data to
     # Usually, this is 'MPAD' but can also be a 2nd/33ed address
     # (dependent on what your program config file looks like)
-    addresse_string = parse_aprs_data(packet, "addresse")
+    addresse_string = parse_aprs_data(raw_aprs_packet, "addresse")
     #
     # The is the actual message that we are going to parse
-    message_text_string = parse_aprs_data(packet, "message_text")
+    message_text_string = parse_aprs_data(raw_aprs_packet, "message_text")
     #
     # messagenumber, if present in the original msg (note: this is optional)
-    msgno_string = parse_aprs_data(packet, "msgNo")
+    msgno_string = parse_aprs_data(raw_aprs_packet, "msgNo")
     #
     # User's call sign. read: who has sent us this message?
-    from_callsign = parse_aprs_data(packet, "from")
+    from_callsign = parse_aprs_data(raw_aprs_packet, "from")
     from_callsign = from_callsign.upper()
-    format_string = parse_aprs_data(packet, "format")
+    format_string = parse_aprs_data(raw_aprs_packet, "format")
 
     #
     # This calls a convenience handler / parser. In some rare cases, APRS
@@ -111,7 +111,7 @@ def mycallback(packet):
         # Continue if both assumptions are correct
         if format_string == "message" and message_text_string:
             # This is a message that belongs to us
-            logging.debug(f"received packet: {packet}")
+            logging.debug(f"received raw_aprs_packet: {raw_aprs_packet}")
             # Send an ack if we did receive a message number
             # see aprs101.pdf pg. 71ff.
             if msg_no_supported:
@@ -124,75 +124,98 @@ def mycallback(packet):
             # contains the parser's error message if 'success' != True)
             # input parameters: the actual message, the user's call sign and
             # the aprs.fi API access key for location lookups
-            success, response_parameters = parsemessage(
+            success, response_parameters = parse_input_message(
                 message_text_string, from_callsign, aprsdotfi_api_key
             )
             #
-            # Now we should know what the user wants from us
+            # If the 'success' parameter is True, then we should know
+            # by now what the user wants from us. Now, we'll leave it to
+            # another module to generate the output data of what we want
+            # to send to the user.
+            # The result to this post-processor will be a general success
+            # status code and a list item, containing the messages that are
+            # ready to be sent to the user.
             if success:
                 success, output_message = generate_output_message(
                     response_parameters=response_parameters,
                     openweathermapdotorg_api_key=openweathermapdotorg_api_key,
                 )
-                if success:
-                    number_of_served_packages = send_aprs_message_list(
-                        AIS,
-                        aprsis_simulate_send,
-                        output_message,
-                        from_callsign,
-                        msg_no_supported,
-                        number_of_served_packages,
-                    )
-                else:
-                    # nichts gefunden; Fehlermeldung an User senden
-                    send_single_aprs_message(
-                        AIS,
-                        aprsis_simulate_send,
-                        "Fatal error",
-                        from_callsign,
-                        msg_no_supported,
-                    )
-                    logging.debug(f"Unable to grok packet {packet}")
-            else:
-                # nichts gefunden; Fehlermeldung anm User senden
-                requested_address = response_parameters["human_readable_address"]
-                send_single_aprs_message(
+                # Regardless of a success, fire the messages to the user
+                # in case of a failure, the list item already does contain
+                # the error message to the user.
+                number_of_served_packages = send_aprs_message_list(
                     AIS,
                     aprsis_simulate_send,
-                    requested_address,
+                    output_message,
                     from_callsign,
                     msg_no_supported,
+                    number_of_served_packages,
                 )
-                logging.debug(f"Unable to grok packet {packet}")
+                if not success:
+                    logging.debug(f"Unable to grok packet {raw_aprs_packet}")
+            # darn - we failed!
+            else:
+                output_list = [
+                    "Sorry, I am unable to parse your request. I have logged a copy of",
+                    "your request to my log file which will help my author to understand",
+                    "what you asked me to do. Thank you",
+                ]
+                number_of_served_packages = send_aprs_message_list(
+                    AIS,
+                    aprsis_simulate_send,
+                    output_list,
+                    from_callsign,
+                    msg_no_supported,
+                    number_of_served_packages,
+                )
+                logging.debug(f"Unable to grok packet {raw_aprs_packet}")
 
 
 #
-# main
+# MPAD main
+# At first, we will set logging parameters
 #
-
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(module)s -%(levelname)s - %(message)s"
 )
-aprsis_callsign, aprsis_passcode, aprsis_simulate_send = get_aprsis_passcode(
-    mpad_config.myaprsis_login_callsign
-)
-number_of_served_packages = read_number_of_served_packages()
-# read_icao_and_iata_data()
+#
+# Get the API access keys for OpenWeatherMap and APRS.fi. If we don't have those
+# then there is no point in continuing
+#
 success, aprsdotfi_api_key, openweathermapdotorg_api_key = read_program_config()
 if not success:
     logging.error("Cannot find config file; aborting")
     sys.exit(0)
 
+# Next, get the uppercase'd call sign, its aprs_is pass code and a boolean
+# variable which indicates if we actually want to SEND data to APRS_IS or not
+# By default, the program's call sign is N0CALL, its passcode is -1 and
+# its 'simulate_send' value will be 'True', meaning that you can use the program
+# in 'listen' mode without sending any actual data to aprs_is.
+# If you however submit a call sign that DIFFERS from N0CALL, then the program
+# will automatically calculate the correct login code for you and -in addition-
+# the 'simulate_send' will be set to False, meaning that content will actually
+# be sent to APRS_IS.
+# By overriding the aprsis_simulate_send parameter to True, you can prevent the
+# program from sending data to APRS_IS even if your call sign is not N0CALL.
+aprsis_callsign, aprsis_passcode, aprsis_simulate_send = get_aprsis_passcode(
+    mpad_config.myaprsis_login_callsign
+)
+#
+# Now let's read the number of served packages that we have dealt with so far
+number_of_served_packages = read_number_of_served_packages()
+# read_icao_and_iata_data()
+
 try:
     while True:
-        reconnect_timestamp = (
-            status_timestamp
-        ) = beacon_timestamp = datetime.datetime.now()
-        # Callsign und Passcode setzen
+        #
+        # Set call sign and pass code
         AIS = aprslib.IS(aprsis_callsign, aprsis_passcode)
 
-        # Filterport und zugehörigen Filter setzen
+        # Set the APRS_IS server name and port
         AIS.set_server(mpad_config.myaprs_server_name, mpad_config.myaprs_server_port)
+
+        # Set the APRS_IS (call sign) filter, based on our config file
         AIS.set_filter(mpad_config.myaprs_server_filter)
 
         logging.debug(
