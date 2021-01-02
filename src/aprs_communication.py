@@ -12,24 +12,48 @@ import re
 
 import mpad_config
 
-# bulletin messages (will be sent every 4 hrs)
+# APRS_IS bulletin messages (will be sent every 4 hrs)
+# Note: these HAVE to have 67 characters (or less) per entry
+# MPAD will NOT check the content and send it out 'as is'
 bulletin_texts: dict = {
     "BLN0": f"{mpad_config.mpad_alias} {mpad_config.mpad_version} Multi-Purpose APRS Bot",
     "BLN1": f"I have just hatched and am still in alpha test mode. More useful",
     "BLN2": f"information is going to be added here very soon. Thank you.",
 }
 
-# beacon texts (will be sent every 30 mins)
+# APRS_IS beacon texts (will be sent every 30 mins)
+# Note: these HAVE to have 67 characters (or less) per entry
+# MPAD will NOT check the content and send it out 'as is'
 beacon_text_array: list = [
     f"={mpad_config.mpad_latitude}/{mpad_config.mpad_longitude}{mpad_config.aprs_symbol}{mpad_config.mpad_alias} {mpad_config.mpad_version}",
     ">My tiny little APRS bot (pre-alpha testing)",
 ]
 
 
-def parse_aprs_data(packet_data_dict, item):
-    try:
-        return packet_data_dict.get(item)
-    except Exception:
+def parse_aprs_data(packet_data_dict: dict, item: str):
+    """
+    Get a value for a key from a dictionary. If key is not present,
+    return 'None' for value
+
+    Parameters
+    ==========
+    packet_data_dict: 'dict'
+        Contains pre-parsed
+
+
+
+    Returns
+    =======
+    call_sign: 'str'
+        Same as input parameter; converted to uppercase
+    passcode: 'str'
+        passcode for the call_sign data; -1 if call sign = 'N0CALL'
+    simulate_send_process: 'bool'
+        We will only simulate the send process if this field is True
+    """
+    if item in packet_data_dict:
+        return packet_data_dict[item]
+    else:
         return None
 
 
@@ -196,7 +220,7 @@ def send_aprs_message_list(
         if send_with_msg_no:
             stringtosend = stringtosend + "}" + f"{number_of_served_packages:05}"
             number_of_served_packages = number_of_served_packages + 1
-            if number_of_served_packages > 99999:  # max. 5stellig
+            if number_of_served_packages > 99999:  # max 5 digits
                 number_of_served_packages = 1
         if not simulate_send:
             logging.debug("Echtes Senden")
@@ -247,7 +271,7 @@ def send_single_aprs_message(
         if send_with_msg_no:
             stringtosend = stringtosend + "}" + f"{number_of_served_packages:05}"
             number_of_served_packages = number_of_served_packages + 1
-            if number_of_served_packages > 99999:  # max. 5stellig
+            if number_of_served_packages > 99999:  # max 5 digits
                 number_of_served_packages = 1
         if not simulate_send:
             logging.debug("Echtes Senden")
@@ -260,14 +284,17 @@ def send_single_aprs_message(
 def extract_msgno_from_defective_message(message_text: str):
     msg = msgno = None
 
-    matches = re.search(r"(.*){([a-zA-Z0-9]{1,5})}", message_text, re.IGNORECASE)
-    if matches:
-        try:
-            msg = matches[1]
-            msgno = matches[2]
-        except:
-            msg = message_text
-            msgno = None
+    if message_text:
+        matches = re.search(r"(.*){([a-zA-Z0-9]{1,5})}", message_text, re.IGNORECASE)
+        if matches:
+            try:
+                msg = matches[1]
+                msgno = matches[2]
+            except:
+                msg = message_text
+                msgno = None
+    else:
+        msg = message_text
     return msg, msgno
 
 
