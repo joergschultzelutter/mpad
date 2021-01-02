@@ -240,8 +240,8 @@ try:
         # Debug what we are trying to do
         logging.debug(
             msg=f"Establish connection to APRS_IS: server={mpad_config.myaprs_server_name},"
-            "port={mpad_config.myaprs_server_port}, filter={mpad_config.myaprs_server_filter},"
-            "APRS-IS User: {aprsis_callsign}, APRS-IS passcode: {aprsis_passcode}"
+            f"port={mpad_config.myaprs_server_port}, filter={mpad_config.myaprs_server_filter},"
+            f"APRS-IS User: {aprsis_callsign}, APRS-IS passcode: {aprsis_passcode}"
         )
         AIS.connect(blocking=True)
         if AIS._connected == True:
