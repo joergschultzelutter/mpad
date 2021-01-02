@@ -18,7 +18,6 @@ from aprs_communication import (
     parse_aprs_data,
     send_bulletin_messages,
     send_beacon_and_status_msg,
-    send_single_aprs_message,
     send_ack,
     extract_msgno_from_defective_message,
     send_aprs_message_list,
@@ -27,7 +26,6 @@ import apscheduler.schedulers.base
 import sys
 import logging
 import aprslib
-import datetime
 import time
 import mpad_config
 
@@ -111,7 +109,7 @@ def mycallback(raw_aprs_packet):
         # Continue if both assumptions are correct
         if format_string == "message" and message_text_string:
             # This is a message that belongs to us
-            logging.debug(f"received raw_aprs_packet: {raw_aprs_packet}")
+            logging.debug(msg=f"received raw_aprs_packet: {raw_aprs_packet}")
             # Send an ack if we did receive a message number
             # see aprs101.pdf pg. 71ff.
             if msg_no_supported:
@@ -152,7 +150,7 @@ def mycallback(raw_aprs_packet):
                     number_of_served_packages,
                 )
                 if not success:
-                    logging.debug(f"Unable to grok packet {raw_aprs_packet}")
+                    logging.debug(msg=f"Unable to grok packet {raw_aprs_packet}")
             # darn - we failed!
             else:
                 output_list = [
@@ -168,7 +166,7 @@ def mycallback(raw_aprs_packet):
                     msg_no_supported,
                     number_of_served_packages,
                 )
-                logging.debug(f"Unable to grok packet {raw_aprs_packet}")
+                logging.debug(msg=f"Unable to grok packet {raw_aprs_packet}")
 
 
 #
@@ -184,7 +182,7 @@ logging.basicConfig(
 #
 success, aprsdotfi_api_key, openweathermapdotorg_api_key = read_program_config()
 if not success:
-    logging.error("Cannot find config file; aborting")
+    logging.error(msg="Cannot find config file; aborting")
     sys.exit(0)
 
 # Next, get the uppercase'd call sign, its aprs_is pass code and a boolean
@@ -218,16 +216,20 @@ try:
         # Set the APRS_IS (call sign) filter, based on our config file
         AIS.set_filter(mpad_config.myaprs_server_filter)
 
+        # Debug what we are trying to do
         logging.debug(
-            f"Verbindung herstellen: Server={mpad_config.myaprs_server_name}, port={mpad_config.myaprs_server_port}, filter={mpad_config.myaprs_server_filter}, APRS-IS User: {aprsis_callsign}, APRS-IS Passcode: {aprsis_passcode}"
+            msg=f"Establish connection: server={mpad_config.myaprs_server_name}, port={mpad_config.myaprs_server_port}, filter={mpad_config.myaprs_server_filter}, APRS-IS User: {aprsis_callsign}, APRS-IS passcode: {aprsis_passcode}"
         )
         AIS.connect(blocking=True)
         if AIS._connected == True:
-            logging.debug("Verbindung aufgebaut")
+            logging.debug(msg="Established the connection")
 
-            # Initiales Beacon versenden
-            logging.debug("Initiales Beacon nach Verbindungsaufbau senden")
+            # Send initial beacon after establishing the connection to APRS_IS
+            logging.debug(msg="Send initial beacon after establishing the connection to APRS_IS")
             send_beacon_and_status_msg(AIS, aprsis_simulate_send)
+
+
+
 
             # Scheduler einrichten und starten
             aprs_scheduler = BackgroundScheduler()
