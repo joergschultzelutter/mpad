@@ -20,62 +20,86 @@ from aprs_communication import (
     send_beacon_and_status_msg,
     send_single_aprs_message,
     send_ack,
+    extract_msgno_from_defective_message,
     send_aprs_message_list,
 )
 import apscheduler.schedulers.base
-import re
 import sys
 import logging
-
 import aprslib
 import datetime
 import time
-
-
-# will be prepopulated through config file
-aprsdotfi_api_key = None
-openweathermapdotorg_api_key = None
+import mpad_config
 
 ########################################
 
-# Send-ID-Counter 1..99999
-number_of_served_packages = 1
 
-
-# Main-Callback, der alles im Bereich APRS-Kommunikation erledigt
+# APRSlib callback
+# Extract the fields from the APRS message, start the parsing process,
+# execute the command and send the command output back to the user
 def mycallback(packet):
-    # Basis-APRS-Daten extrahieren
+
+    global number_of_served_packages
+
+    # Extract base data from the APRS message
+    # our APRS-IS filter kinda guarantees that we have received an APRS message
+    # Nevertheless, we hope for the best and expect the worst
+    # If one of these fields cannot be extracted (or is not present, e.g. msgno)
+    # then its value is 'None' by default
+    #
+    # Let's start:
+    #
+    # addresse_string contains the APRS id that the user has sent the data to
+    # Usually, this is 'MPAD' but can also be a 2nd/33ed address
+    # (dependent on what your program config file looks like)
     addresse_string = parse_aprs_data(packet, "addresse")
+    #
+    # The is the actual message that we are going to parse
     message_text_string = parse_aprs_data(packet, "message_text")
-    msgNo_string = parse_aprs_data(
-        packet, "msgNo"
-    )  # für Acknowledgment der initialen Nachricht
+    #
+    # messagenumber, if present in the original msg (note: this is optional)
+    msgno_string = parse_aprs_data(packet, "msgNo")
+    #
+    # User's call sign. read: who has sent us this message?
     from_callsign = parse_aprs_data(packet, "from")
     from_callsign = from_callsign.upper()
     format_string = parse_aprs_data(packet, "format")
 
-    # Wenn keine MsgNo gefunden, dann prüfen, ob die Message selbst noch eine (ungültige) Message+MessageNo beinhaltet. Falls ja: extrahieren
-    # entspricht nicht den Standards, aber offensichtlich kommen solche Pakete ab und zu an
-    if not msgNo_string:
-        message_text_string, msgNo_string = extract_msgno_from_defective_message(
+    #
+    # This calls a convenience handler / parser. In some rare cases, APRS
+    # messages do not seem to follow the APRS messaging standard as described
+    # in chapter 14 of the aprs101.pdf guide (pg. 71). Rather than sending the
+    # msg no in the standard format (12345=msg_no)
+    # message_text{12345
+    # these senders add a closing bracket to the end of the message. Example:
+    # message_text{12345}
+    # aprslib does not recognise this flawed package and returns the content as
+    # is. Our convenience handler takes care of the issue and returns a 'clean'
+    # message text and a separated message_no whereas present
+    if not msgno_string:
+        message_text_string, msgno_string = extract_msgno_from_defective_message(
             message_text_string
         )
 
-    # anschließend testen, ob wir jetzt final eine MessageNo erhalten haben
-    msg_no_supported = True if msgNo_string else False
+    # Based on whether we have received a message number, we now set a session
+    # parameter which tells MPAD for _this_ message whether an ACK is required
+    # and whether we are supposed to send outgoing messages with or without
+    # that message number.
+    # True = Send ack for initial message, enrich every outgoing msg with msgno
+    msg_no_supported = True if msgno_string else False
 
-    # zunächst die eingehende Nachricht beantworten
-    # in meiner Callzeichenliste vorhanden? --> wird durch den aprs_is-Filter durchgeführt und ist eigentlich nicht mehr notwendig
-    if addresse_string in mycallsigns_to_parse:
+    #
+    # Now let's have a look at the message that we have received
+    if addresse_string in mpad_config.mycallsigns_to_parse:
         # Format = message und message_text gefüllt? (sollte dann keine Response sein)
         if format_string == "message" and message_text_string:
             # Diese Nachricht ist für uns. Es kann losgehen
             logging.debug(f"received packet: {packet}")
             # ack senden, falls msgNo vorhanden (siehe S. 71ff.)
-            sned_ack(AIS, aprsis_simulate_send, from_callsign, msgNo_string)
+            send_ack(AIS, aprsis_simulate_send, from_callsign, msgno_string)
             # Content parsen
             success, response_parameters = parsemessage(
-                message_text_string, from_callsign, aprsdotfi_apikey
+                message_text_string, from_callsign, aprsdotfi_api_key
             )
             if success:
                 success, output_message = generate_output_message(
@@ -83,11 +107,11 @@ def mycallback(packet):
                     openweathermapdotorg_api_key=openweathermapdotorg_api_key,
                 )
                 if success:
-                    number_of_served_packages=send_aprs_message_list(
+                    number_of_served_packages = send_aprs_message_list(
                         AIS,
                         aprsis_simulate_send,
                         output_message,
-                        from_string,
+                        from_callsign,
                         msg_no_supported,
                         number_of_served_packages,
                     )
@@ -97,17 +121,18 @@ def mycallback(packet):
                         AIS,
                         aprsis_simulate_send,
                         "Fatal error",
-                        from_string,
+                        from_callsign,
                         msg_no_supported,
                     )
-                    loggging.debug(f"Unable to grok packet {packet}")
+                    logging.debug(f"Unable to grok packet {packet}")
             else:
                 # nichts gefunden; Fehlermeldung anm User senden
+                requested_address = response_parameters["human_readable_address"]
                 send_single_aprs_message(
                     AIS,
                     aprsis_simulate_send,
                     requested_address,
-                    from_string,
+                    from_callsign,
                     msg_no_supported,
                 )
                 logging.debug(f"Unable to grok packet {packet}")
@@ -121,10 +146,10 @@ logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(module)s -%(levelname)s - %(message)s"
 )
 aprsis_callsign, aprsis_passcode, aprsis_simulate_send = get_aprsis_passcode(
-    myaprsis_login_callsign
+    mpad_config.myaprsis_login_callsign
 )
 number_of_served_packages = read_number_of_served_packages()
-read_icao_and_iata_data()
+# read_icao_and_iata_data()
 success, aprsdotfi_api_key, openweathermapdotorg_api_key = read_program_config()
 if not success:
     logging.error("Cannot find config file; aborting")
@@ -139,11 +164,11 @@ try:
         AIS = aprslib.IS(aprsis_callsign, aprsis_passcode)
 
         # Filterport und zugehörigen Filter setzen
-        AIS.set_server(myaprs_server_name, myaprs_server_port)
-        AIS.set_filter(myaprs_server_filter)
+        AIS.set_server(mpad_config.myaprs_server_name, mpad_config.myaprs_server_port)
+        AIS.set_filter(mpad_config.myaprs_server_filter)
 
         logging.debug(
-            f"Verbindung herstellen: Server={myaprs_server_name}, port={myaprs_server_port}, filter={myaprs_server_filter}, APRS-IS User: {aprsis_callsign}, APRS-IS Passcode: {aprsis_passcode}"
+            f"Verbindung herstellen: Server={mpad_config.myaprs_server_name}, port={mpad_config.myaprs_server_port}, filter={mpad_config.myaprs_server_filter}, APRS-IS User: {aprsis_callsign}, APRS-IS Passcode: {aprsis_passcode}"
         )
         AIS.connect(blocking=True)
         if AIS._connected == True:
@@ -195,10 +220,12 @@ try:
 #        AIS.close()
 except (KeyboardInterrupt, SystemExit):
     logging.debug("received exception!")
-    if aprs_scheduler.state != apscheduler.schedulers.base.STATE_STOPPED:
-        try:
-            aprs_scheduler.shutdown()
-        except:
-            logging.debug("Fehler beim Shutdown APRS-Scheduler")
-    AIS.close()
+    if aprs_scheduler:
+        if aprs_scheduler.state != apscheduler.schedulers.base.STATE_STOPPED:
+            try:
+                aprs_scheduler.shutdown()
+            except:
+                logging.debug("Fehler beim Shutdown APRS-Scheduler")
+        if AIS:
+            AIS.close()
     write_number_of_served_packages(served_packages=number_of_served_packages)
