@@ -21,7 +21,7 @@ packet_delay_long: float = 2.0  # packet delay in seconds after sending data to 
 packet_delay_short: float = 1.0  # packet delay in seconds after sending data to aprs-is
 
 # Beacon / Bulletin config settings
-myaprsis_login_callsign = "n0call"  # APRS-IS-Login; Passcode wird automatisch errechnet
+myaprsis_login_callsign = "N0CALL"  # APRS-IS login
 
 myaprs_server_name = "euro.aprs2.net"  # our login server
 myaprs_server_port = 14580  # server port
