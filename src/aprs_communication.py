@@ -145,8 +145,8 @@ def send_bulletin_messages(myaprsis: aprslib.inet.IS, simulate_send: bool = True
 
 def send_ack(
     myaprsis: aprslib.inet.IS,
-    src_call_sign: str,
-    msg_no: str,
+    users_callsign: str,
+    source_msg_no: str,
     simulate_send: bool = True,
 ):
     """
@@ -158,10 +158,11 @@ def send_ack(
     ==========
     myaprsis: 'aprslib.inet.IS'
         Our aprslib object that we will use for the communication part
-    src_call_sign: 'str'
+    users_callsign: 'str'
         Call sign of the user that has sent us the message
-    msg_no: 'str'
+    source_msg_no: 'str'
         message number from user's request. Can be 'None'. In that case, we don't send a message acknowledgment to the user
+        (normally, we should not enter this function at all if this value is 'None'. The safeguard will still stay in place)
     simulate_send: 'bool'
         If True: Prepare string but only send it to logger
 
@@ -170,9 +171,9 @@ def send_ack(
     none
     """
 
-    if msg_no:
+    if source_msg_no:
         logging.debug("Preparing acknowledgment")
-        stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}::{src_call_sign:9}:ack{msg_no}"
+        stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}::{users_callsign:9}:ack{source_msg_no}"
         if not simulate_send:
             logging.debug(f"echtes Senden: {stringtosend}")
         else:
