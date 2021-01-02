@@ -41,4 +41,4 @@ if __name__ == "__main__":
     )
     logging.debug("Start of program")
     unittest.main()
-    logging.debug("Start of program")
+    logging.debug("End of program")
