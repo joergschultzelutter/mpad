@@ -50,17 +50,22 @@ def mycallback(raw_aprs_packet):
     # addresse_string contains the APRS id that the user has sent the data to
     # Usually, this is 'MPAD' but can also be a 2nd/33ed address
     # (dependent on what your program config file looks like)
-    addresse_string = parse_aprs_data(raw_aprs_packet, "addresse")
+    addresse_string = raw_aprs_packet.get("addresse")
     #
     # The is the actual message that we are going to parse
-    message_text_string = parse_aprs_data(raw_aprs_packet, "message_text")
+    message_text_string = raw_aprs_packet.get("message_text")
     #
     # messagenumber, if present in the original msg (note: this is optional)
-    msgno_string = parse_aprs_data(raw_aprs_packet, "msgNo")
+    msgno_string = raw_aprs_packet.get("msgNo")
     #
     # User's call sign. read: who has sent us this message?
-    from_callsign = parse_aprs_data(raw_aprs_packet, "from")
-    from_callsign = from_callsign.upper()
+    from_callsign = raw_aprs_packet.get("from")
+    if from_callsign:
+        from_callsign = from_callsign.upper()
+
+    # Finally, get the format of the message that we have received
+    # For content that we need to process, this should be 'message'
+    # and not 'response'
     format_string = parse_aprs_data(raw_aprs_packet, "format")
 
     #
@@ -102,71 +107,72 @@ def mycallback(raw_aprs_packet):
     # debugging purposes.
     #
     # Is our address in the target list of call signs that we claim as owner?
-    if addresse_string in mpad_config.mycallsigns_to_parse:
-        # Lets examine what we've got:
-        # 1. Message format should always be 'message' and not 'response'
-        # 2. Actual message should be populated with some content
-        # Continue if both assumptions are correct
-        if format_string == "message" and message_text_string:
-            # This is a message that belongs to us
-            logging.debug(msg=f"received raw_aprs_packet: {raw_aprs_packet}")
-            # Send an ack if we did receive a message number
-            # see aprs101.pdf pg. 71ff.
-            if msg_no_supported:
-                send_ack(AIS, aprsis_simulate_send, from_callsign, msgno_string)
-            #
-            # This is where the magic happens: Try to figure out what the user
-            # wants from us. If we were able to understand the user's message,
-            # 'success' will be true. In any case, the 'response_parameters'
-            # dictionary will give us a hint about what to do next (and even
-            # contains the parser's error message if 'success' != True)
-            # input parameters: the actual message, the user's call sign and
-            # the aprs.fi API access key for location lookups
-            success, response_parameters = parse_input_message(
-                message_text_string, from_callsign, aprsdotfi_api_key
-            )
-            #
-            # If the 'success' parameter is True, then we should know
-            # by now what the user wants from us. Now, we'll leave it to
-            # another module to generate the output data of what we want
-            # to send to the user.
-            # The result to this post-processor will be a general success
-            # status code and a list item, containing the messages that are
-            # ready to be sent to the user.
-            if success:
-                success, output_message = generate_output_message(
-                    response_parameters=response_parameters,
-                    openweathermapdotorg_api_key=openweathermapdotorg_api_key,
+    if addresse_string:
+        if addresse_string in mpad_config.mycallsigns_to_parse:
+            # Lets examine what we've got:
+            # 1. Message format should always be 'message' and not 'response'
+            # 2. Actual message should be populated with some content
+            # Continue if both assumptions are correct
+            if format_string == "message" and message_text_string:
+                # This is a message that belongs to us
+                logging.debug(msg=f"received raw_aprs_packet: {raw_aprs_packet}")
+                # Send an ack if we did receive a message number
+                # see aprs101.pdf pg. 71ff.
+                if msg_no_supported:
+                    send_ack(AIS, aprsis_simulate_send, from_callsign, msgno_string)
+                #
+                # This is where the magic happens: Try to figure out what the user
+                # wants from us. If we were able to understand the user's message,
+                # 'success' will be true. In any case, the 'response_parameters'
+                # dictionary will give us a hint about what to do next (and even
+                # contains the parser's error message if 'success' != True)
+                # input parameters: the actual message, the user's call sign and
+                # the aprs.fi API access key for location lookups
+                success, response_parameters = parse_input_message(
+                    message_text_string, from_callsign, aprsdotfi_api_key
                 )
-                # Regardless of a success, fire the messages to the user
-                # in case of a failure, the list item already does contain
-                # the error message to the user.
-                number_of_served_packages = send_aprs_message_list(
-                    AIS,
-                    aprsis_simulate_send,
-                    output_message,
-                    from_callsign,
-                    msg_no_supported,
-                    number_of_served_packages,
-                )
-                if not success:
+                #
+                # If the 'success' parameter is True, then we should know
+                # by now what the user wants from us. Now, we'll leave it to
+                # another module to generate the output data of what we want
+                # to send to the user.
+                # The result to this post-processor will be a general success
+                # status code and a list item, containing the messages that are
+                # ready to be sent to the user.
+                if success:
+                    success, output_message = generate_output_message(
+                        response_parameters=response_parameters,
+                        openweathermapdotorg_api_key=openweathermapdotorg_api_key,
+                    )
+                    # Regardless of a success, fire the messages to the user
+                    # in case of a failure, the list item already does contain
+                    # the error message to the user.
+                    number_of_served_packages = send_aprs_message_list(
+                        AIS,
+                        aprsis_simulate_send,
+                        output_message,
+                        from_callsign,
+                        msg_no_supported,
+                        number_of_served_packages,
+                    )
+                    if not success:
+                        logging.debug(msg=f"Unable to grok packet {raw_aprs_packet}")
+                # darn - we failed!
+                else:
+                    output_list = [
+                        "Sorry, I am unable to parse your request. I have logged a copy of",
+                        "your request to my log file which will help my author to understand",
+                        "what you asked me to do. Thank you",
+                    ]
+                    number_of_served_packages = send_aprs_message_list(
+                        AIS,
+                        aprsis_simulate_send,
+                        output_list,
+                        from_callsign,
+                        msg_no_supported,
+                        number_of_served_packages,
+                    )
                     logging.debug(msg=f"Unable to grok packet {raw_aprs_packet}")
-            # darn - we failed!
-            else:
-                output_list = [
-                    "Sorry, I am unable to parse your request. I have logged a copy of",
-                    "your request to my log file which will help my author to understand",
-                    "what you asked me to do. Thank you",
-                ]
-                number_of_served_packages = send_aprs_message_list(
-                    AIS,
-                    aprsis_simulate_send,
-                    output_list,
-                    from_callsign,
-                    msg_no_supported,
-                    number_of_served_packages,
-                )
-                logging.debug(msg=f"Unable to grok packet {raw_aprs_packet}")
 
 
 #
@@ -204,6 +210,12 @@ aprsis_callsign, aprsis_passcode, aprsis_simulate_send = get_aprsis_passcode(
 number_of_served_packages = read_number_of_served_packages()
 # read_icao_and_iata_data()
 
+# Define dummy values for both APRS task schedules and AIS object
+aprs_scheduler = AIS = None
+
+#
+# Finally, let's enter the 'eternal loop'
+#
 try:
     while True:
         #
@@ -218,11 +230,11 @@ try:
 
         # Debug what we are trying to do
         logging.debug(
-            msg=f"Establish connection: server={mpad_config.myaprs_server_name}, port={mpad_config.myaprs_server_port}, filter={mpad_config.myaprs_server_filter}, APRS-IS User: {aprsis_callsign}, APRS-IS passcode: {aprsis_passcode}"
+            msg=f"Establish connection to APRS_IS: server={mpad_config.myaprs_server_name}, port={mpad_config.myaprs_server_port}, filter={mpad_config.myaprs_server_filter}, APRS-IS User: {aprsis_callsign}, APRS-IS passcode: {aprsis_passcode}"
         )
         AIS.connect(blocking=True)
         if AIS._connected == True:
-            logging.debug(msg="Established the connection")
+            logging.debug(msg="Established the connection to APRS_IS")
 
             # Send initial beacon after establishing the connection to APRS_IS
             logging.debug(msg="Send initial beacon after establishing the connection to APRS_IS")
@@ -254,26 +266,37 @@ try:
             # start both schedulers
             aprs_scheduler.start()
 
-            logging.debug("Starte Callback-Consumer")
+            #
+            # We are on the verge of starting the aprslib callback consumer
+            # This section is going to be left only in the case of network
+            # errors or if the user did raise an exception
+            #
+            logging.debug(msg="Starting callback consumer")
             AIS.consumer(mycallback, blocking=True, immortal=True, raw=False)
 
-            logging.debug("Callback verlassen")
-            # Scheduler zuerst stoppen, leeren und dann herunterfahren
+            #
+            # We have left the callback, let's clean up a few things
+            logging.debug("Have left the callback")
+            #
+            # First, stop all schedulers. Then remove the associated jobs
+            # This will prevent the beacon/bulletin processes from sending out
+            # messages to APRS_IS
             aprs_scheduler.pause()
             aprs_scheduler.remove_all_jobs()
             if aprs_scheduler.state != apscheduler.schedulers.base.STATE_STOPPED:
                 try:
                     aprs_scheduler.shutdown()
                 except:
-                    logging.debug("Fehler beim Scheduler Shutdown")
+                    logging.debug(msg="Exception during scheduler shutdown eternal loop")
 
             # Verbindung schließen
-            logging.debug("Schliesse Verbindung")
+            logging.debug(msg="Closing APRS connection to APRS_IS")
             AIS.close()
         else:
-            logging.debug("Konnte Verbindung nicht neu aufbauen")
+            logging.debug(msg="Cannot re-establish connection to APRS_IS")
+        # Write the number of served packages to disc
         write_number_of_served_packages(served_packages=number_of_served_packages)
-        logging.debug("Schlafe 5 sec")
+        logging.debug(msg="Sleeping 5 secs")
         time.sleep(5)
 #        AIS.close()
 except (KeyboardInterrupt, SystemExit):
@@ -283,7 +306,8 @@ except (KeyboardInterrupt, SystemExit):
             try:
                 aprs_scheduler.shutdown()
             except:
-                logging.debug("Fehler beim Shutdown APRS-Scheduler")
+                logging.debug(msg="Exception during scheduler shutdown SystemExit loop")
         if AIS:
             AIS.close()
+    # Write number of served packages to disc
     write_number_of_served_packages(served_packages=number_of_served_packages)
