@@ -287,6 +287,7 @@ def parse_daily_weather_from_openweathermapdotorg(
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
+    logger = logging.getLogger(__name__)
 
     success, aprsdotfi_api_key, openweathermap_api_key = read_program_config()
     if success:
@@ -302,4 +303,4 @@ if __name__ == "__main__":
             my_weather_forecast_array = parse_daily_weather_from_openweathermapdotorg(
                 weather_tuple, "metric", "Und jetzt das Wetter", "Samstag", "full"
             )
-            logging.debug(my_weather_forecast_array)
+            logger.debug(my_weather_forecast_array)

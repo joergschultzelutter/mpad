@@ -11,7 +11,7 @@ class MyTestCase(unittest.TestCase):
         assert success == True
 
         # message_text = APRS-Message excluding any message IDs etc
-        message_text = "where=43085{0l}"
+        message_text = "Current"
         # from_callsign = Sender's callsign
         from_callsign = "df1jsl-1"
 
@@ -39,6 +39,8 @@ if __name__ == "__main__":
     logging.basicConfig(
         level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
     )
-    logging.debug("Start of program")
+    logger = logging.getLogger(__name__)
+
+    logger.debug("Start of program")
     unittest.main()
-    logging.debug("End of program")
+    logger.debug("End of program")

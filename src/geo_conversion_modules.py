@@ -407,17 +407,18 @@ def Haversine(
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
+    logger = logging.getLogger(__name__)
 
-    logging.debug(convert_latlon_to_utm(48, -122))
-    logging.debug(convert_utm_to_latlon(10, "U", 574595, 5316784))
+    logger.debug(convert_latlon_to_utm(48, -122))
+    logger.debug(convert_utm_to_latlon(10, "U", 574595, 5316784))
 
-    logging.debug(convert_latlon_to_maidenhead(51.838720, 08.326819))
-    logging.debug(convert_maidenhead_to_latlon("JO41du91"))
+    logger.debug(convert_latlon_to_maidenhead(51.838720, 08.326819))
+    logger.debug(convert_maidenhead_to_latlon("JO41du91"))
 
-    logging.debug(convert_latlon_to_mgrs(51.838720, 08.326819))
-    logging.debug(convert_mgrs_to_latlon("32UMC5362043315"))
+    logger.debug(convert_latlon_to_mgrs(51.838720, 08.326819))
+    logger.debug(convert_mgrs_to_latlon("32UMC5362043315"))
 
-    logging.debug(convert_latlon_to_dms(51.838720, 08.326819))
-    logging.debug(convert_dms_to_latlon(48, 0, 0, "N", 122, 0, 0, "W"))
+    logger.debug(convert_latlon_to_dms(51.838720, 08.326819))
+    logger.debug(convert_dms_to_latlon(48, 0, 0, "N", 122, 0, 0, "W"))
 
-    logging.debug(Haversine(51.8458575, 8.2997425, 51.96564, 9.79817, "metric"))
+    logger.debug(Haversine(51.8458575, 8.2997425, 51.96564, 9.79817, "metric"))
