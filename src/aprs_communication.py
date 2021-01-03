@@ -252,6 +252,7 @@ if __name__ == "__main__":
     logging.basicConfig(
         level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
     )
+    logger = logging.getLogger(__name__)
     send_beacon_and_status_msg(None)
     send_bulletin_messages(None)
-    logging.debug(get_aprsis_passcode("N0CALL"))
+    logger.debug(get_aprsis_passcode("N0CALL"))

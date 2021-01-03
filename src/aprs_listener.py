@@ -39,6 +39,8 @@ def mycallback(raw_aprs_packet):
 
     global number_of_served_packages
 
+    logger = logging.getLogger(__name__)
+
     # Extract base data from the APRS message
     # our APRS-IS filter kinda guarantees that we have received an APRS message
     # Nevertheless, we hope for the best and expect the worst
@@ -116,7 +118,7 @@ def mycallback(raw_aprs_packet):
             # Continue if both assumptions are correct
             if format_string == "message" and message_text_string:
                 # This is a message that belongs to us
-                logging.debug(msg=f"received raw_aprs_packet: {raw_aprs_packet}")
+                logger.debug(msg=f"received raw_aprs_packet: {raw_aprs_packet}")
                 # Send an ack if we did receive a message number
                 # see aprs101.pdf pg. 71ff.
                 if msg_no_supported:
@@ -192,6 +194,7 @@ def mycallback(raw_aprs_packet):
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(module)s -%(levelname)s - %(message)s"
 )
+logger = logging.getLogger(__name__)
 #
 # Get the API access keys for OpenWeatherMap and APRS.fi. If we don't have those
 # then there is no point in continuing
@@ -244,12 +247,13 @@ try:
             f"port={mpad_config.myaprs_server_port}, filter={mpad_config.myaprs_server_filter},"
             f"APRS-IS User: {aprsis_callsign}, APRS-IS passcode: {aprsis_passcode}"
         )
+        logger = logging.getLogger(__name__)
         AIS.connect(blocking=True)
         if AIS._connected == True:
-            logging.debug(msg="Established the connection to APRS_IS")
+            logger.debug(msg="Established the connection to APRS_IS")
 
             # Send initial beacon after establishing the connection to APRS_IS
-            logging.debug(
+            logger.debug(
                 msg="Send initial beacon after establishing the connection to APRS_IS"
             )
             send_beacon_and_status_msg(AIS, aprsis_simulate_send)
@@ -285,12 +289,12 @@ try:
             # This section is going to be left only in the case of network
             # errors or if the user did raise an exception
             #
-            logging.debug(msg="Starting callback consumer")
+            logger.debug(msg="Starting callback consumer")
             AIS.consumer(mycallback, blocking=True, immortal=True, raw=False)
 
             #
             # We have left the callback, let's clean up a few things
-            logging.debug("Have left the callback")
+            logger.debug("Have left the callback")
             #
             # First, stop all schedulers. Then remove the associated jobs
             # This will prevent the beacon/bulletin processes from sending out
@@ -301,28 +305,28 @@ try:
                 try:
                     aprs_scheduler.shutdown()
                 except:
-                    logging.debug(
+                    logger.debug(
                         msg="Exception during scheduler shutdown eternal loop"
                     )
 
             # Verbindung schließen
-            logging.debug(msg="Closing APRS connection to APRS_IS")
+            logger.debug(msg="Closing APRS connection to APRS_IS")
             AIS.close()
         else:
-            logging.debug(msg="Cannot re-establish connection to APRS_IS")
+            logger.debug(msg="Cannot re-establish connection to APRS_IS")
         # Write the number of served packages to disc
         write_number_of_served_packages(served_packages=number_of_served_packages)
-        logging.debug(msg="Sleeping 5 secs")
+        logger.debug(msg="Sleeping 5 secs")
         time.sleep(5)
 #        AIS.close()
 except (KeyboardInterrupt, SystemExit):
-    logging.debug("received exception!")
+    logger.debug("received exception!")
     if aprs_scheduler:
         if aprs_scheduler.state != apscheduler.schedulers.base.STATE_STOPPED:
             try:
                 aprs_scheduler.shutdown()
             except:
-                logging.debug(msg="Exception during scheduler shutdown SystemExit loop")
+                logger.debug(msg="Exception during scheduler shutdown SystemExit loop")
         if AIS:
             AIS.close()
     # Write number of served packages to disc

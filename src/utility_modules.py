@@ -309,7 +309,8 @@ def read_number_of_served_packages(file_name: str = "served_packages.mpad"):
                 served_packages = int(contents)
     except:
         served_packages = 1
-        logging.debug(f"Cannot read content from {file_name}")
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Cannot read content from {file_name}")
     return served_packages
 
 
@@ -339,6 +340,7 @@ def write_number_of_served_packages(served_packages: int,
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
+    logger = logging.getLogger(__name__)
 
     my_array = make_pretty_aprs_messages("Hello World")
     my_array = make_pretty_aprs_messages("Wie geht es Dir", my_array)
@@ -355,7 +357,7 @@ if __name__ == "__main__":
     )
 
     my_array = make_pretty_aprs_messages("Alter Schwede", my_array)
-    logging.debug(my_array)
+    logger.debug(my_array)
 
-    logging.debug("Logtext erfolgreich")
-    logging.debug(read_program_config())
+    logger.debug("Logtext erfolgreich")
+    logger.debug(read_program_config())
