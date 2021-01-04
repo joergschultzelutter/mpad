@@ -165,16 +165,10 @@ def mycallback(raw_aprs_packet):
                         send_with_msg_no=msg_no_supported,
                         number_of_served_packages=number_of_served_packages,
                     )
-                    if not success:
-                        logging.debug(
-                            msg=f"I was unable to grok packet {raw_aprs_packet}"
-                        )
                 # darn - we failed to hail the Tripods
                 else:
                     output_message = [
-                        "Sorry, I am unable to parse your request. I have logged a copy of",
-                        "your request to my log file which will help my author to understand",
-                        "what you asked me to do. Thank you",
+                        "Did not understand your request. Pls check my command syntax",
                     ]
                     number_of_served_packages = send_aprs_message_list(
                         myaprsis=AIS,
