@@ -55,4 +55,4 @@ Python implementation of an APRS Multi-Purpose Daemon (wx forecast, sat data, ge
 ## The fine print
 
 - If you intend host an instance of this program, you need to be a licensed ham radio operator
-- APRS is a registered trademark Bob Bruninga, WB4APR
+- APRS is a registered trademark of APRS Software andBob Bruninga, WB4APR
