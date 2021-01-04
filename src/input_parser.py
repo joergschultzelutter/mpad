@@ -104,7 +104,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # default 'an error has occurred' marker
     err = False
 
-    latitude = longitude = altitude = 0.0
+    latitude = longitude = altitude = users_latitude = users_longitude = 0.0
     date_offset = -1
     when = when_daytime = what = city = state = country = zipcode = cwop_id = None
     icao = human_readable_message = satellite = repeater_band = repeater_mode = None
@@ -417,7 +417,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # sequence and -if found- use the user's call sign
     #
     if not found_my_duty_roster and not err:
-        regex_string = r"(wx|whereis|riseset|cwop|metar)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[a-zA-Z0-9]{1,2})"
+        regex_string = r"(wx|forecast|whereis|riseset|cwop|metar)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[a-zA-Z0-9]{1,2})"
         matches = re.search(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
@@ -427,7 +427,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             aprs_message = re.sub(regex_string, "", aprs_message).strip()
             found_my_duty_roster = True
         if not found_my_duty_roster:
-            regex_string = r"(wx|whereis|riseset|cwop|metar)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3})"
+            regex_string = r"(wx|forecast|whereis|riseset|cwop|metar)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3})"
             matches = re.search(
                 pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
             )
@@ -437,7 +437,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                 found_my_duty_roster = True
                 aprs_message = re.sub(regex_string, "", aprs_message).strip()
         if not found_my_duty_roster:
-            regex_string = r"(wx|whereis|riseset|cwop|metar)"
+            regex_string = r"(wx|forecast|whereis|riseset|cwop|metar)"
             matches = re.search(
                 pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
             )
@@ -457,8 +457,10 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                 aprsfi_callsign=message_callsign, aprsdotfi_api_key=aprsdotfi_api_key
             )
             if success:
-                if what == "wx":
+                if what == "wx" or what == "forecast":
                     human_readable_message = f"Wx {message_callsign}"
+                    if what == "forecast":
+                        what = "wx"
                 elif what == "riseset":
                     human_readable_message = f"RiseSet {message_callsign}"
                 elif what == "whereis":
@@ -510,9 +512,9 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                 )
                 err = True
 
-    # Check if the user wants information about aspecific CWOP ID
+    # Check if the user wants information about a specific CWOP ID
     if not found_my_duty_roster and not err:
-        regex_string = r"cwop\s*(\w*)"
+        regex_string = r"cwop\s*(\w+)"
         matches = re.search(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
@@ -527,7 +529,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
 
     # Check if the user wants to gain information about an upcoming satellite pass
     if not found_my_duty_roster and not err:
-        regex_string = r"satpass\s*(\w*)"
+        regex_string = r"satpass\s*(\w+)"
         matches = re.search(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
@@ -900,8 +902,23 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             if matches:
                 language = matches[2].lower()
 
-    # Default checks outside of the 'for' loop - we may not have everything
-    # we need so let's have a look.
+    # Default checks outside of the 'for' loop - we may not have everything we
+    # need to process the user's message yet so let's have a look.
+
+    # Apply default to 'when' setting if still not populated
+    if not found_when and not err:
+        when = "today"
+        found_when = True
+        date_offset = 0
+
+    # apply default to 'when_daytime' if still not populated
+    if not found_when_daytime and not err:
+        when_daytime = "full"
+        found_when_daytime = True
+
+    # apply default to 'what' if still not populated
+    if not what and not err:
+        what = "wx"
 
     # Check if there is no reference to any position. This can be the case if
     # the user has requested something like 'tonight' where MPAD is to return
@@ -909,7 +926,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # the user has submitted a 'when' information (we don't care about the
     # 'when_daytime') as otherwise, garbage data will trigger a wx report
 
-    if not found_my_duty_roster:
+    if not found_my_duty_roster and not err:
         # the user has specified a time setting (e.g. 'today') so we know that
         # he actually wants us something to do (rather than just sending
         # random garbage data to us
@@ -957,20 +974,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             human_readable_message = errmsg_invalid_command
             err = True
 
-    # Apply default to 'when' setting if still not populated
-    if not found_when and not err:
-        when = "today"
-        found_when = True
-        date_offset = 0
-
-    # apply default to 'when_daytime' if still not populated
-    if not found_when_daytime and not err:
-        when_daytime = "full"
-        found_when_daytime = True
-
-    # apply default to 'what' if still not populated
-    if not what and not err:
-        what = "wx"
 
     # Generate dictionary which contains what we have fund out about the user's request
     response_parameters = {
@@ -998,6 +1001,8 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         "cwop_id": cwop_id,
         "street": street,
         "street_number": street_number,
+        "users_latitude": users_latitude,
+        "users_longitude": users_longitude,
     }
 
     # Finally, set the return code. Unless there was an error, we return a True status
@@ -1143,4 +1148,4 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
 
     success, aprsdotfi_api_key, openweathermap_api_key = read_program_config()
-    logger.debug(parse_input_message("repeater 70cm dmr", "df1jsl-1", aprsdotfi_api_key))
+    logger.debug(parse_input_message("forecast", "df1jsl-1", aprsdotfi_api_key))
