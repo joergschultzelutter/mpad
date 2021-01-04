@@ -44,8 +44,9 @@ help_text_array = [
 def create_cwop_content(cwop_dict: dict):
     """
     Function for generating the content from CWOP data
-    (we need to do this for the two use cases, but the
-    data is the same)
+    (we need to do this for the two avalilable use cases,
+    cwop_by_lat_lon and cwop_by_id. However, the data that we will
+    send to the user is the same.
 
     Parameters
     ==========
@@ -88,8 +89,11 @@ def create_cwop_content(cwop_dict: dict):
     if rain_mn == "0.00":
         rain_mn = "0.0"
 
-    # Generate the output. We need to declare a dummy list here as some -or all-
+    # Prepare the output content. Special use case:
+    # We need to declare a dummy list here as some -or all-
     # of these elements are missing (and we don't know which ones will that be)
+    # Therefore, we cannot rely on make_pretty_aprs_messages returning a list to
+    # us at all times.
     output_list = []
     # we ignore the 'human_readable_message' variable at this point
     # as it did not yet contain the respective CWOP ID
@@ -182,354 +186,524 @@ def generate_output_message(
 
     what = response_parameters["what"]
 
-    # Now evaluate the action command and extract the required fields
-    # from the dictionary (dependent on the context)
-
+    # Now evaluate the action command call an associated subroutine
+    # which will extract the relevant information from the input parser's
+    # response parameters and then build the final outgoing message.
     #
-    # WX report?
-    #
+    # each of these functions will return:
+    # -a boolean status which is a general indicator if something was wrong
+    # -a list object which contains the ready-to-send messages to the end user
     if what == "wx":
-        latitude = response_parameters["latitude"]
-        longitude = response_parameters["longitude"]
-        units = response_parameters["units"]
-        when = response_parameters["when"]
-        when_daytime = response_parameters["when_daytime"]
-        date_offset = response_parameters["date_offset"]
-        human_readable_message = response_parameters["human_readable_message"]
-        success, myweather, tz_offset, tz = get_daily_weather_from_openweathermapdotorg(
-            latitude=latitude,
-            longitude=longitude,
-            units=units,
-            date_offset=date_offset,
-            openweathermap_api_key=openweathermapdotorg_api_key,
+        success, output_list = generate_output_message_wx(response_parameters=response_parameters, openweathermapdotorg_api_key=openweathermapdotorg_api_key)
+    elif what == "metar":
+        success, output_list = generate_output_message_metar(response_parameters=response_parameters)
+    elif what == "help":
+        success, output_list = generate_output_message_help()
+    elif what == "satpass":
+        success, output_list = generate_output_message_satpass(response_parameters=response_parameters)
+    elif what == "cwop_by_latlon":
+        success, output_list = generate_output_message_cwop_by_latlon(response_parameters=response_parameters)
+    elif what == "cwop_by_cwop_id":
+        success, output_list = generate_output_message_cwop_by_cwop_id(response_parameters=response_parameters)
+    elif what == "riseset":
+        success, output_list = generate_output_message_riseset(response_parameters=response_parameters)
+    elif what == "satpass":
+        success, output_list = generate_output_message_satpass(response_parameters=response_parameters)
+    elif what == "repeater":
+        success, output_list = generate_output_message_repeater(response_parameters=response_parameters)
+    elif what == "whereis":
+        success, output_list = generate_output_message_whereis(response_parameters=response_parameters)
+    else:
+        success = False
+        output_list = [
+            "Output parser did encounter an unknown action command",
+        ]
+        logging.debug(f"Unable to generate output message; unknown action command: {response_parameters}")
+
+    return success, output_list
+
+
+def generate_output_message_wx(response_parameters: dict, openweathermapdotorg_api_key: str):
+    """
+    Action keyword "wx": generate the wx report for the requested coordinates
+
+    Parameters
+    ==========
+    response_parameters: 'dict'
+        Dictionary of the data from the input processor's analysis on the user's data
+    openweathermapdotorg_api_key: 'str'
+        API access key to openweathermap.org
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful. Will only be false in case of a
+        fatal error as we need to send something back to the user (even
+        if that message is a mere error text)
+    output_message: 'list'
+        List, containing the message text(s) that we will send to the user
+        This is plain text list without APRS message ID's
+    """
+    latitude = response_parameters["latitude"]
+    longitude = response_parameters["longitude"]
+    units = response_parameters["units"]
+    when = response_parameters["when"]
+    when_daytime = response_parameters["when_daytime"]
+    date_offset = response_parameters["date_offset"]
+    human_readable_message = response_parameters["human_readable_message"]
+    success, myweather, tz_offset, tz = get_daily_weather_from_openweathermapdotorg(
+        latitude=latitude,
+        longitude=longitude,
+        units=units,
+        date_offset=date_offset,
+        openweathermap_api_key=openweathermapdotorg_api_key,
+    )
+    if success:
+        weather_forecast_array = parse_daily_weather_from_openweathermapdotorg(
+            myweather, units, human_readable_message, when, when_daytime
         )
-        if success:
-            weather_forecast_array = parse_daily_weather_from_openweathermapdotorg(
-                myweather, units, human_readable_message, when, when_daytime
-            )
-            return success, weather_forecast_array
-        else:
-            success = True
-            output_list = make_pretty_aprs_messages(
-                message_to_add=f"{human_readable_message} - unable to get wx"
-            )
-            return success, output_list
-
-    #
-    # General help?
-    #
-    if what == "help":
+        return success, weather_forecast_array
+    else:
         success = True
-        return success, help_text_array
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"{human_readable_message} - unable to get wx"
+        )
+        return success, output_list
 
+
+def generate_output_message_metar(response_parameters: dict):
+    """
+    Generate a metar report for a specific airport (ICAO code)
+
+    Parameters
+    ==========
+    response_parameters: 'dict'
+        Dictionary of the data from the input processor's analysis on the user's data
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful. Will only be false in case of a
+        fatal error as we need to send something back to the user (even
+        if that message is a mere error text)
+    output_message: 'list'
+        List, containing the message text(s) that we will send to the user
+        This is plain text list without APRS message ID's
+    """
     #
     # METAR data?
     # At this point in time, we know for sure that the airport is METAR
     # capable. If we are still unable to retrieve that METAR data, then
-    # output the error message to the user
-    # (human_readable_message) from imput parser is ignored in order to
+    # output an error message to the user. The input parser's
+    # human_readable_message field is ignored in order to
     # shorten the user message
     #
-    if what == "metar":
-        icao_code = response_parameters["icao"]
-        success, metar_response = get_metar_data(icao_code=icao_code)
-        if success:
-            output_list = make_pretty_aprs_messages(
-                message_to_add=metar_response,
-            )
-            return success, output_list
-        else:
-            success = True
-            output_list = make_pretty_aprs_messages(
-                message_to_add=f"No METAR data present for {icao_code}"
-            )
-            return success, output_list
-    #
-    # Satellite pass?
-    #
-    if what == "satpass":
-        satellite = response_parameters["satellite"]
-        latitude = response_parameters["latitude"]
-        longitude = response_parameters["longitude"]
-        altitude = response_parameters["altitude"]
-        when_daytime = response_parameters["when_daytime"]
-        when = response_parameters["when"]
-        human_readable_message = response_parameters["human_readable_message"]
+    icao_code = response_parameters["icao"]
+    success, metar_response = get_metar_data(icao_code=icao_code)
+    if success:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=metar_response,
+        )
+        return success, output_list
+    else:
+        success = True
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"No METAR data present for {icao_code}"
+        )
+        return success, output_list
 
-        output_list = ["Currently not implemented"]
+
+def generate_output_message_help():
+    """
+    Return instructions to the user
+
+    Parameters
+    ==========
+
+    Returns
+    =======
+    success: 'bool'
+        always True
+    output_message: 'list'
+        List, containing the message text(s) that we will send to the user
+        This is plain text list without APRS message ID's
+    """
+    success = True
+    output_list = help_text_array
+    return success, output_list
+
+
+def generate_output_message_satpass(response_parameters: dict):
+    """
+    Generate the satellite prediction data report
+
+    Parameters
+    ==========
+    response_parameters: 'dict'
+        Dictionary of the data from the input processor's analysis on the user's data
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful. Will only be false in case of a
+        fatal error as we need to send something back to the user (even
+        if that message is a mere error text)
+    output_message: 'list'
+        List, containing the message text(s) that we will send to the user
+        This is plain text list without APRS message ID's
+    """
+    satellite = response_parameters["satellite"]
+    latitude = response_parameters["latitude"]
+    longitude = response_parameters["longitude"]
+    altitude = response_parameters["altitude"]
+    when_daytime = response_parameters["when_daytime"]
+    when = response_parameters["when"]
+    human_readable_message = response_parameters["human_readable_message"]
+
+    output_list = ["Currently not implemented"]
+    success = True
+    return success, output_list
+
+
+def generate_output_message_cwop_by_latlon(response_parameters: dict):
+    """
+    Generate a CWOP report for a specific lat/lon coordinates set
+
+    Parameters
+    ==========
+    response_parameters: 'dict'
+        Dictionary of the data from the input processor's analysis on the user's data
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful. Will only be false in case of a
+        fatal error as we need to send something back to the user (even
+        if that message is a mere error text)
+    output_message: 'list'
+        List, containing the message text(s) that we will send to the user
+        This is plain text list without APRS message ID's
+    """
+    latitude = response_parameters["latitude"]
+    longitude = response_parameters["longitude"]
+    units = response_parameters["units"]
+    message_callsign = response_parameters["message_callsign"]
+    success, cwop_dict = get_nearest_cwop_findu(
+        latitude=latitude, longitude=longitude, units=units
+    )
+    if success:
+        # extract the response fields from the parsed message content
+        output_list = create_cwop_content(cwop_dict)
+        success = True
+        return success, output_list
+    else:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"Unable to get nearest CWOP for {message_callsign}"
+        )
         success = True
         return success, output_list
 
-    #
-    # CWOP data by lat/lon?
-    #
-    if what == "cwop_by_latlon":
-        latitude = response_parameters["latitude"]
-        longitude = response_parameters["longitude"]
-        units = response_parameters["units"]
-        message_callsign = response_parameters["message_callsign"]
-        success, cwop_dict = get_nearest_cwop_findu(
-            latitude=latitude, longitude=longitude, units=units
+
+def generate_output_message_cwop_by_cwop_id(response_parameters: dict):
+    """
+    Generate a CWOP report for a specific cwop station
+
+    Parameters
+    ==========
+    response_parameters: 'dict'
+        Dictionary of the data from the input processor's analysis on the user's data
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful. Will only be false in case of a
+        fatal error as we need to send something back to the user (even
+        if that message is a mere error text)
+    output_message: 'list'
+        List, containing the message text(s) that we will send to the user
+        This is plain text list without APRS message ID's
+    """
+    human_readable_message = response_parameters["human_readable_message"]
+    cwop_id = response_parameters["cwop_id"]
+    units = response_parameters["units"]
+    success, cwop_dict = get_cwop_findu(cwop_id=cwop_id, units=units)
+    if success:
+        # extract the response fields from the parsed message content
+        output_list = create_cwop_content(cwop_dict)
+        success = True
+        return success, output_list
+    else:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"Unable to get CWOP for ID {cwop_id}"
         )
-        if success:
-            # extract the response fields from the parsed message content
-            output_list = create_cwop_content(cwop_dict)
-            success = True
-            return success, output_list
-        else:
-            output_list = make_pretty_aprs_messages(
-                message_to_add=f"Unable to get nearest CWOP for {message_callsign}"
-            )
-            success = True
-            return success, output_list
+        success = True
+        return success, output_list
 
-    #
-    # CWOP data by CWOP ID?
-    #
-    if what == "cwop_by_cwop_id":
-        human_readable_message = response_parameters["human_readable_message"]
-        cwop_id = response_parameters["cwop_id"]
-        units = response_parameters["units"]
-        success, cwop_dict = get_cwop_findu(cwop_id=cwop_id, units=units)
-        if success:
-            # extract the response fields from the parsed message content
-            output_list = create_cwop_content(cwop_dict)
-            success = True
-            return success, output_list
-        else:
-            output_list = make_pretty_aprs_messages(
-                message_to_add=f"Unable to get CWOP for ID {cwop_id}"
-            )
-            success = True
-            return success, output_list
+def generate_output_message_riseset(response_parameters: dict):
+    """
+    Get sunrise/sunset and moonrise/moonset for latitude/longitude
 
-    #
-    # Sunrise/Sunset and Moonrise/Moonset
-    #
-    if what == "riseset":
-        latitude = response_parameters["latitude"]
-        longitude = response_parameters["longitude"]
-        altitude = response_parameters["altitude"]
-        date_offset = response_parameters["date_offset"]
-        human_readable_message = response_parameters["human_readable_message"]
+    Parameters
+    ==========
+    response_parameters: 'dict'
+        Dictionary of the data from the input processor's analysis on the user's data
 
-        requested_date = datetime.datetime.now() + datetime.timedelta(days=date_offset)
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful. Will only be false in case of a
+        fatal error as we need to send something back to the user (even
+        if that message is a mere error text)
+    output_message: 'list'
+        List, containing the message text(s) that we will send to the user
+        This is plain text list without APRS message ID's
+    """
+    latitude = response_parameters["latitude"]
+    longitude = response_parameters["longitude"]
+    altitude = response_parameters["altitude"]
+    date_offset = response_parameters["date_offset"]
+    human_readable_message = response_parameters["human_readable_message"]
 
-        sunrise, sunset, moonrise, moonset = get_sun_moon_rise_set_for_latlon(
+    requested_date = datetime.datetime.now() + datetime.timedelta(days=date_offset)
+
+    sunrise, sunset, moonrise, moonset = get_sun_moon_rise_set_for_latlon(
+        latitude=latitude,
+        longitude=longitude,
+        requested_date=requested_date,
+        elevation=altitude,
+    )
+    output_list = make_pretty_aprs_messages(message_to_add=human_readable_message)
+    output_list = make_pretty_aprs_messages(
+        message_to_add=datetime.datetime.strftime(requested_date, "%d-%b"),
+        destination_list=output_list,
+    )
+    output_list = make_pretty_aprs_messages(
+        message_to_add="GMT sun_rs", destination_list=output_list
+    )
+    output_list = make_pretty_aprs_messages(
+        message_to_add=datetime.datetime.strftime(sunrise, "%H:%M"),
+        destination_list=output_list,
+    )
+    output_list = make_pretty_aprs_messages(
+        message_to_add=datetime.datetime.strftime(sunset, "-%H:%M"),
+        destination_list=output_list,
+        add_sep=False,
+    )
+    output_list = make_pretty_aprs_messages(
+        message_to_add="mn_sr", destination_list=output_list
+    )
+    output_list = make_pretty_aprs_messages(
+        message_to_add=datetime.datetime.strftime(moonset, "%H:%M"),
+        destination_list=output_list,
+    )
+    output_list = make_pretty_aprs_messages(
+        message_to_add=datetime.datetime.strftime(moonrise, "-%H:%M"),
+        destination_list=output_list,
+        add_sep=False,
+    )
+    success = True
+    return success, output_list
+
+
+def generate_output_message_whereis(response_parameters: dict):
+    """
+    Generate a 'whereis' output (coords, address etc) for a specific lat/lon
+
+    Parameters
+    ==========
+    response_parameters: 'dict'
+        Dictionary of the data from the input processor's analysis on the user's data
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful. Will only be false in case of a
+        fatal error as we need to send something back to the user (even
+        if that message is a mere error text)
+    output_message: 'list'
+        List, containing the message text(s) that we will send to the user
+        This is plain text list without APRS message ID's
+    """
+    latitude = response_parameters["latitude"]
+    longitude = response_parameters["longitude"]
+    altitude = response_parameters["altitude"]
+    human_readable_message = response_parameters["human_readable_message"]
+    when_daytime = response_parameters["when_daytime"]
+
+    # human-readable data was reverse-lookup'ed and can be 'None'
+    city = response_parameters["city"]
+    state = response_parameters["state"]
+    zipcode = response_parameters["zipcode"]
+    country = response_parameters["country"]
+    county = response_parameters["county"]
+    street = response_parameters["street"]
+    street_number = response_parameters["street_number"]
+
+    output_list = make_pretty_aprs_messages(message_to_add=human_readable_message)
+
+    grid = convert_latlon_to_maidenhead(latitude=latitude, longitude=longitude)
+    output_list = make_pretty_aprs_messages(
+        message_to_add=f"Grid:{grid}", destination_list=output_list
+    )
+
+    (
+        lat_deg,
+        lat_min,
+        lat_sec,
+        lat_hdg,
+        lon_deg,
+        lon_min,
+        lon_sec,
+        lon_hdg,
+    ) = convert_latlon_to_dms(latitude=latitude, longitude=longitude)
+
+    human_readable_address = (
+        f"DMS:{lat_hdg}{lat_deg:02d}.{lat_min:02d}'{round(lat_sec):02d}"
+    )
+    human_readable_address += (
+        f", {lon_hdg}{lon_deg:02d}.{lon_min:02d}'{round(lon_sec):02d}"
+    )
+
+    output_list = make_pretty_aprs_messages(
+        message_to_add=human_readable_address,
+        destination_list=output_list,
+    )
+
+    zone_number, zone_letter, easting, northing = convert_latlon_to_utm(
+        latitude=latitude, longitude=longitude
+    )
+    output_list = make_pretty_aprs_messages(
+        message_to_add=f"UTM:{zone_number}{zone_letter} {easting} {northing}",
+        destination_list=output_list,
+    )
+
+    mgrs = convert_latlon_to_mgrs(latitude=latitude, longitude=longitude)
+    output_list = make_pretty_aprs_messages(
+        message_to_add=f"MGRS:{mgrs}", destination_list=output_list
+    )
+
+    output_list = make_pretty_aprs_messages(
+        message_to_add=f"LatLon:{latitude}/{longitude}",
+        destination_list=output_list,
+    )
+
+    human_readable_address = None
+    if city:
+        human_readable_address = city
+        if zipcode:
+            human_readable_address += f", {zipcode}"
+        if country:
+            human_readable_address += f", {country}"
+    else:
+        if county:
+            human_readable_address = county
+        if zipcode:
+            human_readable_address += f", {zipcode}"
+        if country:
+            human_readable_address += f", {country}"
+
+    if human_readable_address:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=human_readable_address, destination_list=output_list
+        )
+
+    human_readable_address = None
+    if street:
+        human_readable_address = street
+        if street_number:
+            human_readable_address += f" {street_number}"
+    if human_readable_address:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=human_readable_address, destination_list=output_list
+        )
+
+    success = True
+    return success, output_list
+
+
+def generate_output_message_repeater(response_parameters: dict):
+    """
+    Generate a 'nearest repeater' inquiry for a specific lat/lon
+
+    Parameters
+    ==========
+    response_parameters: 'dict'
+        Dictionary of the data from the input processor's analysis on the user's data
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful. Will only be false in case of a
+        fatal error as we need to send something back to the user (even
+        if that message is a mere error text)
+    output_message: 'list'
+        List, containing the message text(s) that we will send to the user
+        This is plain text list without APRS message ID's
+    """
+    latitude = response_parameters["latitude"]
+    longitude = response_parameters["longitude"]
+    units = response_parameters["units"]
+    repeater_band = response_parameters["repeater_band"]
+    repeater_mode = response_parameters["repeater_mode"]
+
+    # Static file solution; needs dynamic refresh
+    success, repeater_dict = read_mpad_repeatermap_data_from_disc()
+    if success:
+        success, nearest_repeater = get_nearest_repeater(
             latitude=latitude,
             longitude=longitude,
-            requested_date=requested_date,
-            elevation=altitude,
+            mpad_repeatermap_dictionary=repeater_dict,
+            mode=repeater_mode,
+            band=repeater_band,
+            units=units,
         )
-        output_list = make_pretty_aprs_messages(message_to_add=human_readable_message)
-        output_list = make_pretty_aprs_messages(
-            message_to_add=datetime.datetime.strftime(requested_date, "%d-%b"),
-            destination_list=output_list,
-        )
-        output_list = make_pretty_aprs_messages(
-            message_to_add="GMT sun_rs", destination_list=output_list
-        )
-        output_list = make_pretty_aprs_messages(
-            message_to_add=datetime.datetime.strftime(sunrise, "%H:%M"),
-            destination_list=output_list,
-        )
-        output_list = make_pretty_aprs_messages(
-            message_to_add=datetime.datetime.strftime(sunset, "-%H:%M"),
-            destination_list=output_list,
-            add_sep=False,
-        )
-        output_list = make_pretty_aprs_messages(
-            message_to_add="mn_sr", destination_list=output_list
-        )
-        output_list = make_pretty_aprs_messages(
-            message_to_add=datetime.datetime.strftime(moonset, "%H:%M"),
-            destination_list=output_list,
-        )
-        output_list = make_pretty_aprs_messages(
-            message_to_add=datetime.datetime.strftime(moonrise, "-%H:%M"),
-            destination_list=output_list,
-            add_sep=False,
-        )
-        success = True
-        return success, output_list
-
-    #
-    # 'Whereis' location information
-    #
-    if what == "whereis":
-        latitude = response_parameters["latitude"]
-        longitude = response_parameters["longitude"]
-        altitude = response_parameters["altitude"]
-        human_readable_message = response_parameters["human_readable_message"]
-        when_daytime = response_parameters["when_daytime"]
-
-        # human-readable data was reverse-lookup'ed and can be 'None'
-        city = response_parameters["city"]
-        state = response_parameters["state"]
-        zipcode = response_parameters["zipcode"]
-        country = response_parameters["country"]
-        county = response_parameters["county"]
-        street = response_parameters["street"]
-        street_number = response_parameters["street_number"]
-
-        output_list = make_pretty_aprs_messages(message_to_add=human_readable_message)
-
-        grid = convert_latlon_to_maidenhead(latitude=latitude, longitude=longitude)
-        output_list = make_pretty_aprs_messages(
-            message_to_add=f"Grid:{grid}", destination_list=output_list
-        )
-
-        (
-            lat_deg,
-            lat_min,
-            lat_sec,
-            lat_hdg,
-            lon_deg,
-            lon_min,
-            lon_sec,
-            lon_hdg,
-        ) = convert_latlon_to_dms(latitude=latitude, longitude=longitude)
-
-        human_readable_address = (
-            f"DMS:{lat_hdg}{lat_deg:02d}.{lat_min:02d}'{round(lat_sec):02d}"
-        )
-        human_readable_address += (
-            f", {lon_hdg}{lon_deg:02d}.{lon_min:02d}'{round(lon_sec):02d}"
-        )
-
-        output_list = make_pretty_aprs_messages(
-            message_to_add=human_readable_address,
-            destination_list=output_list,
-        )
-
-        zone_number, zone_letter, easting, northing = convert_latlon_to_utm(
-            latitude=latitude, longitude=longitude
-        )
-        output_list = make_pretty_aprs_messages(
-            message_to_add=f"UTM:{zone_number}{zone_letter} {easting} {northing}",
-            destination_list=output_list,
-        )
-
-        mgrs = convert_latlon_to_mgrs(latitude=latitude, longitude=longitude)
-        output_list = make_pretty_aprs_messages(
-            message_to_add=f"MGRS:{mgrs}", destination_list=output_list
-        )
-
-        output_list = make_pretty_aprs_messages(
-            message_to_add=f"LatLon:{latitude}/{longitude}",
-            destination_list=output_list,
-        )
-
-        human_readable_address = None
-        if city:
-            human_readable_address = city
-            if zipcode:
-                human_readable_address += f", {zipcode}"
-            if country:
-                human_readable_address += f", {country}"
-        else:
-            if county:
-                human_readable_address = county
-            if zipcode:
-                human_readable_address += f", {zipcode}"
-            if country:
-                human_readable_address += f", {country}"
-
-        if human_readable_address:
-            output_list = make_pretty_aprs_messages(
-                message_to_add=human_readable_address, destination_list=output_list
-            )
-
-        human_readable_address = None
-        if street:
-            human_readable_address = street
-            if street_number:
-                human_readable_address += f" {street_number}"
-        if human_readable_address:
-            output_list = make_pretty_aprs_messages(
-                message_to_add=human_readable_address, destination_list=output_list
-            )
-
-        success = True
-        return success, output_list
-
-    #
-    # Repeater data
-    #
-    if what == "repeater":
-        latitude = response_parameters["latitude"]
-        longitude = response_parameters["longitude"]
-        units = response_parameters["units"]
-        repeater_band = response_parameters["repeater_band"]
-        repeater_mode = response_parameters["repeater_mode"]
-
-        # Static file solution; needs dynamic refresh
-        success, repeater_dict = read_mpad_repeatermap_data_from_disc()
         if success:
-            success, nearest_repeater = get_nearest_repeater(
-                latitude=latitude,
-                longitude=longitude,
-                mpad_repeatermap_dictionary=repeater_dict,
-                mode=repeater_mode,
-                band=repeater_band,
-                units=units,
-            )
-            if success:
-                locator = nearest_repeater["locator"]
-                latitude = nearest_repeater["latitude"]
-                longitude = nearest_repeater["longitude"]
-                mode = nearest_repeater["mode"]
-                band = nearest_repeater["band"]
-                rx_frequency = nearest_repeater["rx_frequency"]
-                tx_frequency = nearest_repeater["tx_frequency"]
-                elevation = nearest_repeater["elevation"]
-                remarks = nearest_repeater["remarks"]
-                qth = nearest_repeater["qth"]
-                callsign = nearest_repeater["callsign"]
-                distance = nearest_repeater["distance"]
-                distance_uom = nearest_repeater["distance_uom"]
-                bearing = nearest_repeater["bearing"]
-                direction = nearest_repeater["direction"]
+            locator = nearest_repeater["locator"]
+            latitude = nearest_repeater["latitude"]
+            longitude = nearest_repeater["longitude"]
+            mode = nearest_repeater["mode"]
+            band = nearest_repeater["band"]
+            rx_frequency = nearest_repeater["rx_frequency"]
+            tx_frequency = nearest_repeater["tx_frequency"]
+            elevation = nearest_repeater["elevation"]
+            remarks = nearest_repeater["remarks"]
+            qth = nearest_repeater["qth"]
+            callsign = nearest_repeater["callsign"]
+            distance = nearest_repeater["distance"]
+            distance_uom = nearest_repeater["distance_uom"]
+            bearing = nearest_repeater["bearing"]
+            direction = nearest_repeater["direction"]
 
-                # Build the output message
-                output_list = make_pretty_aprs_messages(f"Nearest repeater {qth}")
-                output_list = make_pretty_aprs_messages(
-                    f"{distance} {distance_uom}", output_list
-                )
-                output_list = make_pretty_aprs_messages(
-                    f"{bearing} deg {direction}", output_list
-                )
-                output_list = make_pretty_aprs_messages(
-                    f"Rx {rx_frequency}", output_list
-                )
-                output_list = make_pretty_aprs_messages(
-                    f"Tx {tx_frequency}", output_list
-                )
-                # Remarks können leer sein
-                if remarks:
-                    output_list = make_pretty_aprs_messages(f"{remarks}", output_list)
-                output_list = make_pretty_aprs_messages(f"{mode}", output_list)
-                output_list = make_pretty_aprs_messages(f"{band}", output_list)
-                output_list = make_pretty_aprs_messages(f"{locator}", output_list)
-            else:
-                output_list = make_pretty_aprs_messages(
-                    "Cannot locate nearest repeater"
-                )
-                success = True
+            # Build the output message
+            output_list = make_pretty_aprs_messages(f"Nearest repeater {qth}")
+            output_list = make_pretty_aprs_messages(
+                f"{distance} {distance_uom}", output_list
+            )
+            output_list = make_pretty_aprs_messages(
+                f"{bearing} deg {direction}", output_list
+            )
+            output_list = make_pretty_aprs_messages(
+                f"Rx {rx_frequency}", output_list
+            )
+            output_list = make_pretty_aprs_messages(
+                f"Tx {tx_frequency}", output_list
+            )
+            # Remarks können leer sein
+            if remarks:
+                output_list = make_pretty_aprs_messages(f"{remarks}", output_list)
+            output_list = make_pretty_aprs_messages(f"{mode}", output_list)
+            output_list = make_pretty_aprs_messages(f"{band}", output_list)
+            output_list = make_pretty_aprs_messages(f"{locator}", output_list)
         else:
             output_list = make_pretty_aprs_messages(
-                "Cannot read repeater directory from disc"
+                "Cannot locate nearest repeater"
             )
             success = True
-        return success, output_list
-
-    # No keyword found
-    success = False
-    output_list = [
-        "Output parser did encounter an unknown action command",
-    ]
-    logging.debug(f"Unable to generate output message; unknown action command: {response_parameters}")
-
+    else:
+        output_list = make_pretty_aprs_messages(
+            "Cannot read repeater directory from disc"
+        )
+        success = True
     return success, output_list
 
 
