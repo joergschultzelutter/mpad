@@ -526,11 +526,9 @@ def generate_output_message(
     # No keyword found
     success = False
     output_list = [
-        "Sorry, I am unable to parse your request. I have logged a copy of",
-        "your request to my log file which will help my author to understand",
-        "what you asked me to do. Thank you",
+        "Output parser did encounter an unknown action command",
     ]
-    logging.debug(f"Unable to parse packet: {response_parameters}")
+    logging.debug(f"Unable to generate output message; unknown action command: {response_parameters}")
 
     return success, output_list
 
