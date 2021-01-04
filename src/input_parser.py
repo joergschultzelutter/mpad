@@ -29,7 +29,8 @@ errmsg_cannot_find_coords_for_user: str = "Cannot find coordinates for user"
 errmsg_invalid_country: str = "Invalid country code (need ISO3166-a2)"
 errmsg_invalid_state: str = "Invalid US state"
 errmsg_invalid_command: str = "Cannot grok command"
-
+errmsg_no_satellite_specified: str = "No satellite specified"
+errmsg_no_cwop_specified: str = "No cwop id specified"
 
 def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str):
     """
@@ -519,43 +520,57 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
         if matches:
-            cwop_id = matches[1].upper()
-            what = "cwop_by_cwop_id"
-            human_readable_message = f"CWOP for {cwop_id}"
-            found_my_duty_roster = True
-            aprs_message = re.sub(
-                regex_string, "", aprs_message, flags=re.IGNORECASE
-            ).strip()
-
-    # Check if the user wants to gain information about an upcoming satellite pass
-    if not found_my_duty_roster and not err:
-        regex_string = r"satpass\s*(\w+)"
-        matches = re.search(
-            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-        )
-        if matches:
-            (
-                success,
-                latitude,
-                longitude,
-                altitude,
-                message_callsign,
-            ) = get_position_on_aprsfi(
-                aprsfi_callsign=users_callsign, aprsdotfi_api_key=aprsdotfi_api_key
-            )
-            if success:
-                satellite = matches[1].upper()
-                what = "satpass"
-                human_readable_message = f"SatPass of {satellite}"
+            cwop_id = matches[1].upper().strip()
+            if len(cwop_id) == 0:
+                human_readable_message = errmsg_no_cwop_specified
+                err = True
+            else:
+                what = "cwop_by_cwop_id"
+                human_readable_message = f"CWOP for {cwop_id}"
                 found_my_duty_roster = True
                 aprs_message = re.sub(
                     regex_string, "", aprs_message, flags=re.IGNORECASE
                 ).strip()
-            else:
-                human_readable_message = (
-                    f"{errmsg_cannot_find_coords_for_user} {users_callsign}"
-                )
+
+    # Check if the user wants to gain information about an upcoming satellite pass
+    if not found_my_duty_roster and not err:
+        regex_string = r"satpass\s*(\w*)"
+        matches = re.search(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            # we deliberately accept ZERO..n characters for the satellite as the
+            # user may have specified the keyword without any actual satellite
+            # name. If that is the case, return an error to the user
+            # (this is to prevent the user from receiving a wx report instead -
+            # wx would kick in as default)
+            satellite = matches[1].upper().strip()
+            if len(satellite) == 0:
+                human_readable_message = errmsg_no_satellite_specified
                 err = True
+            if not err:
+                (
+                    success,
+                    latitude,
+                    longitude,
+                    altitude,
+                    message_callsign,
+                ) = get_position_on_aprsfi(
+                    aprsfi_callsign=users_callsign, aprsdotfi_api_key=aprsdotfi_api_key
+                )
+                if success:
+                    satellite = matches[1].upper()
+                    what = "satpass"
+                    human_readable_message = f"SatPass of {satellite}"
+                    found_my_duty_roster = True
+                    aprs_message = re.sub(
+                        regex_string, "", aprs_message, flags=re.IGNORECASE
+                    ).strip()
+                else:
+                    human_readable_message = (
+                        f"{errmsg_cannot_find_coords_for_user} {users_callsign}"
+                    )
+                    err = True
 
     # Check if the user wants us to search for the nearest repeater
     # this function always relates to the user's own call sign and not to
