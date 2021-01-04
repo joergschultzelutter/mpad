@@ -4,14 +4,9 @@ from output_generator import generate_output_message
 import logging
 
 
-def testcall():
+def testcall(message_text: str, from_callsign: str):
     success, aprsdotfi_api_key, openweathermapdotorg_api_key = read_program_config()
     assert success == True
-
-    # message_text = APRS-Message excluding any message IDs etc
-    message_text = "Full"
-    # from_callsign = Sender's callsign
-    from_callsign = "df1jsl-1"
 
     logger.debug(
         f"parsing message '{message_text}' for callsign '{from_callsign}'"
@@ -37,4 +32,4 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
     logger = logging.getLogger(__name__)
 
-    testcall()
+    testcall("satpass zarya","df1jsl-1")
