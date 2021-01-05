@@ -342,6 +342,6 @@ if __name__ == "__main__":
     )
     logger = logging.getLogger(__name__)
     logger.debug(get_metar_data("EDDF"))
-    logger.debug(validate_iata("FRA"))
+    logger.debug(validate_iata("KLV"))
     logger.debug(validate_icao("EDDF"))
     logger.debug(get_nearest_icao(51.538882, 8.32679))
