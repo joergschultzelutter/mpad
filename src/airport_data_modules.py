@@ -243,7 +243,7 @@ def validate_icao(icao_code: str):
     return success, latitude, longitude, metar_capable, icao_code
 
 
-def download_airport_stations_file(
+def update_local_airport_stations_file(
     airport_stations_filename: str = "airport_stations.txt",
 ):
     """
