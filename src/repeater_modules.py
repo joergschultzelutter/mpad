@@ -248,7 +248,8 @@ def create_enriched_mpad_repeatermap_data(repeatermap_raw_json_content: str):
 
 
 def write_mpad_repeatermap_data_to_disc(
-    mpad_repeatermap_json: str, mpad_repeatermap_filename: str = "repeatermap_enriched_data.json"
+    mpad_repeatermap_json: str,
+    mpad_repeatermap_filename: str = "repeatermap_enriched_data.json",
 ):
     """
     writes the processed repeatermap data in enriched MPAD format
