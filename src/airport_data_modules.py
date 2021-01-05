@@ -14,34 +14,37 @@ import logging
 
 # icao https://www.aviationweather.gov/docs/metar/stations.txt
 
-icao_dict = {}  # create empty dict
-iata_dict = {}  # create empty dict
 
-
-def read_icao_and_iata_data(icao_filename: str = "stations.txt"):
+def read_local_airport_data_file(
+    airport_stations_filename: str = "airport_stations.txt",
+):
     """
     Imports the ICAO/IATA data from a local file. Creates dictionaries for
     IATA-ICAO mapping and IATA-lat/lon mapping
 
     Parameters
     ==========
-    icao_filename : 'str'
+    airport_stations_filename : 'str'
         local file that is to be parsed. File format:
         see https://www.aviationweather.gov/docs/metar/stations.txt
+        default filename: "airport_stations.txt"
 
     Returns
     =======
     iata_dict: 'dict'
-        global dictionary mapping between ICAO-Code (3 chars) and IATA-Code
+        dictionary mapping between ICAO-Code (3 chars) and IATA-Code
         (4 chars) for all cases where such a mapping exists
     icao_dict: 'dict'
-        global dictionary. References IATA-Code (4 chars) to lat/lon,
+        Dictionary. References IATA-Code (4 chars) to lat/lon,
         METAR capability and the actual airport name
     """
 
+    icao_dict = {}  # create empty dict
+    iata_dict = {}  # create empty dict
+
     # Open the local file and read it
     try:
-        with open(f"{icao_filename}", "r") as f:
+        with open(f"{airport_stations_filename}", "r") as f:
             if f.mode == "r":
                 lines = f.readlines()
                 f.close()
@@ -50,10 +53,6 @@ def read_icao_and_iata_data(icao_filename: str = "stations.txt"):
 
     # If the file did contain content, then parse it
     if lines:
-        # delete the current dictionaries
-        icao_dict.clear()
-        iata_dict.clear()
-
         # Start to parse the file content. The data that we want to digest
         # comes in lines of at least 63 chars and does not start with an
         # exclamation mark. Apart from that, everything is fixed file format
@@ -131,11 +130,6 @@ def get_metar_data(icao_code: str):
         (or "NOTFOUND" if no data was found)
     """
 
-    # dictionary exists but is empty? Then read content from disc
-    # ignore any errors; in that case, the modes simply won't work
-    if not icao_dict or not iata_dict:
-        read_icao_and_iata_data()
-
     resp = requests.get(
         f"https://www.aviationweather.gov/"
         f"adds/metars/?station_ids={icao_code}"
@@ -192,10 +186,7 @@ def validate_iata(iata_code: str):
     success: bool = False
     icao_code: str = None
 
-    # dictionary exists but is empty? Then read content from disc
-    # ignore any errors; in that case, the modes simply won't work
-    if not icao_dict or not iata_dict:
-        read_icao_and_iata_data()
+    iata_dict, icao_dict = read_local_airport_data_file()
 
     iata_code = iata_code.upper()
     if iata_code in iata_dict:
@@ -240,8 +231,7 @@ def validate_icao(icao_code: str):
 
     # dictionary exists but is empty? Then read content from disc
     # ignore any errors; in that case, the modes simply won't work
-    if not icao_dict or not iata_dict:
-        read_icao_and_iata_data()
+    iata_dict, icao_dict = read_local_airport_data_file()
 
     icao_code = icao_code.upper()
     if icao_code in icao_dict:
@@ -253,16 +243,18 @@ def validate_icao(icao_code: str):
     return success, latitude, longitude, metar_capable, icao_code
 
 
-def refresh_icao_file(icaoiata_filename: str = "stations.txt"):
+def download_airport_stations_file(
+    airport_stations_filename: str = "airport_stations.txt",
+):
     """
     Imports the ICAO/IATA data from the web and saves it to a local file.
 
     Parameters
     ==========
-    icaoiata_filename : 'str'
+    airport_stations_filename : 'str'
         This local file will hold the content
         from https://www.aviationweather.gov/docs/metar/stations.txt.
-        Default filename is "stations.txt"
+        Default filename is "airport_stations.txt"
 
     Returns
     =======
@@ -278,17 +270,21 @@ def refresh_icao_file(icaoiata_filename: str = "stations.txt"):
     try:
         r = requests.get(file_url)
     except:
-        logger.debug(f"Cannot download ICAO data from {file_url}")
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Cannot download airport data from {file_url}")
         r = None
     if r:
         if r.status_code == 200:
             try:
-                with open(icaoiata_filename, "wb") as f:
+                with open(airport_stations_filename, "wb") as f:
                     f.write(r.content)
                     f.close()
                     success = True
             except:
-                logger.debug(f"Cannot update ICAO data to file {icaoiata_filename}")
+                logger = logging.getLogger(__name__)
+                logger.debug(
+                    f"Cannot update airport data to local file {airport_stations_filename}"
+                )
     return success
 
 
@@ -314,10 +310,8 @@ def get_nearest_icao(latitude: float, longitude: float):
     nearesticao: str = None
     nearest = 12000
 
-    # dictionary exists but is empty? Then read content from disc
-    # ignore any errors; in that case, the modes simply won't work
-    if not icao_dict or not iata_dict:
-        read_icao_and_iata_data()
+    # Import dictionaries from disc
+    iata_dict, icao_dict = read_local_airport_data_file()
 
     # convert lat/lon degrees to radians
     lat1 = latitude * 0.0174533
@@ -343,10 +337,11 @@ def get_nearest_icao(latitude: float, longitude: float):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
+    logging.basicConfig(
+        level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+    )
     logger = logging.getLogger(__name__)
     logger.debug(get_metar_data("EDDF"))
     logger.debug(validate_iata("FRA"))
     logger.debug(validate_icao("EDDF"))
-    logger.debug(refresh_icao_file())
     logger.debug(get_nearest_icao(51.538882, 8.32679))

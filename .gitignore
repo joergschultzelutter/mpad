@@ -4,7 +4,7 @@ de421.bsp
 mpad_api_access_keys.cfg
 repeatermap.mpad
 repeatermap.raw
-stations.txt
+airport_stations.txt
 venv
 wxbot-1.26.pl
 APRS101.PDF
