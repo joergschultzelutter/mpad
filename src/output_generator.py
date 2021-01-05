@@ -24,9 +24,10 @@ from geo_conversion_modules import (
     convert_latlon_to_mgrs,
     convert_latlon_to_utm,
     convert_latlon_to_dms,
+    haversine,
 )
 
-from repeater_modules import read_mpad_repeatermap_data_from_disc, get_nearest_repeater
+from repeater_modules import get_nearest_repeater
 
 import datetime
 import logging
@@ -194,36 +195,59 @@ def generate_output_message(
     # -a boolean status which is a general indicator if something was wrong
     # -a list object which contains the ready-to-send messages to the end user
     if what == "wx":
-        success, output_list = generate_output_message_wx(response_parameters=response_parameters, openweathermapdotorg_api_key=openweathermapdotorg_api_key)
+        success, output_list = generate_output_message_wx(
+            response_parameters=response_parameters,
+            openweathermapdotorg_api_key=openweathermapdotorg_api_key,
+        )
     elif what == "metar":
-        success, output_list = generate_output_message_metar(response_parameters=response_parameters)
+        success, output_list = generate_output_message_metar(
+            response_parameters=response_parameters
+        )
     elif what == "help":
         success, output_list = generate_output_message_help()
     elif what == "satpass":
-        success, output_list = generate_output_message_satpass(response_parameters=response_parameters)
+        success, output_list = generate_output_message_satpass(
+            response_parameters=response_parameters
+        )
     elif what == "cwop_by_latlon":
-        success, output_list = generate_output_message_cwop_by_latlon(response_parameters=response_parameters)
+        success, output_list = generate_output_message_cwop_by_latlon(
+            response_parameters=response_parameters
+        )
     elif what == "cwop_by_cwop_id":
-        success, output_list = generate_output_message_cwop_by_cwop_id(response_parameters=response_parameters)
+        success, output_list = generate_output_message_cwop_by_cwop_id(
+            response_parameters=response_parameters
+        )
     elif what == "riseset":
-        success, output_list = generate_output_message_riseset(response_parameters=response_parameters)
+        success, output_list = generate_output_message_riseset(
+            response_parameters=response_parameters
+        )
     elif what == "satpass":
-        success, output_list = generate_output_message_satpass(response_parameters=response_parameters)
+        success, output_list = generate_output_message_satpass(
+            response_parameters=response_parameters
+        )
     elif what == "repeater":
-        success, output_list = generate_output_message_repeater(response_parameters=response_parameters)
+        success, output_list = generate_output_message_repeater(
+            response_parameters=response_parameters
+        )
     elif what == "whereis":
-        success, output_list = generate_output_message_whereis(response_parameters=response_parameters)
+        success, output_list = generate_output_message_whereis(
+            response_parameters=response_parameters
+        )
     else:
         success = False
         output_list = [
             "Output parser did encounter an unknown action command",
         ]
-        logging.debug(f"Unable to generate output message; unknown action command: {response_parameters}")
+        logging.debug(
+            f"Unable to generate output message; unknown action command: {response_parameters}"
+        )
 
     return success, output_list
 
 
-def generate_output_message_wx(response_parameters: dict, openweathermapdotorg_api_key: str):
+def generate_output_message_wx(
+    response_parameters: dict, openweathermapdotorg_api_key: str
+):
     """
     Action keyword "wx": generate the wx report for the requested coordinates
 
@@ -423,7 +447,6 @@ def generate_output_message_cwop_by_cwop_id(response_parameters: dict):
         List, containing the message text(s) that we will send to the user
         This is plain text list without APRS message ID's
     """
-    human_readable_message = response_parameters["human_readable_message"]
     cwop_id = response_parameters["cwop_id"]
     units = response_parameters["units"]
     success, cwop_dict = get_cwop_findu(cwop_id=cwop_id, units=units)
@@ -438,6 +461,7 @@ def generate_output_message_cwop_by_cwop_id(response_parameters: dict):
         )
         success = True
         return success, output_list
+
 
 def generate_output_message_riseset(response_parameters: dict):
     """
@@ -528,9 +552,11 @@ def generate_output_message_whereis(response_parameters: dict):
     longitude = response_parameters["longitude"]
     altitude = response_parameters["altitude"]
     human_readable_message = response_parameters["human_readable_message"]
-    when_daytime = response_parameters["when_daytime"]
+    users_latitude = response_parameters["users_latitude"]
+    users_longitude = response_parameters["users_longitude"]
+    units = response_parameters["units"]
 
-    # human-readable data was reverse-lookup'ed and can be 'None'
+    # all of the following data was reverse-lookup'ed and can be 'None'
     city = response_parameters["city"]
     state = response_parameters["state"]
     zipcode = response_parameters["zipcode"]
@@ -558,7 +584,7 @@ def generate_output_message_whereis(response_parameters: dict):
     ) = convert_latlon_to_dms(latitude=latitude, longitude=longitude)
 
     human_readable_address = (
-        f"DMS:{lat_hdg}{lat_deg:02d}.{lat_min:02d}'{round(lat_sec):02d}"
+        f"DMS {lat_hdg}{lat_deg:02d}.{lat_min:02d}'{round(lat_sec):02d}"
     )
     human_readable_address += (
         f", {lon_hdg}{lon_deg:02d}.{lon_min:02d}'{round(lon_sec):02d}"
@@ -568,6 +594,42 @@ def generate_output_message_whereis(response_parameters: dict):
         message_to_add=human_readable_address,
         destination_list=output_list,
     )
+
+    distance_string = bearing_string = direction_string = None
+
+    # calculate distance, heading and bearing if message call sign position
+    # differs from our own call sign's position
+    if latitude != users_latitude and longitude != users_longitude:
+        distance, bearing, heading = haversine(
+            latitude1=latitude,
+            longitude1=longitude,
+            latitude2=users_latitude,
+            longitude2=users_longitude,
+            units=units,
+        )
+        distance_uom = "km"
+        if units == "imperial":
+            distance_uom = "mi"
+
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"Dst {round(distance)} {distance_uom}",
+            destination_list=output_list,
+        )
+
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"Brg {round(bearing)}deg", destination_list=output_list
+        )
+
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"{heading}", destination_list=output_list
+        )
+
+    if altitude:
+        human_readable_address = f"Alt {round(altitude)}m"
+        output_list = make_pretty_aprs_messages(
+            message_to_add=human_readable_address,
+            destination_list=output_list,
+        )
 
     zone_number, zone_letter, easting, northing = convert_latlon_to_utm(
         latitude=latitude, longitude=longitude
@@ -647,62 +709,48 @@ def generate_output_message_repeater(response_parameters: dict):
     repeater_mode = response_parameters["repeater_mode"]
 
     # Static file solution; needs dynamic refresh
-    success, repeater_dict = read_mpad_repeatermap_data_from_disc()
+    success, nearest_repeater = get_nearest_repeater(
+        latitude=latitude,
+        longitude=longitude,
+        mode=repeater_mode,
+        band=repeater_band,
+        units=units,
+    )
     if success:
-        success, nearest_repeater = get_nearest_repeater(
-            latitude=latitude,
-            longitude=longitude,
-            mpad_repeatermap_dictionary=repeater_dict,
-            mode=repeater_mode,
-            band=repeater_band,
-            units=units,
-        )
-        if success:
-            locator = nearest_repeater["locator"]
-            latitude = nearest_repeater["latitude"]
-            longitude = nearest_repeater["longitude"]
-            mode = nearest_repeater["mode"]
-            band = nearest_repeater["band"]
-            rx_frequency = nearest_repeater["rx_frequency"]
-            tx_frequency = nearest_repeater["tx_frequency"]
-            elevation = nearest_repeater["elevation"]
-            remarks = nearest_repeater["remarks"]
-            qth = nearest_repeater["qth"]
-            callsign = nearest_repeater["callsign"]
-            distance = nearest_repeater["distance"]
-            distance_uom = nearest_repeater["distance_uom"]
-            bearing = nearest_repeater["bearing"]
-            direction = nearest_repeater["direction"]
+        locator = nearest_repeater["locator"]
+        latitude = nearest_repeater["latitude"]
+        longitude = nearest_repeater["longitude"]
+        mode = nearest_repeater["mode"]
+        band = nearest_repeater["band"]
+        rx_frequency = nearest_repeater["rx_frequency"]
+        tx_frequency = nearest_repeater["tx_frequency"]
+        elevation = nearest_repeater["elevation"]
+        remarks = nearest_repeater["remarks"]
+        qth = nearest_repeater["qth"]
+        callsign = nearest_repeater["callsign"]
+        distance = nearest_repeater["distance"]
+        distance_uom = nearest_repeater["distance_uom"]
+        bearing = nearest_repeater["bearing"]
+        direction = nearest_repeater["direction"]
 
-            # Build the output message
-            output_list = make_pretty_aprs_messages(f"Nearest repeater {qth}")
-            output_list = make_pretty_aprs_messages(
-                f"{distance} {distance_uom}", output_list
-            )
-            output_list = make_pretty_aprs_messages(
-                f"{bearing} deg {direction}", output_list
-            )
-            output_list = make_pretty_aprs_messages(
-                f"Rx {rx_frequency}", output_list
-            )
-            output_list = make_pretty_aprs_messages(
-                f"Tx {tx_frequency}", output_list
-            )
-            # Remarks können leer sein
-            if remarks:
-                output_list = make_pretty_aprs_messages(f"{remarks}", output_list)
-            output_list = make_pretty_aprs_messages(f"{mode}", output_list)
-            output_list = make_pretty_aprs_messages(f"{band}", output_list)
-            output_list = make_pretty_aprs_messages(f"{locator}", output_list)
-        else:
-            output_list = make_pretty_aprs_messages(
-                "Cannot locate nearest repeater"
-            )
-            success = True
-    else:
+        # Build the output message
+        output_list = make_pretty_aprs_messages(f"Nearest repeater {qth}")
         output_list = make_pretty_aprs_messages(
-            "Cannot read repeater directory from disc"
+            f"{distance} {distance_uom}", output_list
         )
+        output_list = make_pretty_aprs_messages(
+            f"{bearing} deg {direction}", output_list
+        )
+        output_list = make_pretty_aprs_messages(f"Rx {rx_frequency}", output_list)
+        output_list = make_pretty_aprs_messages(f"Tx {tx_frequency}", output_list)
+        # Remarks können leer sein
+        if remarks:
+            output_list = make_pretty_aprs_messages(f"{remarks}", output_list)
+        output_list = make_pretty_aprs_messages(f"{mode}", output_list)
+        output_list = make_pretty_aprs_messages(f"{band}", output_list)
+        output_list = make_pretty_aprs_messages(f"{locator}", output_list)
+    else:
+        output_list = make_pretty_aprs_messages("Cannot locate nearest repeater")
         success = True
     return success, output_list
 
