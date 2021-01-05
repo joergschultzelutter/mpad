@@ -284,7 +284,7 @@ def determine_timezone(latitude: float, longitude: float):
     return timezone
 
 
-def read_number_of_served_packages(file_name: str = "served_packages.mpad"):
+def read_number_of_served_packages(file_name: str = "mpad_served_packages.txt"):
     """
     Read the number of served packages from a file
 
@@ -315,7 +315,7 @@ def read_number_of_served_packages(file_name: str = "served_packages.mpad"):
 
 
 def write_number_of_served_packages(served_packages: int,
-                                    file_name: str = "served_packages.mpad"):
+                                    file_name: str = "mpad_served_packages.txt"):
     """
     Writes the number of served packages to a file
 
