@@ -239,7 +239,7 @@ update_local_tle_file()
 # to read and import it whenever necessary
 caching_scheduler = BackgroundScheduler()
 
-# Set up task for IATA/ICAO data download
+# Set up task for IATA/ICAO data download every 30 days
 caching_scheduler.add_job(
     update_local_airport_stations_file,
     "interval",
@@ -248,7 +248,7 @@ caching_scheduler.add_job(
     args=[],
 )
 
-# Set up task for repeater data download
+# Set up task for repeater data download every 7 days
 caching_scheduler.add_job(
     update_local_repeatermap_file,
     "interval",
@@ -257,7 +257,7 @@ caching_scheduler.add_job(
     args=[],
 )
 
-# Set up task for satellite TLE data download
+# Set up task for satellite TLE data download - daily download
 caching_scheduler.add_job(
     update_local_repeatermap_file,
     "interval",
