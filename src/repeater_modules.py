@@ -15,7 +15,7 @@ from geo_conversion_modules import (
     convert_latlon_to_maidenhead,
 )
 from utility_modules import check_if_file_exists
-from geo_conversion_modules import Haversine
+from geo_conversion_modules import haversine
 import logging
 
 
@@ -413,7 +413,7 @@ def get_nearest_repeater(
         callsign = mpad_repeatermap_dictionary[nearest_repeater_id]["callsign"]
 
         # Calculate distance/bearing/direction between user's position and repeater position
-        distance, bearing, direction = Haversine(
+        distance, bearing, direction = haversine(
             latitude, longitude, latitude_repeater, longitude_repeater, units
         )
         # Round both distance and bearing values
