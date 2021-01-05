@@ -12,11 +12,8 @@ from skyfield import api, almanac
 from skyfield.api import EarthSatellite
 import logging
 
-tle_data = {}   # create empty dict
-tle_data_last_download = datetime.datetime.now()
 
-
-def refresh_tle_file(tle_filename: str = "amateur.tle"):
+def update_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
     """
     Download the amateur radio satellite TLE data
     and save it to a local file.
@@ -26,7 +23,7 @@ def refresh_tle_file(tle_filename: str = "amateur.tle"):
     tle_filename : 'str'
         This local file will hold the content
         from http://www.celestrak.com/NORAD/elements/amateur.txt
-        Default is "amateur.tle"
+        Default is "tle_amateur_satellites.txt"
 
     Returns
     =======
@@ -36,7 +33,6 @@ def refresh_tle_file(tle_filename: str = "amateur.tle"):
 
     # This is the fixed name of the file that we are going to download
     tle_data_file_url = "http://www.celestrak.com/NORAD/elements/amateur.txt"
-    global tle_data_last_download
     success: bool = False
 
     # try to get the file
@@ -52,9 +48,6 @@ def refresh_tle_file(tle_filename: str = "amateur.tle"):
                 with open(tle_filename, "wb") as f:
                     f.write(r.content)
                     f.close()
-                    # Update the time stamp so that we know
-                    # when this file was imported
-                    tle_data_last_download = datetime.datetime.now()
                     success = True
             except:
                 logger = logging.getLogger(__name__)
@@ -62,7 +55,7 @@ def refresh_tle_file(tle_filename: str = "amateur.tle"):
     return success
 
 
-def read_tle_data(tle_filename: str = "amateur.tle"):
+def read_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
     """
     Imports the Celestrak TLE data from a local file.
     Create dictionary based on given data.
@@ -93,11 +86,11 @@ def read_tle_data(tle_filename: str = "amateur.tle"):
     success: 'bool'
         True if operation was successful
     tle_data: 'dict'
-        dictionary which contains the parsed data. Global variable
+        dictionary which contains the parsed data
     """
 
     success: bool = False
-    global tle_data
+    tle_data = {}
 
     # Open the local file and read it
     try:
@@ -115,7 +108,6 @@ def read_tle_data(tle_filename: str = "amateur.tle"):
             success = False
             return success, tle_data
         lc = 1
-        tle_data.clear()
         # Retrieve the data and create the dictionary
         for tle_satellite in lines[0::3]:
 
@@ -144,22 +136,16 @@ def read_tle_data(tle_filename: str = "amateur.tle"):
     return success, tle_data
 
 
-def get_tle_data(satellite_name: str, tle_data_ttl: int = 1):
+def get_tle_data(satellite_name: str):
     """
     Try to look up the given (partial) satellite name
-    and return its TLE data. Prior to performing the lookup,
-    we will first check if the data is older than x days (TTL parameter)
-    If this is the case, then the file and the internal dictionary
-    will be refreshed prior to running the lookup
-
+    and return its TLE data.
 
     Parameters
     ==========
     satellite_name: 'str'
         Name of the satellite that is to be searched.
         ID or (if ID not present) dash-ed name
-    tle_data_ttl: 'int'
-        time-to-live life span of the TLE data in days
 
     Returns
     =======
@@ -171,38 +157,20 @@ def get_tle_data(satellite_name: str, tle_data_ttl: int = 1):
         TLE data line 2 (or 'None' if not found)
     """
     success: bool = False
-    global tle_data, tle_data_last_download
-
     tle_data_line1 = tle_data_line2 = tle_satellite = None
-    satellite_name = satellite_name.upper()
-    # Convenience mapping :-)
-    if satellite_name == "ZARYA":
-        satellite_name = "ISS"
 
-    # check if the file's time-to-live period has expired
-    ttl_expired: bool = False
-    if tle_data_last_download:
-        last_download = datetime.datetime.now() - tle_data_last_download
-        if last_download.days > tle_data_ttl:
-            ttl_expired = True
-    # in case the variable was initialized with 'None'
-    else:
-        ttl_expired = True
+    success, tle_data = read_local_tle_file()
+    if success:
+        satellite_name = satellite_name.upper()
+        # Convenience mapping :-)
+        if satellite_name == "ZARYA":
+            satellite_name = "ISS"
 
-    # Re-acquire and re-read new data if the TLE data has expired
-    if ttl_expired:
-        success = refresh_tle_file("amateur.tle")
-        if not success:
-            return success, None, None, None
-        success, tle_data = read_tle_data("amateur.tle")
-        if not success:
-            return success, None, None, None
-
-    if satellite_name in tle_data:
-        tle_satellite = tle_data[satellite_name]["tle_satellite"]
-        tle_data_line1 = tle_data[satellite_name]["tle_line1"]
-        tle_data_line2 = tle_data[satellite_name]["tle_line2"]
-        success = True
+        if satellite_name in tle_data:
+            tle_satellite = tle_data[satellite_name]["tle_satellite"]
+            tle_data_line1 = tle_data[satellite_name]["tle_line1"]
+            tle_data_line2 = tle_data[satellite_name]["tle_line2"]
+            success = True
     return success, tle_satellite, tle_data_line1, tle_data_line2
 
 
@@ -249,45 +217,69 @@ def get_next_satellite_pass_for_latlon(
 
     """
 
+    rise_time = (
+        rise_azimuth
+    ) = maximum_time = maximum_altitude = set_time = set_azimuth = None
+
     # Try to get the satellite information from the dictionary
     # Return error settings if not found
     success, tle_satellite, tle_data_line1, tle_data_line2 = get_tle_data(
         tle_satellite_name
     )
-    if not success:
-        return False, None, None, None, None, None, None
+    if success:
+        ts = api.load.timescale()
+        satellite = EarthSatellite(tle_data_line1, tle_data_line2, tle_satellite, ts)
 
-    ts = api.load.timescale()
-    satellite = EarthSatellite(tle_data_line1, tle_data_line2, tle_satellite, ts)
+        pos = api.Topos(
+            latitude_degrees=latitude,
+            longitude_degrees=longitude,
+            elevation_m=elevation,
+        )
 
-    pos = api.Topos(
-        latitude_degrees=latitude, longitude_degrees=longitude, elevation_m=elevation
+        today = requested_date
+        tomorrow = requested_date + datetime.timedelta(days=1)
+
+        t = ts.utc(
+            year=today.year,
+            month=today.month,
+            day=today.day,
+            hour=today.hour,
+            minute=today.minute,
+            second=today.second,
+        )
+        days = t - satellite.epoch
+        logger = logging.getLogger(__name__)
+        logger.debug("{:.3f} days away from epoch".format(days))
+
+        t0 = ts.utc(
+            today.year, today.month, today.day, today.hour, today.minute, today.second
+        )
+        t1 = ts.utc(
+            tomorrow.year,
+            tomorrow.month,
+            tomorrow.day,
+            tomorrow.hour,
+            tomorrow.minute,
+            tomorrow.second,
+        )
+
+        t, events = satellite.find_events(pos, t0, t1, altitude_degrees=10.0)
+
+    #    for ti, event in zip(t, events):
+    #        name = ("rise above 10°", "culminate", "set below 10°")[event]
+    #        logger.debug(ti.utc_strftime("%Y %b %d %H:%M:%S"), name)
+
+    # some magic is still missing here
+
+    return (
+        success,
+        rise_time,
+        rise_azimuth,
+        maximum_time,
+        maximum_altitude,
+        set_time,
+        set_azimuth,
     )
-
-    today = requested_date
-    tomorrow = requested_date + datetime.timedelta(days=1)
-
-    t = ts.utc(
-        year=today.year,
-        month=today.month,
-        day=today.day,
-        hour=today.hour,
-        minute=today.minute,
-        second=today.second,
-    )
-    days = t - satellite.epoch
-    logger = logging.getLogger(__name__)
-    logger.debug("{:.3f} days away from epoch".format(days))
-
-    t0 = ts.utc(today.year, today.month, today.day, today.hour, today.minute, today.second)
-    t1 = ts.utc(tomorrow.year, tomorrow.month, tomorrow.day, tomorrow.hour, tomorrow.minute, tomorrow.second)
-
-    t, events = satellite.find_events(pos, t0, t1, altitude_degrees=10.0)
-    for ti, event in zip(t, events):
-        name = ("rise above 10°", "culminate", "set below 10°")[event]
-        logger.debug(ti.utc_strftime("%Y %b %d %H:%M:%S"), name)
-
-    # return True, rise_time, rise_azimuth, maximum_altitude_time, maximum_altitude, set_time, set_azimuth, duration
 
 
 def get_sun_moon_rise_set_for_latlon(
@@ -366,18 +358,22 @@ def get_sun_moon_rise_set_for_latlon(
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
+    logging.basicConfig(
+        level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+    )
     logger = logging.getLogger(__name__)
 
     logger.debug(
-        get_sun_moon_rise_set_for_latlon(51.838860, 8.326871, datetime.datetime.now() + datetime.timedelta(days=1), 74.0)
+        get_sun_moon_rise_set_for_latlon(
+            51.838860,
+            8.326871,
+            datetime.datetime.now() + datetime.timedelta(days=1),
+            74.0,
+        )
     )
 
-    tle_data_last_download = None
-    logger.debug("Download TLE Data")
-    refresh_tle_file()
-    logger.debug("Import TLE Data")
-    success, tle_data = read_tle_data()
+    update_local_tle_file()
+
     logger.debug("Get TLE data for Es'Hail2")
     logger.debug(get_tle_data("ES'HAIL-2"))
     logger.debug("Get next ISS pass")
