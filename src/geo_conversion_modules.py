@@ -315,7 +315,7 @@ def convert_dms_to_latlon(
     return latitude, longitude
 
 
-def Haversine(
+def haversine(
     latitude1: float,
     longitude1: float,
     latitude2: float,
@@ -421,4 +421,4 @@ if __name__ == "__main__":
     logger.debug(convert_latlon_to_dms(51.838720, 08.326819))
     logger.debug(convert_dms_to_latlon(48, 0, 0, "N", 122, 0, 0, "W"))
 
-    logger.debug(Haversine(51.8458575, 8.2997425, 51.96564, 9.79817, "metric"))
+    logger.debug(haversine(51.8458575, 8.2997425, 51.96564, 9.79817, "metric"))
