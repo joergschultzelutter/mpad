@@ -479,6 +479,21 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                     county = response_data["county"]
                     street = response_data["street"]
                     street_number = response_data["street_number"]
+
+                    # ultimately, get the sender's lat/lon so that we can
+                    # calculate the distance between the sender's position
+                    # and the call sign that he has requested. We are only
+                    # interested in the user's lat/lon info and ignore the
+                    # remaining information
+                    (
+                        success,
+                        users_latitude,
+                        users_longitude,
+                        _,
+                        _,
+                    ) = get_position_on_aprsfi(
+                        aprsfi_callsign=users_callsign, aprsdotfi_api_key=aprsdotfi_api_key
+                    )
                 elif what == "cwop":
                     human_readable_message = f"CWOP for {message_callsign}"
                     what = "cwop_by_latlon"
@@ -880,6 +895,10 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                         street = response_data["street"]
                         street_number = response_data["street_number"]
 
+                        # Finally, set the user's latitude / longitude
+                        users_latitude = latitude
+                        users_longitude = longitude
+
             # Parse the "when" information if we don't have an error
             # and if we haven't retrieved the command data in a previous run
             if not found_when and not err:
@@ -1163,4 +1182,4 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
 
     success, aprsdotfi_api_key, openweathermap_api_key = read_program_config()
-    logger.debug(parse_input_message("forecast", "df1jsl-1", aprsdotfi_api_key))
+    logger.debug(parse_input_message("whereis kc7oo-6", "df1jsl-1", aprsdotfi_api_key))
