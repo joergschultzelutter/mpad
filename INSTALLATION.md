@@ -15,7 +15,7 @@ Currently, MPAD uses two APIs for its purposes:
 
 If you want to host your own MPAD instance, you need to acquire your personal API access keys for both APIs and add them to MPAD's API config file. 
 
-```
+```bash
 [mpad_config]
 
 # API key for www.openweathermap.org
