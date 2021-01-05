@@ -19,9 +19,9 @@ from geo_conversion_modules import Haversine
 import logging
 
 
-def download_repeatermap_raw_data_and_write_it_to_disc(
+def download_repeatermap_raw_data_to_local_file(
     url: str = "http://www.repeatermap.de/api.php",
-    repeatermap_raw_data_file: str = "repeatermap.raw",
+    repeatermap_raw_data_file: str = "repeatermap_raw_data.json",
 ):
     """
     Downloads the repeatermap.de data and write it to a file 'as is'
@@ -56,7 +56,7 @@ def download_repeatermap_raw_data_and_write_it_to_disc(
 
 
 def read_repeatermap_raw_data_from_disk(
-    repeatermap_raw_data_file: str = "repeatermap.raw",
+    repeatermap_raw_data_file: str = "repeatermap_raw_data.json",
 ):
     """
     Read the repeatermap.de raw data from disc.
@@ -248,7 +248,7 @@ def create_enriched_mpad_repeatermap_data(repeatermap_raw_json_content: str):
 
 
 def write_mpad_repeatermap_data_to_disc(
-    mpad_repeatermap_json: str, mpad_repeatermap_filename: str = "repeatermap.mpad"
+    mpad_repeatermap_json: str, mpad_repeatermap_filename: str = "repeatermap_enriched_data.json"
 ):
     """
     writes the processed repeatermap data in enriched MPAD format
@@ -281,7 +281,7 @@ def write_mpad_repeatermap_data_to_disc(
 
 
 def read_mpad_repeatermap_data_from_disc(
-    mpad_repeatermap_filename: str = "repeatermap.mpad",
+    mpad_repeatermap_filename: str = "repeatermap_enriched_data.json",
 ):
     """
     Read the MPAD preprocessed repeatermap file from disc
@@ -290,7 +290,7 @@ def read_mpad_repeatermap_data_from_disc(
     Parameters
     ==========
     mpad_repeatermap_filename: 'str'
-        file name of the native MPAD repeatermap data
+        file name of the MPAD-enriched repeatermap data
 
     Returns
     =======
@@ -319,7 +319,6 @@ def read_mpad_repeatermap_data_from_disc(
 def get_nearest_repeater(
     latitude: float,
     longitude: float,
-    mpad_repeatermap_dictionary: dict,
     mode: str = None,
     band: str = None,
     units: str = "metric",
@@ -334,9 +333,6 @@ def get_nearest_repeater(
         Latitude of the user's position
     longitude: 'float'
         Longitude of the user's position
-    mpad_repeatermap_dictionary: 'dict'
-        dictionary which contains the enriched repeatermap data
-        (add lat/lon where not present and add band (e.g. 2m))
     mode: 'str'
         optional query parameter. Can be used for querying e.g. for DSTAR, C4FM, ...
     band: 'str'
@@ -369,30 +365,34 @@ def get_nearest_repeater(
     lat1 = latitude * 0.0174533
     lon1 = longitude * 0.0174533
 
-    # loop through all of the ICAO stations and calculate the distance from $lat/$lon
-    # remember the one that is closest.
-    for repeater in mpad_repeatermap_dictionary:
-        lat2 = mpad_repeatermap_dictionary[repeater]["latitude"] * 0.0174533
-        lon2 = mpad_repeatermap_dictionary[repeater]["longitude"] * 0.0174533
+    # read enriched dictionary from disc
+    success, mpad_repeatermap_dictionary = read_mpad_repeatermap_data_from_disc()
 
-        # use equirectangular approximation of distance
-        x = (lon2 - lon1) * math.cos((lat1 + lat2) / 2)
-        y = lat2 - lat1
-        # 3959 is radius of the earth in miles
-        d = math.sqrt(x * x + y * y) * 3959
-        # if this station is nearer than the previous nearest, hang onto it
-        if d < nearest:
-            # if the user has selected additional query parameters, check them too
-            if mode:
-                mode_from_dict = mpad_repeatermap_dictionary[repeater]["mode"]
-                if mode != mode_from_dict:
-                    continue
-            if band:
-                band_from_dict = mpad_repeatermap_dictionary[repeater]["band_name"]
-                if band != band_from_dict:
-                    continue
-            nearest = d
-            nearest_repeater_id = repeater
+    if success:
+        # loop through all of the ICAO stations and calculate the distance from $lat/$lon
+        # remember the one that is closest.
+        for repeater in mpad_repeatermap_dictionary:
+            lat2 = mpad_repeatermap_dictionary[repeater]["latitude"] * 0.0174533
+            lon2 = mpad_repeatermap_dictionary[repeater]["longitude"] * 0.0174533
+
+            # use equirectangular approximation of distance
+            x = (lon2 - lon1) * math.cos((lat1 + lat2) / 2)
+            y = lat2 - lat1
+            # 3959 is radius of the earth in miles
+            d = math.sqrt(x * x + y * y) * 3959
+            # if this station is nearer than the previous nearest, hang onto it
+            if d < nearest:
+                # if the user has selected additional query parameters, check them too
+                if mode:
+                    mode_from_dict = mpad_repeatermap_dictionary[repeater]["mode"]
+                    if mode != mode_from_dict:
+                        continue
+                if band:
+                    band_from_dict = mpad_repeatermap_dictionary[repeater]["band_name"]
+                    if band != band_from_dict:
+                        continue
+                nearest = d
+                nearest_repeater_id = repeater
 
     # Did we find something?
     if nearest_repeater_id:
@@ -451,12 +451,22 @@ def get_nearest_repeater(
     return success, nearest_repeater
 
 
-if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
-    )
-    logger = logging.getLogger(__name__)
-    download_repeatermap_raw_data_and_write_it_to_disc()
+def update_local_repeatermap_file():
+    """
+    Wrapper method for importing the raw data from repeatermap.de,
+    postprocessing the the data and finally writing the enriched data
+    back to a local file.
+
+    Parameters
+    ==========
+
+    Returns
+    =======
+    success: 'bool'
+        True if request was successful
+    """
+
+    download_repeatermap_raw_data_to_local_file()
     success, repeatermap_dot_de_content = read_repeatermap_raw_data_from_disk()
     if success:
         success, local_repeatermap_json = create_enriched_mpad_repeatermap_data(
@@ -464,17 +474,24 @@ if __name__ == "__main__":
         )
         if success:
             success = write_mpad_repeatermap_data_to_disc(local_repeatermap_json)
+    return success
 
-    success, mpad_repeater_dictionary = read_mpad_repeatermap_data_from_disc()
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+    )
+    logger = logging.getLogger(__name__)
+
+    update_local_repeatermap_file()
+
+    success, nearest_repeater = get_nearest_repeater(
+        latitude=51.8458575,
+        longitude=8.2997425,
+        mode="dstar",
+        band="70cm",
+    )
     if success:
-        success, nearest_repeater = get_nearest_repeater(
-            latitude=51.8458575,
-            longitude=8.2997425,
-            mpad_repeatermap_dictionary=mpad_repeater_dictionary,
-            mode="dstar",
-            band="70cm",
-        )
-        if success:
-            logger.debug(nearest_repeater)
-        else:
-            logger.debug("Nothing found!")
+        logger.debug(nearest_repeater)
+    else:
+        logger.debug("Nothing found!")
