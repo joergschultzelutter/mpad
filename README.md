@@ -10,8 +10,8 @@ Python implementation of an APRS Multi-Purpose Daemon (wx forecast, sat data, ge
 - METAR data for IATA/ICAO codes or the nearest airport to the user's position. If an airport is specified/found that does NOT support METAR, the program automatically switches to a standard WX report
 - CWOP data for a specific CWOP station (or the nearest one)
 - sunrise/set and moonrise/set for a given call sign (including the sender's call sign)
-- position data for a given call sign/sender's call sign (human readable address, MGRS, Maidenhead, UTM, DMS)
-- satellite pass data (provides e.g. the next pass of the ISS, based on the sender's call sign position)
+- position data for a given call sign/sender's call sign (human readable address, MGRS, Maidenhead, UTM, DMS, distance between the two users, altitude)
+- BETA:satellite pass data (provides e.g. the next pass of the ISS, based on the sender's call sign position)
 - find your nearest repeater with optional query parameters on band and query (c4fm, dstar, fm, ...)
 - Can be easily extended with additional functionality
 
@@ -20,7 +20,7 @@ Python implementation of an APRS Multi-Purpose Daemon (wx forecast, sat data, ge
 - Very low cpu/traffic foot print (APRS filters and cached disc data)
 - Pretty printing; whenever it is necessary to send more than one APRS message (e.g. text exceeds APRS msg len), the program tries to split up the text in a legible way. Rather than applying a 'hard' truncate to the message after the 67th character, MPAD tries to keep the information groups intact. This means that e.g. if you receive temperature information, that data won't be split up into multiple messages where e.g. your first temperature digit is in message 1 and the 2nd one is in message 2.
 - Human-friendly parser, supporting both keyword- and non-keyword commands
-- External (static) resources such as the list of airports, repeaters e.g. are only downloaded in e.g. day/week intervals and then stored on the local hard drive
+- External (static) resources such as the list of airports, repeaters e.g. are only downloaded in e.g. daily/weekly/monthly intervals and then stored on the local hard drive
 - Supports APRS msg acknowledgments, beacons et al. Also tries to extract APRS msg IDs from APRS messages which do not follow the APRS standards
 
 ## Reimplements and uses programs and services
@@ -55,5 +55,5 @@ Python implementation of an APRS Multi-Purpose Daemon (wx forecast, sat data, ge
 
 ## The fine print
 
-- If you intend host an instance of this program, you need to be a licensed ham radio operator
+- If you intend to host an instance of this program, you need to be a licensed ham radio operator
 - APRS is a registered trademark of APRS Software andBob Bruninga, WB4APR
