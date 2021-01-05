@@ -1,5 +1,4 @@
 __pycache__
-amateur.tle
 de421.bsp
 mpad_api_access_keys.cfg
 repeatermap_raw_data.json
@@ -10,5 +9,5 @@ wxbot-1.26.pl
 APRS101.PDF
 .idea
 .DS_Store
-served_packages.mpad
-stations.mpad
+mpad_served_packages.txt
+tle_amateur_satellites.txt
