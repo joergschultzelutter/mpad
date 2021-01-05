@@ -2,8 +2,8 @@ __pycache__
 amateur.tle
 de421.bsp
 mpad_api_access_keys.cfg
-repeatermap.mpad
-repeatermap.raw
+repeatermap_raw_data.json
+repeatermap_enriched_data.json
 airport_stations.txt
 venv
 wxbot-1.26.pl
