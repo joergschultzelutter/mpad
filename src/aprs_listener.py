@@ -8,6 +8,9 @@
 from input_parser import parse_input_message
 from apscheduler.schedulers.background import BackgroundScheduler
 from output_generator import generate_output_message
+from airport_data_modules import update_local_airport_stations_file
+from repeater_modules import update_local_repeatermap_file
+from skyfield_modules import update_local_tle_file
 from utility_modules import (
     read_program_config,
     read_number_of_served_packages,
@@ -215,17 +218,62 @@ aprsis_callsign, aprsis_passcode, aprsis_simulate_send = get_aprsis_passcode(
 #
 # Now let's read the number of served packages that we have dealt with so far
 number_of_served_packages = read_number_of_served_packages()
-# read_icao_and_iata_data()
 
 # Define dummy values for both APRS task schedules and AIS object
 aprs_scheduler = AIS = None
+
+# Initially, refresh our local data caches
+#
+# Refresh the local "airport stations" file
+update_local_airport_stations_file()
+#
+# Refresh the local "repeatermap" file
+update_local_repeatermap_file()
+#
+# Update the satellite TLE file
+update_local_tle_file()
+
+# Now let's set up schedulers for the refresh process
+# These schedulers will download the file(s) every x days
+# and store the data locally, thus allowing the functions
+# to read and import it whenever necessary
+caching_scheduler = BackgroundScheduler()
+
+# Set up task for IATA/ICAO data download
+caching_scheduler.add_job(
+    update_local_airport_stations_file,
+    "interval",
+    id="airport_data",
+    days=30,
+    args=[],
+)
+
+# Set up task for repeater data download
+caching_scheduler.add_job(
+    update_local_repeatermap_file,
+    "interval",
+    id="repeatermap_data",
+    days=7,
+    args=[],
+)
+
+# Set up task for satellite TLE data download
+caching_scheduler.add_job(
+    update_local_repeatermap_file,
+    "interval",
+    id="tle_satellite_data",
+    days=1,
+    args=[],
+)
+
+# start the caching scheduler
+caching_scheduler.start()
 
 #
 # Finally, let's enter the 'eternal loop'
 #
 try:
     while True:
-        #
         # Set call sign and pass code
         AIS = aprslib.IS(aprsis_callsign, aprsis_passcode)
 
@@ -242,6 +290,7 @@ try:
             f"APRS-IS User: {aprsis_callsign}, APRS-IS passcode: {aprsis_passcode}"
         )
         logger = logging.getLogger(__name__)
+
         AIS.connect(blocking=True)
         if AIS._connected == True:
             logger.debug(msg="Established the connection to APRS_IS")
@@ -252,14 +301,15 @@ try:
             )
             send_beacon_and_status_msg(AIS, aprsis_simulate_send)
 
-            # Install two schedulers
-            # The first scheduler is responsible for sending out beacon messages
+            # Install two schedulers tasks
+            # The first task is responsible for sending out beacon messages
             # to APRS; it will be triggered every 30 mins
-            # The 2nd scheduler is responsible for sending out bulletin messages
+            # The 2nd task is responsible for sending out bulletin messages
             # to APRS; it will be triggered every 4 hours
             #
-            # Install scheduler 1 - beacons
+            # Install scheduler task 1 - beacons
             aprs_scheduler = BackgroundScheduler()
+
             aprs_scheduler.add_job(
                 send_beacon_and_status_msg,
                 "interval",
@@ -267,15 +317,15 @@ try:
                 minutes=30,
                 args=[AIS, aprsis_simulate_send],
             )
-            # Install scheduler 2 - bulletins
+            # Install scheduler task 2 - bulletins
             aprs_scheduler.add_job(
                 send_bulletin_messages,
                 "interval",
                 id="status",
-                minutes=4 * 60,
+                hours=4,
                 args=[AIS, aprsis_simulate_send],
             )
-            # start both schedulers
+            # start both tasks
             aprs_scheduler.start()
 
             #
@@ -299,9 +349,7 @@ try:
                 try:
                     aprs_scheduler.shutdown()
                 except:
-                    logger.debug(
-                        msg="Exception during scheduler shutdown eternal loop"
-                    )
+                    logger.debug(msg="Exception during scheduler shutdown eternal loop")
 
             # Verbindung schließen
             logger.debug(msg="Closing APRS connection to APRS_IS")
@@ -315,13 +363,30 @@ try:
 #        AIS.close()
 except (KeyboardInterrupt, SystemExit):
     logger.debug("received exception!")
+
+    # write number of processed packages to disc
+    write_number_of_served_packages(served_packages=number_of_served_packages)
+
     if aprs_scheduler:
+        aprs_scheduler.pause()
+        aprs_scheduler.remove_all_jobs()
+        logger.debug(msg="shutting down aprs_scheduler")
         if aprs_scheduler.state != apscheduler.schedulers.base.STATE_STOPPED:
             try:
                 aprs_scheduler.shutdown()
             except:
                 logger.debug(msg="Exception during scheduler shutdown SystemExit loop")
-        if AIS:
-            AIS.close()
-    # Write number of served packages to disc
-    write_number_of_served_packages(served_packages=number_of_served_packages)
+
+    if caching_scheduler:
+        logger.debug(msg="shutting down caching_scheduler")
+        caching_scheduler.pause()
+        caching_scheduler.remove_all_jobs()
+        if caching_scheduler.state != apscheduler.schedulers.base.STATE_STOPPED:
+            try:
+                caching_scheduler.shutdown()
+            except:
+                logger.debug(msg="Exception during scheduler shutdown SystemExit loop")
+
+    # Close the socket if it is still open
+    if AIS:
+        AIS.close()
