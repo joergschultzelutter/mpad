@@ -4,6 +4,20 @@
 #
 # Purpose: APRS communication core functions
 #
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
 
 import aprslib
 import logging
@@ -108,13 +122,14 @@ def send_beacon_and_status_msg(myaprsis: aprslib.inet.IS, simulate_send: bool = 
     =======
     none
     """
-    logging.debug("Reached beacon interval; sending beacons")
+    logger = logging.getLogger(__name__)
+    logger.debug("Reached beacon interval; sending beacons")
     for bcn in beacon_text_array:
         stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}:{bcn}"
         if not simulate_send:
-            logging.debug(f"echtes Senden: {stringtosend}")
+            logger.debug(f"echtes Senden: {stringtosend}")
         else:
-            logging.debug(f"Simulating beacons: {stringtosend}")
+            logger.debug(f"Simulating beacons: {stringtosend}")
 
 
 def send_bulletin_messages(myaprsis: aprslib.inet.IS, simulate_send: bool = True):
@@ -134,13 +149,14 @@ def send_bulletin_messages(myaprsis: aprslib.inet.IS, simulate_send: bool = True
     =======
     none
     """
-    logging.debug("reached bulletin interval; sending bulletins")
+    logger = logging.getLogger(__name__)
+    logger.debug("reached bulletin interval; sending bulletins")
     for recipient_id, bln in bulletin_texts.items():
         stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}::{recipient_id:9}:{bln}"
         if not simulate_send:
-            logging.debug(f"echtes Senden: {stringtosend}")
+            logger.debug(f"echtes Senden: {stringtosend}")
         else:
-            logging.debug(f"simulating bulletins: {stringtosend}")
+            logger.debug(f"simulating bulletins: {stringtosend}")
 
 
 def send_ack(
@@ -172,12 +188,13 @@ def send_ack(
     """
 
     if source_msg_no:
-        logging.debug("Preparing acknowledgment receipt")
+        logger = logging.getLogger(__name__)
+        logger.debug("Preparing acknowledgment receipt")
         stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}::{users_callsign:9}:ack{source_msg_no}"
         if not simulate_send:
-            logging.debug(f"echtes Senden: {stringtosend}")
+            logger.debug(f"echtes Senden: {stringtosend}")
         else:
-            logging.debug(f"Simulating acknowledgment receipt: {stringtosend}")
+            logger.debug(f"Simulating acknowledgment receipt: {stringtosend}")
 
 
 def send_aprs_message_list(
@@ -223,10 +240,11 @@ def send_aprs_message_list(
             number_of_served_packages = number_of_served_packages + 1
             if number_of_served_packages > 99999:  # max 5 digits
                 number_of_served_packages = 1
+        logger = logging.getLogger(__name__)
         if not simulate_send:
-            logging.debug("Echtes Senden")
+            logger.debug("Echtes Senden")
         else:
-            logging.debug(f"Simulating response message '{stringtosend}'")
+            logger.debug(f"Simulating response message '{stringtosend}'")
         time.sleep(mpad_config.packet_delay_short)
     return number_of_served_packages
 
