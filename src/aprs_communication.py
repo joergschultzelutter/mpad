@@ -232,6 +232,43 @@ def send_aprs_message_list(
 
 
 def extract_msgno_from_defective_message(message_text: str):
+    """
+    Have a look at the incoming APRS message and check if it
+    contains a message no which does not follow the APRS
+    standard (see aprs101.pdf chapter 14)
+
+    Explanation:
+
+    Per specification, any APRS message that HAS a message ID
+    contains this data in as trailing information in the following format:
+
+    message_text_1_to_67_chars{message_no_1_to_5_chars
+    e.g.
+    Hello World{12345
+
+    MPAD has encountered a few messages where the message does seem
+    to contain message IDs that are transmitted in an invalid format:
+
+    Hello World{12345}ab
+
+    aprslib does not recognise this format because it deviates from the
+    APRS standard. This tweak recognises such messages, extracts the message
+    number and ignores the trailing content.
+
+    Parameters
+    ==========
+    message_text: 'str'
+        The original aprs message as originally extracted by aprslib
+
+    Returns
+    =======
+    msg: 'str'
+        original message OR the modified message minus message no and trailing
+        data
+    msg_no: 'str'
+        Null if no message_no was present
+    """
+
     msg = msgno = None
 
     if message_text:

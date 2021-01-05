@@ -80,10 +80,11 @@ def mycallback(raw_aprs_packet):
     # msg no in the standard format (12345=msg_no)
     # message_text{12345
     # these senders add a closing bracket to the end of the message. Example:
-    # message_text{12345}
+    # message_text{12345}abcd
     # aprslib does not recognise this flawed package and returns the content as
     # is. Our convenience handler takes care of the issue and returns a 'clean'
-    # message text and a separated message_no whereas present
+    # message text and a separated message_no whereas present.
+    # The trailing information (abcd) is ignored and removed.
     if not msgno_string:
         if message_text_string:
             message_text_string, msgno_string = extract_msgno_from_defective_message(
