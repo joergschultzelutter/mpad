@@ -12,7 +12,7 @@ Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) k
 
 Formats:
 
-```
+```bash
 <city>, <state>; <country>
 <city>, <state>
 <city>; <country>
@@ -22,7 +22,7 @@ Country = iso3166-a2 country (de, us, fr, uk, ...)
 
 Examples:
 
-```
+```bash
 Los Angeles, CA
 Mountain View, CA; US
 Holzminden; de
@@ -31,14 +31,17 @@ Holzminden; de
 ### Zip Codes
 
 Formats:
-```
+
+```bash
 zip <zipcode>[;iso3166-a2 country code]
 <5-digit code>
 ```
+
 A zip code __with__ keyword but __without__ a country setting OR a 5-digit zip code __without__ keyword will automatically assume that the given zip code is a U.S. zip code. 
 
 Examples:
-```
+
+```bash
 zip 94043 --> Mountain View, CA, United States
 zip 85609 --> Dragoon, AZ, United States
 zip 85609; us --> Dragoon, AZ, United States
@@ -54,32 +57,38 @@ Zip codes can be of 3..10 characters
 Format: latitude/longitude (can be positive or negative)
 
 Examples:
-```
+
+```bash
 51.8458575/8.2997425
 37.773972/-122.431297
 -33.447487/-70.673676
 ```
+
 Whereas possible, the program will try to turn these coordinates into a human readable address
 
 ### Maidenhead / Grid locator
 
 Formats:
-```
+
+``` bash
 grid <4-or 6-character grid locator>
 mh <4-or 6-character grid locator>
 ```
 
 Examples:
-```
+
+```bash
 grid jo41du
 mh jo41
 ```
+
 Note: When a maidenhead locator is specified, the program will _not_ try to translate this information to a human readable address
 
 ### Call sign
 
 Formats:
-```
+
+```bash
 wx <call sign>[-ssid]
 wx
 <call sign>[-ssid]
@@ -102,13 +111,15 @@ Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) k
 Get a METAR report for a specific ICAO code. If the ICAO code is valid but the airport does not provide METAR data, a default wx report is returned instead.
 
 Formats:
-```
+
+```bash
 icao <4-character ICAO code>
 <4-character ICAO code>
 ```
 
 Examples:
-```
+
+```bash
 icao eddf
 eddf
 ```
@@ -120,13 +131,15 @@ Specifying an ICAO code without keyword may or may not be successful as it is pr
 Get a METAR report for a specific IATA code by retrieving its associated ICAO code (and then performing an ICAO metar inquiry). If the IATA code is valid but the airport does not provide METAR data, a default wx report is returned instead.
 
 Formats:
-```
+
+```bash
 iata <3-character IATA code>
 <3-character IATA code>
 ```
 
 Examples:
-```
+
+```bash
 iata fra
 fra
 ```
@@ -138,14 +151,17 @@ Specifying an IATA code without keyword may or may not be successful as it is pr
 Get a METAR report for the nearest airport in relation to the user's own call sign or a different call sign
 
 Formats:
-```
+
+```bash
 metar <callsign>[-ssid]
 metar
 ```
+
 If no call sign is specified, then the user's own call sign (the one that he has send us the message with) is used
 
 Examples:
-```
+
+```bash
 metar ko4jvr-9
 metar lb7ji
 metar 
@@ -166,13 +182,15 @@ Returns the geocoordinates/address info of the sender's position or a specific c
 Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
 
 Formats:
-```
+
+```bash
 whereami --> returns position of the sender's last known coordinates
 whereis <callsign>[-ssid]
 ```
 
 Examples:
-```
+
+```bash
 whereami
 whereis df1jsl-1
 ```
@@ -184,13 +202,15 @@ Returns the sunrise/sunset and moonrise/moonset info of the sender's position or
 Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __YES__
 
 Formats:
-```
+
+```bash
 riseset --> returns values for the sender's position
 riseset <callsign>[-ssid]
 ```
 
 Examples:
-```
+
+```bash
 riseset
 riseset df1jsl-1
 ```
@@ -202,14 +222,16 @@ Returns the nearest CWOP station's weather report (related to the sender's call 
 Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
 
 Formats:
-```
+
+```bash
 cwop --> get nearest CWOP report, based on the user's position
 cwop <callsign>[-ssid] --> get nearest CWOP report, based on the given call sign's position
 cwop <station_id> --> get the weather report for the given CWOP ID
 ```
 
 Examples:
-```
+
+```bash
 cwop
 cwop df1jsl-1
 cwop at166
@@ -234,12 +256,14 @@ EXPERIMENTAL - STILL IN DEVELOPMENT
 Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __YES__
 
 Formats:
-```
+
+```bash
 satpass <satellite_name>
 ```
 
 Examples:
-```
+
+```bash
 satpass iss
 satpass zarya
 satpass saudisat-1c
@@ -252,16 +276,19 @@ Retrieves the nearest repeater, based on the user's position. In addition, 'band
 Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
 
 Formats:
-```
+
+```bash
 repeater [band] [mode]
 ```
+
 The positions for both parameters __band__ and __mode__ are interchangeable
 
 __Band__ parameter needs to be specified with 'm' or 'cm' unit of measure, e.g. 70cm, 2m, 80m
 __Mode__ parameter can be one of the following: fm, dstar, d-star, dmr, c4fm, tetra, atv. d-star and dstar are identical; the two options just exist because of convenience issues.
 
 Examples:
-```
+
+```bash
 repeater --> returns the nearest repeater, regardless of its capabilities
 repeater c4fm --> returns the nearest c4fm repeater without checking the band requirements
 repeater 70cm --> returns the nearest 70cm repeater without checking the mode requirements
@@ -271,18 +298,20 @@ repeater 70cm c4fm --> same command as in the previous example
 
 ### General help
 
-Returns general program help to the user. 
+Returns general program help to the user.
 
 Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
 
 Formats:
-```
+
+```bash
 info
 help
 ```
 
 Examples:
-```
+
+```bash
 info
 help
 ```
@@ -299,13 +328,15 @@ Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) k
 If you don't want to rely on the automatic mode, you can override the automated setting by specifying the following keywords:
 
 Formats:
-```
+
+```bash
 mtr, metric
 imp, imperial
 ```
 
 Examples:
-```
+
+```bash
 metric
 imperial
 ```
