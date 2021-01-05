@@ -29,18 +29,19 @@ Python implementation of an APRS Multi-Purpose Daemon (wx forecast, sat data, ge
 - [MGRS coordinate converter](https://github.com/aydink/pymgrs)
 - aprs.fi for call sign location retrieval
 - openweathermap.org for wx data
-- Openstreetmap / geopy for address data retrieval and conversion
+- Openstreetmap.org / geopy for address data retrieval and conversion
 - findu.com for CWOP and METAR data
 - repeatermap.de for for repeater information
 - [APRSlib](https://pypi.org/project/aprslib/) for sending and receiving data
 - Celestrak for TLE data retrieval
-- and many other Python modules
+- and many other Python modules and web sites
 
 ## Currently out of scope / known issues:
 
 - OUTERNET logic from WXBOT is not implemented
+- WX requests by hour / minute are currently not implemented. I might add this at a later point in time
 - With its current implementation of its 'OneCall' API, Openweathermap does not return the human-readable address in case a query is performed for lat/lon coordinates. Therefore, additional calls to e.g. Openstreetmap etc. are necessary in order to provide the user with a human readable address.
-- The repeater data is very much EU-centric (the program uses its data from repeatermap.de). Additional _free_ repeater data sources can be added in future versions of the program if such sources are available. Alternatively, please get in touch with DK3ML and add your missing local repeaters to that web site.
+- Currently, the repeater data is very much EU-centric (the program uses its data from repeatermap.de). Additional _free_ repeater data sources can be added in future versions of the program if such sources are available. Alternatively, please get in touch with DK3ML and add your missing local repeaters to that web site. Alternatively, feel free to recommend free sources for repeater data and I see what I'll can do. 
 - Wx alert data from openweathermap.org is not returned to the user. This can be added in a later version but keep in mind that the text is very long and would result in multiple (10-15) APRS messages per alert!
 - Access to openweathermap.org requires an API key which comes with a certain traffic limit
 - Currently, all timestamps returned by the program use UTC as time zone. Implicitly, this constraint also applies to the time-related program keywords (see [USAGE.md](USAGE.md)) which instructs the program to return data for a certain time of the day. Dependent on your geographical location, a 'give me a wx report for today noon' may result in unwanted effects as the 'noon' part is based on GMT. When in doubt, do NOT limit your data to a certain time slot of the day ('full' day is the program default).
