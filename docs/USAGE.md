@@ -2,15 +2,15 @@
 
 ## What you need to know as a program user
 
-- The program's default __action__ is to retrieve a __wx report__ for the given address/coordinates. This assumption is valid as long as the user has not specified a keyword that tells the program to do something different. This means that you can a single datetime-related keyword like e.g. 'tomorrow' and the program will try to return the wx report for you.
+- The program's default ```action``` is to retrieve a wx report for the given address/coordinates. This assumption is valid as long as the user has not specified a keyword that tells the program to do something different. This means that you can a single datetime-related keyword like e.g. 'tomorrow' and the program will try to return the wx report for you.
 
-- Default __date__ is always 'today'. If you omit any date-related information, 'today' will be the default value.
+- Default ```date``` is always ```today```. If you omit any date-related information, ```today``` will be the default value.
 
-- Default __daytime__ is always 'full', meaning that you will get e.g. the wx report for the whole day. See the next paragraph on limitations wrt keywords and time zones.
+- Default ```daytime``` is always ```full```, meaning that you will get e.g. the wx report for the whole day. See the next paragraph on limitations wrt keywords and time zones. Note that ```full``` can be time- or content-specific.
 
-- Although both __date__ or __daytime__ settings can be specified at all times, any provided information in this matter may be partially or fully ignored by the program, dependent on the keyword (e.g. sunrise/set and moonrise/set will ignore the __daytime__ argument)
+- Although both ```date``` or ```daytime``` settings can be specified at all times, any provided information in this matter may be partially or fully ignored by the program, dependent on the keyword (e.g. sunrise/set and moonrise/set will ignore the ```daytime``` argument)
 
-- All __time stamps__ are __always returned in reference to the UTC time zone__. If time-specific inquiries (keywords) are issued (e.g. 'give me the wx report for tomorrow afternoon'), __those keywords ('afternoon') also abide to UTC time zone settings__. Dependent on where you are located in the world, that setting might be a different experience for you. Limiting the output to UTC may or may not change in future versions of this program but in general, time zones are a mess. And taking into consideration that daylight saving times may or may not be applicable to the user's position, sticking to UTC is the safest option for now. Therefore, all times reported by the program are provided with a UTC time qualifier, e.g. 12:03UTC.
+- All __time stamps__ are __always returned in reference to the UTC time zone__. If time-specific inquiries (keywords) are issued (e.g. 'give me the wx report for tomorrow afternoon'), __those keywords__ (e.g. ```afternoon```) __also abide to UTC time zone settings__. Dependent on where you are located in the world, that setting might be a different experience for you. Limiting the output to UTC may or may not change in future versions of this program but in general, time zones are a mess. And taking into consideration that daylight saving times may or may not be applicable to the user's position, sticking to UTC is the safest option for now. Therefore, all times reported by the program are provided with a UTC time qualifier, e.g. 12:03UTC.
 
 - Certain action command keywords can be specified in combination with a date setting and a daytime setting, e.g. request a wx report for the next day. The respective keyword documentation settings state if the keyword can be used in conjunction with a date/daytime keyword. All restrictions wrt UTC time settings do apply - see previous paragraph.
 
@@ -36,7 +36,7 @@ In reference to the European Union's GDPR regulations and other legal rules and 
 
 - That information is then returned back to the user via APRS-IS (and subsequently via radio transmission)
 
-- One or multiple keywords can be sent to MPAD, thus telling the program what to do. This is done by actively sending an APRS message to the program, either via ham radio or APRS-IS. All commands need to be send to the program's APRS identifier __MPAD__ (or a different identifier if you have decided to host your own instance). The program will neither __actively__ monitor a user's position or trigger any automatic transmissions to a user but will only respond to commands that have been sent to it.
+- One or multiple keywords can be sent to MPAD, thus telling the program what to do. This is done by actively sending an APRS message to the program, either via ham radio or APRS-IS. All commands need to be send to the program's APRS identifier ```MPAD``` (or a different identifier if you have decided to host your own instance). The program will neither __actively__ monitor a user's position or trigger any automatic transmissions to a user but will only respond to commands that have been sent to it.
 
 - No transaction data with the exception of the following cases is stored:
 

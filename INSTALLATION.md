@@ -2,7 +2,7 @@
 
 - Clone repository
 - Install Python packages - see [external dependencies](DEPENDENCIES.md) 
-- [MGRS coordinate converter](https://github.com/aydink/pymgrs) is already part of this repo so you don't need to install it
+- [MGRS coordinate converter](https://github.com/aydink/pymgrs) is already part of this repo
 
 ## Configuration
 
@@ -13,7 +13,7 @@ Currently, MPAD uses two APIs for its purposes:
 - aprs.fi
 - openweathermap.org
 
-If you want to host your own MPAD instance, you need to acquire your personal API access keys for both APIs and add them to MPAD's API config file. 
+If you want to host your own MPAD instance, you need to acquire your personal API access keys for both APIs and add them to MPAD's API config file (```mpad_api_access_keys.cfg```). 
 
 ```bash
 [mpad_config]
@@ -25,20 +25,24 @@ openweathermapdotorg_api_key = abcdef1234567890abcdef
 aprsdotfi_api_key = 123456.abcdefGHIJKLMN
 ```
 
-### Program config
+### Program configuration
 
-Open the program configuration file (mpad_config.py). Change the following values:
+Open the program configuration file (```mpad_config.py```). Change/Review the following base settings:
 
-- __mpad_latitude__ and __mpad_longitude__. These are the coordinates of your local instance.
-- __mpad_alias__. This is the ID which will be used by the program for all outgoing APRS messages.
-- __aprsis_login_callsign__. By default, this value is set to "N0CALL" which does permit the program to connect to APRS_IS in read-only mode. You can still receive and process messages which are directed to your filter settings' call signs. However, the processed data will not be sent to the user but does end up in the program's log file.
-- Filter settings. You NEED to tweak these if you intend to run your own instance. MPAD uses two filters:
-    - __aprsis_server_filter__. This is the filter that MPAD used for connecting to APRS-IS. It is also MPAD's __primary__ filter. If an APRS message does not pass this filter, then the program won't process it. You can specify one or many call signs: Format __g/callsign1/callsign2/callsign_n__. Example: __g/MPAD__. See [APRS-IS Server-Side Filter Commands](http://www.aprs-is.net/javAPRSFilter.aspx) for further details.
-    - __mpad_callsigns_to_parse__. This is the secondary filter. In general, it is identical to the first filter but this time, it is controlled by MPAD itself. Similar to the APRS-IS filter, you can specify 1..n call signs. Obviously, these call signs must be present in the APRS-IS filter because otherwise, the program won't see the messages. This 2nd filter mainly exists for debugging purposes; you can broaden the APRS-IS filter (e.g. program call sign and your personal call sign) and then use the 2nd filter for some software development magic.
-- __aprsis_server_name__ and __aprsis_server_port__. APRS-IS server/port that the program tries to connect with. Self-explanatory.
+- ```mpad_latitude``` and ```mpad_longitude```. These are the coordinates of your local instance. Once your instance of MPAD is up and running, it will submit APRS broadcasts to APRS, thus allowing other users to see your station info on services such as aprs.fi
+- ```mpad_alias```. This is the identifier/station name which will be used by the program for all outgoing APRS messages
+- ```mpad_aprs_tocall``` - The program's (unique) APRS "TOCALL" identifier. MPAD has just hatched and currently has no "TOCALL identifier of its own. This may change in the future.
+
+You also need to set the APRS-IS access and server credentials:
+
+- ```aprsis_login_callsign``` and ```aprsis_login_passcode```. These are the APRS-IS login credentials. By default, the login callsign is set to "N0CALL" which does permit the program to connect to APRS_IS in read-only mode. You can still receive and process messages (based on your filter settings' call signs). However, any outgoing message will not be sent to the user (via APRS-IS) but ends up in the program's log file.
+- Filter settings. You NEED to tweak these if you intend to run your own instance with your own call sign (see also ```mpad_alias```). MPAD uses two filters:
+    - ```aprsis_server_filter```. This is the filter that MPAD used for connecting to APRS-IS. It is also MPAD's ```primary``` filter. If an APRS message does not pass this filter, then the program won't process it. You can specify one or many call signs: Format ```g/callsign1/callsign2/callsign_n```. Example: ```g/MPAD```. See [APRS-IS Server-Side Filter Commands](http://www.aprs-is.net/javAPRSFilter.aspx) for further details.
+    - ```mpad_callsigns_to_parse```. This is the ```secondary filter```. Unlike the primary filter, this one is controlled by MPAD itself and similar to the APRS-IS filter, you can specify 1..n call signs. Obviously, at least a subset of these call signs must be present in the APRS-IS filter because otherwise, MPAD won't even see the message. This 2nd filter mainly exists for debugging purposes; you can broaden the APRS-IS filter (e.g. program call sign and your personal call sign) and then use the 2nd filter for some software development magic.
+- ```aprsis_server_name``` and ```aprsis_server_port```. APRS-IS server/port that the program tries to connect with. Self-explanatory (I hope).
 
 
-Excerpt from mpad_config.py:
+Excerpt from ```mpad_config.py```:
 ```python
 ##########################
 # Configuration settings #
