@@ -14,7 +14,7 @@ The following libraries need to be installed:
 - [pymgrs](https://github.com/aydink/pymgrs)
 - [requests](https://github.com/psf/requests)
 - [skyfield](https://github.com/skyfielders/python-skyfield)
-- [timezonefinder](https://github.com/MrMinimal64/timezonefinder)
+- [timezonefinder](https://github.com/MrMinimal64/timezonefinder) (currently not in use)
 - [us](https://github.com/unitedstates/python-us)
   
 ## API Dependencies
