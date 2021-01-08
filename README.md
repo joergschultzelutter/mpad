@@ -59,9 +59,9 @@ Both beacon and bulletin data messages will be sent as part of a fixed duty cycl
 
 In order to limit the access to data from external web sites to a minimum, MPAD caches data from the following web sites and refreshes it automatically:
 
-- Amateur satellite data from Celestrak is refreshed on a daily basis (Keyword __satpass__)
-- Repeater data from repeatermap.de is refreshed every 7 days (keyword __repeater__)
-- Airport data from aviationweather.gov is refreshed every 30 days (keywords __metar__, __iata__ and __icao__)
+- Amateur satellite data from Celestrak is refreshed on a daily basis (Keyword ```satpass```)
+- Repeater data from repeatermap.de is refreshed every 7 days (keyword ```repeater```)
+- Airport data from aviationweather.gov is refreshed every 30 days (keywords ```metar```, ```iata``` and ```icao```)
 
 Additionally, all of these data files will also be refreshed whenever the program starts.
 ## The fine print
