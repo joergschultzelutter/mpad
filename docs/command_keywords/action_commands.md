@@ -1,5 +1,6 @@
 # Action Keyword Commands
 
+Based on the sender's call sign, MPAD automatically provides its content in the 'correct format'. By default, MPAD uses the metric system. MPAD will evaluate the user call sign. If a call sign from Liberia, Myanmar and the U.S. has been received, MPAD will automatically switch to the imperial system, thus providing the user wx temperature reports in Fahrenheit, speed in mph, distances in miles and so on. You can override this behavior with specific keywords (can be found at the end of this document) 
 ## WX data inquiries
 
 - One or multiple spaces between the respective separators are permitted
@@ -134,14 +135,14 @@ Based on the user's lat/lon, the program will then try to find the nearest airpo
 
 ### WhereIs
 
-Returns the geocoordinates/address info of the sender's position or a specific call sign. Returned data & #### Formats
+Returns the geocoordinates/address info of the sender's position or a specific call sign. Respose data includes:
 
 - Maidenhead locator
 - MGRS coordinates
 - DMS coordinates
 - UTM coordinates
-- Human-readable address (whereas such data is available)
-- Distance, direction and bearing to the call sign (if differs from user's call sign)
+- Human-readable address (whereas available)
+- Distance, direction and bearing to the call sign (if requested position differs from user's position)
 - Altitude information whereas present
 
 Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
