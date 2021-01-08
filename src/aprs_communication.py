@@ -84,6 +84,7 @@ def get_aprsis_passcode(call_sign: str = "N0CALL"):
     call_sign: 'str'
         Call sign string that we want to use for connecting to aprs-is
 
+
     Returns
     =======
     call_sign: 'str'
@@ -314,4 +315,4 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     send_beacon_and_status_msg(None)
     send_bulletin_messages(None)
-    logger.debug(get_aprsis_passcode("N0CALL"))
+    logger.debug(get_aprsis_passcode("MPAD"))

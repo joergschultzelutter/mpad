@@ -19,25 +19,61 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-# Configuration settings
+###########################
+# Constants, do not change#
+###########################
+#
 mpad_version: str = "0.01"
-mpad_latitude: str = "51.8388N"  # 8 chars fixed length, ddmm.mmN, see chapter 6 pg. 23
-# fmt: off
-mpad_longitude: str = "008.3266E"  # 9 chars fixed length, dddmm.mmE, see chapter 6 pg. 23)
-# fmt: on
-mpad_alias: str = "MPAD"  # Identifier for sending data to APRS-IS
-mpad_aprs_tocall: str = "APRS"  # APRS "TOCALL", see http://aprs.org/aprs11/tocalls.txt. Needs to get its own identifier at a later point in time
-
-# Constants, do not change
 aprs_table: str = "/"  # my symbol table (/=primary \=secondary, or overlay)
 aprs_symbol: str = "?"  # APRS symbol: Server
 packet_delay_long: float = 2.0  # packet delay in seconds after sending data to aprs-is
 packet_delay_short: float = 1.0  # packet delay in seconds after sending data to aprs-is
-
-# Beacon / Bulletin config settings
-myaprsis_login_callsign = "N0CALL"  # APRS-IS login
-
-myaprs_server_name = "euro.aprs2.net"  # our login server
-myaprs_server_port = 14580  # server port
-myaprs_server_filter = "g/WXBOT/WXYO"  # server filter criteria for aprs.is
-mycallsigns_to_parse = ["WXBOT", "WXYO"]  # (additional) call sign filter
+#
+##########################
+# Configuration settings #
+##########################
+#
+#################################
+# General Program Configuration #
+#################################
+#
+# Location of our process (Details: see aprs101.pdf see aprs101.pdf chapter 6 pg. 23)
+mpad_latitude: str = "51.8388N"  # 8 chars fixed length, ddmm.mmN
+mpad_longitude: str = "008.3266E"  # 9 chars fixed length, dddmm.mmE
+#
+# Program alias: This is the APRS name that will be used for all outgoing messages
+mpad_alias: str = "MPAD"  # Identifier for sending outgoing data to APRS-IS
+#
+# APRS "TOCALL" identifier - see http://aprs.org/aprs11/tocalls.txt
+# Needs to get its own identifier at a later point in time
+mpad_aprs_tocall: str = "APRS"  # APRS "TOCALL"
+#
+####################
+# APRS-IS Settings #
+####################
+#
+# APRS-IS login user / password
+aprsis_login_callsign = "N0CALL"  # APRS-IS login
+aprsis_login_passcode = "-1"    # APRS-IS Passcode
+#
+# APRS-IS login Server / login Port
+aprsis_server_name = "euro.aprs2.net"  # our login server
+aprsis_server_port = 14580  # server port
+#
+# APRS-IS server filter setting (This is the program's PRIMARY message filter)
+# Syntax: see http://www.aprs-is.net/javAPRSFilter.aspx
+# If you remove/disable this filter, MPAD will 'see' all aprs-is messages
+# (the whole APRS-IS traffic)
+aprsis_server_filter = "g/WXBOT/WXYO"  # server filter criteria for aprs.is
+#
+#############################
+# Secondary filter settings #
+#############################
+#
+#
+# MPAD SECONDARY filter setting. This filter will be applied to those
+# messages which have made it past the PRIMARY filter (from APRS-IS)
+# If that secondary filter is also passed, then we will have a look
+# at the user's message and try to process it
+#
+mpad_callsigns_to_parse = ["WXBOT", "WXYO"]  # (additional) call sign filter

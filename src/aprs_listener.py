@@ -129,7 +129,7 @@ def mycallback(raw_aprs_packet):
     #
     # Is our address in the target list of call signs that we claim as owner?
     if addresse_string:
-        if addresse_string in mpad_config.mycallsigns_to_parse:
+        if addresse_string in mpad_config.mpad_callsigns_to_parse:
             # Lets examine what we've got:
             # 1. Message format should always be 'message' and not 'response'
             # 2. Actual message should be populated with some content
@@ -228,7 +228,7 @@ if not success:
 # By overriding the aprsis_simulate_send parameter to True, you can prevent the
 # program from sending data to APRS_IS even if your call sign is not N0CALL.
 aprsis_callsign, aprsis_passcode, aprsis_simulate_send = get_aprsis_passcode(
-    mpad_config.myaprsis_login_callsign
+    mpad_config.aprsis_login_callsign
 )
 #
 # Now let's read the number of served packages that we have dealt with so far
@@ -293,15 +293,15 @@ try:
         AIS = aprslib.IS(aprsis_callsign, aprsis_passcode)
 
         # Set the APRS_IS server name and port
-        AIS.set_server(mpad_config.myaprs_server_name, mpad_config.myaprs_server_port)
+        AIS.set_server(mpad_config.aprsis_server_name, mpad_config.aprsis_server_port)
 
         # Set the APRS_IS (call sign) filter, based on our config file
-        AIS.set_filter(mpad_config.myaprs_server_filter)
+        AIS.set_filter(mpad_config.aprsis_server_filter)
 
         # Debug what we are trying to do
         logger.debug(
-            msg=f"Establish connection to APRS_IS: server={mpad_config.myaprs_server_name},"
-            f"port={mpad_config.myaprs_server_port}, filter={mpad_config.myaprs_server_filter},"
+            msg=f"Establish connection to APRS_IS: server={mpad_config.aprsis_server_name},"
+            f"port={mpad_config.aprsis_server_port}, filter={mpad_config.aprsis_server_filter},"
             f"APRS-IS User: {aprsis_callsign}, APRS-IS passcode: {aprsis_passcode}"
         )
 
