@@ -220,6 +220,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                 aprs_message = re.sub(
                     regex_string, "", aprs_message, flags=re.IGNORECASE
                 ).strip()
+                found_my_duty_roster = True
         # Did I find something at all?
         # Yes; send the query to GeoPy and get lat/lon for the address
         if found_my_duty_roster:
