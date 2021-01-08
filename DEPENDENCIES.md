@@ -7,7 +7,7 @@ The following libraries need to be installed:
 - [apscheduler](https://github.com/agronholm/apscheduler)
 - [unidecode](https://github.com/avian2/unidecode)
 - [aprslib](https://github.com/rossengeorgiev/aprs-python)
-- [beautufulsoup4](https://www.crummy.com/software/BeautifulSoup/)
+- [beautifulsoup4](https://www.crummy.com/software/BeautifulSoup/)
 - [geopy](https://github.com/geopy/geopy)
 - [iso3166](https://github.com/deactivated/python-iso3166)
 - [maidenhead](https://github.com/space-physics/maidenhead)
