@@ -87,9 +87,6 @@ def send_beacon_and_status_msg(myaprsis: aprslib.inet.IS, simulate_send: bool = 
     =======
     none
     """
-
-    simulate_send = True
-
     logger = logging.getLogger(__name__)
     logger.debug("Reached beacon interval; sending beacons")
     for bcn in beacon_text_array:
@@ -118,9 +115,6 @@ def send_bulletin_messages(myaprsis: aprslib.inet.IS, simulate_send: bool = True
     =======
     none
     """
-
-    simulate_send = True
-
     logger = logging.getLogger(__name__)
     logger.debug("reached bulletin interval; sending bulletins")
     for recipient_id, bln in bulletin_texts.items():
@@ -218,7 +212,7 @@ def send_aprs_message_list(
             myaprsis.sendall(stringtosend)
         else:
             logger.debug(f"Simulating response message '{stringtosend}'")
-        time.sleep(mpad_config.packet_delay_short)
+        time.sleep(mpad_config.packet_delay_long)
     return number_of_served_packages
 
 
