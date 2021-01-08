@@ -2,15 +2,15 @@
 
 MPAD is able to understand the following keywords:
 
-- __full__. Returns all data for the given day (program default)
+- ```full```. Returns all data for the given day (__program default__). Note that ```full``` can refer to time frames or the amount of data that is returned by the program (dependent on the [action keyword](action_commands_.md))
 
-- Morning (Keywords: __morn__, __morning__)
+- Morning (Keywords: ```morn```, ```morning```)
 
-- Daytime (Keywords: __day__, __daytime__, __noon__)
+- Daytime (Keywords: ```day```, ```daytime```, ```noon```)
 
-- Evening (Keywords: __eve__, __evening__)
+- Evening (Keywords: ```eve```, ```evening```)
 
-- Night (Keywords: __nite__, __night__, __tonite__, __tonight__)
+- Night (Keywords: ```nite```, ```night```, ```tonite```, ```tonight```)
 
 
 All references are to UTC time zone settings.
@@ -22,3 +22,5 @@ San Francisco, CA tomorrow full --> returns a full wx report for location 'San F
 satpass iss friday morning --> returns the first pass of the ISS on Friday morning
 riseset thursday --> returns sunrise/sunset and moonrise / moonset values for Thursday.
 ```
+
+If an [action keyword](action_commands_.md) does not support daytime information (e.g. ```repeater```, ```riseset``` etc.), the daytime keyword information will be ignored.
