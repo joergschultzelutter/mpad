@@ -2,7 +2,7 @@
 
 Multi-Purpose APRS Daemon
 
-Python implementation of an APRS Multi-Purpose Daemon (wx forecast, sat data, get your nearest repeater ...)
+Python implementation of an APRS Multi-Purpose Daemon (WX/METAR/CWOP forecast, satellite data, nearest repeater, coordinates for user etc. ...)
 
 ## Supported features
 
@@ -17,47 +17,54 @@ Python implementation of an APRS Multi-Purpose Daemon (wx forecast, sat data, ge
 
 ## Program specifics
 
-- Very low cpu/traffic foot print (APRS filters and cached disc data)
+- Very low cpu/traffic foot print thanks to APRS filters and local data caches
 - Pretty printing; whenever it is necessary to send more than one APRS message (e.g. text exceeds APRS msg len), the program tries to split up the text in a legible way. Rather than applying a 'hard' truncate to the message after the 67th character, MPAD tries to keep the information groups intact. This means that e.g. if you receive temperature information, that data won't be split up into multiple messages where e.g. your first temperature digit is in message 1 and the 2nd one is in message 2.
 - Human-friendly parser, supporting both keyword- and non-keyword commands
-- External (static) resources such as the list of airports, repeaters e.g. are only downloaded in e.g. daily/weekly/monthly intervals and then stored on the local hard drive
 - Supports APRS msg acknowledgments, beacons et al. Also tries to extract APRS msg IDs from APRS messages which do not follow the APRS standards
-
-## Reimplements and uses programs and services
-
-- Portions of the code from WXBOT (Martin Nile, KI6WJP)
-- [MGRS coordinate converter](https://github.com/aydink/pymgrs)
-- aprs.fi for call sign location retrieval
-- openweathermap.org for wx data
-- Openstreetmap.org / geopy for address data retrieval and conversion
-- findu.com for CWOP and METAR data
-- repeatermap.de for for repeater information
-- [APRSlib](https://pypi.org/project/aprslib/) for sending and receiving data
-- Celestrak for TLE data retrieval
-- and many other Python modules and web sites
-
-## Currently out of scope / known issues:
-
-- OUTERNET logic from WXBOT is not implemented
-- WX requests by hour / minute are currently not implemented. I might add this at a later point in time
-- With its current implementation of its 'OneCall' API, Openweathermap does not return the human-readable address in case a query is performed for lat/lon coordinates. Therefore, additional calls to e.g. Openstreetmap etc. are necessary in order to provide the user with a human readable address.
-- Currently, the repeater data is very much EU-centric (the program uses its data from repeatermap.de). Additional _free_ repeater data sources can be added in future versions of the program if such sources are available. Alternatively, please get in touch with DK3ML and add your missing local repeaters to that web site. Alternatively, feel free to recommend free sources for repeater data and I see what I'll can do. 
-- Wx alert data from openweathermap.org is not returned to the user. This can be added in a later version but keep in mind that the text is very long and would result in multiple (10-15) APRS messages per alert!
-- Access to openweathermap.org requires an API key which comes with a certain traffic limit
-- Currently, all timestamps returned by the program use UTC as time zone. Implicitly, this constraint also applies to the time-related program keywords (see [USAGE.md](USAGE.md)) which instructs the program to return data for a certain time of the day. Dependent on your geographical location, a 'give me a wx report for today noon' may result in unwanted effects as the 'noon' part is based on GMT. When in doubt, do NOT limit your data to a certain time slot of the day ('full' day is the program default).
-- APRS 'TOCALL' identifier is currently still set to default 'APRS' (see WXBOT implementation); in the long run, MPAD needs its own identifier (see http://www.aprs.org/aprs11/tocalls.txt)
-- Call signs which deviate from a 'normal' call sign pattern may currently not be recognised (e.g. APRS bot call signs etc)
-
 
 ## Usage examples and command syntax
 
 [see USAGE](docs/USAGE.md)
 
+## Dependencies and external data sources
+
+[see DEPENDENCIES](DEPENDENCIES.md)
+
 ## Installation
 
 [see INSTALLATION](INSTALLATION.md)
 
+## Known issues
+
+- Weather report data from openweathermap:
+    - Wx requests by hour / minute are currently not implemented. I might add this at a later point in time
+    - Wx Alert data is not returned to the user. This can be added in a later version but keep in mind that the text is very long and would result in multiple (10-15) APRS messages per alert!
+    - Access to openweathermap.org requires an API key which has a traffic limit
+    - With its current implementation of its 'OneCall' API, Openweathermap does not return the human-readable address in case a query is performed for lat/lon coordinates - which is applicable to all queries from MAPD. As a result, additional calls to e.g. Openstreetmap etc. may be necessary in order to provide the user with a human readable address.
+- Repeater data:
+    - Currently, the repeater data is very much EU-centric (MPAD borrows its data from repeatermap.de). Additional _free_ repeater data sources can be added to future MPAD versions if such sources are available. If you want to see your repeater added to repeatermap.de, [please get in touch with DK3ML](https://www.repeatermap.de/new_repeater.php?lang=en) and have your missing local repeaters added to repeatermap.de. Alternatively, feel free to recommend free sources for repeater data and I see what I'll can do to add them to the program.
+- Time zones:
+    - Currently, all timestamps returned by the program use UTC as time zone. Implicitly, __this constraint also applies to the time-related program keywords__ (see [USAGE.md](USAGE.md)) which instructs the program to return data for a certain time of the day. Dependent on your geographical location, a 'give me a wx report for today noon' may result in unwanted effects as the 'noon' part __is based on GMT__. When in doubt, do NOT limit your data to a certain time slot of the day ('full' day is the program default). I might implement local time zone data at a later point in time - for now, GMT applies.
+- General:
+    - APRS 'TOCALL' identifier is currently still set to default 'APRS' (see WXBOT implementation); in the long run, MPAD needs its own identifier (see http://www.aprs.org/aprs11/tocalls.txt)
+    - Call signs which deviate from a 'normal' call sign pattern may currently not be recognised (e.g. APRS bot call signs etc) and may result in e.g. WX reports for the sender's call sign.
+    - OUTERNET logic from WXBOT is not implemented
+
+## Duty cycles and local caches
+
+- APRS Beacon Data is sent to APRS-IS every 30 mins
+- APRS Bulletin Data is sent to APRS-IS every 4 hours
+
+Both beacon and bulletin data messages will be sent as part of a fixed duty cycle. Thanks to the APRS-IS server filters, MPAD will enter hibernation mode unless there is a user message that it needs to process.
+
+In order to limit the access to data from external web sites to a minimum, MPAD caches data from the following web sites and refreshes it automatically:
+
+- Amateur satellite data from Celestrak is refreshed on a daily basis (Keyword __satpass__)
+- Repeater data from repeatermap.de is refreshed every 7 days (keyword __repeater__)
+- Airport data from aviationweather.gov is refreshed every 30 days (keywords __metar__, __iata__ and __icao__)
+
+Additionally, all of these data files will also be refreshed whenever the program starts.
 ## The fine print
 
-- If you intend to host an instance of this program, you need to be a licensed ham radio operator
+- If you intend to host an instance of this program, you need to be a licensed ham radio operator. BYOP (Bring your own passcode) :-)
 - APRS is a registered trademark of APRS Software and Bob Bruninga, WB4APR

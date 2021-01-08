@@ -10,7 +10,7 @@
 
 - Although both __date__ or __daytime__ settings can be specified at all times, any provided information in this matter may be partially or fully ignored by the program, dependent on the keyword (e.g. sunrise/set and moonrise/set will ignore the __daytime__ argument)
 
-- All __time stamps__ are __always returned in reference to the UTC time zone__. If time-specific inquiries are issued (e.g. 'give me the wx report for tomorrow afternoon'), the 'afternoon' part also abides to UTC time zone settings. Dependent on where you are located in the world, that setting might be a different experience for you. Limiting the output to UTC may or may not change in future versions of this program but in general, time zones are a mess. And taking into consideration that daylight saving times may or may not be applicable to the user's position, sticking to UTC is the safest option for now. Therefore, all times reported by the program are provided with a Zulu time qualifier, e.g. 12:03Z
+- All __time stamps__ are __always returned in reference to the UTC time zone__. If time-specific inquiries (keywords) are issued (e.g. 'give me the wx report for tomorrow afternoon'), __those keywords ('afternoon') also abide to UTC time zone settings__. Dependent on where you are located in the world, that setting might be a different experience for you. Limiting the output to UTC may or may not change in future versions of this program but in general, time zones are a mess. And taking into consideration that daylight saving times may or may not be applicable to the user's position, sticking to UTC is the safest option for now. Therefore, all times reported by the program are provided with a UTC time qualifier, e.g. 12:03UTC.
 
 - Certain action command keywords can be specified in combination with a date setting and a daytime setting, e.g. request a wx report for the next day. The respective keyword documentation settings state if the keyword can be used in conjunction with a date/daytime keyword. All restrictions wrt UTC time settings do apply - see previous paragraph.
 
@@ -24,27 +24,25 @@
 
 ## Legal mumbo-jumbo
 
-In reference to the European Union's GDPR regulations:
+In reference to the European Union's GDPR regulations and other legal rules and regulations that I may not be aware of at this time:
 
 - This is a hobby project. It has no commercial background whatsoever. Source files are freely accessible.
 
-- if you intend to host this software and submit data to APRS-IS, you need to be a licensed ham radio operator.
+- if you intend to host this software and submit data to APRS-IS, you need to be a licensed ham radio operator. You also need to provide your personal APRS passcode.
 
-- The main purpose of this program is to provide you (the user) with information that is based on either your own location or someone else's position data on the APRS network. 
+- The user's position information (as well as other APRS user's position data) which is used by MPAD is acquired from freely accessible data sources such as the APRS-IS network, aprs.fi et al. These data sources gather APRS information from ham radio users who did decide to have their position information actively submitted to the APRS network. Any of these information sources can already be used for a various user's position inquiry.
 
-- The position information itself is acquired from freely accessible data sources such as the APRS-IS network, aprs.fi et al. These data sources gather APRS information from ham radio users who did decide to have their position information actively submitted to the APRS network. Any of these information sources can already be used for a various user's position inquiry.
-
-- Based on the user's submitted keyword, information such as wx reports that position data is gathered and/or transposed into human-readable location information.
+- Based on the user's keyword request (submitted via the APRS message to MPAD), information such as wx reports that position data is gathered and/or transposed into human-readable location information.
 
 - That information is then returned back to the user via APRS-IS (and subsequently via radio transmission)
 
-- Requesting data from the program is done by sending one or multiple keywords to it. This is done by actively sending an APRS message to the program, either via ham radio or APRS-IS. All commands need to be send to the program's APRS identifier (__MPAD__). The program will neither actively monitor a user's position or trigger any automatic transmissions to a user.
+- One or multiple keywords can be sent to MPAD, thus telling the program what to do. This is done by actively sending an APRS message to the program, either via ham radio or APRS-IS. All commands need to be send to the program's APRS identifier __MPAD__ (or a different identifier if you have decided to host your own instance). The program will neither __actively__ monitor a user's position or trigger any automatic transmissions to a user but will only respond to commands that have been sent to it.
 
 - No transaction data with the exception of the following cases is stored:
 
-  - Number of transactions in total
+  - Number of total transactions
 
-  - Program exceptions and/or crashes may be stored to log files for debug purposes
+  - Program exceptions and/or crashes may be stored to log files for debug purposes (these may include the full original APRS message)
 
 - If you intend to host your own instance of MPAD, you need to provide API access keys to the following services (both are usually free of charge but may come with a transaction limit):
 
