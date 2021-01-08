@@ -327,7 +327,7 @@ try:
             aprs_scheduler.add_job(
                 send_beacon_and_status_msg,
                 "interval",
-                id="bulletin",
+                id="aprsbeacon",
                 minutes=30,
                 args=[AIS, aprsis_simulate_send],
             )
@@ -335,7 +335,7 @@ try:
             aprs_scheduler.add_job(
                 send_bulletin_messages,
                 "interval",
-                id="status",
+                id="aprsbulletin",
                 hours=4,
                 args=[AIS, aprsis_simulate_send],
             )
