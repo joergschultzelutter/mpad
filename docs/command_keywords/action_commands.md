@@ -1,68 +1,57 @@
-# Actions and Keyword Commands
+# Action Keyword Commands
 
 ## WX data inquiries
 
 - One or multiple spaces between the respective separators are permitted
 - ALL Commands and keywords are case __insensitive__
-- For most of the cases, wx inquiries can be specified without any specific keyword; just specify the address. Unless any other keyword has been specified, wx is always assumed as default.
+- For most of the cases, ```wx``` inquiries can be specified without any specific keyword; just specify the address. Unless any other keyword has been specified, ```wx``` __is always assumed as default keyword__.
 
-Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __YES__
+Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __YES__
 
 ### City, State and/or Country
 
 Formats:
 
-```bash
-<city>, <state>; <country>
-<city>, <state>
-<city>; <country>
-```
+- ```<city>, <state>; <country>```
+- ```<city>, <state>```
+- ```<city>; <country>```
 
 Country = iso3166-a2 country (de, us, fr, uk, ...)
+Example requests:
 
-Examples:
-
-```bash
-Los Angeles, CA
-Mountain View, CA; US
-Holzminden; de
-```
+- ```Los Angeles, CA```
+- ```Mountain View, CA; US```
+- ```Holzminden; de```
 
 ### Zip Codes
 
 Formats:
 
-```bash
-zip <zipcode>[;iso3166-a2 country code]
-<5-digit code>
-```
+- ```zip <zipcode>[;iso3166-a2 country code]```
+- ```<5-digit code>```
 
 A zip code __with__ keyword but __without__ a country setting OR a 5-digit zip code __without__ keyword will automatically assume that the given zip code is a U.S. zip code. 
 
-Examples:
+Example requests:
 
-```bash
-zip 94043 --> Mountain View, CA, United States
-zip 85609 --> Dragoon, AZ, United States
-zip 85609; us --> Dragoon, AZ, United States
-zip 85609; de --> Aschheim, Germany
-94043 --> Mountain View, CA, United States
-```
+- ```zip 94043``` returns the wx information for Mountain View, CA, United States
+- ```zip 85609``` returns the wx information for Dragoon, AZ, United States
+- ```zip 85609; us``` returns the wx information for Dragoon, AZ, United States
+- ```zip 85609; de``` returns the wx information for Aschheim, Germany
+- ```94043``` returns the  wx information for Mountain View, CA, United States
 
-A 5-digit zip code with no iso-3166-a2 qualifier automatically sets the country setting to "US". 
+A 5-digit zip code __without__ iso-3166-a2 qualifier automatically sets the country setting to "US". 
 Zip codes can be of 3..10 characters
 
 ### numeric coordinates
 
 Format: latitude/longitude (can be positive or negative)
 
-Examples:
+Example requests:
 
-```bash
-51.8458575/8.2997425
-37.773972/-122.431297
--33.447487/-70.673676
-```
+- ```51.8458575/8.2997425```
+- ```37.773972/-122.431297```
+- ```-33.447487/-70.673676```
 
 Whereas possible, the program will try to turn these coordinates into a human readable address
 
@@ -70,29 +59,15 @@ Whereas possible, the program will try to turn these coordinates into a human re
 
 Formats:
 
-``` bash
-grid <4-or 6-character grid locator>
-mh <4-or 6-character grid locator>
-```
+- ```grid <4-or 6-character grid locator>```
+- ```mh <4-or 6-character grid locator>```
 
-Examples:
+Example requests:
 
-```bash
-grid jo41du
-mh jo41
-```
+- ```grid jo41du```
+- ```mh jo41```
 
 Note: When a maidenhead locator is specified, the program will _not_ try to translate this information to a human readable address
-
-### Call sign
-
-Formats:
-
-```bash
-wx <call sign>[-ssid]
-wx
-<call sign>[-ssid]
-```
 
 ## METAR Data for airport locations
 
@@ -102,9 +77,9 @@ You have three options:
 - specify a specific IATA code
 - specify the METAR keyword, which instructs the program to look for the nearest airport. That 'nearest' airport position can either be based on the user's own call sign or alternatively on a different user's call sign.
 
-If the given airport or the nearest one has been found but does __not__ support METAR data, the program will try to provide you with a standard WX report for the airport's coordinates instead.
+If the given airport or the nearest one has been found but does __not__ support METAR data, the program will try to provide you with a standard WX report for the airport's coordinates instead. If the airport is capable of providing METAR data but the METAR report cannot be retrieved, an error message is returned to the user.
 
-Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__. If WX data is returned, 'today'/'full' settings will be applied.
+Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__. If WX data is returned, 'today'/'full' settings will be applied.
 
 ### ICAO METAR / wx inquiries
 
@@ -112,37 +87,29 @@ Get a METAR report for a specific ICAO code. If the ICAO code is valid but the a
 
 Formats:
 
-```bash
-icao <4-character ICAO code>
-<4-character ICAO code>
-```
+- ```icao <4-character ICAO code>```
+- ```<4-character ICAO code>```
 
-Examples:
+Example requests:
 
-```bash
-icao eddf
-eddf
-```
+- ```icao eddf```
+- ```eddf```
 
 Specifying an ICAO code without keyword may or may not be successful as it is processed at the end of the parser's process chain.
 
 ### IATA METAR / wx inquiries
 
-Get a METAR report for a specific IATA code by retrieving its associated ICAO code (and then performing an ICAO metar inquiry). If the IATA code is valid but the airport does not provide METAR data, a default wx report is returned instead.
+Get a METAR report for a specific IATA code by retrieving its associated ICAO code (and then performing an ICAO metar inquiry). If the IATA code is valid but the airport does not provide METAR data, a default wx report is returned instead. If the airport is capable of providing METAR data but the METAR report cannot be retrieved, an error message is returned to the user.
 
 Formats:
 
-```bash
-iata <3-character IATA code>
-<3-character IATA code>
-```
+- ```iata <3-character IATA code>```
+- ```<3-character IATA code>```
 
-Examples:
+Example requests:
 
-```bash
-iata fra
-fra
-```
+- ```iata sea```
+- ```sea```
 
 Specifying an IATA code without keyword may or may not be successful as it is processed at the end of the parser's process chain.
 
@@ -152,24 +119,20 @@ Get a METAR report for the nearest airport in relation to the user's own call si
 
 Formats:
 
-```bash
-metar <callsign>[-ssid]
-metar
-```
+- ```metar <callsign>[-ssid]```
+- ```metar```
 
 If no call sign is specified, then the user's own call sign (the one that he has send us the message with) is used
 
-Examples:
+Example requests:
 
-```bash
-metar ko4jvr-9
-metar lb7ji
-metar 
-```
+- ```metar ko4jvr-9```
+- ```metar lb7ji```
+- ```metar ```
 
-Based on the user's lat/lon, the program will then try to find the nearest airport for you. If that airport supports METAR data, the program is going to return METAR data to the user. Otherwise, it will try to pull a standard wx report for the airport's coordinates.
+Based on the user's lat/lon, the program will then try to find the nearest airport for you. If that airport supports METAR data, the program is going to return METAR data to the user. Otherwise, it will try to pull a standard wx report for the airport's coordinates. If the airport is capable of providing METAR data but the METAR report cannot be retrieved, an error message is returned to the user.
 
-### Where Is
+### WhereIs
 
 Returns the geocoordinates/address info of the sender's position or a specific call sign. Returned data & formats:
 
@@ -178,64 +141,54 @@ Returns the geocoordinates/address info of the sender's position or a specific c
 - DMS coordinates
 - UTM coordinates
 - Human-readable address (whereas such data is available)
+- Distance, direction and bearing to the call sign (if differs from user's call sign)
+- Altitude information whereas present
 
-Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
+Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
 
 Formats:
 
-```bash
-whereami --> returns position of the sender's last known coordinates
-whereis <callsign>[-ssid]
-```
+- ```whereami``` returns my last known coordinates
+- ```whereis <callsign>[-ssid]``` returns the position information for this user
 
-Examples:
+Example requests:
 
-```bash
-whereami
-whereis df1jsl-1
-```
+- ```whereami```
+- ```whereis df1jsl-1```
 
 ### Sunrise/Sunset and Moonrise/Moonset
 
 Returns the sunrise/sunset and moonrise/moonset info of the sender's position or a specific call sign. Note: values are calculated for the given day. In case the moonSET value overlaps from the previous date, then this is not taken into consideration.
 
-Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __YES__
+Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __YES__
 
 Formats:
 
-```bash
-riseset --> returns values for the sender's position
-riseset <callsign>[-ssid]
-```
+- ```riseset``` returns the values based on the sender's position
+- ```riseset <callsign>[-ssid]``` returns the values based on a different call sign's position
 
-Examples:
+Example requests:
 
-```bash
-riseset
-riseset df1jsl-1
-```
+- ```riseset```
+- ```riseset df1jsl-1```
 
 ### CWOP (Customer Weather's Observer Program)
 
 Returns the nearest CWOP station's weather report (related to the sender's call sign or a different call sign) OR a specific CWOP ID's weather report to the user.
 
-Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
+Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
 
 Formats:
 
-```bash
-cwop --> get nearest CWOP report, based on the user's position
-cwop <callsign>[-ssid] --> get nearest CWOP report, based on the given call sign's position
-cwop <station_id> --> get the weather report for the given CWOP ID
-```
+- ```cwop``` returns the nearest CWOP report, based on the user's position
+- ```cwop <callsign>[-ssid]``` returns the nearest CWOP report, based on the given call sign's position
+- ```cwop <station_id>``` returns the weather report for the given CWOP station ID
 
-Examples:
+Example requests:
 
-```bash
-cwop
-cwop df1jsl-1
-cwop at166
-```
+- ```cwop```
+- ```cwop df1jsl-1```
+- ```cwop at166```
 
 ### Satellite passes
 
@@ -253,68 +206,56 @@ Retrieves the next pass of the given satellite ID for the user's position. Satel
 
 EXPERIMENTAL - STILL IN DEVELOPMENT
 
-Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __YES__
+Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __YES__
 
 Formats:
 
-```bash
-satpass <satellite_name>
-```
+- ```satpass <satellite_name>```
 
-Examples:
+Example requests:
 
-```bash
-satpass iss
-satpass zarya
-satpass saudisat-1c
-```
+- ```satpass iss```
+- ```satpass zarya```
+- ```satpass saudisat-1c```
 
 ### Repeater data
 
 Retrieves the nearest repeater, based on the user's position. In addition, 'band' and 'mode' filters can be specified.
 
-Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
+Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
 
 Formats:
 
-```bash
-repeater [band] [mode]
-```
+- ```repeater [band] [mode]```
 
-The positions for both parameters __band__ and __mode__ are interchangeable
+The positions for both parameters __band__ and __mode__ are position-interchangeable
 
-__Band__ parameter needs to be specified with 'm' or 'cm' unit of measure, e.g. 70cm, 2m, 80m
-__Mode__ parameter can be one of the following: fm, dstar, d-star, dmr, c4fm, tetra, atv. d-star and dstar are identical; the two options just exist because of convenience issues.
+```Band``` parameter needs to be specified with '```m```' or '```cm```' unit of measure, e.g. ```70cm```, ```2m```, ```80m```
+```Mode``` parameter can be one of the following: ```fm```, ```dstar```, ```d-star```, ```dmr```, ```c4fm```, ```tetra```, ```atv```. ```d-star``` and ```dstar``` are identical; the two options just exist because of convenience issues.
 
-Examples:
+Example requests:
 
-```bash
-repeater --> returns the nearest repeater, regardless of its capabilities
-repeater c4fm --> returns the nearest c4fm repeater without checking the band requirements
-repeater 70cm --> returns the nearest 70cm repeater without checking the mode requirements
-repeater c4fm 70cm --> returns the nearest c4fm repeater that runs on the 70cm band
-repeater 70cm c4fm --> same command as in the previous example
-```
+- ```repeater``` returns the nearest repeater, regardless of its capabilities
+- ```repeater c4fm``` returns the nearest c4fm repeater without checking the band requirements
+- ```repeater 70cm``` returns the nearest 70cm repeater without checking the mode requirements
+- ```repeater c4fm 70cm``` returns the nearest c4fm repeater that runs on the 70cm band
+- ```repeater 70cm c4fm``` same command as in the previous example
 
 ### General help
 
 Returns general program help to the user.
 
-Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
+Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
 
 Formats:
 
-```bash
-info
-help
-```
+- ```info```
+- ```help```
 
-Examples:
+Example requests:
 
-```bash
-info
-help
-```
+- ```info```
+- ```help```
 
 ### Switching between the metric and imperial system
 
@@ -323,20 +264,16 @@ By default, the program will automatically switch from the metric system (defaul
 - metric system (__default__): temperatures in degrees Celsius, speed in km/h, rain levels in cm etc.
 - imperial system: temperatures in degress Fahrenheit, speed in mph, rain levels in inch etc.
 
-Can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __YES__. The automated process is part of the program core and even overriding the setting by one of the imperial/metric keywords can be done at any time. Dependent on the information that you have requested, the program may or may not honor the information.
+Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __YES__. The automated process is part of the program core and even overriding the setting by one of the imperial/metric keywords can be done at any time. Dependent on the information that you have requested, the program may or may not honor the information.
 
 If you don't want to rely on the automatic mode, you can override the automated setting by specifying the following keywords:
 
 Formats:
 
-```bash
-mtr, metric
-imp, imperial
-```
+- ```mtr``` or ```metric```
+- ```imp``` or ```imperial```
 
-Examples:
+Example requests:
 
-```bash
-metric
-imperial
-```
+- ```metric```
+- ```imperial```

@@ -2,25 +2,25 @@
 
 MPAD is able to understand the following keywords:
 
-- __today__ (Note: if not specified, this is the program default)
+- ```today``` (Note: if not specified, this is the program default)
 
-- __tomorrow__
+- ```tomorrow```
 
-- __monday__ or __mon__
+- ```monday``` or ```mon```
 
-- __tuesday__ or __tue__
+- ```tuesday``` or ```tue```
 
-- __wednesday__ or __wed__
+- ```wednesday``` or ```wed```
 
-- __thursday__ or __thu__
+- ```thursday``` or ```thu```
 
-- __friday__ or __fri__
+- ```friday``` or ```fri```
 
-- __saturday__ or __sat__
+- ```saturday``` or ```sat```
 
-- __sunday__ or __sun__
+- ```sunday``` or ```sun```
 
-- __tonight__,__tonite__, __night__ or __nite__ --> results in a __today__ value
+- ```tonight```,```tonite```, ```night``` or ```nite``` --> results in a ```today``` value
 
 If you request the same weekday that is today, then the program assumes that you refer to that day in the next week.
 
