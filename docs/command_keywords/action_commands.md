@@ -10,14 +10,14 @@ Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime
 
 ### City, State and/or Country
 
-Formats:
+#### Formats
 
 - ```<city>, <state>; <country>```
 - ```<city>, <state>```
 - ```<city>; <country>```
 
 Country = iso3166-a2 country (de, us, fr, uk, ...)
-Example requests:
+#### Example requests
 
 - ```Los Angeles, CA```
 - ```Mountain View, CA; US```
@@ -25,14 +25,14 @@ Example requests:
 
 ### Zip Codes
 
-Formats:
+#### Formats
 
 - ```zip <zipcode>[;iso3166-a2 country code]```
 - ```<5-digit code>```
 
 A zip code __with__ keyword but __without__ a country setting OR a 5-digit zip code __without__ keyword will automatically assume that the given zip code is a U.S. zip code. 
 
-Example requests:
+#### Example requests
 
 - ```zip 94043``` returns the wx information for Mountain View, CA, United States
 - ```zip 85609``` returns the wx information for Dragoon, AZ, United States
@@ -47,7 +47,7 @@ Zip codes can be of 3..10 characters
 
 Format: latitude/longitude (can be positive or negative)
 
-Example requests:
+#### Example requests
 
 - ```51.8458575/8.2997425```
 - ```37.773972/-122.431297```
@@ -57,12 +57,12 @@ Whereas possible, the program will try to turn these coordinates into a human re
 
 ### Maidenhead / Grid locator
 
-Formats:
+#### Formats
 
 - ```grid <4-or 6-character grid locator>```
 - ```mh <4-or 6-character grid locator>```
 
-Example requests:
+#### Example requests
 
 - ```grid jo41du```
 - ```mh jo41```
@@ -85,12 +85,12 @@ Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime
 
 Get a METAR report for a specific ICAO code. If the ICAO code is valid but the airport does not provide METAR data, a default wx report is returned instead.
 
-Formats:
+#### Formats
 
 - ```icao <4-character ICAO code>```
 - ```<4-character ICAO code>```
 
-Example requests:
+#### Example requests
 
 - ```icao eddf```
 - ```eddf```
@@ -101,12 +101,12 @@ Specifying an ICAO code without keyword may or may not be successful as it is pr
 
 Get a METAR report for a specific IATA code by retrieving its associated ICAO code (and then performing an ICAO metar inquiry). If the IATA code is valid but the airport does not provide METAR data, a default wx report is returned instead. If the airport is capable of providing METAR data but the METAR report cannot be retrieved, an error message is returned to the user.
 
-Formats:
+#### Formats
 
 - ```iata <3-character IATA code>```
 - ```<3-character IATA code>```
 
-Example requests:
+#### Example requests
 
 - ```iata sea```
 - ```sea```
@@ -117,14 +117,14 @@ Specifying an IATA code without keyword may or may not be successful as it is pr
 
 Get a METAR report for the nearest airport in relation to the user's own call sign or a different call sign
 
-Formats:
+#### Formats
 
 - ```metar <callsign>[-ssid]```
 - ```metar```
 
 If no call sign is specified, then the user's own call sign (the one that he has send us the message with) is used
 
-Example requests:
+#### Example requests
 
 - ```metar ko4jvr-9```
 - ```metar lb7ji```
@@ -134,7 +134,7 @@ Based on the user's lat/lon, the program will then try to find the nearest airpo
 
 ### WhereIs
 
-Returns the geocoordinates/address info of the sender's position or a specific call sign. Returned data & formats:
+Returns the geocoordinates/address info of the sender's position or a specific call sign. Returned data & #### Formats
 
 - Maidenhead locator
 - MGRS coordinates
@@ -146,12 +146,12 @@ Returns the geocoordinates/address info of the sender's position or a specific c
 
 Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
 
-Formats:
+#### Formats
 
 - ```whereami``` returns my last known coordinates
 - ```whereis <callsign>[-ssid]``` returns the position information for this user
 
-Example requests:
+#### Example requests
 
 - ```whereami```
 - ```whereis df1jsl-1```
@@ -162,12 +162,12 @@ Returns the sunrise/sunset and moonrise/moonset info of the sender's position or
 
 Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __YES__
 
-Formats:
+#### Formats
 
 - ```riseset``` returns the values based on the sender's position
 - ```riseset <callsign>[-ssid]``` returns the values based on a different call sign's position
 
-Example requests:
+#### Example requests
 
 - ```riseset```
 - ```riseset df1jsl-1```
@@ -178,13 +178,13 @@ Returns the nearest CWOP station's weather report (related to the sender's call 
 
 Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
 
-Formats:
+#### Formats
 
 - ```cwop``` returns the nearest CWOP report, based on the user's position
 - ```cwop <callsign>[-ssid]``` returns the nearest CWOP report, based on the given call sign's position
 - ```cwop <station_id>``` returns the weather report for the given CWOP station ID
 
-Example requests:
+#### Example requests
 
 - ```cwop```
 - ```cwop df1jsl-1```
@@ -208,11 +208,11 @@ EXPERIMENTAL - STILL IN DEVELOPMENT
 
 Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __YES__
 
-Formats:
+#### Formats
 
 - ```satpass <satellite_name>```
 
-Example requests:
+#### Example requests
 
 - ```satpass iss```
 - ```satpass zarya```
@@ -224,7 +224,7 @@ Retrieves the nearest repeater, based on the user's position. In addition, 'band
 
 Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
 
-Formats:
+#### Formats
 
 - ```repeater [band] [mode]```
 
@@ -233,7 +233,7 @@ The positions for both parameters __band__ and __mode__ are position-interchange
 ```Band``` parameter needs to be specified with '```m```' or '```cm```' unit of measure, e.g. ```70cm```, ```2m```, ```80m```
 ```Mode``` parameter can be one of the following: ```fm```, ```dstar```, ```d-star```, ```dmr```, ```c4fm```, ```tetra```, ```atv```. ```d-star``` and ```dstar``` are identical; the two options just exist because of convenience issues.
 
-Example requests:
+#### Example requests
 
 - ```repeater``` returns the nearest repeater, regardless of its capabilities
 - ```repeater c4fm``` returns the nearest c4fm repeater without checking the band requirements
@@ -247,12 +247,12 @@ Returns general program help to the user.
 
 Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
 
-Formats:
+#### Formats
 
 - ```info```
 - ```help```
 
-Example requests:
+#### Example requests
 
 - ```info```
 - ```help```
@@ -268,12 +268,12 @@ Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime
 
 If you don't want to rely on the automatic mode, you can override the automated setting by specifying the following keywords:
 
-Formats:
+#### Formats
 
 - ```mtr``` or ```metric```
 - ```imp``` or ```imperial```
 
-Example requests:
+#### Example requests
 
 - ```metric```
 - ```imperial```
