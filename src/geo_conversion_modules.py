@@ -420,7 +420,9 @@ def haversine(
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
+    logging.basicConfig(
+        level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+    )
     logger = logging.getLogger(__name__)
 
     logger.debug(convert_latlon_to_utm(48, -122))

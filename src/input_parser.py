@@ -46,6 +46,7 @@ errmsg_invalid_command: str = "Cannot grok command"
 errmsg_no_satellite_specified: str = "No satellite specified"
 errmsg_no_cwop_specified: str = "No cwop id specified"
 
+
 def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str):
     """
     Core parser. Takes care of analyzing the user's request and tries to
@@ -506,7 +507,8 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                         _,
                         _,
                     ) = get_position_on_aprsfi(
-                        aprsfi_callsign=users_callsign, aprsdotfi_api_key=aprsdotfi_api_key
+                        aprsfi_callsign=users_callsign,
+                        aprsdotfi_api_key=aprsdotfi_api_key,
                     )
                 elif what == "cwop":
                     human_readable_message = f"CWOP for {message_callsign}"
@@ -1022,7 +1024,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             human_readable_message = errmsg_invalid_command
             err = True
 
-
     # Generate dictionary which contains what we have fund out about the user's request
     response_parameters = {
         "latitude": latitude,
@@ -1192,7 +1193,9 @@ def parse_when_daytime(word: str):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
+    logging.basicConfig(
+        level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+    )
     logger = logging.getLogger(__name__)
 
     success, aprsdotfi_api_key, openweathermap_api_key = read_program_config()

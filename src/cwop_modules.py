@@ -110,13 +110,20 @@ def get_cwop_findu(cwop_id: str, units: str = "metric"):
             if len(output_rows) > 0:
                 if len(output_rows[0]) >= 10:
                     time = output_rows[1][0]
-                    time_year=int(time[0:4])
-                    time_month=int(time[4:6])
-                    time_day=int(time[6:8])
-                    time_hh=int(time[8:10])
+                    time_year = int(time[0:4])
+                    time_month = int(time[4:6])
+                    time_day = int(time[6:8])
+                    time_hh = int(time[8:10])
                     time_mm = int(time[10:12])
                     time_ss = int(time[12:14])
-                    my_timestamp = datetime.datetime(year = time_year, month= time_month, day = time_day, hour=time_hh, minute=time_mm, second=time_ss)
+                    my_timestamp = datetime.datetime(
+                        year=time_year,
+                        month=time_month,
+                        day=time_day,
+                        hour=time_hh,
+                        minute=time_mm,
+                        second=time_ss,
+                    )
                     temp = output_rows[1][1]
                     wind_direction = output_rows[1][2]
                     wind_speed = output_rows[1][3]
@@ -195,7 +202,6 @@ def get_nearest_cwop_findu(latitude: float, longitude: float, units: str = "metr
     humidity = air_pressure = cwop_id = None
     my_timestamp = datetime.datetime.utcnow()
 
-
     humidity_uom = "%"
     air_pressure_uom = "mb"
 
@@ -250,7 +256,9 @@ def get_nearest_cwop_findu(latitude: float, longitude: float, units: str = "metr
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
+    logging.basicConfig(
+        level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+    )
     logger = logging.getLogger(__name__)
     logger.debug(get_nearest_cwop_findu(51.838720, 08.326819, "imperial"))
     logger.debug(get_cwop_findu("AT166", "metric"))
