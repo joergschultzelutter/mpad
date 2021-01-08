@@ -68,7 +68,7 @@ Whereas possible, the program will try to turn these coordinates into a human re
 - ```grid jo41du```
 - ```mh jo41```
 
-Note: When a maidenhead locator is specified, the program will _not_ try to translate this information to a human readable address
+Note: When a maidenhead locator is specified, the program will _not_ try to translate this information to a human readable address, meaning that WX information will reference to the given grid data and not to a human-readable address (city, street and so onß)
 
 ## METAR Data for airport locations
 
