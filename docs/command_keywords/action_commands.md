@@ -44,7 +44,7 @@ A zip code __with__ keyword but __without__ a country setting OR a 5-digit zip c
 A 5-digit zip code __without__ iso-3166-a2 qualifier automatically sets the country setting to "US". 
 Zip codes can be of 3..10 characters
 
-### numeric coordinates
+### Numeric Coordinates
 
 Format: latitude/longitude (can be positive or negative)
 
@@ -68,7 +68,7 @@ Whereas possible, the program will try to turn these coordinates into a human re
 - ```grid jo41du```
 - ```mh jo41```
 
-Note: When a maidenhead locator is specified, the program will _not_ try to translate this information to a human readable address, meaning that WX information will reference to the given grid data and not to a human-readable address (city, street and so onß)
+Note: When a maidenhead locator is specified, the program will _not_ try to translate this information to a human readable address, meaning that WX information will reference to the given grid data and not to a human-readable address (city, street and so on)
 
 ## METAR Data for airport locations
 
