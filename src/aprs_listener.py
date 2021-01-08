@@ -31,7 +31,6 @@ from utility_modules import (
     write_number_of_served_packages,
 )
 from aprs_communication import (
-    get_aprsis_passcode,
     parse_aprs_data,
     send_bulletin_messages,
     send_beacon_and_status_msg,
@@ -216,20 +215,20 @@ if not success:
     logging.error(msg="Cannot find config file; aborting")
     sys.exit(0)
 
-# Next, get the uppercase'd call sign, its aprs_is pass code and a boolean
-# variable which indicates if we actually want to SEND data to APRS_IS or not
-# By default, the program's call sign is N0CALL, its passcode is -1 and
-# its 'simulate_send' value will be 'True', meaning that you can use the program
-# in 'listen' mode without sending any actual data to aprs_is.
-# If you however submit a call sign that DIFFERS from N0CALL, then the program
-# will automatically calculate the correct login code for you and -in addition-
-# the 'simulate_send' will be set to False, meaning that content will actually
-# be sent to APRS_IS.
-# By overriding the aprsis_simulate_send parameter to True, you can prevent the
-# program from sending data to APRS_IS even if your call sign is not N0CALL.
-aprsis_callsign, aprsis_passcode, aprsis_simulate_send = get_aprsis_passcode(
-    mpad_config.aprsis_login_callsign
-)
+# Next: check our user credentials. If our call sign is "N0CALL", we ensure:
+#
+# - that the passcode will be invalidated
+# - that the program will only simulate data transfers to APRS-IS
+#
+# Otherwise, use user/pass as specified in mpad_config.py and enable the
+# program for real transmissions to APRS-IS
+aprsis_callsign = mpad_config.aprsis_login_callsign.upper()
+aprsis_passcode = mpad_config.aprsis_login_passcode
+aprsis_simulate_send = False
+if aprsis_callsign == "N0CALL":
+    aprsis_passcode = "-1"
+    aprsis_simulate_send = True
+
 #
 # Now let's read the number of served packages that we have dealt with so far
 number_of_served_packages = read_number_of_served_packages()

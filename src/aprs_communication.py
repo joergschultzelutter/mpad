@@ -71,42 +71,6 @@ def parse_aprs_data(packet_data_dict: dict, item: str):
         return None
 
 
-def get_aprsis_passcode(call_sign: str = "N0CALL"):
-    """
-    Get the APRS passcode for the given call sign
-    If call sign = 'N0CALL', we will return:
-
-    a) a passcode of -1 (see aprslib.is)
-    b) a flag which tells MPAD that it is only to simulate the send process
-
-    Parameters
-    ==========
-    call_sign: 'str'
-        Call sign string that we want to use for connecting to aprs-is
-
-
-    Returns
-    =======
-    call_sign: 'str'
-        Same as input parameter; converted to uppercase
-    passcode: 'str'
-        passcode for the call_sign data; -1 if call sign = 'N0CALL'
-    simulate_send_process: 'bool'
-        We will only simulate the send process if this field is True
-    """
-
-    call_sign = call_sign.upper()
-
-    if call_sign == "N0CALL":
-        passcode = "-1"  # read only, see aprslib
-        simulate_send_process = True
-    else:
-        # We got ourselves a real callsign, let's get the passcode
-        passcode = aprslib.passcode(call_sign)
-        simulate_send_process = False
-    return call_sign, passcode, simulate_send_process
-
-
 def send_beacon_and_status_msg(myaprsis: aprslib.inet.IS, simulate_send: bool = True):
     """
     Send beacon message list to APRS_IS
@@ -236,9 +200,7 @@ def send_aprs_message_list(
         number of packages sent to aprs_is
     """
     for single_message in message_text_array:
-        stringtosend = (
-            f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}::{src_call_sign:9}:{single_message}"
-        )
+        stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}::{src_call_sign:9}:{single_message}"
         if send_with_msg_no:
             stringtosend = stringtosend + "}" + f"{number_of_served_packages:05}"
             number_of_served_packages = number_of_served_packages + 1
@@ -315,4 +277,3 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     send_beacon_and_status_msg(None)
     send_bulletin_messages(None)
-    logger.debug(get_aprsis_passcode("MPAD"))
