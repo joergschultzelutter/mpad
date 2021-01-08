@@ -316,8 +316,8 @@ def read_number_of_served_packages(file_name: str = "mpad_served_packages.txt"):
     """
     served_packages = 1
     try:
-        with open(f'{file_name}', 'r') as f:
-            if f.mode == 'r':
+        with open(f"{file_name}", "r") as f:
+            if f.mode == "r":
                 contents = f.read()
                 f.close()
                 served_packages = int(contents)
@@ -328,8 +328,9 @@ def read_number_of_served_packages(file_name: str = "mpad_served_packages.txt"):
     return served_packages
 
 
-def write_number_of_served_packages(served_packages: int,
-                                    file_name: str = "mpad_served_packages.txt"):
+def write_number_of_served_packages(
+    served_packages: int, file_name: str = "mpad_served_packages.txt"
+):
     """
     Writes the number of served packages to a file
 
@@ -345,8 +346,8 @@ def write_number_of_served_packages(served_packages: int,
     Nothing
     """
     try:
-        with open(f'{file_name}', 'w') as f:
-            f.write('%d' % served_packages)
+        with open(f"{file_name}", "w") as f:
+            f.write("%d" % served_packages)
             f.close()
     except:
         logger = logging.getLogger(__name__)
@@ -354,7 +355,9 @@ def write_number_of_served_packages(served_packages: int,
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
+    logging.basicConfig(
+        level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+    )
     logger = logging.getLogger(__name__)
 
     my_array = make_pretty_aprs_messages("Hello World")

@@ -300,7 +300,9 @@ def parse_daily_weather_from_openweathermapdotorg(
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
+    logging.basicConfig(
+        level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+    )
     logger = logging.getLogger(__name__)
 
     success, aprsdotfi_api_key, openweathermap_api_key = read_program_config()

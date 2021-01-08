@@ -235,10 +235,10 @@ def generate_output_message(
         success, output_list = generate_output_message_riseset(
             response_parameters=response_parameters
         )
-#    elif what == "satpass":
-#        success, output_list = generate_output_message_satpass(
-#            response_parameters=response_parameters
-#        )
+    #    elif what == "satpass":
+    #        success, output_list = generate_output_message_satpass(
+    #            response_parameters=response_parameters
+    #        )
     elif what == "repeater":
         success, output_list = generate_output_message_repeater(
             response_parameters=response_parameters

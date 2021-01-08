@@ -173,7 +173,9 @@ def validate_country(country: str):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
+    logging.basicConfig(
+        level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+    )
     logger = logging.getLogger(__name__)
 
     logger.debug(get_reverse_geopy_data(37.7790262, -122.4199061))
