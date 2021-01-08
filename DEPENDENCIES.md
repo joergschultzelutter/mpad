@@ -2,7 +2,7 @@
 
 ## Python Library Dependencies
 
-The following libraries need to be installed:
+The following Python packages need to be installed:
 
 - [apscheduler](https://github.com/agronholm/apscheduler)
 - [unidecode](https://github.com/avian2/unidecode)
@@ -19,13 +19,11 @@ The following libraries need to be installed:
   
 ## API Dependencies
 
-The following API's are used:
-
 - [aprs.fi](https://aprs.fi/page/api)
 - [openweathermap.org](https://www.openweathermap.org)
 - [findu.com](https://www.findu.com)
 
-aprs.fi and openweathermap.org require an API access key which needs to be added to the program's configuration file - see [installation instructions](INSTALLATION.md)
+Both aprs.fi and openweathermap.org require an API access key which needs to be added to the program's configuration file - see [installation instructions](INSTALLATION.md)
 
 ## Additional external data dependencies
 
