@@ -23,14 +23,14 @@ The following API's are used:
 
 - [aprs.fi](https://aprs.fi/page/api)
 - [openweathermap.org](https://www.openweathermap.org)
-- [findu.com](www.findu.com)
+- [findu.com](https://www.findu.com)
 
 aprs.fi and openweathermap.org require an API access key which needs to be added to the program's configuration file - see [installation instructions](INSTALLATION.md)
 
 ## Additional external data dependencies
 
 - [aviationweather.gov](https://www.aviationweather.gov)
-- [openstreetmap.org](https://www,openstreetmap.org)
+- [openstreetmap.org](https://www.openstreetmap.org)
 - [repeatermap.de](https://www.repeatermap.de)
   
 ## Programming & knowledge resources
