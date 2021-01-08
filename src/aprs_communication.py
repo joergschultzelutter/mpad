@@ -31,8 +31,8 @@ import mpad_config
 # MPAD will NOT check the content and send it out 'as is'
 bulletin_texts: dict = {
     "BLN0": f"{mpad_config.mpad_alias} {mpad_config.mpad_version} Multi-Purpose APRS Bot",
-    "BLN1": f"I have just hatched and am still in alpha test mode. More useful",
-    "BLN2": f"information is going to be added here very soon. Thank you.",
+#    "BLN1": f"I have just hatched and am still in alpha test mode. More useful",
+#    "BLN2": f"information is going to be added here very soon. Thank you.",
 }
 
 # APRS_IS beacon texts (will be sent every 30 mins)
@@ -40,7 +40,7 @@ bulletin_texts: dict = {
 # MPAD will NOT check the content and send it out 'as is'
 beacon_text_array: list = [
     f"={mpad_config.mpad_latitude}/{mpad_config.mpad_longitude}{mpad_config.aprs_symbol}{mpad_config.mpad_alias} {mpad_config.mpad_version}",
-    ">My tiny little APRS bot (pre-alpha testing)",
+#    ">My tiny little APRS bot (pre-alpha testing)",
 ]
 
 
@@ -87,6 +87,9 @@ def send_beacon_and_status_msg(myaprsis: aprslib.inet.IS, simulate_send: bool = 
     =======
     none
     """
+
+    simulate_send = True
+
     logger = logging.getLogger(__name__)
     logger.debug("Reached beacon interval; sending beacons")
     for bcn in beacon_text_array:
@@ -115,6 +118,9 @@ def send_bulletin_messages(myaprsis: aprslib.inet.IS, simulate_send: bool = True
     =======
     none
     """
+
+    simulate_send = True
+
     logger = logging.getLogger(__name__)
     logger.debug("reached bulletin interval; sending bulletins")
     for recipient_id, bln in bulletin_texts.items():
@@ -260,11 +266,13 @@ def extract_msgno_from_defective_message(message_text: str):
         matches = re.search(r"(.*){([a-zA-Z0-9]{1,5})}", message_text, re.IGNORECASE)
         if matches:
             try:
-                msg = matches[1]
+                msg = matches[1].rstrip()
                 msgno = matches[2]
             except:
                 msg = message_text
                 msgno = None
+        else:
+            msg = message_text
     else:
         msg = message_text
     return msg, msgno
@@ -275,5 +283,4 @@ if __name__ == "__main__":
         level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
     )
     logger = logging.getLogger(__name__)
-    send_beacon_and_status_msg(None)
-    send_bulletin_messages(None)
+    logger.debug(extract_msgno_from_defective_message("Deensen;de tomorrow {ab}cd"))
