@@ -30,9 +30,10 @@ aprs.fi and openweathermap.org require an API access key which needs to be added
 ## Additional external data dependencies
 
 - [aviationweather.gov](https://www.aviationweather.gov)
+- [celestrak.com](https://www.celestrak.com)
 - [openstreetmap.org](https://www.openstreetmap.org)
 - [repeatermap.de](https://www.repeatermap.de)
-  
+
 ## Programming & knowledge resources
 
 - [wxbot](https://sites.google.com/site/ki6wjp/wxbot)
