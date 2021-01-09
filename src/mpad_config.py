@@ -37,9 +37,10 @@ packet_delay_short: float = 1.0  # packet delay in seconds after sending data to
 # General Program Configuration #
 #################################
 #
-# Location of our process (Details: see aprs101.pdf see aprs101.pdf chapter 6 pg. 23)
-mpad_latitude: str = "51.8388N"  # 8 chars fixed length, ddmm.mmN
-mpad_longitude: str = "008.3266E"  # 9 chars fixed length, dddmm.mmE
+# Location of our MPAD process (Details: see aprs101.pdf see aprs101.pdf chapter 6 pg. 23)
+# Ensure to honor the format settings as described in the specification!
+mpad_latitude: str = "5150.34N"  # 8 chars fixed length, ddmm.mmN
+mpad_longitude: str = "00819.60E"  # 9 chars fixed length, dddmm.mmE
 #
 # Program alias: This is the APRS name that will be used for all outgoing messages
 mpad_alias: str = "MPAD"  # Identifier for sending outgoing data to APRS-IS
