@@ -24,11 +24,11 @@ Country = iso3166-a2 country (de, us, fr, uk, ...)
 - ```Mountain View, CA; US``` will try to return the Wx data for ```Mountain View, CA, United States```
 - ```Holzminden; de``` will try to return the Wx data for ```Holzminden, Germany```
 
-#### Default Wx example response
+#### Example response
 
 (applicable to all wx request types)
 
-A wx response consists of 1..n lines, dependent on how much data is available. Here is an example for a wx report in metric format:
+A wx response consists of 1..n lines, The actual content as well as the message lenght is dependent on how much data is actually available. Here is an example for a wx report in metric format:
 
 ```10-Jan-21 San Francisco,CA overcast clouds morn:10c day:13c eve:12c```
 
@@ -95,6 +95,17 @@ Whereas possible, the program will try to turn these coordinates into a human re
 - ```grid jo41du```
 - ```mh jo41```
 
+#### Example response
+
+
+
+```jo41du overcast clouds morn:-0c day:1c eve:1c nite:-0c```
+
+```sunrise/set 08:31/16:36UTC clouds:90% uvi:0.5 hPa:1024 hum:97%```
+
+```dewpt:0c wndspd:2m/s wnddeg:291```
+
+
 Note: When a maidenhead locator is specified, the program will _not_ try to translate this information to a human readable address, meaning that WX information will reference to the given grid data and not to a human-readable address (city, street and so on)
 
 ## METAR Data for airport locations
@@ -120,8 +131,9 @@ Get a METAR report for a specific ICAO code. If the ICAO code is valid but the a
 
 #### Example requests
 
-- ```icao eddf```
-- ```eddf```
+```icao eddf```
+
+```eddf```
 
 #### Example response
 
@@ -146,8 +158,9 @@ Get a METAR report for a specific IATA code by retrieving its associated ICAO co
 
 #### Example requests
 
-- ```iata sea```
-- ```sea```
+```iata sea```
+
+```sea```
 
 Specifying an IATA code without keyword may or may not be successful as it is processed at the end of the parser's process chain.
 
@@ -164,9 +177,11 @@ If no call sign is specified, then the user's own call sign (the one that he has
 
 #### Example requests
 
-- ```metar ko4jvr-9```
-- ```metar lb7ji```
-- ```metar ```
+```metar ko4jvr-9```
+
+```metar lb7ji```
+
+```metar ```
 
 Based on the user's lat/lon, the program will then try to find the nearest airport for you. If that airport supports METAR data, the program is going to return METAR data to the user. Otherwise, it will try to pull a standard wx report for the airport's coordinates. If the airport is capable of providing METAR data but the METAR report cannot be retrieved, an error message is returned to the user.
 
@@ -196,7 +211,7 @@ Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime
 
 #### Example response
 
-Request: ```whereis wa1gov-10```
+Request: ```whereis wa1gov-10``` in metric format
 
 Result:
 
@@ -218,9 +233,9 @@ Glossary:
 - street / zip code / country / city, if available
 - ```alt``` - altitude, if available. Unit of measure is __always__ meters (read: metric system)
 
-### Sunrise/Sunset and Moonrise/Moonset
+### Sunrise/Sunset and Moonset/Moonrise
 
-Returns the sunrise/sunset and moonrise/moonset info of the sender's position or a specific call sign. Note: values are calculated for the given day. In case the moonSET value overlaps from the previous date, then this is not taken into consideration.
+Returns the sunrise/sunset and moonset/moonrise info of the sender's position or a specific call sign. Note: values are calculated for the given day. In case the moonSET value overlaps from the previous date, then this is not taken into consideration.
 
 Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __YES__
 
@@ -231,8 +246,11 @@ Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime
 
 #### Example requests
 
-- ```riseset```
-- ```riseset df1jsl-1```
+```riseset```
+
+```riseset df1jsl-1 wednesday```
+
+```riseset df1jsl-1```
 
 #### Example response
 
@@ -244,7 +262,7 @@ Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime
 
 ### CWOP (Customer Weather's Observer Program)
 
-Returns the nearest CWOP station's weather report (related to the sender's call sign or a different call sign) OR a specific CWOP ID's weather report to the user.
+Returns the latest CWOP Wx report of the nearest CWOP station (related to the sender's call sign or a different call sign) OR a specific CWOP station ID.
 
 Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
 
@@ -256,9 +274,17 @@ Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime
 
 #### Example requests
 
-- ```cwop```
-- ```cwop df1jsl-1```
-- ```cwop at166```
+```cwop```
+
+```cwop df1jsl-1```
+
+```cwop at166```
+
+#### Example response
+
+```CWOP AT166 09-Jan-21 1C Spd 0.0km/h Gust 1.6km/h Hum 95%```
+
+```Pres 1021.6mb Rain(cm) 1h=0.0, 24h=0.05, mn=0.05```
 
 ### Satellite passes
 
@@ -298,7 +324,7 @@ Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime
 
 - ```repeater [band] [mode]```
 
-The positions for both parameters __band__ and __mode__ are position-interchangeable
+The positions for both parameters __band__ and __mode__ are position-interchangeable, meaning that ```repeater [band] [mode]``` and ```repeater [mode] [band]``` are both valid.
 
 ```Band``` parameter needs to be specified with '```m```' or '```cm```' unit of measure, e.g. ```70cm```, ```2m```, ```80m```
 ```Mode``` parameter can be one of the following: ```fm```, ```dstar```, ```d-star```, ```dmr```, ```c4fm```, ```tetra```, ```atv```. ```d-star``` and ```dstar``` are identical; the two options just exist because of convenience issues.
@@ -344,9 +370,7 @@ By default, the program will automatically switch from the metric system (defaul
 - metric system (__default__): temperatures in degrees Celsius, speed in km/h, rain levels in cm etc.
 - imperial system: temperatures in degress Fahrenheit, speed in mph, rain levels in inch etc.
 
-Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __YES__. The automated process is part of the program core and even overriding the setting by one of the imperial/metric keywords can be done at any time. Dependent on the information that you have requested, the program may or may not honor the information.
-
-If you don't want to rely on the automatic mode, you can override the automated setting by specifying the following keywords:
+If you don't want to rely on the automatic mode, you can always override this automated setting by specifying one of the following keywords:
 
 #### Formats
 
@@ -355,5 +379,28 @@ If you don't want to rely on the automatic mode, you can override the automated 
 
 #### Example requests
 
-- ```metric```
-- ```imperial```
+```metric```
+
+```imperial```
+
+To illustrate how this works, have a look at these two examples:
+
+Request: ```san francisco, ca; us``` (issued by my German call sign). The result is returned in metric format:
+
+```09-Jan-21 San Francisco,CA few clouds morn:9c day:12c eve:11c```
+
+```nite:10c sunrise/set 16:25/02:08UTC clouds:16% uvi:2.2 hPa:1025```
+
+```hum:68% dewpt:6c wndspd:1m/s wnddeg:50```
+
+Now let's request the same wx report - but this time, we want it to be delivered in imperial format (this is what an American user would see as default format): 
+
+```09-Jan-21 San Francisco,CA few clouds morn:48f day:53f eve:52f```
+
+```nite:50f sunrise/set 16:25/02:08UTC clouds:16% uvi:2.2 hPa:1025```
+
+```hum:68% dewpt:43f wndspd:2mph wnddeg:50```
+
+MPAD does not perform an imperial-to-metric calculation (or vice versa) but requests the desired format as part of its REST requests to e.g. Openweathermap and other services. Apart from rounding these values in order to limit the message length, all data is displayed 'as is'.
+
+Please note that altitude information for the ```whereis``` / ```whereami``` requests is always displayed in meters.
