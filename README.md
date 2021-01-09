@@ -42,12 +42,13 @@ Python implementation of an APRS Multi-Purpose Daemon (WX/METAR/CWOP forecast, s
     - Access to openweathermap.org requires an API key which has a traffic limit
     - With its current implementation of its 'OneCall' API, Openweathermap does not return the human-readable address in case a query is performed for lat/lon coordinates - which is applicable to all queries from MAPD. As a result, additional calls to e.g. Openstreetmap etc. may be necessary in order to provide the user with a human readable address.
 - Repeater data:
-    - Currently, the repeater data is very much EU-centric (MPAD borrows its data from repeatermap.de). Additional _free_ repeater data sources can be added to future MPAD versions if such sources are available. If you want to see your repeater added to repeatermap.de, [please get in touch with DK3ML](https://www.repeatermap.de/new_repeater.php?lang=en) and have your missing local repeaters added to repeatermap.de. Alternatively, feel free to recommend free sources for repeater data and I see what I'll can do to add them to the program.
+    - Currently, the repeater data is very much EU-centric (MPAD borrows its data from repeatermap.de). Additional _free_ repeater data sources can be added to future MPAD versions if such sources are available. If you want to see your repeater added to repeatermap.de, [please submit your data on DK3ML's site](https://www.repeatermap.de/new_repeater.php?lang=en). Alternatively, feel free to recommend free sources for repeater data and I see what I'll can do to add them to the program.
+    - Apart from some internal pre-processing, the data is taken from repeatermap.de 'as is'. 
 - Time zones:
     - Currently, all timestamps returned by the program use UTC as time zone. Implicitly, __this constraint also applies to the time-related program keywords__ (see [USAGE.md](USAGE.md)) which instructs the program to return data for a certain time of the day. Dependent on your geographical location, a 'give me a wx report for today noon' may result in unwanted effects as the 'noon' part __is based on GMT__. When in doubt, do NOT limit your data to a certain time slot of the day ('full' day is the program default). I might implement local time zone data at a later point in time - for now, GMT applies.
 - General:
     - APRS 'TOCALL' identifier is currently still set to default 'APRS' (see WXBOT implementation); in the long run, MPAD needs its own identifier (see http://www.aprs.org/aprs11/tocalls.txt)
-    - Call signs which deviate from a 'normal' call sign pattern may currently not be recognised (e.g. APRS bot call signs etc) and may result in e.g. WX reports for the sender's call sign.
+    - Call signs which deviate from a 'normal' call sign pattern may currently not be recognised (e.g. APRS bot call signs etc). In this case, the program may not know what to do and will perform a fallback to its default mode: generate a wx report for the user's call sign.
     - OUTERNET logic from WXBOT is not implemented
 
 ## Duty cycles and local caches
@@ -59,12 +60,12 @@ Both beacon and bulletin data messages will be sent as part of a fixed duty cycl
 
 In order to limit the access to data from external web sites to a minimum, MPAD caches data from the following web sites and refreshes it automatically:
 
-- Amateur satellite data from Celestrak is refreshed on a daily basis (Keyword ```satpass```)
-- Repeater data from repeatermap.de is refreshed every 7 days (keyword ```repeater```)
-- Airport data from aviationweather.gov is refreshed every 30 days (keywords ```metar```, ```iata``` and ```icao```)
+- Amateur satellite data from Celestrak is refreshed on a daily basis
+- Repeater data from repeatermap.de is refreshed every 7 days
+- Airport data from aviationweather.gov is refreshed every 30 days
 
-Additionally, all of these data files will also be refreshed whenever the program starts.
+Additionally, all of these data files will also be refreshed whenever the program starts. Any in-between changes to sat/repeater/airport data will not be recognised, meaning that if e.g. new repeater data was added in between, MPAD might see this data only after a few days. All of these intervals can be configured, though.
 ## The fine print
 
-- If you intend to host an instance of this program, you need to be a licensed ham radio operator. BYOP (Bring your own passcode) :-)
+- If you intend to host an instance of this program, you need to be a licensed ham radio operator. BYOP (Bring your own (APRS-IS) passcode) :-)
 - APRS is a registered trademark of APRS Software and Bob Bruninga, WB4APR
