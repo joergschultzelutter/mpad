@@ -31,16 +31,31 @@ import mpad_config
 # MPAD will NOT check the content and send it out 'as is'
 bulletin_texts: dict = {
     "BLN0": f"{mpad_config.mpad_alias} {mpad_config.mpad_version} Multi-Purpose APRS Bot",
-#    "BLN1": f"I have just hatched and am still in alpha test mode. More useful",
-#    "BLN2": f"information is going to be added here very soon. Thank you.",
+    #    "BLN1": f"I have just hatched and am still in alpha test mode. More useful",
+    #    "BLN2": f"information is going to be added here very soon. Thank you.",
 }
 
 # APRS_IS beacon texts (will be sent every 30 mins)
-# Note: these HAVE to have 67 characters (or less) per entry
+# Note: these HAVE to have 67 characters or less per entry
 # MPAD will NOT check the content and send it out 'as is'
+#
+# This message is a position report; format description can be found on pg. 23ff.
+# of aprs101.pdf. Message symbols: see http://www.aprs.org/symbols/symbolsX.txt
+# Format is as follows: =Lat primary-symbol-table-identifier lon symbol-identifier test-message
+# Lat/lon from the configuration have to be valid or the message will not be accepted by aprs-is
+#
+# Example nessage: MPAD>APRS:=5150.34N/00819.60E?MPAD 0.01
+# results in
+# lat = 5150.34N
+# primary symbol identifier = /
+# lon = 00819.60E
+# symbol identifier = ?
+# plus some text.
+# The overall total symbol code /? refers to a server icon - see list of symbols
+#
 beacon_text_array: list = [
-    f"={mpad_config.mpad_latitude}/{mpad_config.mpad_longitude}{mpad_config.aprs_symbol}{mpad_config.mpad_alias} {mpad_config.mpad_version}",
-#    ">My tiny little APRS bot (pre-alpha testing)",
+    f"={mpad_config.mpad_latitude}{mpad_config.aprs_table}{mpad_config.mpad_longitude}{mpad_config.aprs_symbol}{mpad_config.mpad_alias} {mpad_config.mpad_version}",
+    #    ">My tiny little APRS bot (pre-alpha testing)",
 ]
 
 
@@ -93,7 +108,7 @@ def send_beacon_and_status_msg(myaprsis: aprslib.inet.IS, simulate_send: bool = 
         stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}:{bcn}"
         if not simulate_send:
             logger.debug(f"Sending beacon: {stringtosend}")
-            myaprsis.sendall(bcn)
+            myaprsis.sendall(stringtosend)
         else:
             logger.debug(f"Simulating beacons: {stringtosend}")
 
