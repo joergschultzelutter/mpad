@@ -20,9 +20,9 @@ Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime
 Country = iso3166-a2 country (de, us, fr, uk, ...)
 #### Example requests
 
-- ```Los Angeles, CA```
-- ```Mountain View, CA; US```
-- ```Holzminden; de```
+- ```Los Angeles, CA``` will try to return the Wx data for Los Angeles, CA in the United States (Country code is not specified --> will automatically be set to "US")
+- ```Mountain View, CA; US``` will try to return the Wx data for Mountain View, CA in the United States
+- ```Holzminden; de``` will try to return the Wx data for Holzminden, Germany
 
 #### Default Wx example response
 
@@ -62,11 +62,11 @@ A zip code __with__ keyword but __without__ a country setting OR a 5-digit zip c
 
 #### Example requests
 
-- ```zip 94043``` returns the wx information for Mountain View, CA, United States
-- ```zip 85609``` returns the wx information for Dragoon, AZ, United States
-- ```zip 85609; us``` returns the wx information for Dragoon, AZ, United States
-- ```zip 85609; de``` returns the wx information for Aschheim, Germany
-- ```94043``` returns the  wx information for Mountain View, CA, United States
+- ```zip 94043``` returns the wx information for ```Mountain View, CA, United States```
+- ```zip 85609``` returns the wx information for ```Dragoon, AZ, United States```
+- ```zip 85609; us``` returns the wx information for ```Dragoon, AZ, United States```
+- ```zip 85609; de``` returns the wx information for ```Aschheim, Germany```
+- ```94043``` returns the  wx information for ```Mountain View, CA, United States```
 
 A 5-digit zip code __without__ iso-3166-a2 qualifier automatically sets the country setting to "US". 
 Zip codes can be of 3..10 characters
@@ -214,7 +214,7 @@ Glossary:
 - ```Brg``` - Bearing
 - ```UTM``` - UTM coordinates
 - ```MGRS``` - MGRS coordinates
-- ```LatLon`` - coordinates in numerical format
+- ```LatLon``` - coordinates in numerical format
 - street / zip code / country / city, if available
 - ```alt``` - altitude, if available. Unit of measure is __always__ meters (read: metric system)
 
@@ -233,6 +233,14 @@ Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime
 
 - ```riseset```
 - ```riseset df1jsl-1```
+
+#### Example response
+
+```RiseSet DF1JSL-4 09-Jan GMT sun_rs 07:31-15:36 mn_sr 12:20-03:19```
+
+- ```sun_rs``` - time settings for sunrise and sunset in GMT
+- ```mn_sr``` - time settings for moonset and moonrise in GMT
+
 
 ### CWOP (Customer Weather's Observer Program)
 
@@ -302,6 +310,16 @@ The positions for both parameters __band__ and __mode__ are position-interchange
 - ```repeater 70cm``` returns the nearest 70cm repeater without checking the mode requirements
 - ```repeater c4fm 70cm``` returns the nearest c4fm repeater that runs on the 70cm band
 - ```repeater 70cm c4fm``` same command as in the previous example
+
+#### Example response
+
+```Nearest repeater Bad Iburg / Dorenberg 40 km 335 deg NNW```
+
+```Rx 430.9375 Tx 438.5375 WIRES-X,Startreflektor DL-Nordwest C4FM```
+
+```70cm JO42AE```
+
+
 
 ### General help
 
