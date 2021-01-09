@@ -24,6 +24,33 @@ Country = iso3166-a2 country (de, us, fr, uk, ...)
 - ```Mountain View, CA; US```
 - ```Holzminden; de```
 
+#### Default Wx example response
+
+(applicable to all wx request types)
+
+A wx response consists of 1..n lines, dependent on how much data is available. Here is an example for a wx report in metric format:
+
+```10-Jan-21 San Francisco,CA overcast clouds morn:10c day:13c eve:12c```
+
+```nite:11c sunrise/set 16:24/02:09UTC clouds:90% uvi:1.9 hPa:1026```
+
+```hum:57% dewpt:4c wndspd:2m/s wnddeg:52```
+
+Glossary:
+
+- ```morn``` - morning temperature
+- ```day``` - daytime temperature
+- ```eve``` - evening temperature
+- ```nite``` - nighttime temperature
+- ```sunrise/set``` sunrise and sunset in UTC time zone format
+- ```clouds```
+- ```uvi``` - UV index
+- ```hPa``` - air pressure
+- ```hum``` - humidity
+- ```dewpt``` - dew point
+- ```wndspd``` - wind speed
+- ```wnddeg``` - wind degrees
+  
 ### Zip Codes
 
 #### Formats
@@ -96,6 +123,16 @@ Get a METAR report for a specific ICAO code. If the ICAO code is valid but the a
 - ```icao eddf```
 - ```eddf```
 
+#### Example response
+
+(applicable to all METAR options)
+
+```EDDF 090120Z 36005KT 9999 FEW040 00/M01 Q1019 R25L/29//95```
+
+```R25C/29//95 R25R/////// R18/29//95 NOSIG```
+
+
+
 Specifying an ICAO code without keyword may or may not be successful as it is processed at the end of the parser's process chain.
 
 ### IATA METAR / wx inquiries
@@ -156,6 +193,30 @@ Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime
 
 - ```whereami```
 - ```whereis df1jsl-1```
+
+#### Example response
+
+Request: ```whereis wa1gov-10```
+
+Result:
+
+```Pos WA1GOV-10 Grid:FN41lu95 DMS N41.51'17, W71.00'24 Dst 5826 km```
+
+```Brg 50deg NE UTM:19T 333431 4635605 MGRS:19TCG3343135605```
+
+```LatLon:41.85483/-71.00667 Taunton, 02718, US Seekell Street 329```
+
+Glossary:
+
+- ```Grid``` - Maidenhead locator
+- ```DMS``` - Coordinates in degresses/minutes/seconds
+- ```Dst``` - Distance to target in km (or miles)
+- ```Brg``` - Bearing
+- ```UTM``` - UTM coordinates
+- ```MGRS``` - MGRS coordinates
+- ```LatLon`` - coordinates in numerical format
+- street / zip code / country / city, if available
+- ```alt``` - altitude, if available. Unit of measure is __always__ meters (read: metric system)
 
 ### Sunrise/Sunset and Moonrise/Moonset
 
