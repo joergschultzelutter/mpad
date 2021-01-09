@@ -20,9 +20,9 @@ Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime
 Country = iso3166-a2 country (de, us, fr, uk, ...)
 #### Example requests
 
-- ```Los Angeles, CA``` will try to return the Wx data for Los Angeles, CA in the United States (Country code is not specified --> will automatically be set to "US")
-- ```Mountain View, CA; US``` will try to return the Wx data for Mountain View, CA in the United States
-- ```Holzminden; de``` will try to return the Wx data for Holzminden, Germany
+- ```Los Angeles, CA``` will try to return the Wx data for ```Los Angeles, CA, United States``` (Country code is not specified --> will automatically be set to "US")
+- ```Mountain View, CA; US``` will try to return the Wx data for ```Mountain View, CA, United States```
+- ```Holzminden; de``` will try to return the Wx data for ```Holzminden, Germany```
 
 #### Default Wx example response
 
