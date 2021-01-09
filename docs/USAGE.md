@@ -26,9 +26,9 @@
 
 In reference to the European Union's GDPR regulations and other legal rules and regulations that I may not be aware of at this time:
 
-- This is a hobby project. It has no commercial background whatsoever. Source files are freely accessible.
+- This is a hobby project. It has no commercial background whatsoever.
 
-- if you intend to host this software and submit data to APRS-IS, you need to be a licensed ham radio operator. You also need to provide your personal APRS passcode.
+- If you intend to host this software and submit data to APRS-IS, you need to be a licensed ham radio operator. You also need to provide an APRS passcode for logging on to APRS-IS. If you don't know what this is and how to get a passcode, then don't host an an instance of this program.
 
 - The user's position information (as well as other APRS user's position data) which is used by MPAD is acquired from freely accessible data sources such as the APRS-IS network, aprs.fi et al. These data sources gather APRS information from ham radio users who did decide to have their position information actively submitted to the APRS network. Any of these information sources can already be used for a various user's position inquiry.
 
@@ -49,5 +49,7 @@ In reference to the European Union's GDPR regulations and other legal rules and 
   - aprs.fi
 
   - openweathermap.org
+
+- Don't rely on this service's availability. 
 
 If you use this program, then you agree to these terms and conditions. Thank you.
