@@ -109,6 +109,7 @@ def send_beacon_and_status_msg(myaprsis: aprslib.inet.IS, simulate_send: bool = 
         if not simulate_send:
             logger.debug(f"Sending beacon: {stringtosend}")
             myaprsis.sendall(stringtosend)
+            time.sleep(mpad_config.packet_delay_short)
         else:
             logger.debug(f"Simulating beacons: {stringtosend}")
 
@@ -137,6 +138,7 @@ def send_bulletin_messages(myaprsis: aprslib.inet.IS, simulate_send: bool = True
         if not simulate_send:
             logger.debug(f"Sending bulletin: {stringtosend}")
             myaprsis.sendall(stringtosend)
+            time.sleep(mpad_config.packet_delay_short)
         else:
             logger.debug(f"simulating bulletins: {stringtosend}")
 
@@ -176,6 +178,7 @@ def send_ack(
         if not simulate_send:
             logger.debug(f"Sending acknowledgment receipt: {stringtosend}")
             myaprsis.sendall(stringtosend)
+            time.sleep(mpad_config.packet_delay_short)
         else:
             logger.debug(f"Simulating acknowledgment receipt: {stringtosend}")
 
@@ -217,7 +220,7 @@ def send_aprs_message_list(
     for single_message in message_text_array:
         stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}::{src_call_sign:9}:{single_message}"
         if send_with_msg_no:
-            stringtosend = stringtosend + "}" + f"{number_of_served_packages:05}"
+            stringtosend = stringtosend + "{" + f"{number_of_served_packages:05}"
             number_of_served_packages = number_of_served_packages + 1
             if number_of_served_packages > 99999:  # max 5 digits
                 number_of_served_packages = 1

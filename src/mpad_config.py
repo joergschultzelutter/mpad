@@ -26,8 +26,8 @@
 mpad_version: str = "0.01"
 aprs_table: str = "/"  # my symbol table (/=primary \=secondary, or overlay)
 aprs_symbol: str = "?"  # APRS symbol: Server
-packet_delay_long: float = 2.0  # packet delay in seconds after sending data to aprs-is
-packet_delay_short: float = 1.0  # packet delay in seconds after sending data to aprs-is
+packet_delay_long: float = 5.0  # packet delay in seconds after sending data to aprs-is
+packet_delay_short: float = 3.0  # packet delay after sending an acknowledgment, bulletin or beacon
 #
 ##########################
 # Configuration settings #
@@ -37,7 +37,7 @@ packet_delay_short: float = 1.0  # packet delay in seconds after sending data to
 # General Program Configuration #
 #################################
 #
-# Location of our MPAD process (Details: see aprs101.pdf see aprs101.pdf chapter 6 pg. 23)
+# Location of our process (Details: see aprs101.pdf see aprs101.pdf chapter 6 pg. 23)
 # Ensure to honor the format settings as described in the specification!
 mpad_latitude: str = "5150.34N"  # 8 chars fixed length, ddmm.mmN
 mpad_longitude: str = "00819.60E"  # 9 chars fixed length, dddmm.mmE
@@ -54,8 +54,10 @@ mpad_aprs_tocall: str = "APRS"  # APRS "TOCALL"
 ####################
 #
 # APRS-IS login user / password
-aprsis_login_callsign = "N0CALL"  # APRS-IS login
-aprsis_login_passcode = "-1"    # APRS-IS Passcode
+#aprsis_login_callsign = "N0CALL"  # APRS-IS login
+#aprsis_login_passcode = "-1"    # APRS-IS Passcode
+aprsis_login_callsign = "MPAD"  # APRS-IS login
+aprsis_login_passcode = "32758"    # APRS-IS Passcode
 #
 # APRS-IS login Server / login Port
 aprsis_server_name = "euro.aprs2.net"  # our login server
@@ -65,7 +67,8 @@ aprsis_server_port = 14580  # server port
 # Syntax: see http://www.aprs-is.net/javAPRSFilter.aspx
 # If you remove/disable this filter, MPAD will 'see' all aprs-is messages
 # (the whole APRS-IS traffic)
-aprsis_server_filter = "g/WXBOT/WXYO"  # server filter criteria for aprs.is
+#aprsis_server_filter = "g/WXBOT/WXYO"  # server filter criteria for aprs.is
+aprsis_server_filter = "g/MPAD"  # server filter criteria for aprs.is
 #
 #############################
 # Secondary filter settings #
@@ -77,4 +80,5 @@ aprsis_server_filter = "g/WXBOT/WXYO"  # server filter criteria for aprs.is
 # If that secondary filter is also passed, then we will have a look
 # at the user's message and try to process it
 #
-mpad_callsigns_to_parse = ["WXBOT", "WXYO"]  # (additional) call sign filter
+#mpad_callsigns_to_parse = ["WXBOT", "WXYO"]  # (additional) call sign filter
+mpad_callsigns_to_parse = ["MPAD"]  # (additional) call sign filter
