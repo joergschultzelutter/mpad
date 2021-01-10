@@ -1,6 +1,6 @@
 #
 # Author: Joerg Schultze-Lutter, 2020
-# Prototype: YSF repeatermap parser
+# Prototype: YSF repeatermap parser - currently unused
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
