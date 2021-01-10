@@ -1,7 +1,8 @@
 # Installation
 
-- Clone repository
-- Install Python packages - see [external dependencies](DEPENDENCIES.md) 
+- Clone the repository
+- Install Python packages - see [external dependencies](DEPENDENCIES.md)
+- Populate the API access keys and amend the program configuration (see next paragraphs). You can keep the default settings for ```aprsis_login_callsign``` and ```aprsis_login_passcode``` if you just want to listen to the traffic that __my local MPAD instance__ processes. However, if you intend to __send__ data to APRS-IS, you must change these settings as well as the values for the primary/secondary filter and the program's alias.
 
 ## Configuration
 
@@ -12,7 +13,7 @@ Currently, MPAD uses two APIs for its purposes:
 - aprs.fi
 - openweathermap.org
 
-If you want to host your own MPAD instance, you need to acquire your personal API access keys for both APIs and add them to MPAD's API config file (```mpad_api_access_keys.cfg```). 
+If you want to host your own MPAD instance, you need to acquire your personal API access keys for both APIs and add them to MPAD's API config file (```mpad_api_access_keys.cfg```). An empty config template file is part of the repository.
 
 ```bash
 [mpad_config]
