@@ -21,7 +21,7 @@ Python implementation of an APRS Multi-Purpose Daemon (WX/METAR/CWOP forecast, s
 - Pretty printing; whenever it is necessary to send more than one APRS message (e.g. text exceeds APRS msg len), the program tries to split up the text in a legible way. Rather than applying a 'hard' truncate to the message after the 67th character, MPAD tries to keep the information groups intact. This means that e.g. if you receive temperature information, that data won't be split up into multiple messages where e.g. your first temperature digit is in message 1 and the 2nd one is in message 2.
 - Human-friendly parser, supporting both keyword- and non-keyword commands
 - Supports APRS msg acknowledgments, beacons et al. Also tries to extract APRS msg IDs from APRS messages which do not follow the APRS standards
-- Auto-detection of duplicate APRS message requests
+- Auto-detection of incoming duplicate APRS message requests
 
 ## Usage examples and command syntax
 
@@ -35,7 +35,7 @@ Python implementation of an APRS Multi-Purpose Daemon (WX/METAR/CWOP forecast, s
 
 [see INSTALLATION](INSTALLATION.md)
 
-## Handling of duplicate APRS message requests
+## Handling of incoming duplicate APRS message requests
 
 Due to its technical nature, the APRS network might receive the same APRS message more than once during a short time frame. MPAD tries to detect these duplicate messages by applying a decaying cache mechanism to all messages that it would normally process:
 
