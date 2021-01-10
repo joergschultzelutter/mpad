@@ -11,3 +11,4 @@ APRS101.PDF
 .DS_Store
 mpad_served_packages.txt
 tle_amateur_satellites.txt
+mgrs.py
