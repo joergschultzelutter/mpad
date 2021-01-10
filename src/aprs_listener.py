@@ -30,6 +30,8 @@ from utility_modules import (
     read_program_config,
     read_number_of_served_packages,
     write_number_of_served_packages,
+    get_aprs_message_from_cache,
+    add_aprs_message_to_cache,
 )
 from aprs_communication import (
     parse_aprs_data,
@@ -45,6 +47,7 @@ import logging
 import aprslib
 import time
 import mpad_config
+from expiringdict import ExpiringDict
 
 ########################################
 
@@ -53,8 +56,8 @@ import mpad_config
 # Extract the fields from the APRS message, start the parsing process,
 # execute the command and send the command output back to the user
 def mycallback(raw_aprs_packet):
-
     global number_of_served_packages
+    global aprs_message_cache
 
     logger = logging.getLogger(__name__)
 
@@ -83,8 +86,8 @@ def mycallback(raw_aprs_packet):
         from_callsign = from_callsign.upper()
 
     # Finally, get the format of the message that we have received
-    # For content that we need to process, this should be 'message'
-    # and not 'response'
+    # For content that we need to process, this value has to be 'message'
+    # and not 'response'.
     format_string = parse_aprs_data(raw_aprs_packet, "format")
 
     #
@@ -118,14 +121,14 @@ def mycallback(raw_aprs_packet):
     # has sent the message to). In an ideal world, this should be 'MPAD' or any
     # other call sign that the program is supposed to listen to.
     #
-    # NOTE: this is a SECONDARY filter. The PRIMARY filter is defined through
+    # NOTE: this is the SECONDARY filter. The PRIMARY filter is defined by
     # the APRS_IS filter settings. Both filter settings can be found in the
     # mpad_config.py module. Normally, this secondary filter is obviously not
-    # required as the primary aprs_is filter does a great job. If however that
-    # primary filter fails, then this acts as a safe guard as we only want to
-    # process and respond to messages which actually belong to us. By keeping
-    # these 2 layers, you can decide to allow to pass certain packages for
-    # debugging purposes.
+    # required as the primary aprs_is filter does a great job. If however the
+    # primary filter is disabled, then the secondary filter acts as a safe guard
+    # as we only want to process and respond to messages which actually belong
+    # to us. By keeping these 2 layers, you can decide to allow to pass certain
+    # packages for debugging purposes.
     #
     # Is our address in the target list of call signs that we claim as owner?
     if addresse_string:
@@ -136,72 +139,105 @@ def mycallback(raw_aprs_packet):
             # Continue if both assumptions are correct
             if format_string == "message" and message_text_string:
                 # This is a message that belongs to us
-                logger.debug(msg=f"received raw_aprs_packet: {raw_aprs_packet}")
-                # Send an ack if we did receive a message number
-                # see aprs101.pdf pg. 71ff.
-                if msg_no_supported:
-                    send_ack(
-                        myaprsis=AIS,
-                        simulate_send=aprsis_simulate_send,
-                        users_callsign=from_callsign,
-                        source_msg_no=msgno_string,
-                    )
-                #
-                # This is where the magic happens: Try to figure out what the user
-                # wants from us. If we were able to understand the user's message,
-                # 'success' will be true. In any case, the 'response_parameters'
-                # dictionary will give us a hint about what to do next (and even
-                # contains the parser's error message if 'success' != True)
-                # input parameters: the actual message, the user's call sign and
-                # the aprs.fi API access key for location lookups
-                success, response_parameters = parse_input_message(
-                    aprs_message=message_text_string,
+
+                # Check if the message is present in our decaying message cache
+                # If the message can be located, then we can assume that we have
+                # processed (and potentially acknowledged) that message request
+                # within the last e.g. 5 minutes and that this is a delayed / dupe
+                # request, thus allowing us to ignore this request.
+                aprs_message_key = get_aprs_message_from_cache(
+                    message_text=message_text_string,
+                    message_no=msgno_string,
                     users_callsign=from_callsign,
-                    aprsdotfi_api_key=aprsdotfi_api_key,
+                    aprs_cache=aprs_message_cache,
                 )
-                #
-                # If the 'success' parameter is True, then we should know
-                # by now what the user wants from us. Now, we'll leave it to
-                # another module to generate the output data of what we want
-                # to send to the user.
-                # The result to this post-processor will be a general success
-                # status code and a list item, containing the messages that are
-                # ready to be sent to the user.
-                if success:
-                    success, output_message = generate_output_message(
-                        response_parameters=response_parameters,
-                        openweathermapdotorg_api_key=openweathermapdotorg_api_key,
+                if aprs_message_key:
+                    logger.debug(
+                        msg="DUPLICATE PACKET - key for this packet is still in our decaying message cache"
                     )
-                    # Regardless of a success status, fire the messages to the user
-                    # in case of a failure, the list item already does contain
-                    # the error message to the user.
-                    number_of_served_packages = send_aprs_message_list(
-                        myaprsis=AIS,
-                        simulate_send=aprsis_simulate_send,
-                        message_text_array=output_message,
-                        src_call_sign=from_callsign,
-                        send_with_msg_no=msg_no_supported,
-                        number_of_served_packages=number_of_served_packages,
+                    logger.debug(
+                        msg=f"Ignoring duplicate packet raw_aprs_packet: {raw_aprs_packet}"
                     )
-                # darn - we failed to hail the Tripods
                 else:
-                    output_message = [
-                        "Did not understand your request. Pls check my command syntax",
-                    ]
-                    number_of_served_packages = send_aprs_message_list(
-                        myaprsis=AIS,
-                        simulate_send=aprsis_simulate_send,
-                        message_text_array=output_message,
-                        src_call_sign=from_callsign,
-                        send_with_msg_no=msg_no_supported,
-                        number_of_served_packages=number_of_served_packages,
+                    logger.debug(msg=f"Received raw_aprs_packet: {raw_aprs_packet}")
+
+                    # Send an ack if we did receive a message number
+                    # see aprs101.pdf pg. 71ff.
+                    if msg_no_supported:
+                        send_ack(
+                            myaprsis=AIS,
+                            simulate_send=aprsis_simulate_send,
+                            users_callsign=from_callsign,
+                            source_msg_no=msgno_string,
+                        )
+                    #
+                    # This is where the magic happens: Try to figure out what the user
+                    # wants from us. If we were able to understand the user's message,
+                    # 'success' will be true. In any case, the 'response_parameters'
+                    # dictionary will give us a hint about what to do next (and even
+                    # contains the parser's error message if 'success' != True)
+                    # input parameters: the actual message, the user's call sign and
+                    # the aprs.fi API access key for location lookups
+                    success, response_parameters = parse_input_message(
+                        aprs_message=message_text_string,
+                        users_callsign=from_callsign,
+                        aprsdotfi_api_key=aprsdotfi_api_key,
                     )
-                    logger.debug(msg=f"Unable to grok packet {raw_aprs_packet}")
+                    #
+                    # If the 'success' parameter is True, then we should know
+                    # by now what the user wants from us. Now, we'll leave it to
+                    # another module to generate the output data of what we want
+                    # to send to the user.
+                    # The result to this post-processor will be a general success
+                    # status code and a list item, containing the messages that are
+                    # ready to be sent to the user.
+                    if success:
+                        success, output_message = generate_output_message(
+                            response_parameters=response_parameters,
+                            openweathermapdotorg_api_key=openweathermapdotorg_api_key,
+                        )
+                        # Regardless of a success status, fire the messages to the user
+                        # in case of a failure, the list item already does contain
+                        # the error message to the user.
+                        number_of_served_packages = send_aprs_message_list(
+                            myaprsis=AIS,
+                            simulate_send=aprsis_simulate_send,
+                            message_text_array=output_message,
+                            src_call_sign=from_callsign,
+                            send_with_msg_no=msg_no_supported,
+                            number_of_served_packages=number_of_served_packages,
+                        )
+                    # darn - we failed to hail the Tripods
+                    else:
+                        output_message = [
+                            "Did not understand your request. Pls. check my command syntax",
+                        ]
+                        number_of_served_packages = send_aprs_message_list(
+                            myaprsis=AIS,
+                            simulate_send=aprsis_simulate_send,
+                            message_text_array=output_message,
+                            src_call_sign=from_callsign,
+                            send_with_msg_no=msg_no_supported,
+                            number_of_served_packages=number_of_served_packages,
+                        )
+                        logger.debug(msg=f"Unable to grok packet {raw_aprs_packet}")
+
+                    # We've finished processing this message. Update the decaying
+                    # cache.
+                    # Store the core message data in our decaying APRS message cache
+                    # Dupe detection is applied regardless of the message's
+                    # processing status
+                    aprs_message_cache = add_aprs_message_to_cache(
+                        message_text=message_text_string,
+                        message_no=msgno_string,
+                        users_callsign=from_callsign,
+                        aprs_cache=aprs_message_cache,
+                    )
 
 
 #
 # MPAD main
-# At first, we will set logging parameters
+# Start by setting the logger parameters
 #
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(module)s -%(levelname)s - %(message)s"
@@ -283,6 +319,13 @@ caching_scheduler.add_job(
 
 # start the caching scheduler
 caching_scheduler.start()
+
+# Create the decaying APRS message cache. Any APRS message that is present in
+# this cache will be considered as a duplicate / delayed and will not be processed
+# by MPAD and is going to be ignored.
+aprs_message_cache = ExpiringDict(
+    max_len=180, max_age_seconds=mpad_config.mpad_msg_cache_time_to_live
+)
 
 #
 # Finally, let's enter the 'eternal loop'
@@ -372,8 +415,8 @@ try:
             logger.debug(msg="Cannot re-establish connection to APRS_IS")
         # Write the number of served packages to disc
         write_number_of_served_packages(served_packages=number_of_served_packages)
-        logger.debug(msg="Sleeping 5 secs")
-        time.sleep(5)
+        logger.debug(msg=f"Sleeping {mpad_config.packet_delay_long} secs")
+        time.sleep(mpad_config.packet_delay_long)
 #        AIS.close()
 except (KeyboardInterrupt, SystemExit):
     logger.debug("received exception!")
