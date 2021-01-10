@@ -43,6 +43,16 @@ You also need to set the APRS-IS access and server credentials:
 
 Excerpt from ```mpad_config.py```:
 ```python
+###########################
+# Constants, do not change#
+###########################
+#
+mpad_version: str = "0.01"
+aprs_table: str = "/"  # my symbol table (/=primary \=secondary, or overlay)
+aprs_symbol: str = "?"  # APRS symbol: Server
+packet_delay_long: float = 5.0  # packet delay in seconds after sending data to aprs-is
+packet_delay_short: float = 3.0  # packet delay after sending an acknowledgment, bulletin or beacon
+#
 ##########################
 # Configuration settings #
 ##########################
@@ -52,8 +62,12 @@ Excerpt from ```mpad_config.py```:
 #################################
 #
 # Location of our process (Details: see aprs101.pdf see aprs101.pdf chapter 6 pg. 23)
-mpad_latitude: str = "51.8388N"  # 8 chars fixed length, ddmm.mmN
-mpad_longitude: str = "008.3266E"  # 9 chars fixed length, dddmm.mmE
+# Ensure to honor the format settings as described in the specification, otherwise
+# your package might get rejected and/or not surface on aprs.fi
+# Degrees: lat: 0-90, lon: 0-180
+# Minutes and Seconds: 00-60
+mpad_latitude: str = "5150.34N"  # 8 chars fixed length, ddmm.ssN
+mpad_longitude: str = "00819.60E"  # 9 chars fixed length, dddmm.ssE
 #
 # Program alias: This is the APRS name that will be used for all outgoing messages
 mpad_alias: str = "MPAD"  # Identifier for sending outgoing data to APRS-IS
@@ -78,7 +92,7 @@ aprsis_server_port = 14580  # server port
 # Syntax: see http://www.aprs-is.net/javAPRSFilter.aspx
 # If you remove/disable this filter, MPAD will 'see' all aprs-is messages
 # (the whole APRS-IS traffic)
-aprsis_server_filter = "g/WXBOT/WXYO"  # server filter criteria for aprs.is
+aprsis_server_filter = "g/MPAD"  # server filter criteria for aprs.is
 #
 #############################
 # Secondary filter settings #
@@ -90,5 +104,5 @@ aprsis_server_filter = "g/WXBOT/WXYO"  # server filter criteria for aprs.is
 # If that secondary filter is also passed, then we will have a look
 # at the user's message and try to process it
 #
-mpad_callsigns_to_parse = ["WXBOT", "WXYO"]  # (additional) call sign filter
+mpad_callsigns_to_parse = ["MPAD"]  # (additional) call sign filter
 ```
