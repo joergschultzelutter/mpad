@@ -21,6 +21,7 @@ Python implementation of an APRS Multi-Purpose Daemon (WX/METAR/CWOP forecast, s
 - Pretty printing; whenever it is necessary to send more than one APRS message (e.g. text exceeds APRS msg len), the program tries to split up the text in a legible way. Rather than applying a 'hard' truncate to the message after the 67th character, MPAD tries to keep the information groups intact. This means that e.g. if you receive temperature information, that data won't be split up into multiple messages where e.g. your first temperature digit is in message 1 and the 2nd one is in message 2.
 - Human-friendly parser, supporting both keyword- and non-keyword commands
 - Supports APRS msg acknowledgments, beacons et al. Also tries to extract APRS msg IDs from APRS messages which do not follow the APRS standards
+- Detection of duplicate message requests
 
 ## Usage examples and command syntax
 
@@ -33,6 +34,22 @@ Python implementation of an APRS Multi-Purpose Daemon (WX/METAR/CWOP forecast, s
 ## Installation
 
 [see INSTALLATION](INSTALLATION.md)
+
+## Handling of duplicate APRS message requests
+
+Due to its technical nature, the APRS network might receive the same APRS message more than once during a short time frame. MPAD tries to detect these duplicate messages by applying a decaying cache mechanism to all messages that it would normally process:
+
+- For each incoming message that is deemed as valid MPAD message, the program will create a key value, consisting of the user's call sign, the APRS message number (or ```None``` if the  message was sent without an APRS message number) and the md5-ed content of the message text.
+- Prior to processing the request, MPAD checks if this particular key is present in its decaying cache. Every element in that cache has a life span of 5 mins.
+- If that key is present in the cache, MPAD assumes that the __current__ request is a duplicate one.  As a result, the program will neither send a message acknowledgment (whereas applicable) nor will it process the current message request.
+- If the entry for that key cannot be found in the cache, MPAD will process the request and then add the key to the decaying cache.
+
+For the end user, sending an identical message to MPAD within 5 mins from the same call sign will cause the following results:
+
+- Identical messages with __different__ APRS messages IDs __can be processed__ within these 5 mins __unless__ the message is already present in the cache (these would be dupes from APRS-IS but not from the user's radio)
+- Identical messages with __without__ an APRS message ID __will not be processed__. Based on the unique message key (md5'ed message, call sign, message ID (in this case: ```None```)), the entry is detected as 'already present' in the decaying database. MPAD will ignore this message.
+
+After the entry in the decaying cache has expired, you can resend the same message again. MPAD will honor your request and try to process it as usual.
 
 ## Known issues
 
