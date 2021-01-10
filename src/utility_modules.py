@@ -29,7 +29,6 @@ import hashlib
 import time
 
 
-
 def make_pretty_aprs_messages(
     message_to_add: str,
     destination_list: list = None,
@@ -358,7 +357,9 @@ def write_number_of_served_packages(
         logger.debug(f"Cannot write number of served packages to {file_name}")
 
 
-def add_aprs_message_to_cache(message_text: str, message_no: str, users_callsign: str, aprs_cache: ExpiringDict):
+def add_aprs_message_to_cache(
+    message_text: str, message_no: str, users_callsign: str, aprs_cache: ExpiringDict
+):
     """
     Creates an entry in our expiring dictionary cache. Later on,
     we can check for this entry and see if a certain message has already been sent
@@ -387,7 +388,7 @@ def add_aprs_message_to_cache(message_text: str, message_no: str, users_callsign
     #   Conversion to string is necessary; otherwise, the lookup won't work
     # - the user's call sign
     # - the message number (note that this field's content can be 'None')
-    md5_hash = hashlib.md5(message_text.encode('utf-8')).hexdigest()
+    md5_hash = hashlib.md5(message_text.encode("utf-8")).hexdigest()
     key = (md5_hash, users_callsign, message_no)
     # Finally, build the key. Convert it to a tuple as the key needs to be immutable
     key = tuple(key)
@@ -398,7 +399,9 @@ def add_aprs_message_to_cache(message_text: str, message_no: str, users_callsign
     return aprs_cache
 
 
-def get_aprs_message_from_cache(message_text: str, message_no: str, users_callsign: str, aprs_cache: ExpiringDict):
+def get_aprs_message_from_cache(
+    message_text: str, message_no: str, users_callsign: str, aprs_cache: ExpiringDict
+):
     """
     Checks for an entry in our expiring dictionary cache.
     If we find that entry in our list before that entry has expired,
@@ -425,7 +428,7 @@ def get_aprs_message_from_cache(message_text: str, message_no: str, users_callsi
     #   Conversion to string is necessary; otherwise, the lookup won't work
     # - the user's call sign
     # - the message number (note that this field's content can be 'None')
-    md5_hash = hashlib.md5(message_text.encode('utf-8')).hexdigest()
+    md5_hash = hashlib.md5(message_text.encode("utf-8")).hexdigest()
     key = (md5_hash, users_callsign, message_no)
     # Finally, build the key. Convert it to a tuple as the key needs to be immutable
     key = tuple(key)
@@ -464,23 +467,23 @@ if __name__ == "__main__":
 
     cache = ExpiringDict(max_len=180, max_age_seconds=10)
 
-    cache = add_aprs_message_to_cache("Hallo Welt", None,"DF1JSL",cache)
+    cache = add_aprs_message_to_cache("Hallo Welt", None, "DF1JSL", cache)
 
     for x in cache:
         print(x)
         print(cache[x])
 
-    key = get_aprs_message_from_cache("Hallo Welt", None,"DF1JSL",cache)
+    key = get_aprs_message_from_cache("Hallo Welt", None, "DF1JSL", cache)
     if key:
-        print (key)
+        print(key)
         print(cache[key])
     else:
-        print ("Not found")
+        print("Not found")
 
     time.sleep(11)
-    key = get_aprs_message_from_cache("Hallo Welt", None,"DF1JSL",cache)
+    key = get_aprs_message_from_cache("Hallo Welt", None, "DF1JSL", cache)
     if key:
-        print (key)
+        print(key)
         print(cache[key])
     else:
-        print ("Not found")
+        print("Not found")
