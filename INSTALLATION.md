@@ -2,7 +2,6 @@
 
 - Clone repository
 - Install Python packages - see [external dependencies](DEPENDENCIES.md) 
-- [MGRS coordinate converter](https://github.com/aydink/pymgrs) is already part of this repo
 
 ## Configuration
 
