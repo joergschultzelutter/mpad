@@ -1,4 +1,4 @@
-from utility_modules import read_program_config
+from utility_modules import read_program_config, add_aprs_message_to_cache, get_aprs_message_from_cache
 from input_parser import parse_input_message
 from output_generator import generate_output_message
 import logging
@@ -6,7 +6,7 @@ import logging
 
 def testcall(message_text: str, from_callsign: str):
     success, aprsdotfi_api_key, openweathermapdotorg_api_key = read_program_config()
-    assert success == True
+    assert success
 
     logger.debug(
         f"parsing message '{message_text}' for callsign '{from_callsign}'"
@@ -32,4 +32,4 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
     logger = logging.getLogger(__name__)
 
-    testcall("satpass zarya","df1jsl-1")
+    testcall("icao eddf","df1jsl-1")

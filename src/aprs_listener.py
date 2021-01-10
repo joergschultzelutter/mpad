@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #
 # Multi-Purpose APRS Daemon
 # Author: Joerg Schultze-Lutter, 2020
