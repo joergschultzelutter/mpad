@@ -24,6 +24,10 @@ from timezonefinder import TimezoneFinder
 import re
 from unidecode import unidecode
 import logging
+from expiringdict import ExpiringDict
+import hashlib
+import time
+
 
 
 def make_pretty_aprs_messages(
@@ -354,6 +358,84 @@ def write_number_of_served_packages(
         logger.debug(f"Cannot write number of served packages to {file_name}")
 
 
+def add_aprs_message_to_cache(message_text: str, message_no: str, users_callsign: str, aprs_cache: ExpiringDict):
+    """
+    Creates an entry in our expiring dictionary cache. Later on,
+    we can check for this entry and see if a certain message has already been sent
+    within the past x minutes (setting is specified as part of the definition of the
+    ExpiringDict). If we find that entry in our list before that entry has expired,
+    we will not send it out again and consider the request to be fulfilled
+
+    Parameters
+    ==========
+    message_text: 'str'
+        APRS message (as extracted from the original incoming message)
+    message_no: 'str'
+        APRS message number (or 'None' if not present)
+    users_callsign: 'str'
+        Call sign of the user who has sent this message
+    aprs_cache: 'ExpiringDict'
+        Reference to the ExpiringDict cache
+
+    Returns
+    =======
+    aprs_cache: 'ExpiringDict'
+        Reference to the ExpiringDict cache, now containing our entry
+    """
+    # Create message key which consists of:
+    # - an md5-ed version of the message text (save some bytes on storage)
+    #   Conversion to string is necessary; otherwise, the lookup won't work
+    # - the user's call sign
+    # - the message number (note that this field's content can be 'None')
+    md5_hash = hashlib.md5(message_text.encode('utf-8')).hexdigest()
+    key = (md5_hash, users_callsign, message_no)
+    # Finally, build the key. Convert it to a tuple as the key needs to be immutable
+    key = tuple(key)
+
+    # Add the Key to our expiring cache. The datetime stamp is not used; we
+    # just need to give the dictionary entry a value
+    aprs_cache[key] = datetime.datetime.now()
+    return aprs_cache
+
+
+def get_aprs_message_from_cache(message_text: str, message_no: str, users_callsign: str, aprs_cache: ExpiringDict):
+    """
+    Checks for an entry in our expiring dictionary cache.
+    If we find that entry in our list before that entry has expired,
+    MPAD considers the request to be fulfilled and will not process it again
+
+    Parameters
+    ==========
+    message_text: 'str'
+        APRS message (as extracted from the original incoming message)
+    message_no: 'str'
+        APRS message number (or 'None' if not present)
+    users_callsign: 'str'
+        Call sign of the user who has sent this message
+    aprs_cache: 'ExpiringDict'
+        Reference to the ExpiringDict cache
+
+    Returns
+    =======
+    key: 'Tuple'
+        Key tuple (or 'None' if not found / no longer present)
+    """
+    # Create message key which consists of:
+    # - an md5-ed version of the message text (save some bytes on storage)
+    #   Conversion to string is necessary; otherwise, the lookup won't work
+    # - the user's call sign
+    # - the message number (note that this field's content can be 'None')
+    md5_hash = hashlib.md5(message_text.encode('utf-8')).hexdigest()
+    key = (md5_hash, users_callsign, message_no)
+    # Finally, build the key. Convert it to a tuple as the key needs to be immutable
+    key = tuple(key)
+
+    if key in aprs_cache:
+        return key
+    else:
+        return None
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -379,3 +461,26 @@ if __name__ == "__main__":
 
     logger.debug("Logtext erfolgreich")
     logger.debug(read_program_config())
+
+    cache = ExpiringDict(max_len=180, max_age_seconds=10)
+
+    cache = add_aprs_message_to_cache("Hallo Welt", None,"DF1JSL",cache)
+
+    for x in cache:
+        print(x)
+        print(cache[x])
+
+    key = get_aprs_message_from_cache("Hallo Welt", None,"DF1JSL",cache)
+    if key:
+        print (key)
+        print(cache[key])
+    else:
+        print ("Not found")
+
+    time.sleep(11)
+    key = get_aprs_message_from_cache("Hallo Welt", None,"DF1JSL",cache)
+    if key:
+        print (key)
+        print(cache[key])
+    else:
+        print ("Not found")
