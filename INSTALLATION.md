@@ -39,6 +39,7 @@ You also need to set the APRS-IS access and server credentials:
     - ```aprsis_server_filter```. This is the filter that MPAD used for connecting to APRS-IS. It is also MPAD's ```primary``` filter. If an APRS message does not pass this filter, then the program won't process it. You can specify one or many call signs: Format ```g/callsign1/callsign2/callsign_n```. Example: ```g/MPAD```. See [APRS-IS Server-Side Filter Commands](http://www.aprs-is.net/javAPRSFilter.aspx) for further details.
     - ```mpad_callsigns_to_parse```. This is the ```secondary filter```. Unlike the primary filter, this one is controlled by MPAD itself and similar to the APRS-IS filter, you can specify 1..n call signs. Obviously, at least a subset of these call signs must be present in the APRS-IS filter because otherwise, MPAD won't even see the message. This 2nd filter mainly exists for debugging purposes; you can broaden the APRS-IS filter (e.g. program call sign and your personal call sign) and then use the 2nd filter for some software development magic.
 - ```aprsis_server_name``` and ```aprsis_server_port```. APRS-IS server/port that the program tries to connect with. Self-explanatory (I hope).
+- Tune the ```mpad_msg_cache_time_to_live``` parameter if too many messages are detected as duplicates and are not getting processed. Default is 5 mins
 
 
 Excerpt from ```mpad_config.py```:
@@ -48,8 +49,18 @@ Excerpt from ```mpad_config.py```:
 ###########################
 #
 mpad_version: str = "0.01"
-aprs_table: str = "/"  # my symbol table (/=primary \=secondary, or overlay)
+#
+# APRS position report: message symbol
+# see also http://www.aprs.org/symbols/symbolsX.txt and aprs_communication.py
+# on how this is used. Normally, you don't want to change these settings
+#
+aprs_table: str = "/"  # APRS symbol table (/=primary \=secondary, or overlay)
 aprs_symbol: str = "?"  # APRS symbol: Server
+#
+# Delay settings: These sleep settings are applied for each SINGLE message that is sent out
+# to APRS-IS. If the program has to send two bulletin messages, then the total run time of\
+# sending out those bulletins is 2 * 3 secs
+#
 packet_delay_long: float = 5.0  # packet delay in seconds after sending data to aprs-is
 packet_delay_short: float = 3.0  # packet delay after sending an acknowledgment, bulletin or beacon
 #
@@ -105,4 +116,20 @@ aprsis_server_filter = "g/MPAD"  # server filter criteria for aprs.is
 # at the user's message and try to process it
 #
 mpad_callsigns_to_parse = ["MPAD"]  # (additional) call sign filter
+#
+#############################################################
+# Time-to-live settings for the decaying APRS message cache #
+#############################################################
+#
+# This value represents the time span for how long MPAD considers incoming
+# messages as duplicates if these messages have been sent to the program
+# For each processed message (regardless of its actual success state), MPAD
+# is going to add a key to a decaying dictionary. That key consists of
+# the user's call sign, the APRS message ID (or - if not present - 'None) and
+# an md5'ed version of the message text. If another delayed or duplicate
+# message is received within that specified time frame, that message is going
+# to be ignored by the program
+#
+mpad_msg_cache_time_to_live = 5 * 60  # ttl = 5 minutes
+
 ```
