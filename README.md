@@ -46,10 +46,10 @@ Due to its technical nature, the APRS network might receive the same APRS messag
 
 For the end user, sending an identical message to MPAD within 5 mins from the same call sign will cause the following results:
 
-- Identical messages with __different__ APRS messages IDs __can be processed__ within these 5 mins __unless__ the message is already present in the cache (these would be dupes from APRS-IS but not from the user's radio)
-- Identical messages with __without__ an APRS message ID __will not be processed__. Based on the unique message key (md5'ed message, call sign, message ID (in this case: ```None```)), the entry is detected as 'already present' in the decaying database. MPAD will ignore this message.
+- Identical APRS messages requests with __different__ APRS message IDs __can be processed__ within these 5 mins __unless__ the message is already present in the cache (these would be dupes from APRS-IS but not from the user's radio)
+- Identical APRS message requests __without__ an APRS message ID __will be ignored__. Based on its unique message key (md5'ed message, call sign, message ID (in this case: ```None```)), the entry is detected as 'already processed' in the decaying database. Therefore, MPAD will ignore this message.
 
-After the entry in the decaying cache has expired, you can resend the same message again. MPAD will honor your request and try to process it as usual.
+Once the entry within the decaying cache has expired, MPAD will again accept that message and process it for you.
 
 ## Known issues
 
