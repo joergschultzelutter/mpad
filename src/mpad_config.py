@@ -24,8 +24,18 @@
 ###########################
 #
 mpad_version: str = "0.01"
-aprs_table: str = "/"  # my symbol table (/=primary \=secondary, or overlay)
+#
+# APRS position report: message symbol
+# see also http://www.aprs.org/symbols/symbolsX.txt and aprs_communication.py
+# on how this is used. Normally, you don't want to change these settings
+#
+aprs_table: str = "/"  # APRS symbol table (/=primary \=secondary, or overlay)
 aprs_symbol: str = "?"  # APRS symbol: Server
+#
+# Delay settings: These sleep settings are applied for each SINGLE message that is sent out
+# to APRS-IS. If the program has to send two bulletin messages, then the total run time of\
+# sending out those bulletins is 2 * 3 secs
+#
 packet_delay_long: float = 5.0  # packet delay in seconds after sending data to aprs-is
 packet_delay_short: float = 3.0  # packet delay after sending an acknowledgment, bulletin or beacon
 #
@@ -38,9 +48,12 @@ packet_delay_short: float = 3.0  # packet delay after sending an acknowledgment,
 #################################
 #
 # Location of our process (Details: see aprs101.pdf see aprs101.pdf chapter 6 pg. 23)
-# Ensure to honor the format settings as described in the specification!
-mpad_latitude: str = "5150.34N"  # 8 chars fixed length, ddmm.mmN
-mpad_longitude: str = "00819.60E"  # 9 chars fixed length, dddmm.mmE
+# Ensure to honor the format settings as described in the specification, otherwise
+# your package might get rejected and/or not surface on aprs.fi
+# Degrees: lat: 0-90, lon: 0-180
+# Minutes and Seconds: 00-60
+mpad_latitude: str = "5150.34N"  # 8 chars fixed length, ddmm.ssN
+mpad_longitude: str = "00819.60E"  # 9 chars fixed length, dddmm.ssE
 #
 # Program alias: This is the APRS name that will be used for all outgoing messages
 mpad_alias: str = "MPAD"  # Identifier for sending outgoing data to APRS-IS
@@ -82,3 +95,18 @@ aprsis_server_filter = "g/MPAD"  # server filter criteria for aprs.is
 #
 #mpad_callsigns_to_parse = ["WXBOT", "WXYO"]  # (additional) call sign filter
 mpad_callsigns_to_parse = ["MPAD"]  # (additional) call sign filter
+
+#############################################################
+# Time-to-live settings for the decaying APRS message cache #
+#############################################################
+#
+# This value represents the time span for how long MPAD considers incoming
+# messages as duplicates if these messages have been sent to the program
+# For each processed message (regardless of its actual success state), MPAD
+# is going to add a key to a decaying dictionary. That key consists of
+# the user's call sign, the APRS message ID (or - if not present - 'None) and
+# an md5'ed version of the message text. If another delayed or duplicate
+# message is received within that specified time frame, that message is going
+# to be ignored by the program
+#
+mpad_msg_cache_time_to_live = 5 * 60  # ttl = 5 minutes
