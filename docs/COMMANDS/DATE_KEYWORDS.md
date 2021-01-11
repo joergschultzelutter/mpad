@@ -24,7 +24,7 @@ MPAD is able to understand the following keywords:
 
 If you request the same weekday that is today, then the program assumes that you refer to that day in the next week.
 
-Whereas noted for the respective [action keyword](action_commands.md), these date setting keywords (and also the [daytime](daytime_keywords.md) setting keywords) can be combined with the action keywords. Examples:
+Whereas noted for the respective [action keyword](ACTION_KEYWORDS.md), these date setting keywords (and also the [daytime](DAYTIME_KEYWORDS.md) setting keywords) can be combined with the action keywords. Examples:
 
 ```
 San Francisco, CA tomorrow full --> returns a full wx report for location 'San Francisco' and date setting 'tomorrow'

@@ -16,11 +16,11 @@
 
 ## Command keyset
 
-- [Action commands](command_keywords/action_commands.md)
+- [Action commands](COMMANDS/ACTION_KEYWORDS.md)
 
-- [Date settings](command_keywords/date_keywords.md)
+- [Date settings](COMMANDS/DATE_KEYWORDS.md)
 
-- [Daytime settings](command_keywords/daytime_keywords.md)
+- [Daytime settings](COMMANDS/DAYTIME_KEYWORDS.md)
 
 ## Legal mumbo-jumbo
 

@@ -29,15 +29,15 @@ Python implementation of an APRS Multi-Purpose Daemon (WX/METAR/CWOP forecast, s
 
 ## Dependencies and external data sources
 
-[see DEPENDENCIES](DEPENDENCIES.md)
+[see DEPENDENCIES](docs/DEPENDENCIES.md)
 
 ## Installation
 
-[see INSTALLATION](INSTALLATION.md)
+[see INSTALLATION](docs/INSTALLATION.md)
 
 ## Technical Details and Known Issues
 
-[see TECHNICAL_DETAILS](TECHNICAL_DETAILS.md)
+[see TECHNICAL_DETAILS](docs/TECHNICAL_DETAILS.md)
 
 ## The fine print
 
