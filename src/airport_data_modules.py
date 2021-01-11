@@ -295,7 +295,7 @@ def update_local_airport_stations_file(
         r = requests.get(file_url)
     except:
         logger = logging.getLogger(__name__)
-        logger.debug(f"Cannot download airport data from {file_url}")
+        logger.info(f"Cannot download airport data from {file_url}")
         r = None
     if r:
         if r.status_code == 200:
@@ -306,7 +306,7 @@ def update_local_airport_stations_file(
                     success = True
             except:
                 logger = logging.getLogger(__name__)
-                logger.debug(
+                logger.info(
                     f"Cannot update airport data to local file {airport_stations_filename}"
                 )
     return success
@@ -362,10 +362,10 @@ def get_nearest_icao(latitude: float, longitude: float):
 
 if __name__ == "__main__":
     logging.basicConfig(
-        level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+        level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
     )
     logger = logging.getLogger(__name__)
-    logger.debug(get_metar_data("EDDF"))
-    logger.debug(validate_iata("KLV"))
-    logger.debug(validate_icao("EDDF"))
-    logger.debug(get_nearest_icao(51.538882, 8.32679))
+    logger.info(get_metar_data("EDDF"))
+    logger.info(validate_iata("KLV"))
+    logger.info(validate_icao("EDDF"))
+    logger.info(get_nearest_icao(51.538882, 8.32679))
