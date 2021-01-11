@@ -12,3 +12,4 @@ APRS101.PDF
 mpad_served_packages.txt
 tle_amateur_satellites.txt
 mgrs.py
+mpad_config.py
