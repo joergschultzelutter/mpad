@@ -7,7 +7,7 @@ Based on the sender's call sign, MPAD automatically provides its content in the 
 - ALL Commands and keywords are case __insensitive__
 - For most of the cases, ```wx``` inquiries can be specified without any specific keyword; just specify the address. Unless any other keyword has been specified, ```wx``` __is always assumed as default keyword__.
 
-Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __YES__
+Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __YES__
 
 ### City, State and/or Country
 
@@ -118,7 +118,7 @@ You have three options:
 
 If the given airport or the nearest one has been found but does __not__ support METAR data, the program will try to provide you with a standard WX report for the airport's coordinates instead. If the airport is capable of providing METAR data but the METAR report cannot be retrieved, an error message is returned to the user.
 
-Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__. If WX data is returned, 'today'/'full' settings will be applied.
+Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __NO__. If WX data is returned, 'today'/'full' settings will be applied.
 
 ### ICAO METAR / wx inquiries
 
@@ -197,7 +197,7 @@ Returns the geocoordinates/address info of the sender's position or a specific c
 - Distance, direction and bearing to the call sign (if requested position differs from user's position)
 - Altitude information whereas present
 
-Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
+Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __NO__
 
 #### Formats
 
@@ -237,7 +237,7 @@ Glossary:
 
 Returns the sunrise/sunset and moonset/moonrise info of the sender's position or a specific call sign. Note: values are calculated for the given day. In case the moonSET value overlaps from the previous date, then this is not taken into consideration.
 
-Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __YES__
+Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __YES__
 
 #### Formats
 
@@ -264,7 +264,7 @@ Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime
 
 Returns the latest CWOP Wx report of the nearest CWOP station (related to the sender's call sign or a different call sign) OR a specific CWOP station ID.
 
-Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
+Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __NO__
 
 #### Formats
 
@@ -302,7 +302,7 @@ Retrieves the next pass of the given satellite ID for the user's position. Satel
 
 EXPERIMENTAL - STILL IN DEVELOPMENT
 
-Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __YES__
+Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __YES__
 
 #### Formats
 
@@ -318,7 +318,7 @@ Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime
 
 Retrieves the nearest repeater, based on the user's position. In addition, 'band' and 'mode' filters can be specified.
 
-Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
+Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __NO__
 
 #### Formats
 
@@ -351,7 +351,7 @@ The positions for both parameters __band__ and __mode__ are position-interchange
 
 Returns general program help to the user.
 
-Action Keyword can be combined with [date](date_keywords.md) / [daytime](daytime_keywords.md) keyword parameters: __NO__
+Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __NO__
 
 #### Formats
 
