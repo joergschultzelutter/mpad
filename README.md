@@ -37,19 +37,21 @@ Python implementation of an APRS Multi-Purpose Daemon (WX/METAR/CWOP forecast, s
 
 ## Handling of incoming duplicate APRS message requests
 
-Due to its technical nature, the APRS network might receive the same APRS message more than once during a short time frame. MPAD tries to detect these duplicate messages by applying a decaying cache mechanism to all messages that it would normally process:
+Due to its technical nature, the APRS network might receive the same __incoming__ APRS message more than once during a short time frame - these can be duplicate or delayed messages. Wherever possible, MPAD tries to detect these duplicate messages by applying a decaying cache mechanism to all messages:
 
-- For each incoming message that is deemed as valid MPAD message, the program will create a key value, consisting of the user's call sign, the APRS message number (or ```None``` if the  message was sent without an APRS message number) and the md5-ed content of the message text.
-- Prior to processing the request, MPAD checks if this particular key is present in its decaying cache. Every element in that cache has a life span of 5 mins.
+- For each incoming message that is deemed as valid ready-to-be-processed MPAD message, the program will create a cache key value, consisting of the user's call sign, the APRS message number (or ```None``` if the  message was sent without an APRS message number) and the md5-ed content of the incoming message text.
+- Prior to processing the request, MPAD checks if this particular key is already present in its decaying cache. Every cache element has a life span of 5 mins.
 - If that key is present in the cache, MPAD assumes that the __current__ request is a duplicate one.  As a result, the program will neither send a message acknowledgment (whereas applicable) nor will it process the current message request.
-- If the entry for that key cannot be found in the cache, MPAD will process the request and then add the key to the decaying cache.
+- If the entry for that key cannot be found in the cache, MPAD will process the request. Regardless of its status, the key element will be added to the decaying cache. This means that even messages which failed MPAD processing will still be detected as a duplicate.
 
 For the end user, sending an identical message to MPAD within 5 mins from the same call sign will cause the following results:
 
 - Identical APRS messages requests with __different__ APRS message IDs __can be processed__ within these 5 mins __unless__ the message is already present in the cache (these would be dupes from APRS-IS but not from the user's radio)
 - Identical APRS message requests __without__ an APRS message ID __will be ignored__. Based on its unique message key (md5'ed message, call sign, message ID (in this case: ```None```)), the entry is detected as 'already processed' in the decaying database. Therefore, MPAD will ignore this message.
 
-Once the entry within the decaying cache has expired, MPAD will again accept that message and process it for you.
+Once the key entry in the decaying cache has expired, sending the same message to MPAD will no longer cause a duplicate detection for this single message and MPAD will process it for you.
+
+A decaying cashe for __outgoing__ messages to the user is currently not implemented but can be added, if necessary.
 
 ## Known issues
 
