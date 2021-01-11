@@ -54,7 +54,7 @@ def update_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
         r = requests.get(tle_data_file_url)
     except:
         logger = logging.getLogger(__name__)
-        logger.debug(f"Cannot download TLE data from {tle_data_file_url}")
+        logger.info(f"Cannot download TLE data from {tle_data_file_url}")
         r = None
     if r:
         if r.status_code == 200:
@@ -65,7 +65,7 @@ def update_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
                     success = True
             except:
                 logger = logging.getLogger(__name__)
-                logger.debug(f"Cannot update TLE data to file {tle_filename}")
+                logger.info(f"Cannot update TLE data to file {tle_filename}")
     return success
 
 
@@ -118,7 +118,7 @@ def read_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
     if lines:
         if len(lines) % 3 != 0:
             logger = logging.getLogger(__name__)
-            logger.debug(f"Invalid TLE file structure for file {tle_filename}")
+            logger.info(f"Invalid TLE file structure for file {tle_filename}")
             success = False
             return success, tle_data
         lc = 1
@@ -263,7 +263,7 @@ def get_next_satellite_pass_for_latlon(
         )
         days = t - satellite.epoch
         logger = logging.getLogger(__name__)
-        logger.debug("{:.3f} days away from epoch".format(days))
+        logger.info("{:.3f} days away from epoch".format(days))
 
         t0 = ts.utc(
             today.year, today.month, today.day, today.hour, today.minute, today.second
@@ -281,7 +281,7 @@ def get_next_satellite_pass_for_latlon(
 
     #    for ti, event in zip(t, events):
     #        name = ("rise above 10°", "culminate", "set below 10°")[event]
-    #        logger.debug(ti.utc_strftime("%Y %b %d %H:%M:%S"), name)
+    #        logger.info(ti.utc_strftime("%Y %b %d %H:%M:%S"), name)
 
     # some magic is still missing here
 
@@ -373,11 +373,11 @@ def get_sun_moon_rise_set_for_latlon(
 
 if __name__ == "__main__":
     logging.basicConfig(
-        level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+        level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
     )
     logger = logging.getLogger(__name__)
 
-    logger.debug(
+    logger.info(
         get_sun_moon_rise_set_for_latlon(
             51.838860,
             8.326871,
@@ -388,11 +388,11 @@ if __name__ == "__main__":
 
     update_local_tle_file()
 
-    logger.debug("Get TLE data for Es'Hail2")
-    logger.debug(get_tle_data("ES'HAIL-2"))
-    logger.debug("Get next ISS pass")
+    logger.info("Get TLE data for Es'Hail2")
+    logger.info(get_tle_data("ES'HAIL-2"))
+    logger.info("Get next ISS pass")
     thedate = datetime.datetime.now()
-    logger.debug(
+    logger.info(
         get_next_satellite_pass_for_latlon(
             51.838890, 8.326747, thedate + datetime.timedelta(days=0), "ISS", 74.0
         )

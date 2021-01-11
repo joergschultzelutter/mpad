@@ -152,14 +152,14 @@ def mycallback(raw_aprs_packet):
                     aprs_cache=aprs_message_cache,
                 )
                 if aprs_message_key:
-                    logger.debug(
+                    logger.info(
                         msg="DUPLICATE PACKET - key for this packet is still in our decaying message cache"
                     )
-                    logger.debug(
+                    logger.info(
                         msg=f"Ignoring duplicate packet raw_aprs_packet: {raw_aprs_packet}"
                     )
                 else:
-                    logger.debug(msg=f"Received raw_aprs_packet: {raw_aprs_packet}")
+                    logger.info(msg=f"Received raw_aprs_packet: {raw_aprs_packet}")
 
                     # Send an ack if we did receive a message number
                     # see aprs101.pdf pg. 71ff.
@@ -220,7 +220,7 @@ def mycallback(raw_aprs_packet):
                             send_with_msg_no=msg_no_supported,
                             number_of_served_packages=number_of_served_packages,
                         )
-                        logger.debug(msg=f"Unable to grok packet {raw_aprs_packet}")
+                        logger.info(msg=f"Unable to grok packet {raw_aprs_packet}")
 
                     # We've finished processing this message. Update the decaying
                     # cache.
@@ -240,7 +240,7 @@ def mycallback(raw_aprs_packet):
 # Start by setting the logger parameters
 #
 logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(module)s -%(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(module)s -%(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 #
@@ -342,7 +342,7 @@ try:
         AIS.set_filter(mpad_config.aprsis_server_filter)
 
         # Debug what we are trying to do
-        logger.debug(
+        logger.info(
             msg=f"Establish connection to APRS_IS: server={mpad_config.aprsis_server_name},"
             f"port={mpad_config.aprsis_server_port}, filter={mpad_config.aprsis_server_filter},"
             f"APRS-IS User: {aprsis_callsign}, APRS-IS passcode: {aprsis_passcode}"
@@ -350,10 +350,10 @@ try:
 
         AIS.connect(blocking=True)
         if AIS._connected == True:
-            logger.debug(msg="Established the connection to APRS_IS")
+            logger.info(msg="Established the connection to APRS_IS")
 
             # Send initial beacon after establishing the connection to APRS_IS
-            logger.debug(
+            logger.info(
                 msg="Send initial beacon after establishing the connection to APRS_IS"
             )
             send_beacon_and_status_msg(AIS, aprsis_simulate_send)
@@ -390,12 +390,12 @@ try:
             # This section is going to be left only in the case of network
             # errors or if the user did raise an exception
             #
-            logger.debug(msg="Starting callback consumer")
+            logger.info(msg="Starting callback consumer")
             AIS.consumer(mycallback, blocking=True, immortal=True, raw=False)
 
             #
             # We have left the callback, let's clean up a few things
-            logger.debug("Have left the callback")
+            logger.info("Have left the callback")
             #
             # First, stop all schedulers. Then remove the associated jobs
             # This will prevent the beacon/bulletin processes from sending out
@@ -406,20 +406,20 @@ try:
                 try:
                     aprs_scheduler.shutdown()
                 except:
-                    logger.debug(msg="Exception during scheduler shutdown eternal loop")
+                    logger.info(msg="Exception during scheduler shutdown eternal loop")
 
             # Verbindung schließen
-            logger.debug(msg="Closing APRS connection to APRS_IS")
+            logger.info(msg="Closing APRS connection to APRS_IS")
             AIS.close()
         else:
-            logger.debug(msg="Cannot re-establish connection to APRS_IS")
+            logger.info(msg="Cannot re-establish connection to APRS_IS")
         # Write the number of served packages to disc
         write_number_of_served_packages(served_packages=number_of_served_packages)
-        logger.debug(msg=f"Sleeping {mpad_config.packet_delay_long} secs")
+        logger.info(msg=f"Sleeping {mpad_config.packet_delay_long} secs")
         time.sleep(mpad_config.packet_delay_long)
 #        AIS.close()
 except (KeyboardInterrupt, SystemExit):
-    logger.debug("received exception!")
+    logger.info("received exception!")
 
     # write number of processed packages to disc
     write_number_of_served_packages(served_packages=number_of_served_packages)
@@ -427,22 +427,22 @@ except (KeyboardInterrupt, SystemExit):
     if aprs_scheduler:
         aprs_scheduler.pause()
         aprs_scheduler.remove_all_jobs()
-        logger.debug(msg="shutting down aprs_scheduler")
+        logger.info(msg="shutting down aprs_scheduler")
         if aprs_scheduler.state != apscheduler.schedulers.base.STATE_STOPPED:
             try:
                 aprs_scheduler.shutdown()
             except:
-                logger.debug(msg="Exception during scheduler shutdown SystemExit loop")
+                logger.info(msg="Exception during scheduler shutdown SystemExit loop")
 
     if caching_scheduler:
-        logger.debug(msg="shutting down caching_scheduler")
+        logger.info(msg="shutting down caching_scheduler")
         caching_scheduler.pause()
         caching_scheduler.remove_all_jobs()
         if caching_scheduler.state != apscheduler.schedulers.base.STATE_STOPPED:
             try:
                 caching_scheduler.shutdown()
             except:
-                logger.debug(msg="Exception during scheduler shutdown SystemExit loop")
+                logger.info(msg="Exception during scheduler shutdown SystemExit loop")
 
     # Close the socket if it is still open
     if AIS:

@@ -327,7 +327,7 @@ def read_number_of_served_packages(file_name: str = "mpad_served_packages.txt"):
     except:
         served_packages = 1
         logger = logging.getLogger(__name__)
-        logger.debug(f"Cannot read content from {file_name}")
+        logger.info(f"Cannot read content from {file_name}")
     return served_packages
 
 
@@ -354,7 +354,7 @@ def write_number_of_served_packages(
             f.close()
     except:
         logger = logging.getLogger(__name__)
-        logger.debug(f"Cannot write number of served packages to {file_name}")
+        logger.info(f"Cannot write number of served packages to {file_name}")
 
 
 def add_aprs_message_to_cache(
@@ -441,7 +441,7 @@ def get_aprs_message_from_cache(
 
 if __name__ == "__main__":
     logging.basicConfig(
-        level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+        level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
     )
     logger = logging.getLogger(__name__)
 
@@ -460,10 +460,10 @@ if __name__ == "__main__":
     )
 
     my_array = make_pretty_aprs_messages("Alter Schwede", my_array)
-    logger.debug(my_array)
+    logger.info(my_array)
 
-    logger.debug("Logtext erfolgreich")
-    logger.debug(read_program_config())
+    logger.info("Logtext erfolgreich")
+    logger.info(read_program_config())
 
     cache = ExpiringDict(max_len=180, max_age_seconds=10)
 

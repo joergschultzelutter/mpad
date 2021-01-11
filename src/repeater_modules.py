@@ -63,7 +63,7 @@ def download_repeatermap_raw_data_to_local_file(
             success = True
         except:
             logger = logging.getLogger(__name__)
-            logger.debug(
+            logger.info(
                 f"Cannot write repeatermap.de data to local disc file '{repeatermap_raw_data_file}'"
             )
     return success
@@ -98,7 +98,7 @@ def read_repeatermap_raw_data_from_disk(
                 success = True
     except:
         logger = logging.getLogger(__name__)
-        logger.debug(f"Cannot read '{repeatermap_raw_data_file}' from disc")
+        logger.info(f"Cannot read '{repeatermap_raw_data_file}' from disc")
     return success, repeatermap_raw_json_content
 
 
@@ -289,7 +289,7 @@ def write_mpad_repeatermap_data_to_disc(
         success = True
     except:
         logger = logging.getLogger(__name__)
-        logger.debug(
+        logger.info(
             f"Cannot write native repeatermap data to local disc file '{mpad_repeatermap_filename}'"
         )
     return success
@@ -327,7 +327,7 @@ def read_mpad_repeatermap_data_from_disc(
                     mpad_repeatermap = json.loads(mpad_repeatermap_json)
         except:
             logger = logging.getLogger(__name__)
-            logger.debug(f"Cannot read '{mpad_repeatermap_filename}' from disc")
+            logger.info(f"Cannot read '{mpad_repeatermap_filename}' from disc")
     return success, mpad_repeatermap
 
 
@@ -494,7 +494,7 @@ def update_local_repeatermap_file():
 
 if __name__ == "__main__":
     logging.basicConfig(
-        level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+        level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
     )
     logger = logging.getLogger(__name__)
 
@@ -507,6 +507,6 @@ if __name__ == "__main__":
         band="70cm",
     )
     if success:
-        logger.debug(nearest_repeater)
+        logger.info(nearest_repeater)
     else:
-        logger.debug("Nothing found!")
+        logger.info("Nothing found!")

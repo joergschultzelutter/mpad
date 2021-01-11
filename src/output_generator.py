@@ -252,7 +252,7 @@ def generate_output_message(
         output_list = [
             "Output parser did encounter an unknown action command",
         ]
-        logger.debug(
+        logger.info(
             f"Unable to generate output message; unknown action command: {response_parameters}"
         )
 
@@ -771,10 +771,10 @@ def generate_output_message_repeater(response_parameters: dict):
 
 if __name__ == "__main__":
     logging.basicConfig(
-        level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+        level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
     )
     logger = logging.getLogger(__name__)
 
     success, aprsdotfi_api_key, openweathermap_api_key = read_program_config()
     if success:
-        logger.debug("Further actions are executed here")
+        logger.info("Further actions are executed here")

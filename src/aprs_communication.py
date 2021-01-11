@@ -103,15 +103,15 @@ def send_beacon_and_status_msg(myaprsis: aprslib.inet.IS, simulate_send: bool = 
     none
     """
     logger = logging.getLogger(__name__)
-    logger.debug("Reached beacon interval; sending beacons")
+    logger.info("Reached beacon interval; sending beacons")
     for bcn in beacon_text_array:
         stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}:{bcn}"
         if not simulate_send:
-            logger.debug(f"Sending beacon: {stringtosend}")
+            logger.info(f"Sending beacon: {stringtosend}")
             myaprsis.sendall(stringtosend)
             time.sleep(mpad_config.packet_delay_short)
         else:
-            logger.debug(f"Simulating beacons: {stringtosend}")
+            logger.info(f"Simulating beacons: {stringtosend}")
 
 
 def send_bulletin_messages(myaprsis: aprslib.inet.IS, simulate_send: bool = True):
@@ -132,15 +132,15 @@ def send_bulletin_messages(myaprsis: aprslib.inet.IS, simulate_send: bool = True
     none
     """
     logger = logging.getLogger(__name__)
-    logger.debug("reached bulletin interval; sending bulletins")
+    logger.info("reached bulletin interval; sending bulletins")
     for recipient_id, bln in bulletin_texts.items():
         stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}::{recipient_id:9}:{bln}"
         if not simulate_send:
-            logger.debug(f"Sending bulletin: {stringtosend}")
+            logger.info(f"Sending bulletin: {stringtosend}")
             myaprsis.sendall(stringtosend)
             time.sleep(mpad_config.packet_delay_short)
         else:
-            logger.debug(f"simulating bulletins: {stringtosend}")
+            logger.info(f"simulating bulletins: {stringtosend}")
 
 
 def send_ack(
@@ -173,14 +173,14 @@ def send_ack(
 
     if source_msg_no:
         logger = logging.getLogger(__name__)
-        logger.debug("Preparing acknowledgment receipt")
+        logger.info("Preparing acknowledgment receipt")
         stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}::{users_callsign:9}:ack{source_msg_no}"
         if not simulate_send:
-            logger.debug(f"Sending acknowledgment receipt: {stringtosend}")
+            logger.info(f"Sending acknowledgment receipt: {stringtosend}")
             myaprsis.sendall(stringtosend)
             time.sleep(mpad_config.packet_delay_short)
         else:
-            logger.debug(f"Simulating acknowledgment receipt: {stringtosend}")
+            logger.info(f"Simulating acknowledgment receipt: {stringtosend}")
 
 
 def send_aprs_message_list(
@@ -226,10 +226,10 @@ def send_aprs_message_list(
                 number_of_served_packages = 1
         logger = logging.getLogger(__name__)
         if not simulate_send:
-            logger.debug(f"Sending response message '{stringtosend}'")
+            logger.info(f"Sending response message '{stringtosend}'")
             myaprsis.sendall(stringtosend)
         else:
-            logger.debug(f"Simulating response message '{stringtosend}'")
+            logger.info(f"Simulating response message '{stringtosend}'")
         time.sleep(mpad_config.packet_delay_long)
     return number_of_served_packages
 
@@ -292,7 +292,7 @@ def extract_msgno_from_defective_message(message_text: str):
 
 if __name__ == "__main__":
     logging.basicConfig(
-        level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+        level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
     )
     logger = logging.getLogger(__name__)
-    logger.debug(extract_msgno_from_defective_message("Deensen;de tomorrow {ab}cd"))
+    logger.info(extract_msgno_from_defective_message("Deensen;de tomorrow {ab}cd"))
