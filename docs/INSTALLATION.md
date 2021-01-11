@@ -78,8 +78,8 @@ packet_delay_short: float = 3.0  # packet delay after sending an acknowledgment,
 # your package might get rejected and/or not surface on aprs.fi
 # Degrees: lat: 0-90, lon: 0-180
 # Minutes and Seconds: 00-60
-mpad_latitude: str = "5150.34N"  # 8 chars fixed length, ddmm.ssN
-mpad_longitude: str = "00819.60E"  # 9 chars fixed length, dddmm.ssE
+mpad_latitude: str = "ddmm.ssN"  # 8 chars fixed length, ddmm.ssN
+mpad_longitude: str = "dddmm.ssE"  # 9 chars fixed length, dddmm.ssE
 #
 # Program alias: This is the APRS name that will be used for all outgoing messages
 mpad_alias: str = "MPAD"  # Identifier for sending outgoing data to APRS-IS
