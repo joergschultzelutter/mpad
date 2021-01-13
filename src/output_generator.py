@@ -288,6 +288,7 @@ def generate_output_message_wx(
     when = response_parameters["when"]
     when_daytime = response_parameters["when_daytime"]
     date_offset = response_parameters["date_offset"]
+    language = response_parameters["language"]
     human_readable_message = response_parameters["human_readable_message"]
     success, myweather, tz_offset, tz = get_daily_weather_from_openweathermapdotorg(
         latitude=latitude,
@@ -295,6 +296,7 @@ def generate_output_message_wx(
         units=units,
         date_offset=date_offset,
         openweathermap_api_key=openweathermapdotorg_api_key,
+        language=language
     )
     if success:
         weather_forecast_array = parse_daily_weather_from_openweathermapdotorg(
