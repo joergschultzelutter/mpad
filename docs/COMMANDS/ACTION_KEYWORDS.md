@@ -404,3 +404,70 @@ Now let's request the same wx report - but this time, we want it to be delivered
 MPAD does not perform an imperial-to-metric calculation (or vice versa) but requests the desired format as part of its REST requests to e.g. Openweathermap and other services. Apart from rounding these values in order to limit the message length, all data is displayed 'as is'.
 
 Please note that altitude information for the ```whereis``` / ```whereami``` requests is always displayed in meters.
+
+### Language
+
+Allows you to specify a language in a (somewhat) ISO639-1 format. Default language is 'en'. 
+
+Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __YES__
+
+Currently, this keyword is __only__ used for WX reports from Openweathermap. In addition, it only provides a localised __ASCII__ version of the wx free text, e.g. en=```snow```, de=```Schnee```, pl=```Snieg``` so don't expect to receive e.g. a wx report APRS message with the cyrillic alphabet. I might use the language option for other purposes in the future.
+
+#### Formats
+
+- ```lang [iso639-1 code]```
+- ```lng [iso639-1 code]```
+
+#### Example requests
+
+- ```lang de```
+- ```Erding;de lng pl``` returns a wx report for the city of Erding in Germany where the wx report's free text part will be in Polish.
+
+#### Supported languages
+
+- ```af``` Afrikaans
+- ```al``` Albanian
+- ```ar``` Arabic
+- ```az``` Azerbaijani
+- ```bg``` Bulgarian
+- ```ca``` Catalan
+- ```cz``` Czech
+- ```da``` Danish
+- ```de``` German
+- ```el``` Greek
+- ```en``` English (__default__)
+- ```eu``` Basque
+- ```fa``` Persian (Farsi)
+- ```fi``` Finnish
+- ```fr``` French
+- ```gl``` Galician
+- ```he``` Hebrew
+- ```hi``` Hindi
+- ```hr``` Croatian
+- ```hu``` Hungarian
+- ```id``` Indonesian
+- ```it``` Italian
+- ```ja``` Japanese
+- ```kr``` Korean
+- ```la``` Latvian
+- ```lt``` Lithuanian
+- ```mk``` Macedonian
+- ```no``` Norwegian
+- ```nl``` Dutch
+- ```pl``` Polish
+- ```pt``` Portuguese
+- ```ro``` Romanian
+- ```ru``` Russian
+- ```sv```, ```se``` Swedish
+- ```sk``` Slovak
+- ```sl``` Slovenian
+- ```sp```, ```es``` Spanish
+- ```sr``` Serbian
+- ```th``` Thai
+- ```tr``` Turkish
+- ```ua```, ```uk``` Ukrainian
+- ```vi``` Vietnamese
+- ```cn``` Chinese Simplified
+- ```tw``` Chinese Traditional
+- ```zu``` Zulu
+
