@@ -32,6 +32,7 @@ def get_daily_weather_from_openweathermapdotorg(
     date_offset: int,
     openweathermap_api_key: str,
     units: str = "metric",
+    language: str = "en",
 ):
     """
     Gets the OWM 'onecall' weather forecast for a given latitide
@@ -54,6 +55,8 @@ def get_daily_weather_from_openweathermapdotorg(
         API key for accessing openweathermap.org api
     units: 'str'
         Unit of measure. Can either be 'metric' or 'imperial'
+    language: 'str'
+        ISO3166-2 language in lowercase
 
     Returns
     =======
@@ -72,6 +75,30 @@ def get_daily_weather_from_openweathermapdotorg(
     weather_tuple = timezone_offset = timezone = None
     success = False
 
+    #fmt: off
+    owm_supported_languages = [
+        "af", "al", "ar", "az",
+        "bg", "ca", "cz", "da",
+        "de", "el", "en", "eu",
+        "fa", "fi", "fr", "gl",
+        "he", "hi", "hr", "hu",
+        "id", "it", "ja", "kr",
+        "la", "lt", "mk", "no",
+        "nl", "pl", "pt", "ro",
+        "ru", "sv", "se", "sk",
+        "sl", "sp", "es", "sr",
+        "th", "tr", "ua", "uk",
+        "vi", "cn", "tw", "zu",
+    ]
+    #fmt: on
+
+    if language not in owm_supported_languages:
+        language = "en"
+    if language == "cn":
+        language = "zh_cn"
+    if language == "tw":
+        language = "zh_tw"
+
     # return 'false' if user has requested a day that is out of bounds
     if date_offset < 0 or date_offset > 7:
         return success, weather_tuple, timezone_offset, timezone_offset
@@ -80,7 +107,7 @@ def get_daily_weather_from_openweathermapdotorg(
         return success, weather_tuple, timezone_offset, timezone_offset
 
     # Issue the request to OWN
-    url = f"https://api.openweathermap.org/data/2.5/onecall?lat={latitude}&lon={longitude}&units={units}&exclude=hourly,minutely&appid={openweathermap_api_key}"
+    url = f"https://api.openweathermap.org/data/2.5/onecall?lat={latitude}&lon={longitude}&units={units}&exclude=hourly,minutely&lang={language}&appid={openweathermap_api_key}"
     resp = requests.get(url)
     if resp.status_code == 200:
         x = resp.json()
