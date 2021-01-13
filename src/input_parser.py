@@ -698,6 +698,18 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                     f"{errmsg_cannot_find_coords_for_user} {message_callsign}"
                 )
 
+    # check if the user wants to change the language
+    # for openweathermap.com (currently fix for 'en' but
+    # might change in the future
+    # hint: setting is not tied to the program's duty roster
+    regex_string = r"(lang|lng)\s*([a-zA-Z]{2})"
+    matches = re.search(
+        pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+    )
+    if matches:
+        language = matches[2].lower()
+        aprs_message = re.sub(regex_string, "", aprs_message, flags=re.IGNORECASE).strip()
+
     #
     # We have reached the end of the 'standard' position data processing
     # for that kind of data which may come with a command AND an associated
@@ -944,14 +956,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             matches = re.search(r"^(imp|imperial)$", word, re.IGNORECASE)
             if matches:
                 units = "imperial"
-
-            # check if the user wants to change the language
-            # for openweathermap.com (currently fix for 'en' but
-            # might change in the future
-            # hint: setting is not tied to the program's duty roster
-            matches = re.search(r"^(lang|lng)([a-zA-Z]{2})$", word, re.IGNORECASE)
-            if matches:
-                language = matches[2].lower()
 
     # Default checks outside of the 'for' loop - we may not have everything we
     # need to process the user's message yet so let's have a look.
