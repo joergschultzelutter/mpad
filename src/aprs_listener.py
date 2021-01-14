@@ -310,7 +310,7 @@ caching_scheduler.add_job(
 
 # Set up task for satellite TLE data download - daily download
 caching_scheduler.add_job(
-    update_local_repeatermap_file,
+    update_local_tle_file,
     "interval",
     id="tle_satellite_data",
     days=1,
