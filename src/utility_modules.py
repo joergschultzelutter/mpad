@@ -150,14 +150,6 @@ def make_pretty_aprs_messages(
         else:
             destination_list.append(message_to_add)
 
-        # Special treatment hack for the very first line of text
-        # This will eliminate the additional comma which might end up in here
-        # Code is not pretty but it works
-        # if len(destination_list) == 1:
-        #    string_from_list = destination_list[0]
-        #    string_from_list = string_from_list.replace(f": {separator_char}", ": ")
-        #    destination_list[0] = string_from_list
-
     return destination_list
 
 
@@ -167,8 +159,7 @@ def split_string_to_string_list(message_string: str, max_len: int = 67):
     strings. This function is going to be called if the string that the user
     wants to insert exceeds more than e.g. 67 characters. In this unlikely
     case, we may not be able to add the string in a pretty format - but
-    we will split it up for the user and
-
+    we will split it up for the user and ensure that none of the data is lost
 
     Parameters
     ==========
@@ -184,7 +175,7 @@ def split_string_to_string_list(message_string: str, max_len: int = 67):
         List array, containing 1..n strings with a max len of 'max_len'
     """
     split_strings = [
-        message_string[index : index + max_len]
+        message_string[index: index + max_len]
         for index in range(0, len(message_string), max_len)
     ]
     return split_strings
