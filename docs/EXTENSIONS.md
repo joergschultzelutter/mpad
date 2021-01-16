@@ -24,7 +24,7 @@ If that previous process has found a message ID (or it has been previously ident
 
 ## Part 2 - Parsing the data
 
-This is the part where we need to get our hands dirty. The program has three input parameters:
+This is the part where we need to get our hands dirty. ```input_parser.py``` has three input parameters:
 
 - the aprs ```message text```
 - the ```from_callsign``` ("who has sent me the data")
@@ -33,7 +33,7 @@ This is the part where we need to get our hands dirty. The program has three inp
 Output of the function consists of two variables:
 
 - a general ```success``` variable. If that one is set to ```True```, we did not encounter any errors.
-- a dictionary which contains keyword-specific fields. Dependent on what you asked the program to do, these fields may or may not be populated.
+- a ```dictionary``` which contains keyword-specific fields. Dependent on what you asked the program to do, these fields may or may not be populated.
 
 That data structure comes with a couple of fields which are of universal nature. The most important ones:
 
@@ -53,8 +53,34 @@ Based on certain regex commands, the existing data will be parsed. If such a reg
 Ultimately at the end of the parser, the following things happen: 
 
 - The string will be split up (separator = blank) and for each of these string words, another parser round will be issues. This is also the time where the ```when``` and ```when_daytime``` values are determined. If no 'real' ```when``` keyword has been found, the program will try to give you a wx report for the current user's position.
-- All internal values will be added to that dictionary. It will then be the output generator's responsibility to turn these requests into something useful.
+- All internal values will be added to that ```dictionary```. It will then be the output generator's responsibility to turn these requests into something useful.
 
 ## Part 3 - Generating the output string
 
-lorem ipsum
+```output_generator.py``` is responsible for generating the outgoing messages to the user. Dependent on the ```what``` keyword, the program calls the respective functions which will then do the __actual__ work (e.g. get wx report etc.). Each of these functions uses a function called ```make_pretty_aprs_messages``` in order to add the content to a ```List``` item which contains 1..n lines of ready-to-be-sent text messages. Each of these messages has a max len of 67 characters, so you won't exceed the max. APRS message length. ```make_pretty_aprs_messages``` is responsible for a couple of things:
+
+- remove any non-ASCII characters from the content. APRS only speaks ASCII.
+- Initially, call ```make_pretty_aprs_messages``` without a ```List``` reference and provide your string. As a result, you'll get a reference to the output ```List``` item which contains your string.
+
+For each new string that you are going to add, ```make_pretty_aprs_messages``` checks if the len for (current existing string plus your new string) exceed 67 characters. If that is the case, a new element is genarated (which represents your current input to the function). ```make_pretty_aprs_messages``` always tries to add the content without ripping it apart (e.g. the 67th byte of a message contains "1" and the 1st byte contains "2" for a temperature reference of 12 degrees. Yes, this might result in 'bloated' APRS messages so ensure that you add your content in a proper manner (see __Testing__).
+
+There are a few safety nets: for the unlikely event of receiving an input string of more than 67 characters, MPAD refrains from keeping the logical connection and tries to split up that string on a per-word basis. This does not rip content apart but may break the logical connection. Finally, if there should ever be a string of more than 67 characters without any blanks (Martian landing coordinates?), MPAD will break up that string into chunks of 67 bytes. MPAD does not speak Martian and neither do I. This is the 'last resort' option which should never be triggered.
+
+Here's how to call ```make_pretty_aprs_messages```:
+
+- Start with the process by calling ```make_pretty_aprs_messages``` without a ```List``` item reference. You'll get a reference to the dictionary which contains your first message.
+- For message contents 2..n, pass that reference to the function in order to ensure that the next message is added to that same list.
+- For each new message, that you add, a separator (default: space) is added between the previous message and the new message. If you don't want that message separator to be added, you can omit it by specifying the ```add_sep``` parameter.
+
+Once your native routine has prepared that list, there is nothing else that you need to do. If the original incoming message was sent with a message ID, MPAD will automatically add unique message IDs to each outgoing message. Finally, the(se) message(s) are sent to APRS-IS - which represents the end of the process.
+
+The output generator has only two parameters:
+
+- the ```dictionary``` from the ```input_parser.py``` module
+- the API access key to openweathermap.org
+
+Entering the output parser ONLY happens if the input parser has found a valid command. Otherwise, a generic error message is presented to the user.
+
+## Testing
+
+For a non-live test of the input parser and output generator, you can use the ```parser_test.py``` Python file which is part of this repo. Simply specify your own call sign (the one that you would send the message from) and the APRS message. Both ```input_parser.py``` and ```output_generator.py``` will be triggered and you can test if your new keyword works as designed.
