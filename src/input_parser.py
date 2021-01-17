@@ -233,6 +233,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             if not err:
                 success, latitude, longitude = get_geocode_geopy_data(geopy_query)
                 if success:
+                    what = "wx"
                     human_readable_message = city
                     if state and country == "US":
                         human_readable_message += f",{state}"
@@ -287,7 +288,14 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             if not err:
                 success, latitude, longitude = get_geocode_geopy_data(geopy_query)
                 if success:
+                    # Pre-build the output message
                     human_readable_message = f"Zip {zipcode};{country}"
+                    # but try to get a real city name
+                    success, response_data = get_reverse_geopy_data(latitude=latitude, longitude=longitude)
+                    if success:
+                        city = response_data["city"]
+                        if city:
+                            human_readable_message = f"{city},{zipcode};{country}"
                 else:
                     err = True
                     human_readable_message = errmsg_cannot_find_coords_for_address
@@ -745,6 +753,13 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                         err = True
                         human_readable_message = errmsg_cannot_find_coords_for_address
                         break
+                    else:
+                        # Finally, try to get a real city name
+                        success, response_data = get_reverse_geopy_data(latitude=latitude, longitude=longitude)
+                        if success:
+                            city = response_data["city"]
+                            if city:
+                                human_readable_message = f"{city},{zipcode};{country}"
 
             # Look for a 4..6 character Maidenhead coordinate
             if not found_my_duty_roster and not err:
