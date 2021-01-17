@@ -1,4 +1,4 @@
-# Example requests
+# MPAD example requests and responses
 
 This is a mere collection of example requests along with their associated responses.
 
@@ -12,6 +12,12 @@ This is a mere collection of example requests along with their associated respon
 | WX report for monday for the user's own current position | ```monday``` | ```18-Jan-21 DF1JSL-1 rain and snow morn:-1c day:1c eve:2c nite:0c``` |
 | | | ```sunrise/set 08:25/16:48UTC rain:1mm snow:2mm clouds:100% uvi:0.3``` |
 | | | ```hPa:1017 hum:98% dewpt:1c wndspd:2m/s wnddeg:223``` |
+| Wx report for zipcode 94043 | ```94043``` | ```17-Jan-21 Zip 94043;US clear sky morn:13c day:19c eve:16c nite:14c``` |
+| country code is added implicity - see |(```zip 94043``` gives | ```sunrise/set 16:20/02:16UTC clouds:8% uvi:2.6 hPa:1019 hum:43%``` |
+| keyword specification | the same results) | ```dewpt:6c wndspd:2m/s wnddeg:353``` |
+| WX report for zipcode 37603 in Germany | ```zip 37603;de``` | ```17-Jan-21 Zip 37603;DE rain and snow morn:-2c day:-0c eve:-1c``` |
+| | | ```nite:1c sunrise/set 08:20/16:43UTC rain:1mm snow:1mm clouds:100%``` |
+| | | ```uvi:0.5 hPa:1018 hum:94% dewpt:-3c wndspd:2m/s wnddeg:165``` |
 
 ## Repeater
 
