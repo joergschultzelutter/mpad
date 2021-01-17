@@ -35,6 +35,10 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/CWOP prediction, 
 
 [see INSTALLATION](docs/INSTALLATION.md)
 
+## Add your own keywords
+
+[see EXTENSIONS](docs/EXTENSIONS.md)
+
 ## Technical Details and Known Issues
 
 [see TECHNICAL_DETAILS](docs/TECHNICAL_DETAILS.md)
