@@ -6,8 +6,8 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/CWOP prediction, 
 
 ## Supported features
 
-- Worldwide weather forecast for address / zip code / lat/lon / maidenhead / ... that supports both imperial and metric data with automatic detection of the respective standard based on the station's callsign. By default, users in the USA, Liberia and Myanmar receive their data in imperial format, while for international users the metric system is preset. The user can override this auto-setting with a separate keyword.
-- METAR data for IATA/ICAO codes or the nearest airport to the user's position. If an airport is specified/found that does NOT support METAR, the program automatically switches to a standard WX report
+- Worldwide weather forecast for address / zip code / lat,lon / maidenhead / ... 
+- METAR data for IATA/ICAO codes or the nearest airport to the user's position.
 - CWOP data for a given CWOP station (or the nearest one)
 - Sunrise/sunset and moonrise/sunset for a given callsign (or the station's callsign)
 - Position data for a given callsign/transmitter callsign (human readable address, MGRS, Maidenhead, UTM, DMS, distance between the two users, altitude)
@@ -18,8 +18,9 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/CWOP prediction, 
 ## Program specifics
 
 - Very low cpu/traffic footprint thanks to APRS filters and local data caches.
-- Pretty printing; whenever it is necessary to send more than one APRS message (e.g. when the text exceeds the APRS msg len), the program tries to split the text in a readable way. Instead of 'hard cutting' the message after the 67th character, MPAD tries to keep the information groups intact. This means that for temperature information, for example, the data is not split into multiple messages where, for example, the first temperature digit is in message 1 and the second is in message 2.
+- Pretty printing of APRS messages. Rather than splitting up the content after a max message len of 67 bytes, the program tries to split the text in a readable way.
 - Human-friendly parser that supports both keyword and non-keyword commands
+- Auto-detection of the user's system of units. Callsigns from the USA, Liberia and Myanmar receive their data in imperial format, while for the rest of the world the metric system is preset. This auto-setting can be overriden with a separate keyword.
 - Supports APRS msg acknowledgments, beacons, etc. Also tries to extract APRS msg IDs from APRS messages that do not conform to APRS standards
 - Automatic detection of incoming duplicate / delayed APRS message requests
 
@@ -45,6 +46,6 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/CWOP prediction, 
 
 ## The fine print
 
-- If you intend to host an instance of this program, you must be a licensed radio amateur. BYOP (Bring your own (APRS-IS) passcode).
+- If you intend to host an instance of this program, you must be a licensed radio amateur. BYOP: Bring your own (APRS-IS) passcode.
 - Some program routines borrow logic from KI6WJP's WxBot, whose source code was immensely helpful in getting a better understanding of how to process an APRS message. If the code works, give Martin kudos. If it doesn't work, I'm the one who screwed up.
 - APRS is a registered trademark of APRS Software and Bob Bruninga, WB4APR.
