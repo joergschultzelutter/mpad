@@ -4,6 +4,12 @@ This is a mere collection of example requests along with their associated respon
 
 ## Weather forecasts
 
+External service dependencies:
+
+- [Openweathermap](www.openweathermap.org) for wx reporting
+- [Openstreetmap](www.openstreetmap.org) for coordinate transformation (e.g. City/country or zipcode to lat/lon)
+- [aprs.fi](www.aprs.fi) for APRS call sign coordinates
+
 | What do we want | Command string User > MPAD | Response example MPAD > User |
 | --------------- | -------------------------- | ---------------------------- |
 | localised Wx report for the city of Holzminden, Germany | ```Holzminden;de tomorrow lang de``` | ```16-Jan-21 Holzminden;DE Bedeckt morn:-3c day:-1c eve:-2c nite:-2c``` |
@@ -13,13 +19,25 @@ This is a mere collection of example requests along with their associated respon
 | | | ```sunrise/set 08:25/16:48UTC rain:1mm snow:2mm clouds:100% uvi:0.3``` |
 | | | ```hPa:1017 hum:98% dewpt:1c wndspd:2m/s wnddeg:223``` |
 | Wx report for zipcode 94043 | ```94043``` | ```17-Jan-21 Zip 94043;US clear sky morn:13c day:19c eve:16c nite:14c``` |
-| country code is added implicity - see |(```zip 94043``` gives | ```sunrise/set 16:20/02:16UTC clouds:8% uvi:2.6 hPa:1019 hum:43%``` |
-| keyword specification | the same results) | ```dewpt:6c wndspd:2m/s wnddeg:353``` |
+| country code is added implicity - see |```zip 94043``` gives same results| ```sunrise/set 16:20/02:16UTC clouds:8% uvi:2.6 hPa:1019 hum:43%``` |
+| keyword specification | | ```dewpt:6c wndspd:2m/s wnddeg:353``` |
 | WX report for zipcode 37603 in Germany | ```zip 37603;de``` | ```17-Jan-21 Zip 37603;DE rain and snow morn:-2c day:-0c eve:-1c``` |
 | | | ```nite:1c sunrise/set 08:20/16:43UTC rain:1mm snow:1mm clouds:100%``` |
 | | | ```uvi:0.5 hPa:1018 hum:94% dewpt:-3c wndspd:2m/s wnddeg:165``` |
+| WX report for Grid JO41du | ```grid jo41du``` | ```17-Jan-21 jo41du rain and snow morn:-1c day:0c eve:1c nite:2c``` |
+| | ```mh jo41du``` gives the same results | ```sunrise/set 08:25/16:48UTC rain:1mm snow:2mm clouds:100% uvi:0.3``` |
+| | | ```hPa:1018 hum:97% dewpt:-1c wndspd:2m/s wnddeg:153``` |
+| Wx report for numeric latitude and longitude | ```50.1211/8.7938``` | ```17-Jan-21 Offenbach am Main;DE rain and snow morn:-1c day:0c``` |
+| | | ```eve:-0c nite:2c sunrise/set 08:16/16:53UTC rain:0mm snow:3mm``` |
+| | | ```clouds:100% uvi:0.4 hPa:1019 hum:96% dewpt:-1c wndspd:1m/s``` |
+| | | ```wnddeg:204``` |
 
 ## Repeater
+
+External service dependencies:
+
+- [aprs.fi](www.aprs.fi) for APRS call sign coordinates
+- [repeatermap.de](www.repeatermap.de) for the repeater database
 
 | What do we want | Command string User > MPAD | Response example MPAD > User |
 | --------------- | -------------------------- | ---------------------------- |
@@ -34,6 +52,12 @@ This is a mere collection of example requests along with their associated respon
 
 ## Where Is / Where Am I
 
+External service dependencies:
+
+- [Openstreetmap](www.openstreetmap.org) for coordinate transformation (e.g. City/country or zipcode to lat/lon)
+- [aprs.fi](www.aprs.fi) for APRS call sign coordinates
+
+
 | What do we want | Command string User > MPAD | Response example MPAD > User |
 | --------------- | -------------------------- | ---------------------------- |
 | My own position data | ```whereami``` | ```Pos for DF1JSL-1 Grid:JO41su94 DMS N51.51'13, E09.34'38 Alt 237m``` |
@@ -47,6 +71,12 @@ This is a mere collection of example requests along with their associated respon
 
 METAR wx reports always return the latest wx data to the user, meaning that you cannot request METAR data for a specific day (such keywords will be ignored)
 
+External service dependencies:
+
+- [Aviation Weather](www.aviationweather.gov) for coordinate transformation (e.g. City/country or zipcode to lat/lon)
+- [aprs.fi](www.aprs.fi) for APRS call sign coordinates
+
+
 | What do we want | Command string User > MPAD | Response example MPAD > User |
 | --------------- | -------------------------- | ---------------------------- |
 | METAR data of a METAR-capable airport, relative to the user's position | ```metar``` | |
@@ -59,7 +89,13 @@ METAR wx reports always return the latest wx data to the user, meaning that you 
 
 ## CWOP data
 
+External service dependencies:
+
 CWOP reports always return the latest wx data to the user, meaning that you cannot request CWOP data for a specific day (such keywords will be ignored)
+
+- [aprs.fi](www.aprs.fi) for APRS call sign coordinates
+- [findu.com](www.findu.com) for the CWOP data
+
 
 | What do we want | Command string User > MPAD | Response example MPAD > User |
 | --------------- | -------------------------- | ---------------------------- |
@@ -71,6 +107,10 @@ CWOP reports always return the latest wx data to the user, meaning that you cann
 | | | ```Pres 1018.1mb Rain(cm) 1h=0.0, 24h=0.0, mn=0.0``` |
 
 ## Sunrise/Sunset and Moonset/Moonrise
+
+External service dependencies:
+
+- [aprs.fi](www.aprs.fi) for APRS call sign coordinates
 
 | What do we want | Command string User > MPAD | Response example MPAD > User |
 | --------------- | -------------------------- | ---------------------------- |
