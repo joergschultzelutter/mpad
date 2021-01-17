@@ -1,59 +1,63 @@
 # Adding new keywords
 
-Adding kew keywords to the program should be rather easy. The general process is as follows:
+Adding kew keywords to the program should be rather easy. The general APRS message work flow is as follows:
 
 ## Part 1 - Receiving the input string
 
-If an APRS messages has been received and has made it past the __primary__ input filter (this is the APRS-IS server filter setting), MPAD examines the message and extracts certain information from that message:
+If an APRS messages has been received and has made it past the __primary__ input filter ([see INSTALLATION](docs/INSTALLATION.md)), MPAD examines the message and extracts certain information from that message:
 
 - who has sent me the message (```from_callsign```)
-- the ```adresse``` callsign that is supposed to receive the message. This is the message recipient - usually, it's our bot process' call sign.
-- the actual ```message```
+- the ```adresse``` callsign that is supposed to receive the message. This is the message recipient - usually, it's our own bot process' call sign.
+- the actual ```message text```
 - ```message number``` if present in the message
-- and finally, we extract the ```format``` string of that message.
+- and finally, we extract the ```format``` string of that APRS message.
 
 In order to enter the input parser, the following preconditions need to be met:
 
-- ```format``` has to be ```message```. If the value is ```response```, we ignore the message.
+- ```format``` has to be ```message```. If the value is ```response```, we ignore that APRS message.
 - ```from_callsign``` has to be in the program's __second__ filter. This is not the APRS-IS server filter but the filter that is rum by MPAD itself. See [the installation instructions](INSTALLLATION.md) on how to configure this setting.
-- The __incoming__ message must not be a duplicate. For each message that is sent to MPAD, a hash key is built and added to a decaying cache. If the same message is received within 5 mins, it will be detected as a duplicate request. The message will neither re-acked nor processed. If your ham radio uses message IDs for APRS messages, sending the same message text __content__ will not trigger a duplicate detection if the message numbers differ.
+- The __incoming__ message must not be a duplicate. For each message that is sent to MPAD, a hash key is built and added to a decaying cache. If the same message is received within 5 mins, it will be detected as a duplicate request. The message will neither re-acked nor processed. If your ham radio uses message IDs for APRS messages, sending the same message text __content__ will not trigger a duplicate detection if the message numbers differ. [See the TECHNICAL_DETAILS](docs/TECHNICAL_DETAILS.md) on how the dupe check works.
 
-Finally, MPAD has a look at some corrupted APRS messages where the message ID is present but not properly transmitted. [aprslib](https://github.com/rossengeorgiev/aprs-python) does not detect these message IDs (since the message itself does not follow APRS standards). MPAD tries to extract and repair that data, if necessary.
+Finally, MPAD has a look for some corrupted APRS messages where the message ID is present but not properly transmitted. [aprslib](https://github.com/rossengeorgiev/aprs-python) does not detect these message IDs (since the message itself does not follow APRS standards). MPAD tries to extract and repair that data, if necessary.
 
 If that previous process has found a message ID (or it has been previously identified), we will first send an acknowledgment to APRS-IS and then continue with parsing the data.
 
 ## Part 2 - Parsing the data
 
-This is the part where we need to get our hands dirty. ```input_parser.py``` has three input parameters:
+This is the part where we need to get our hands dirty. Herem we try to figure out what the user wants us to do. We do not perform those actual tasks (e.g. pull the wx report) in here - these are parts of the the output generator (see next chapter)
+
+ ```input_parser.py``` has three input parameters:
 
 - the aprs ```message text```
 - the ```from_callsign``` ("who has sent me the data")
-- and finally, the API key to aprs.filter
+- and finally, the API key to aprs.fi
 
 Output of the function consists of two variables:
 
-- a general ```success``` variable. If that one is set to ```True```, we did not encounter any errors.
-- a ```dictionary``` which contains keyword-specific fields. Dependent on what you asked the program to do, these fields may or may not be populated.
+- a general ```success``` variable. If that one is set to ```True```, we did not encounter any errors. If the value is ```False```, the output generator will send an error message to the user
+- a ```dictionary``` which contains ```key```word-specific ```values```. Dependent on what you asked the program to do, these ```values``` may or may not be populated. 
 
 That data structure comes with a couple of fields which are of universal nature. The most important ones:
 
-- ```what``` contains the actual command. The output parser will extract this field and then calls the respective subroutines for generating the outgoing content.
+- ```what``` contains the actual command that the user wants us to execute (e.g. 'get wx data', 'get position for user xyz'). The output parser will extract this field and then calls the respective subroutines for generating the outgoing content.
 - ```when``` countains the normalized reference to a day, e.g. 'monday'. ```date_offset``` already represents its numerical nature in relation to the server's date settings. For example, if the user has requested data for 'Thursday' on a Tuesday, that field's value is '2'.
-- ```when_daytime``` contains a normalized reference to a certain daytime (e.g. night, evening etc)
-- ```latitude``` and ```longitude```. Self-explanatory. These fields __always__ contain the user's coordinates or -if a different call sign has been queried for- that user's call sign. WX inquiries as well as any other task always build their queries on lat/lon and not on the street information. ```users_latitude``` and ```users_longitude``` are only used for the ```whereis``` command.
-- ```units``` represents the units of measure that the program will use.
+- ```when_daytime``` contains a normalized reference to a certain daytime (e.g. 'night', 'evening' etc)
+- ```latitude``` and ```longitude```. Self-explanatory. These fields __always__ contain the user's coordinates or -if a different call sign is to be used as position reference- that user's call sign. Ann keywords use these lat/lon coordinates as their queries' point of destination, meaning that additional information such as city name, country etc is only used for data output to the user. The additional fields ```users_latitude``` and ```users_longitude``` are only used for the ```whereis``` command - for any other keyword, they are not populated.
+- ```units``` represents the units of measure that the program will use (```metric``` (default) or ```imperial```)
 
 Parsing the data in a nutshell:
 
-Based on certain regex commands, the existing data will be parsed. If such a regex query was successful, MPAD will extract the information (related to the associated regex) and then set the ```what``` keyword. Ultimately, two other things happen:
+Based on keyword-specific regex commands, the existing message text will be parsed. If a regex query was successful, MPAD will extract the information (related to the associated regex) and then set the ```what``` keyword with the command that the user has requested. Afterwards, we perform a little bit of a cleanup:
 
-- the regex'ed string will be removed from the main message. As we need to continue our parser process, keeping that data might cause some unwanted effects.
-- Ultimately, a general marker called ```found_my_duty_roster``` will be set. If that marker is set to ```True```, the parser knows that it has found a command that it is required to execute at a later point in time.
+- The regex'ed string will be removed from the originating APRS message. As we need to continue our parser process (so far, we've only figured out 'what' the user wants us to do; the 'when' question is still unresolved), keeping that data might cause some unwanted effects.
+- Finally, a general marker called ```found_my_duty_roster``` will be set. If that marker is set to ```True```, the parser knows that it has found a 'what' command that it is required to execute at a later point in time.
 
-Ultimately at the end of the parser, the following things happen: 
+The parser starts with a query for WX information, followed by CWOP/Position/Celestial keywords. The first successful regex 'wins', meaning that if you e.g. create a message where you query for wx data and celestial data, the wx data keyword wins as this is one of the first regex keyword queries in the program.
 
-- The string will be split up (separator = blank) and for each of these string words, another parser round will be issues. This is also the time where the ```when``` and ```when_daytime``` values are determined. If no 'real' ```when``` keyword has been found, the program will try to give you a wx report for the current user's position.
-- All internal values will be added to that ```dictionary```. It will then be the output generator's responsibility to turn these requests into something useful.
+At the end of the parsing process where we have taken a look at the complete message, the following things happen: 
+
+- The remaining APRS message text will be split up (separator = blank). For each of these string words, another parser round will be issued. This is also the time where the ```when``` and ```when_daytime``` values are determined. If no 'real' ```when``` keyword has been found, the program will try to provide you a wx report for the current user's position. This is the prgram's default fallback
+- All internal values will be added to that output ```dictionary```. It will then be the output generator's responsibility to turn these requests into something useful.
 
 ## Part 3 - Generating the output string
 
@@ -68,18 +72,18 @@ There are a few safety nets: for the unlikely event of receiving an input string
 
 Here's how to call ```make_pretty_aprs_messages```:
 
-- Start with the process by calling ```make_pretty_aprs_messages``` without a ```List``` item reference. You'll get a reference to the dictionary which contains your first message.
-- For message contents 2..n, pass that reference to the function in order to ensure that the next message is added to that same list.
+- Start with the process by calling ```make_pretty_aprs_messages``` without a ```List``` item reference. You'll get a reference to the ```List``` object which contains your first message.
+- For message contents 2..n, pass that reference to the function in order to ensure that the next message is added to that same ```List```.
 - For each new message, that you add, a separator (default: space) is added between the previous message and the new message. If you don't want that message separator to be added, you can omit it by specifying the ```add_sep``` parameter.
 
-Once your native routine has prepared that list, there is nothing else that you need to do. If the original incoming message was sent with a message ID, MPAD will automatically add unique message IDs to each outgoing message. Finally, the(se) message(s) are sent to APRS-IS - which represents the end of the process.
+Once your native routine has prepared that list, there is nothing else that you need to do. If the original incoming message was sent with a message ID, MPAD will automatically add unique message IDs to each outgoing message. Finally, the(se) message(s) are sent to APRS-IS.
 
 The output generator has only two parameters:
 
 - the ```dictionary``` from the ```input_parser.py``` module
 - the API access key to openweathermap.org
 
-Entering the output parser ONLY happens if the input parser has found a valid command. Otherwise, a generic error message is presented to the user.
+Entering the output parser ONLY happens if the input parser has found a valid ```what``` command. Otherwise, a generic error message is presented to the user.
 
 ## Testing
 
