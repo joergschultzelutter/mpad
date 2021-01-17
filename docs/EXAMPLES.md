@@ -1,6 +1,6 @@
 # MPAD example requests and responses
 
-This is a mere collection of example requests along with their associated responses.
+This is a simple collection of example requests along with their associated responses. 
 
 ## Weather forecasts
 
@@ -18,14 +18,15 @@ External service dependencies:
 | WX report for monday for the user's own current position | ```monday``` | ```18-Jan-21 DF1JSL-1 rain and snow morn:-1c day:1c eve:2c nite:0c``` |
 | | | ```sunrise/set 08:25/16:48UTC rain:1mm snow:2mm clouds:100% uvi:0.3``` |
 | | | ```hPa:1017 hum:98% dewpt:1c wndspd:2m/s wnddeg:223``` |
-| Wx report for zipcode 94043 | ```94043``` | ```17-Jan-21 Zip 94043;US clear sky morn:13c day:19c eve:16c nite:14c``` |
-| country code is added implicity - see |```zip 94043``` gives same results| ```sunrise/set 16:20/02:16UTC clouds:8% uvi:2.6 hPa:1019 hum:43%``` |
-| keyword specification | | ```dewpt:6c wndspd:2m/s wnddeg:353``` |
-| WX report for zipcode 37603 in Germany | ```zip 37603;de``` | ```17-Jan-21 Zip 37603;DE rain and snow morn:-2c day:-0c eve:-1c``` |
-| | | ```nite:1c sunrise/set 08:20/16:43UTC rain:1mm snow:1mm clouds:100%``` |
-| | | ```uvi:0.5 hPa:1018 hum:94% dewpt:-3c wndspd:2m/s wnddeg:165``` |
+| Wx report for zipcode 94043 | ```94043``` | ```17-Jan-21 Mountain View,94043;US clear sky morn:13c day:22c eve:16c``` |
+| country code is added implicity - see |```zip 94043``` returns same results| ```nite:14c sunrise/set 16:20/02:16UTC clouds:1% uvi:2.6 hPa:1019``` |
+| keyword specification | | ```hum:27% dewpt:2c wndspd:2m/s wnddeg:353``` |
+| WX report for zipcode 37603 in Germany | ```zip 37603;de``` | ```17-Jan-21 Holzminden,37603;DE rain and snow morn:-2c day:-0c``` |
+| | | ```eve:-1c nite:1c sunrise/set 08:20/16:43UTC rain:1mm snow:1mm``` |
+| | | ```clouds:100% uvi:0.5 hPa:1018 hum:94% dewpt:-3c wndspd:2m/s``` |
+| | | ```wnddeg:165``` |
 | WX report for Grid JO41du | ```grid jo41du``` | ```17-Jan-21 jo41du rain and snow morn:-1c day:0c eve:1c nite:2c``` |
-| | ```mh jo41du``` gives the same results | ```sunrise/set 08:25/16:48UTC rain:1mm snow:2mm clouds:100% uvi:0.3``` |
+| | ```mh jo41du``` returns same results | ```sunrise/set 08:25/16:48UTC rain:1mm snow:2mm clouds:100% uvi:0.3``` |
 | | | ```hPa:1018 hum:97% dewpt:-1c wndspd:2m/s wnddeg:153``` |
 | Wx report for numeric latitude and longitude | ```50.1211/8.7938``` | ```17-Jan-21 Offenbach am Main;DE rain and snow morn:-1c day:0c``` |
 | | | ```eve:-0c nite:2c sunrise/set 08:16/16:53UTC rain:0mm snow:3mm``` |
@@ -42,6 +43,9 @@ External service dependencies:
 | What do we want | Command string User > MPAD | Response example MPAD > User |
 | --------------- | -------------------------- | ---------------------------- |
 | Nearest repeater with C4FM capability | ```repeater c4fm``` | ```Nearest repeater Hoexter 8 km 225 deg SW Rx 430.4125 Tx 439.8125``` |
+| | | ```Multimode-Digital-Relais (C4FM und DMR), DMR-ID: 262484 C4FM 70cm``` |
+| | | ```JO41QS``` |
+| Nearest repeater on 70cm band | ```repeater 70cm``` | ```Nearest repeater Hoexter 8 km 225 deg SW Rx 430.4125 Tx 439.8125``` |
 | | | ```Multimode-Digital-Relais (C4FM und DMR), DMR-ID: 262484 C4FM 70cm``` |
 | | | ```JO41QS``` |
 | Nearest repeater with C4FM capability and on 70cm band | ```repeater c4fm 70cm``` | ```Nearest repeater Hoexter 8 km 225 deg SW Rx 430.4125 Tx 439.8125``` |
