@@ -223,7 +223,7 @@ def get_next_satellite_pass_for_latlon(
     maximum_time: 'Datetime'
         maximum time
     maximum_altitude: 'float'
-        Maximul altitude
+        Maximum altitude
     set_time: 'Datetime'
         Set time
     set_azimuth: 'float'
