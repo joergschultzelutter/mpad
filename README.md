@@ -20,7 +20,7 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/CWOP prediction, 
 - Very low cpu/traffic footprint thanks to APRS filters and local data caches.
 - Pretty printing of APRS messages. Rather than splitting up the content after a max message len of 67 bytes, the program tries to split the text in a readable way.
 - Human-friendly parser that supports both keyword and non-keyword commands
-- Auto-detection of the user's system of units. Callsigns from the USA, Liberia and Myanmar receive their data in imperial format, while for the rest of the world the metric system is preset. This auto-setting can be overriden with a separate keyword.
+- Auto-detection of the user's system of units. Callsigns from the USA, Liberia and Myanmar will receive their data in imperial format, while for the rest of the world the metric system is preset. This auto-setting can be overriden with a separate keyword.
 - Supports APRS msg acknowledgments, beacons, etc. Also tries to extract APRS msg IDs from APRS messages that do not conform to APRS standards
 - Automatic detection of incoming duplicate / delayed APRS message requests
 
