@@ -110,6 +110,17 @@ def make_pretty_aprs_messages(
     message_to_add = re.sub("[{}|~]+", "", message_to_add)
 
     # Convert the message to plain ascii
+    # Unidecode does not take care of German special characters
+    # Therefore, we need to 'translate' them first
+    message_to_add = (
+        message_to_add.replace("Ä", "Ae")
+        .replace("Ö", "Oe")
+        .replace("Ü", "Ue")
+        .replace("ä", "ae")
+        .replace("ö", "oe")
+        .replace("ü", "ue")
+        .replace("ß", "ss")
+    )
     message_to_add = unidecode(message_to_add)
 
     # If new message is longer than max len then split it up with
@@ -175,7 +186,7 @@ def split_string_to_string_list(message_string: str, max_len: int = 67):
         List array, containing 1..n strings with a max len of 'max_len'
     """
     split_strings = [
-        message_string[index: index + max_len]
+        message_string[index : index + max_len]
         for index in range(0, len(message_string), max_len)
     ]
     return split_strings
@@ -450,7 +461,7 @@ if __name__ == "__main__":
         my_array,
     )
 
-    my_array = make_pretty_aprs_messages("Alter Schwede", my_array)
+    my_array = make_pretty_aprs_messages("Äußerste Grüße aus Höxter", my_array)
     logger.info(my_array)
 
     logger.info("Logtext erfolgreich")
