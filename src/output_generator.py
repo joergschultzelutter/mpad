@@ -641,7 +641,14 @@ def generate_output_message_whereis(response_parameters: dict):
         )
 
     if altitude:
-        human_readable_address = f"Alt {round(altitude)}m"
+        altitude_uom = "m"
+        altitude_value = round(altitude)
+
+        if units == "imperial":
+            altitude_uom = "ft"
+            altitude_value = round(altitude * 3.28084)  # convert m to feet
+
+        human_readable_address = f"Alt {altitude_value}{altitude_uom}"
         output_list = make_pretty_aprs_messages(
             message_to_add=human_readable_address,
             destination_list=output_list,
