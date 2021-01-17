@@ -26,7 +26,13 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/CWOP prediction, 
 
 ## Usage examples and command syntax
 
-[see USAGE](docs/USAGE.md)
+[Usage information](docs/USAGE.md) and the command keywords:
+
+- [Action commands](docs/COMMANDS/ACTION_KEYWORDS.md)
+
+- [Date settings](docs/COMMANDS/DATE_KEYWORDS.md)
+
+- [Daytime settings](docs/COMMANDS/DAYTIME_KEYWORDS.md)
 
 ## Dependencies and external data sources
 
