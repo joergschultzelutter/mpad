@@ -1012,6 +1012,19 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             if success:
                 human_readable_message = f"{message_callsign}"
                 found_my_duty_roster = True
+
+                # (try) to translate into human readable information
+                success, response_data = get_reverse_geopy_data(latitude=latitude, longitude=longitude)
+                if success:
+                    city = response_data["city"]
+                    county = response_data["county"]
+                    country = response_data["country"]
+                    if city:
+                        human_readable_message = city
+                    if not city:
+                        if county:
+                            human_readable_message = county
+                    human_readable_message += f",{country}"
             else:
                 # we haven't found anything? Let's get rid of the SSID and
                 # give it one final try. If we still can't find anything,
@@ -1034,6 +1047,17 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                     if success:
                         found_my_duty_roster = True
                         human_readable_message = f"{message_callsign}"
+                        success, response_data = get_reverse_geopy_data(latitude=latitude,longitude=longitude)
+                        if success:
+                            city = response_data["city"]
+                            county = response_data["county"]
+                            country = response_data["country"]
+                            if city:
+                                human_readable_message = city
+                            if not city:
+                                if county:
+                                    human_readable_message = county
+                            human_readable_message += f",{country}"
                     else:
                         human_readable_message = errmsg_cannot_find_coords_for_user
                         err = True
