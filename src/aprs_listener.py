@@ -183,6 +183,8 @@ def mycallback(raw_aprs_packet):
                         users_callsign=from_callsign,
                         aprsdotfi_api_key=aprsdotfi_api_key,
                     )
+                    logger.info(f"Input parser result: {success}")
+                    logger.info(response_parameters)
                     #
                     # If the 'success' parameter is True, then we should know
                     # by now what the user wants from us. Now, we'll leave it to
