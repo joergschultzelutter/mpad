@@ -231,7 +231,7 @@ Glossary:
 - ```MGRS``` - MGRS coordinates
 - ```LatLon``` - coordinates in numerical format
 - street / zip code / country / city, if available
-- ```alt``` - altitude, if available. Unit of measure is __always__ meters (read: metric system)
+- ```alt``` - altitude in meters or feet, if available. 
 
 ### Sunrise/Sunset and Moonset/Moonrise
 
@@ -402,8 +402,6 @@ Now let's request the same wx report - but this time, we want it to be delivered
 ```hum:68% dewpt:43f wndspd:2mph wnddeg:50```
 
 MPAD does not perform an imperial-to-metric calculation (or vice versa) but requests the desired format as part of its REST requests to e.g. Openweathermap and other services. Apart from rounding these values in order to limit the message length, all data is displayed 'as is'.
-
-Please note that altitude information for the ```whereis``` / ```whereami``` requests is always displayed in meters.
 
 ### Language
 
