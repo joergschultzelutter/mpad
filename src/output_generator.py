@@ -278,7 +278,7 @@ def generate_output_message_wx(
         True if operation was successful. Will only be false in case of a
         fatal error as we need to send something back to the user (even
         if that message is a mere error text)
-    output_message: 'list'
+    output_list: 'list'
         List, containing the message text(s) that we will send to the user
         This is plain text list without APRS message ID's
     """
@@ -289,6 +289,7 @@ def generate_output_message_wx(
     when_daytime = response_parameters["when_daytime"]
     date_offset = response_parameters["date_offset"]
     language = response_parameters["language"]
+    altitude = response_parameters["altitude"]
     human_readable_message = response_parameters["human_readable_message"]
     success, myweather, tz_offset, tz = get_daily_weather_from_openweathermapdotorg(
         latitude=latitude,
@@ -299,10 +300,25 @@ def generate_output_message_wx(
         language=language
     )
     if success:
-        weather_forecast_array = parse_daily_weather_from_openweathermapdotorg(
+        output_list = parse_daily_weather_from_openweathermapdotorg(
             myweather, units, human_readable_message, when, when_daytime
         )
-        return success, weather_forecast_array
+
+        # Add altitude from aprs.fi if present
+        if altitude:
+            altitude_uom = "m"
+            altitude_value = round(altitude)
+
+            if units == "imperial":
+                altitude_uom = "ft"
+                altitude_value = round(altitude * 3.28084)  # convert m to feet
+
+            human_readable_address = f"Alt:{altitude_value}{altitude_uom}"
+            output_list = make_pretty_aprs_messages(
+                message_to_add=human_readable_address,
+                destination_list=output_list,
+            )
+        return success, output_list
     else:
         success = True
         output_list = make_pretty_aprs_messages(
