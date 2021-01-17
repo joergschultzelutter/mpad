@@ -116,6 +116,8 @@ External service dependencies:
 
 - [aprs.fi](www.aprs.fi) for APRS call sign coordinates
 
+The very first usage of this command set will trigger a download of the ```de421.bsp``` ephemeris data file which will take a few seconds to complete. Once that download has been completed, all future attempts to calculate these celestial attempts will use that downloaded data file.
+
 | What do we want | Command string User > MPAD | Response example MPAD > User |
 | --------------- | -------------------------- | ---------------------------- |
 | Sunrise/set and moonset/rise, relative to the user's position | ```riseset``` | ```RiseSet DF1JSL-4 17-Jan GMT sun_rs 07:25-15:49 mn_sr 20:47-09:55``` |
