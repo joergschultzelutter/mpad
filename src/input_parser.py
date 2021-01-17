@@ -284,13 +284,13 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             if not validate_country(country):
                 human_readable_message = f"{errmsg_invalid_country}: '{country}'"
                 err = True
-                if not err:
-                    success, latitude, longitude = get_geocode_geopy_data(geopy_query)
-                    if success:
-                        human_readable_message = f"Zip {zipcode};{country}"
-                    else:
-                        err = True
-                        human_readable_message = errmsg_cannot_find_coords_for_address
+            if not err:
+                success, latitude, longitude = get_geocode_geopy_data(geopy_query)
+                if success:
+                    human_readable_message = f"Zip {zipcode};{country}"
+                else:
+                    err = True
+                    human_readable_message = errmsg_cannot_find_coords_for_address
 
     # check if the user has requested a set of maidenhead coordinates
     # Can either be 4- or 6-character set of maidenhead coordinates
@@ -1028,23 +1028,23 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
 
     # Generate dictionary which contains what we have fund out about the user's request
     response_parameters = {
-        "latitude": latitude,
-        "longitude": longitude,
-        "altitude": altitude,  # altitude UOM is always 'meters'
-        "when": when,
-        "when_daytime": when_daytime,
-        "what": what,
-        "units": units,
-        "message_callsign": message_callsign,
-        "users_callsign": users_callsign,
-        "language": language,
-        "icao": icao,
-        "human_readable_message": human_readable_message,
-        "date_offset": date_offset,
-        "satellite": satellite,
-        "repeater_band": repeater_band,
-        "repeater_mode": repeater_mode,
-        "city": city,
+        "latitude": latitude,   # numeric latitude value
+        "longitude": longitude, # numeric longitude value
+        "altitude": altitude,  # altitude; UOM is always 'meters'
+        "when": when,  # day setting for 'when' command keyword
+        "when_daytime": when_daytime,  # daytime setting for 'when' command keyword
+        "what": what,  # contains the command that the user wants us to execute
+        "units": units,  # units of measure, 'metric' or 'imperial'
+        "message_callsign": message_callsign,  # Call sign from message (if one was specified)
+        "users_callsign": users_callsign, # user's call sign that he has sent the message from
+        "language": language, # iso639-1 a2 message code
+        "icao": icao,  # ICAO code
+        "human_readable_message": human_readable_message,  # Message text header
+        "date_offset": date_offset,  # precalculated date offset, based on 'when' value
+        "satellite": satellite,  # satellite name, e.g. 'ISS'
+        "repeater_band": repeater_band,  # repeater band, e.g. '70cm'
+        "repeater_mode": repeater_mode,  # repeater mode, e.g. 'c4fm'
+        "city": city,  # address information
         "state": state,
         "country": country,
         "county": county,
@@ -1052,8 +1052,8 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         "cwop_id": cwop_id,
         "street": street,
         "street_number": street_number,
-        "users_latitude": users_latitude,
-        "users_longitude": users_longitude,
+        "users_latitude": users_latitude,  # User's own lat / lon. Only used for 'whereis' request
+        "users_longitude": users_longitude, # in reference to another user's call sign
     }
 
     # Finally, set the return code. Unless there was an error, we return a True status
