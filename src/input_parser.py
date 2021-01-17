@@ -1033,7 +1033,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     response_parameters = {
         "latitude": latitude,
         "longitude": longitude,
-        "altitude": altitude,
+        "altitude": altitude,  # altitude UOM is always 'meters'
         "when": when,
         "when_daytime": when_daytime,
         "what": what,
