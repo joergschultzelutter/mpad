@@ -15,7 +15,7 @@ External service dependencies:
 | localised Wx report for the city of Holzminden, Germany | ```Holzminden;de tomorrow lang de``` | ```16-Jan-21 Holzminden;DE Bedeckt morn:-3c day:-1c eve:-2c nite:-2c``` |
 | | | ```sunrise/set 08:21/16:42UTC clouds:89% uvi:0.5 hPa:1026 hum:92%``` |
 | | | ```dewpt:-5c wndspd:2m/s wnddeg:252``` |
-| WX report for monday for the user's own current position | ```monday``` | ```18-Jan-21 DF1JSL-1 rain and snow morn:-1c day:1c eve:2c nite:0c``` |
+| WX report for monday for the user's own current position | ```monday``` | ```18-Jan-21 Hoexter rain and snow morn:-1c day:1c eve:2c nite:0c``` |
 | | | ```sunrise/set 08:25/16:48UTC rain:1mm snow:2mm clouds:100% uvi:0.3``` |
 | | | ```hPa:1017 hum:98% dewpt:1c wndspd:2m/s wnddeg:223``` |
 | Wx report for zipcode 94043 | ```94043``` | ```17-Jan-21 Mountain View,94043;US clear sky morn:13c day:22c eve:16c``` |
