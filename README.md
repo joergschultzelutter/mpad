@@ -24,7 +24,7 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/CWOP prediction, 
 - Supports APRS msg acknowledgments, beacons, etc. Also tries to extract APRS msg IDs from APRS messages that do not conform to APRS standards
 - Automatic detection of incoming duplicate / delayed APRS message requests
 
-## Usage examples and command syntax
+## Usage and command syntax
 
 [Usage information](docs/USAGE.md) and the command keywords:
 
@@ -33,6 +33,10 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/CWOP prediction, 
 - [Date settings](docs/COMMANDS/DATE_KEYWORDS.md)
 
 - [Daytime settings](docs/COMMANDS/DAYTIME_KEYWORDS.md)
+
+## Example requests and responses
+
+[see EXAMPLES](docs/EXAMPLES.md)
 
 ## Dependencies and external data sources
 
