@@ -291,9 +291,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                     else:
                         err = True
                         human_readable_message = errmsg_cannot_find_coords_for_address
-            else:
-                err = True
-                human_readable_message = errmsg_cannot_find_coords_for_address
 
     # check if the user has requested a set of maidenhead coordinates
     # Can either be 4- or 6-character set of maidenhead coordinates
