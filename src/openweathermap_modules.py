@@ -75,7 +75,7 @@ def get_daily_weather_from_openweathermapdotorg(
     weather_tuple = timezone_offset = timezone = None
     success = False
 
-    #fmt: off
+    # fmt: off
     owm_supported_languages = [
         "af", "al", "ar", "az",
         "bg", "ca", "cz", "da",
@@ -90,7 +90,7 @@ def get_daily_weather_from_openweathermapdotorg(
         "th", "tr", "ua", "uk",
         "vi", "cn", "tw", "zu",
     ]
-    #fmt: on
+    # fmt: on
 
     if language not in owm_supported_languages:
         language = "en"
