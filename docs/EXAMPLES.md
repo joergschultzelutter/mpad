@@ -73,12 +73,12 @@ External service dependencies:
 
 ## METAR data
 
-METAR wx reports always return the latest wx data to the user, meaning that you cannot request METAR data for a specific day (such keywords will be ignored)
-
 External service dependencies:
 
-- [Aviation Weather](www.aviationweather.gov) for coordinate transformation (e.g. City/country or zipcode to lat/lon)
+- [Aviation Weather](www.aviationweather.gov) for coordinate transformation (e.g. City/country or zipcode to lat/lon) and the METAR report data
 - [aprs.fi](www.aprs.fi) for APRS call sign coordinates
+
+METAR wx reports always return the latest wx data to the user, meaning that you cannot request METAR data for a specific day (such keywords will be ignored)
 
 
 | What do we want | Command string User > MPAD | Response example MPAD > User |
@@ -95,11 +95,10 @@ External service dependencies:
 
 External service dependencies:
 
-CWOP reports always return the latest wx data to the user, meaning that you cannot request CWOP data for a specific day (such keywords will be ignored)
-
 - [aprs.fi](www.aprs.fi) for APRS call sign coordinates
 - [findu.com](www.findu.com) for the CWOP data
 
+CWOP reports always return the latest wx data to the user, meaning that you cannot request CWOP data for a specific day (such keywords will be ignored)
 
 | What do we want | Command string User > MPAD | Response example MPAD > User |
 | --------------- | -------------------------- | ---------------------------- |
