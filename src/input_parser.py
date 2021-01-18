@@ -233,7 +233,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             if not err:
                 success, latitude, longitude = get_geocode_geopy_data(geopy_query)
                 if success:
-                    what = "wx"
+                    what = "wx"  # We know now that we want a wx report
                     human_readable_message = city
                     if state and country == "US":
                         human_readable_message += f",{state}"
@@ -261,10 +261,11 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                 regex_string, "", aprs_message, flags=re.IGNORECASE
             ).strip()
             found_my_duty_roster = True
+            # prepare the geopy reverse lookup string
             geopy_query = {"postalcode": zipcode, "country": country}
         if not found_my_duty_roster:
-            # check for a 5-digit zip code with prefix and assume
-            # that the user wants a US zip code if matched
+            # check for a 5-digit zip code with keyword
+            # If match: assume that the user wants a US zip code
             regex_string = r"(zip)\s*([0-9]{5})"
             matches = re.findall(
                 pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
@@ -277,6 +278,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                     regex_string, "", aprs_message, flags=re.IGNORECASE
                 ).strip()
                 found_my_duty_roster = True
+                # prepare the geopy reverse lookup string
                 geopy_query = {"postalcode": zipcode, "country": country}
         # Did I find something at all?
         # Yes; send the query to GeoPy and get lat/lon for the address
@@ -285,13 +287,20 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             if not validate_country(country):
                 human_readable_message = f"{errmsg_invalid_country}: '{country}'"
                 err = True
-            if not err:
+                what = None
+            else:
+                # Perform a reverse lookup. Query string was already pre-prepared.
                 success, latitude, longitude = get_geocode_geopy_data(geopy_query)
                 if success:
+                    # We only need latitude/longitude in order to get the wx report
+                    # Therefore, we can already set the 'what' command keyword'
+                    what = "wx"
                     # Pre-build the output message
                     human_readable_message = f"Zip {zipcode};{country}"
                     # but try to get a real city name
-                    success, response_data = get_reverse_geopy_data(latitude=latitude, longitude=longitude)
+                    success, response_data = get_reverse_geopy_data(
+                        latitude=latitude, longitude=longitude
+                    )
                     if success:
                         city = response_data["city"]
                         if city:
@@ -339,7 +348,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                 found_my_duty_roster = True
                 human_readable_message = f"METAR for '{icao}'"
                 # If we did find the airport but it is not METAR-capable,
-                # then supply a wx report instead
+                # then provide a wx report instead
                 if not metar_capable:
                     what = "wx"
                     icao = None
@@ -367,7 +376,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                 found_my_duty_roster = True
                 human_readable_message = f"METAR for '{icao}'"
                 # If we did find the airport but it is not METAR-capable,
-                # then supply a wx report instead
+                # then provide a wx report instead
                 if not metar_capable:
                     what = "wx"
                     icao = None
@@ -415,11 +424,10 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                             human_readable_message += f";{country}"
                 else:
                     # We didn't find anything; use the original input
-                    human_readable_message = (
-                        f"latitude {latitude}/longitude {longitude}"
-                    )
+                    human_readable_message = f"lat {latitude}/lon {longitude}"
                 aprs_message = re.sub(regex_string, "", aprs_message).strip()
                 found_my_duty_roster = True
+                what = "wx"
             else:
                 human_readable_message = "Error while parsing coordinates"
                 err = True
@@ -708,12 +716,12 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # might change in the future
     # hint: setting is not tied to the program's duty roster
     regex_string = r"(lang|lng)\s*([a-zA-Z]{2})"
-    matches = re.search(
-        pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-    )
+    matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
         language = matches[2].lower()
-        aprs_message = re.sub(regex_string, "", aprs_message, flags=re.IGNORECASE).strip()
+        aprs_message = re.sub(
+            regex_string, "", aprs_message, flags=re.IGNORECASE
+        ).strip()
 
     #
     # We have reached the end of the 'standard' position data processing
@@ -745,6 +753,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                     state = None
                     country = "US"
                     found_my_duty_roster = True
+                    what = "wx"
                     human_readable_message = f"Zip {zipcode};{country}"
                     success, latitude, longitude = get_geocode_geopy_data(
                         {"postalcode": zipcode, "country": country}
@@ -755,7 +764,9 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                         break
                     else:
                         # Finally, try to get a real city name
-                        success, response_data = get_reverse_geopy_data(latitude=latitude, longitude=longitude)
+                        success, response_data = get_reverse_geopy_data(
+                            latitude=latitude, longitude=longitude
+                        )
                         if success:
                             city = response_data["city"]
                             if city:
@@ -771,6 +782,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                 if matches:
                     (latitude, longitude) = maidenhead.to_location(matches[0])
                     found_my_duty_roster = True
+                    what = "wx"
                     human_readable_message = f"{matches[0]}"
 
             # Look for a call sign either with or without SSID
@@ -811,6 +823,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                         err = True
                     else:
                         human_readable_message = message_callsign
+                        what = "wx"
 
             # Try to check if the user has submitted an ICAO code without
             # submitting a specific pre- qualifier prefix
@@ -854,7 +867,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                             icao = None
                             human_readable_message = f"Wx for '{icao}'"
 
-            # if the user has specified the 'metar' request, then
+            # if the user has specified the 'metar' keyword, then
             # try to determine the nearest airport in relation to
             # the user's own call sign position
             matches = re.search(r"^(metar)$", word, re.IGNORECASE)
@@ -972,6 +985,11 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # Default checks outside of the 'for' loop - we may not have everything we
     # need to process the user's message yet so let's have a look.
 
+    # Check if we found ANYTHING valid at all
+    if not what and not when and not when_daytime:
+        human_readable_message = errmsg_invalid_command
+        err = True
+
     # Apply default to 'when' setting if still not populated
     if not found_when and not err:
         when = "today"
@@ -1014,7 +1032,9 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                 found_my_duty_roster = True
 
                 # (try) to translate into human readable information
-                success, response_data = get_reverse_geopy_data(latitude=latitude, longitude=longitude)
+                success, response_data = get_reverse_geopy_data(
+                    latitude=latitude, longitude=longitude
+                )
                 if success:
                     city = response_data["city"]
                     county = response_data["county"]
@@ -1047,7 +1067,9 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                     if success:
                         found_my_duty_roster = True
                         human_readable_message = f"{message_callsign}"
-                        success, response_data = get_reverse_geopy_data(latitude=latitude,longitude=longitude)
+                        success, response_data = get_reverse_geopy_data(
+                            latitude=latitude, longitude=longitude
+                        )
                         if success:
                             city = response_data["city"]
                             county = response_data["county"]
@@ -1067,16 +1089,16 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
 
     # Generate dictionary which contains what we have fund out about the user's request
     response_parameters = {
-        "latitude": latitude,   # numeric latitude value
-        "longitude": longitude, # numeric longitude value
+        "latitude": latitude,  # numeric latitude value
+        "longitude": longitude,  # numeric longitude value
         "altitude": altitude,  # altitude; UOM is always 'meters'
         "when": when,  # day setting for 'when' command keyword
         "when_daytime": when_daytime,  # daytime setting for 'when' command keyword
         "what": what,  # contains the command that the user wants us to execute
         "units": units,  # units of measure, 'metric' or 'imperial'
         "message_callsign": message_callsign,  # Call sign from message (if one was specified)
-        "users_callsign": users_callsign, # user's call sign that he has sent the message from
-        "language": language, # iso639-1 a2 message code
+        "users_callsign": users_callsign,  # user's call sign that he has sent the message from
+        "language": language,  # iso639-1 a2 message code
         "icao": icao,  # ICAO code
         "human_readable_message": human_readable_message,  # Message text header
         "date_offset": date_offset,  # precalculated date offset, based on 'when' value
@@ -1092,7 +1114,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         "street": street,
         "street_number": street_number,
         "users_latitude": users_latitude,  # User's own lat / lon. Only used for 'whereis' request
-        "users_longitude": users_longitude, # in reference to another user's call sign
+        "users_longitude": users_longitude,  # in reference to another user's call sign
     }
 
     # Finally, set the return code. Unless there was an error, we return a True status
