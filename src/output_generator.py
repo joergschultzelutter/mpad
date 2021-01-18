@@ -297,7 +297,7 @@ def generate_output_message_wx(
         units=units,
         date_offset=date_offset,
         openweathermap_api_key=openweathermapdotorg_api_key,
-        language=language
+        language=language,
     )
     if success:
         output_list = parse_daily_weather_from_openweathermapdotorg(
