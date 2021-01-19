@@ -1,6 +1,6 @@
 # MPAD example requests and responses
 
-This is a simple collection of example requests along with their associated responses. 
+This is a simple collection of sample queries along with their associated responses.
 
 ## Weather forecasts
 
@@ -15,23 +15,24 @@ External service dependencies:
 | localised Wx report for the city of Holzminden, Germany | ```Holzminden;de tomorrow lang de``` | ```16-Jan-21 Holzminden;DE Bedeckt morn:-3c day:-1c eve:-2c nite:-2c``` |
 | | | ```sunrise/set 08:21/16:42UTC clouds:89% uvi:0.5 hPa:1026 hum:92%``` |
 | | | ```dewpt:-5c wndspd:2m/s wnddeg:252``` |
-| WX report for monday for the user's own current position | ```monday``` | ```18-Jan-21 Hoexter rain and snow morn:-1c day:1c eve:2c nite:0c``` |
+| WX report for monday for the user's own current position | ```monday``` | ```18-Jan-21 Hoexter;DE rain and snow morn:-1c day:1c eve:2c nite:0c``` |
 | | | ```sunrise/set 08:25/16:48UTC rain:1mm snow:2mm clouds:100% uvi:0.3``` |
 | | | ```hPa:1017 hum:98% dewpt:1c wndspd:2m/s wnddeg:223``` |
-| Wx report for zipcode 94043 | ```94043``` | ```17-Jan-21 Mountain View,94043;US clear sky morn:13c day:22c eve:16c``` |
-| country code is added implicitly for a 5-digit zip - see keyword spec |```zip 94043``` returns same results| ```nite:14c sunrise/set 16:20/02:16UTC clouds:1% uvi:2.6 hPa:1019``` |
-| | | ```hum:27% dewpt:2c wndspd:2m/s wnddeg:353``` |
-| WX report for zipcode 37603 in Germany | ```zip 37603;de``` | ```17-Jan-21 Holzminden,37603;DE rain and snow morn:-2c day:-0c``` |
-| | | ```eve:-1c nite:1c sunrise/set 08:20/16:43UTC rain:1mm snow:1mm``` |
-| | | ```clouds:100% uvi:0.5 hPa:1018 hum:94% dewpt:-3c wndspd:2m/s``` |
-| | | ```wnddeg:165``` |
-| WX report for Grid JO41du | ```grid jo41du``` | ```17-Jan-21 jo41du rain and snow morn:-1c day:0c eve:1c nite:2c``` |
-| | ```mh jo41du``` returns same results | ```sunrise/set 08:25/16:48UTC rain:1mm snow:2mm clouds:100% uvi:0.3``` |
-| | | ```hPa:1018 hum:97% dewpt:-1c wndspd:2m/s wnddeg:153``` |
-| Wx report for numeric latitude and longitude | ```50.1211/8.7938``` | ```17-Jan-21 Offenbach am Main;DE rain and snow morn:-1c day:0c``` |
-| | | ```eve:-0c nite:2c sunrise/set 08:16/16:53UTC rain:0mm snow:3mm``` |
-| | | ```clouds:100% uvi:0.4 hPa:1019 hum:96% dewpt:-1c wndspd:1m/s``` |
-| | | ```wnddeg:204``` |
+| WX report for monday for another user's position | ```wa1gov-10 monday``` | ```20-Jan-21 Taunton,MA,02718;US overcast clouds morn:-1c day:1c``` |
+| | | ```eve:0c nite:-4c sunrise/set 13:06/22:43UTC clouds:100% uvi:0.9```|
+| | |```hPa:1010 hum:84% dewpt:-4c wndspd:1m/s wnddeg:280```|
+| Wx report for zipcode 94043 |```94043``` | ```17-Jan-21 Mountain View,94043;US clear sky morn:13c day:22c eve:16c```|
+| country code is added implicitly for a 5-digit zip - see keyword spec |```zip 94043``` returns same results| ```nite:14c sunrise/set 16:20/02:16UTC clouds:1% uvi:2.6 hPa:1019```|
+| | |```hum:27% dewpt:2c wndspd:2m/s wnddeg:353```|
+| WX report for zipcode 37603 in Germany |```zip 37603;de``` | ```19-Jan-21 Holzminden,37603;DE moderate rain morn:3c day:4c eve:8c```|
+| | |```nite:5c sunrise/set 08:18/16:46UTC rain:13mm clouds:100% uvi:0.3```|
+| | |```hPa:1006 hum:90% dewpt:3c wndspd:7m/s wnddeg:217'``|
+| WX report for Grid JO41du |```grid jo41du``` | ```17-Jan-21 jo41du rain and snow morn:-1c day:0c eve:1c nite:2c```|
+| |```mh jo41du``` or ```jo41du``` returns same results | ```sunrise/set 08:25/16:48UTC rain:1mm snow:2mm clouds:100% uvi:0.3```|
+| | |```hPa:1018 hum:97% dewpt:-1c wndspd:2m/s wnddeg:153```|
+| Wx report for numeric latitude and longitude|```50.1211/8.7938``` | ```19-Jan-21 Offenbach am Main,63075;DE moderate rain morn:2c day:3c```|
+| | |```eve:5c nite:3c sunrise/set 08:14/16:56UTC rain:5mm clouds:100%```|
+| | |```uvi:0.1 hPa:1014 hum:79% dewpt:0c wndspd:8m/s wnddeg:217```|
 
 ## Repeater
 
@@ -75,16 +76,16 @@ External service dependencies:
 
 External service dependencies:
 
-- [Aviation Weather](www.aviationweather.gov) for coordinate transformation (e.g. City/country or zipcode to lat/lon) and the METAR report data
+- [Aviation Weather](www.aviationweather.gov) for coordinate transformation (e.g. City/country or zipcode to lat/lon) and  METAR report data
 - [aprs.fi](www.aprs.fi) for APRS call sign coordinates
 
-METAR wx reports always return the latest wx data to the user, meaning that you cannot request METAR data for a specific day (such keywords will be ignored)
+METAR reports always return the latest wx data to the user. So METAR data cannot be requested for a specific day (corresponding keywords are ignored).
 
 
 | What do we want | Command string User > MPAD | Response example MPAD > User |
 | --------------- | -------------------------- | ---------------------------- |
-| METAR data of a METAR-capable airport, relative to the user's position | ```metar``` | |
-| METAR data of a METAR-capable airport, relative to another user's position | ```metar wa1gov-10``` | ```KTAN 171752Z AUTO 25013G27KT 10SM BKN055 07/M05 A2945 RMK AO2 PK``` |
+| METAR data of a METAR-enabled airport, related to the user's position | ```metar``` | |
+| METAR data of a METAR-enabled airport, related to another user's position | ```metar wa1gov-10``` | ```KTAN 171752Z AUTO 25013G27KT 10SM BKN055 07/M05 A2945 RMK AO2 PK``` |
 | | | ```WND 22027/1747 SLP971 T00721050 10083 20022 56007``` |
 | METAR data for ICAO code EDDF | ```icao eddf``` | ```EDDF 171750Z 22004KT 5000 BR BKN004 OVC011 00/M01 Q1022 R25C/290095``` |
 | | | ```R25L/290095 R18/290095 TEMPO SCT004``` |
@@ -98,15 +99,15 @@ External service dependencies:
 - [aprs.fi](www.aprs.fi) for APRS call sign coordinates
 - [findu.com](www.findu.com) for the CWOP data
 
-CWOP reports always return the latest wx data to the user, meaning that you cannot request CWOP data for a specific day (such keywords will be ignored)
+METAR reports always return the latest wx data to the user. So METAR data cannot be requested for a specific day (corresponding keywords are ignored).
 
 | What do we want | Command string User > MPAD | Response example MPAD > User |
 | --------------- | -------------------------- | ---------------------------- |
-| CWOP report, relative to the user's position | ```cwop``` | ```CWOP AT166 17-Jan-21 0C Spd 0.0km/h Gust 1.6km/h Hum 94%``` |
+| CWOP report, related to the user's position | ```cwop``` | ```CWOP AT166 17-Jan-21 0C Spd 0.0km/h Gust 1.6km/h Hum 94%``` |
 | | | ```Pres 1017.9mb Rain(cm) 1h=0.03, 24h=0.10, mn=0.10``` |
-| CWOP report, relative to another user's position | ```cwop wa1gov-10``` | ```CWOP FW8220 17-Jan-21 6C 332deg Spd 8.0km/h Gust 32.2km/h Hum 52%``` |
+| CWOP report, related to another user's position | ```cwop wa1gov-10``` | ```CWOP FW8220 17-Jan-21 6C 332deg Spd 8.0km/h Gust 32.2km/h Hum 52%``` |
 | | | ```Pres 997.4mb Rain(cm) 1h=0.0, 24h=0.0, mn=0.0``` |
-| CWOP report for a specific station | ```cwop dl6mm-4``` | ```CWOP DL6MM-4 17-Jan-21 0C 0deg Spd 0.0km/h Gust 0.0km/h Hum 91%``` |
+| CWOP report for a specific CWOP station ID | ```cwop dl6mm-4``` | ```CWOP DL6MM-4 17-Jan-21 0C 0deg Spd 0.0km/h Gust 0.0km/h Hum 91%``` |
 | | | ```Pres 1018.1mb Rain(cm) 1h=0.0, 24h=0.0, mn=0.0``` |
 
 ## Sunrise/Sunset and Moonset/Moonrise
@@ -115,7 +116,7 @@ External service dependencies:
 
 - [aprs.fi](www.aprs.fi) for APRS call sign coordinates
 
-The very first usage of this command set will trigger a download of the ```de421.bsp``` ephemeris data file which will take a few seconds to complete. Once that download has been completed, all future attempts to calculate these celestial attempts will use that downloaded data file.
+The very first usage of this command set will trigger a download of the ```de421.bsp``` ephemeris data file which will take a few seconds to complete. Once that download has been completed, all future attempts to calculate these celestial attempts will use that previously downloaded data file.
 
 | What do we want | Command string User > MPAD | Response example MPAD > User |
 | --------------- | -------------------------- | ---------------------------- |
