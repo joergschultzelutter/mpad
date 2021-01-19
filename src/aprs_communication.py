@@ -30,13 +30,16 @@ import mpad_config
 # Note: these HAVE to have 67 characters (or less) per entry
 # MPAD will NOT check the content and send it out 'as is'
 bulletin_texts: dict = {
-    "BLN0": f"{mpad_config.mpad_alias} {mpad_config.mpad_version} Multi-Purpose APRS Bot",
+    "BLN0": f"{mpad_config.mpad_alias} {mpad_config.mpad_version} Multi-Purpose APRS Daemon",
     #    "BLN1": f"I have just hatched and am still in alpha test mode. More useful",
     #    "BLN2": f"information is going to be added here very soon. Thank you.",
 }
 
 # APRS_IS beacon texts (will be sent every 30 mins)
-# Note: these HAVE to have 67 characters or less per entry
+# - APRS Position (first line) needs to have 43 characters or less
+# - APRS Status can have 67 chars (as usual)
+# Details: see aprs101.pdf chapter 8
+
 # MPAD will NOT check the content and send it out 'as is'
 #
 # This message is a position report; format description can be found on pg. 23ff.
@@ -54,7 +57,7 @@ bulletin_texts: dict = {
 # The overall total symbol code /? refers to a server icon - see list of symbols
 #
 beacon_text_array: list = [
-    f"={mpad_config.mpad_latitude}{mpad_config.aprs_table}{mpad_config.mpad_longitude}{mpad_config.aprs_symbol}{mpad_config.mpad_alias} {mpad_config.mpad_version}",
+    f"={mpad_config.mpad_latitude}{mpad_config.aprs_table}{mpad_config.mpad_longitude}{mpad_config.aprs_symbol}{mpad_config.mpad_alias} {mpad_config.mpad_version} /A={mpad_config.mpad_beacon_altitude_ft:06}",
     #    ">My tiny little APRS bot (pre-alpha testing)",
 ]
 
@@ -109,7 +112,7 @@ def send_beacon_and_status_msg(myaprsis: aprslib.inet.IS, simulate_send: bool = 
         if not simulate_send:
             logger.info(f"Sending beacon: {stringtosend}")
             myaprsis.sendall(stringtosend)
-            time.sleep(mpad_config.packet_delay_short)
+            time.sleep(mpad_config.packet_delay_other)
         else:
             logger.info(f"Simulating beacons: {stringtosend}")
 
@@ -138,7 +141,7 @@ def send_bulletin_messages(myaprsis: aprslib.inet.IS, simulate_send: bool = True
         if not simulate_send:
             logger.info(f"Sending bulletin: {stringtosend}")
             myaprsis.sendall(stringtosend)
-            time.sleep(mpad_config.packet_delay_short)
+            time.sleep(mpad_config.packet_delay_other)
         else:
             logger.info(f"simulating bulletins: {stringtosend}")
 
@@ -178,7 +181,7 @@ def send_ack(
         if not simulate_send:
             logger.info(f"Sending acknowledgment receipt: {stringtosend}")
             myaprsis.sendall(stringtosend)
-            time.sleep(mpad_config.packet_delay_short)
+            time.sleep(mpad_config.packet_delay_other)
         else:
             logger.info(f"Simulating acknowledgment receipt: {stringtosend}")
 
@@ -230,7 +233,7 @@ def send_aprs_message_list(
             myaprsis.sendall(stringtosend)
         else:
             logger.info(f"Simulating response message '{stringtosend}'")
-        time.sleep(mpad_config.packet_delay_long)
+        time.sleep(mpad_config.packet_delay_message)
     return number_of_served_packages
 
 

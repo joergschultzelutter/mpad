@@ -417,8 +417,8 @@ try:
             logger.info(msg="Cannot re-establish connection to APRS_IS")
         # Write the number of served packages to disc
         write_number_of_served_packages(served_packages=number_of_served_packages)
-        logger.info(msg=f"Sleeping {mpad_config.packet_delay_long} secs")
-        time.sleep(mpad_config.packet_delay_long)
+        logger.info(msg=f"Sleeping {mpad_config.packet_delay_message} secs")
+        time.sleep(mpad_config.packet_delay_message)
 #        AIS.close()
 except (KeyboardInterrupt, SystemExit):
     logger.info("received exception!")

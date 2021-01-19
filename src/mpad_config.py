@@ -34,10 +34,10 @@ aprs_symbol: str = "?"  # APRS symbol: Server
 #
 # Delay settings: These sleep settings are applied for each SINGLE message that is sent out
 # to APRS-IS. If the program has to send two bulletin messages, then the total run time of\
-# sending out those bulletins is 2 * 3 secs
+# sending out those bulletins is 2 * x secs
 #
-packet_delay_long: float = 5.0  # packet delay in seconds after sending data to aprs-is
-packet_delay_short: float = 3.0  # packet delay after sending an acknowledgment, bulletin or beacon
+packet_delay_message: float = 6.0  # packet delay in seconds after sending data to aprs-is
+packet_delay_other: float = 6.0  # packet delay after sending an acknowledgment, bulletin or beacon
 #
 ##########################
 # Configuration settings #
@@ -52,11 +52,15 @@ packet_delay_short: float = 3.0  # packet delay after sending an acknowledgment,
 # your package might get rejected and/or not surface on aprs.fi
 # Degrees: lat: 0-90, lon: 0-180
 # Minutes and Seconds: 00-60
+# Bearing: latitude N or S, longitude: E or W
 mpad_latitude: str = "ddmm.ssN"  # 8 chars fixed length, ddmm.ssN
 mpad_longitude: str = "dddmm.ssE"  # 9 chars fixed length, dddmm.ssE
 #
 # Program alias: This is the APRS name that will be used for all outgoing messages
 mpad_alias: str = "MPAD"  # Identifier for sending outgoing data to APRS-IS
+#
+# Altitude in *FEET* (not meters) for APRS beacon. Details: see aprs101.pdf chapter 8
+mpad_beacon_altitude_ft = 123
 #
 # APRS "TOCALL" identifier - see http://aprs.org/aprs11/tocalls.txt
 # Needs to get its own identifier at a later point in time

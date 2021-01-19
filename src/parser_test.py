@@ -35,4 +35,4 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
     logger = logging.getLogger(__name__)
 
-    testcall(message_text="Erding;de lang pl",from_callsign="df1jsl-1")
+    testcall(message_text="whereami imperial",from_callsign="df1jsl-1")
