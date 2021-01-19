@@ -302,9 +302,17 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                         latitude=latitude, longitude=longitude
                     )
                     if success:
+                        # extract all fields as they will be used for the creation of the
+                        # outgoing data dictionary
                         city = response_data["city"]
-                        if city:
-                            human_readable_message = f"{city},{zipcode};{country}"
+                        state = response_data["state"]
+                        country = response_data["country"]
+                        #zipcode = response_data["zipcode"]
+                        county = response_data["county"]
+                        street = response_data["street"]
+                        street_number = response_data["street_number"]
+                        # build the HRM message based on the given data
+                        human_readable_message = build_human_readable_address_message(response_data)
                 else:
                     err = True
                     human_readable_message = errmsg_cannot_find_coords_for_address
@@ -324,6 +332,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             (latitude, longitude) = maidenhead.to_location(matches[2])
             found_my_duty_roster = True
             human_readable_message = f"{matches[2]}"
+            what = "wx"
             aprs_message = re.sub(
                 regex_string, "", aprs_message, flags=re.IGNORECASE
             ).strip()
@@ -404,26 +413,19 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                     latitude=latitude, longitude=longitude, language=language
                 )
                 if success:
-                    # extract response fields; one/all can be 'None'
+                    # extract all fields as they will be used for the creation of the
+                    # outgoing data dictionary
                     city = response_data["city"]
                     state = response_data["state"]
                     country = response_data["country"]
                     zipcode = response_data["zipcode"]
+                    county = response_data["county"]
                     street = response_data["street"]
                     street_number = response_data["street_number"]
-                    if city:
-                        human_readable_message = city
-                        if country:
-                            # Geopy returns the state information as full-length
-                            # text. Let's use the zip code in order to limit the
-                            # space that is used in the message
-                            if zipcode and country == "US":
-                                human_readable_message = (
-                                    f"{human_readable_message},{zipcode}"
-                                )
-                            human_readable_message += f";{country}"
+                    # build the HRM message based on the given data
+                    human_readable_message = build_human_readable_address_message(response_data)
                 else:
-                    # We didn't find anything; use the original input
+                    # We didn't find anything; use the original input for the HRM
                     human_readable_message = f"lat {latitude}/lon {longitude}"
                 aprs_message = re.sub(regex_string, "", aprs_message).strip()
                 found_my_duty_roster = True
@@ -500,7 +502,8 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                     success, response_data = get_reverse_geopy_data(
                         latitude=latitude, longitude=longitude
                     )
-                    # extract response fields; one/all can be 'None'
+                    # extract all fields as they will be used for the creation of the
+                    # outgoing data dictionary
                     city = response_data["city"]
                     state = response_data["state"]
                     country = response_data["country"]
@@ -768,9 +771,17 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                             latitude=latitude, longitude=longitude
                         )
                         if success:
+                            # extract all fields as they will be used for the creation of the
+                            # outgoing data dictionary
                             city = response_data["city"]
-                            if city:
-                                human_readable_message = f"{city},{zipcode};{country}"
+                            state = response_data["state"]
+                            country = response_data["country"]
+                            # zipcode = response_data["zipcode"]
+                            county = response_data["county"]
+                            street = response_data["street"]
+                            street_number = response_data["street_number"]
+                            # build the HRM message based on the given data
+                            human_readable_message = build_human_readable_address_message(response_data)
 
             # Look for a 4..6 character Maidenhead coordinate
             if not found_my_duty_roster and not err:
@@ -830,24 +841,17 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                             latitude=latitude, longitude=longitude
                         )
                         if success:
+                            # extract all fields as they will be used for the creation of the
+                            # outgoing data dictionary
                             city = response_data["city"]
                             state = response_data["state"]
-                            county = response_data["county"]
                             country = response_data["country"]
                             zipcode = response_data["zipcode"]
-                            if city:
-                                human_readable_message = city
-                                if country:
-                                    if country == "US":
-                                        if state:
-                                            human_readable_message += f",{state}"
-                                if zipcode:
-                                    human_readable_message += f",{zipcode}"
-                            if not city:
-                                if county:
-                                    human_readable_message = county
-                            if country:
-                                human_readable_message += f";{country}"
+                            county = response_data["county"]
+                            street = response_data["street"]
+                            street_number = response_data["street_number"]
+                            # build the HRM message based on the given data
+                            human_readable_message = build_human_readable_address_message(response_data)
 
             # Try to check if the user has submitted an ICAO code without
             # submitting a specific pre- qualifier prefix
@@ -1060,24 +1064,17 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                     latitude=latitude, longitude=longitude
                 )
                 if success:
+                    # extract all fields as they will be used for the creation of the
+                    # outgoing data dictionary
                     city = response_data["city"]
                     state = response_data["state"]
-                    county = response_data["county"]
                     country = response_data["country"]
                     zipcode = response_data["zipcode"]
-                    if city:
-                        human_readable_message = city
-                        if country:
-                            if country == "US":
-                                if state:
-                                    human_readable_message += f",{state}"
-                        if zipcode:
-                            human_readable_message += f",{zipcode}"
-                    if not city:
-                        if county:
-                            human_readable_message = county
-                    if country:
-                        human_readable_message += f";{country}"
+                    county = response_data["county"]
+                    street = response_data["street"]
+                    street_number = response_data["street_number"]
+                    # build the HRM message based on the given data
+                    human_readable_message = build_human_readable_address_message(response_data)
             else:
                 # we haven't found anything? Let's get rid of the SSID and
                 # give it one final try. If we still can't find anything,
@@ -1104,15 +1101,17 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                             latitude=latitude, longitude=longitude
                         )
                         if success:
+                            # extract all fields as they will be used for the creation of the
+                            # outgoing data dictionary
                             city = response_data["city"]
-                            county = response_data["county"]
+                            state = response_data["state"]
                             country = response_data["country"]
-                            if city:
-                                human_readable_message = city
-                            if not city:
-                                if county:
-                                    human_readable_message = county
-                            human_readable_message += f",{country}"
+                            zipcode = response_data["zipcode"]
+                            county = response_data["county"]
+                            street = response_data["street"]
+                            street_number = response_data["street_number"]
+                            # build the HRM message based on the given data
+                            human_readable_message = build_human_readable_address_message(response_data)
                     else:
                         human_readable_message = errmsg_cannot_find_coords_for_user
                         err = True
@@ -1286,6 +1285,49 @@ def parse_when_daytime(word: str):
         found_when_daytime = True
 
     return found_when_daytime, when_daytime
+
+
+def build_human_readable_address_message(response_data: dict):
+    """
+    Build the 'human readable message' based on the reverse-lookup
+    from OpenStreetMap
+
+    Note: State information is ignored unless country=US. OSM does not
+    provide 'state' information in an abbreviated format and we need
+    to keep the message as brief as possible
+
+    Parameters
+    ==========
+    response_data : 'dict'
+        Dictionary as received via get_reverse_geopy_data()
+
+    Returns
+    =======
+    human_readable_message: 'str'
+        The human readable message string
+    """
+
+    human_readable_message = ""
+    city = response_data["city"]
+    state = response_data["state"]
+    country = response_data["country"]
+    zipcode = response_data["zipcode"]
+    county = response_data["county"]
+    if city:
+        human_readable_message = city
+        if country:
+            if country == "US":
+                if state:
+                    human_readable_message += f",{state}"
+        if zipcode:
+            human_readable_message += f",{zipcode}"
+    if not city:
+        if county:
+            human_readable_message = county
+    if country:
+        human_readable_message += f";{country}"
+
+    return human_readable_message
 
 
 if __name__ == "__main__":
