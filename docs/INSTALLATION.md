@@ -41,7 +41,7 @@ You also need to set the APRS-IS access and server credentials:
     - ```mpad_callsigns_to_parse```. This is the __secondary filter__. Unlike the primary filter, this one is controlled by MPAD itself and similar to the APRS-IS filter, you can specify 1..n call signs. Obviously, at least a subset of these call signs must be present in the APRS-IS filter because otherwise, MPAD won't even see the message. This 2nd filter mainly exists for debugging purposes; you can broaden the APRS-IS filter (e.g. program call sign and your personal call sign) and then use the 2nd filter for some software development magic.
 - ```aprsis_server_name``` and ```aprsis_server_port```. APRS-IS server/port that the program tries to connect with. Self-explanatory (I hope).
 - Tune the ```mpad_msg_cache_time_to_live``` parameter if too many messages are detected as duplicates and are not getting processed. Default is 5 mins
-
+- Configure the ```mpad_beacon_altitude_ft``` parameter. This is the beacon's altitude in __feet__ (not in meters)
 
 Excerpt from ```mpad_config.py```:
 ```python
@@ -83,6 +83,9 @@ mpad_longitude: str = "dddmm.ssE"  # 9 chars fixed length, dddmm.ssE
 #
 # Program alias: This is the APRS name that will be used for all outgoing messages
 mpad_alias: str = "MPAD"  # Identifier for sending outgoing data to APRS-IS
+#
+# Altitude in *FEET* (not meters) for APRS beacon. Details: see aprs101.pdf chapter 8
+mpad_beacon_altitude_ft = 123
 #
 # APRS "TOCALL" identifier - see http://aprs.org/aprs11/tocalls.txt
 # Needs to get its own identifier at a later point in time
