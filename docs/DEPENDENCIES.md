@@ -11,7 +11,7 @@ The following Python packages need to be installed:
 - [geopy](https://github.com/geopy/geopy)
 - [iso3166](https://github.com/deactivated/python-iso3166)
 - [maidenhead](https://github.com/space-physics/maidenhead)
-- [pymgrs](https://github.com/aydink/pymgrs) Note: this is not a pip package; download the file and add it to the source's directory
+- [pymgrs](https://github.com/aydink/pymgrs) Note: this is not a pip package; download the .py file and add it to the source's directory
 - [requests](https://github.com/psf/requests)
 - [skyfield](https://github.com/skyfielders/python-skyfield)
 - [timezonefinder](https://github.com/MrMinimal64/timezonefinder) (currently not in use)
