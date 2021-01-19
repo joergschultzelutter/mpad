@@ -1,7 +1,6 @@
 #
 # Multi-Purpose APRS Daemon: CWOP data retrieval
 # Author: Joerg Schultze-Lutter, 2020
-# Reimplements parts of the WXBOT code from Martin Nile (KI6WJP)
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

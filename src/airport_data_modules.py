@@ -1,7 +1,6 @@
 #
 # Multi-Purpose APRS Daemon: Airport Data Modules
 # Author: Joerg Schultze-Lutter, 2020
-# Reimplements parts of the WXBOT code from Martin Nile (KI6WJP)
 #
 # Purpose: Find nearest airport (or based on the given airport code)
 #
