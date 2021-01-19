@@ -19,7 +19,7 @@ External service dependencies:
 | | | ```sunrise/set 08:25/16:48UTC rain:1mm snow:2mm clouds:100% uvi:0.3``` |
 | | | ```hPa:1017 hum:98% dewpt:1c wndspd:2m/s wnddeg:223``` |
 | Wx report for zipcode 94043 | ```94043``` | ```17-Jan-21 Mountain View,94043;US clear sky morn:13c day:22c eve:16c``` |
-| country code is added implicitly - see keyword spec |```zip 94043``` returns same results| ```nite:14c sunrise/set 16:20/02:16UTC clouds:1% uvi:2.6 hPa:1019``` |
+| country code is added implicitly for a 5-digit zip - see keyword spec |```zip 94043``` returns same results| ```nite:14c sunrise/set 16:20/02:16UTC clouds:1% uvi:2.6 hPa:1019``` |
 | | | ```hum:27% dewpt:2c wndspd:2m/s wnddeg:353``` |
 | WX report for zipcode 37603 in Germany | ```zip 37603;de``` | ```17-Jan-21 Holzminden,37603;DE rain and snow morn:-2c day:-0c``` |
 | | | ```eve:-1c nite:1c sunrise/set 08:20/16:43UTC rain:1mm snow:1mm``` |
