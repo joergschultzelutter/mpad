@@ -822,8 +822,32 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                         )
                         err = True
                     else:
+                        # Prepopulate our message to the user with a default
                         human_readable_message = message_callsign
                         what = "wx"
+                        # now try to build a human readable message
+                        success, response_data = get_reverse_geopy_data(
+                            latitude=latitude, longitude=longitude
+                        )
+                        if success:
+                            city = response_data["city"]
+                            state = response_data["state"]
+                            county = response_data["county"]
+                            country = response_data["country"]
+                            zipcode = response_data["zipcode"]
+                            if city:
+                                human_readable_message = city
+                                if country:
+                                    if country == "US":
+                                        if state:
+                                            human_readable_message += f",{state}"
+                                if zipcode:
+                                    human_readable_message += f",{zipcode}"
+                            if not city:
+                                if county:
+                                    human_readable_message = county
+                            if country:
+                                human_readable_message += f";{country}"
 
             # Try to check if the user has submitted an ICAO code without
             # submitting a specific pre- qualifier prefix
@@ -1037,14 +1061,23 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                 )
                 if success:
                     city = response_data["city"]
+                    state = response_data["state"]
                     county = response_data["county"]
                     country = response_data["country"]
+                    zipcode = response_data["zipcode"]
                     if city:
                         human_readable_message = city
+                        if country:
+                            if country == "US":
+                                if state:
+                                    human_readable_message += f",{state}"
+                        if zipcode:
+                            human_readable_message += f",{zipcode}"
                     if not city:
                         if county:
                             human_readable_message = county
-                    human_readable_message += f",{country}"
+                    if country:
+                        human_readable_message += f";{country}"
             else:
                 # we haven't found anything? Let's get rid of the SSID and
                 # give it one final try. If we still can't find anything,
