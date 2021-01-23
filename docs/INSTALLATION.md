@@ -15,6 +15,8 @@ Currently, MPAD uses two APIs for its purposes:
 
 If you want to host your own MPAD instance, you need to acquire your personal API access keys for both APIs and add them to MPAD's API config file (```mpad_api_access_keys.cfg```). An empty config template file is part of the repository.
 
+Additionally, you also need to set your APRS-IS login credentials (callsign and passcode). By default, the login callsign is set to ```N0CALL``` which does permit the program to connect to APRS_IS in read-only mode. You can still receive and process messages (based on your filter settings' call signs). However, any outgoing message will not be sent to the user (via APRS-IS) but ends up in the program's log file. Setting the user's call sign to ```N0CALL``` will automatically enforce the program to enter read-only mode. ```aprsis_login_passcode``` is automatically set to ```-1``` and no data will be sent to APRS-IS.
+
 ```bash
 [mpad_config]
 
@@ -23,6 +25,12 @@ openweathermapdotorg_api_key = abcdef1234567890abcdef
 
 # API key for www.aprs.fi
 aprsdotfi_api_key = 123456.abcdefGHIJKLMN
+
+# Access credentials for aprs-id
+# Any callsign different from N0CALL will disable the listen-only
+# mode, meaning that MPAD will send data to APRS-IS
+aprsis_login_callsign = N0CALL
+aprsis_login_passcode = -1
 ```
 
 ### Program configuration
@@ -35,7 +43,6 @@ Open the program configuration file (```mpad_config.py```). Change/Review the fo
 
 You also need to set the APRS-IS access and server credentials:
 
-- ```aprsis_login_callsign``` and ```aprsis_login_passcode```. These are the APRS-IS login credentials. By default, the login callsign is set to ```N0CALL``` which does permit the program to connect to APRS_IS in read-only mode. You can still receive and process messages (based on your filter settings' call signs). However, any outgoing message will not be sent to the user (via APRS-IS) but ends up in the program's log file. Setting the user's call sign to ```N0CALL``` will automatically enforce the program to enter read-only mode. ```aprsis_login_passcode``` is automatically set to ```-1``` and no data will be sent to APRS-IS.
 - Filter settings. You NEED to tweak these if you intend to run your own instance with your own call sign (see also ```mpad_alias```). MPAD uses two filters:
     - ```aprsis_server_filter```. This is the filter that MPAD used for connecting to APRS-IS. It is also MPAD's __primary filter__. If an APRS message does not pass this filter, then the program won't process it. You can specify one or many call signs: Format ```g/callsign1/callsign2/callsign_n```. Example: ```g/MPAD```. See [APRS-IS Server-Side Filter Commands](http://www.aprs-is.net/javAPRSFilter.aspx) for further details.
     - ```mpad_callsigns_to_parse```. This is the __secondary filter__. Unlike the primary filter, this one is controlled by MPAD itself and similar to the APRS-IS filter, you can specify 1..n call signs. Obviously, at least a subset of these call signs must be present in the APRS-IS filter because otherwise, MPAD won't even see the message. This 2nd filter mainly exists for debugging purposes; you can broaden the APRS-IS filter (e.g. program call sign and your personal call sign) and then use the 2nd filter for some software development magic.
@@ -94,10 +101,6 @@ mpad_aprs_tocall: str = "APRS"  # APRS "TOCALL"
 ####################
 # APRS-IS Settings #
 ####################
-#
-# APRS-IS login user / password
-aprsis_login_callsign = "N0CALL"  # APRS-IS login
-aprsis_login_passcode = "-1"    # APRS-IS Passcode
 #
 # APRS-IS login Server / login Port
 aprsis_server_name = "euro.aprs2.net"  # our login server
