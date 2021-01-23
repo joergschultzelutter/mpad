@@ -53,14 +53,14 @@ packet_delay_other: float = 6.0  # packet delay after sending an acknowledgment,
 # Degrees: lat: 0-90, lon: 0-180
 # Minutes and Seconds: 00-60
 # Bearing: latitude N or S, longitude: E or W
-mpad_latitude: str = "ddmm.ssN"  # 8 chars fixed length, ddmm.ssN
-mpad_longitude: str = "dddmm.ssE"  # 9 chars fixed length, dddmm.ssE
+mpad_latitude: str = "5150.34N"  # 8 chars fixed length, ddmm.ssN
+mpad_longitude: str = "00819.60E"  # 9 chars fixed length, dddmm.ssE
 #
 # Program alias: This is the APRS name that will be used for all outgoing messages
 mpad_alias: str = "MPAD"  # Identifier for sending outgoing data to APRS-IS
 #
 # Altitude in *FEET* (not meters) for APRS beacon. Details: see aprs101.pdf chapter 8
-mpad_beacon_altitude_ft = 123
+mpad_beacon_altitude_ft = 243
 #
 # APRS "TOCALL" identifier - see http://aprs.org/aprs11/tocalls.txt
 # Needs to get its own identifier at a later point in time
@@ -70,10 +70,6 @@ mpad_aprs_tocall: str = "APRS"  # APRS "TOCALL"
 # APRS-IS Settings #
 ####################
 #
-# APRS-IS login user / password
-aprsis_login_callsign = "N0CALL"  # APRS-IS login
-aprsis_login_passcode = "-1"    # APRS-IS Passcode
-#
 # APRS-IS login Server / login Port
 aprsis_server_name = "euro.aprs2.net"  # our login server
 aprsis_server_port = 14580  # server port
@@ -82,6 +78,7 @@ aprsis_server_port = 14580  # server port
 # Syntax: see http://www.aprs-is.net/javAPRSFilter.aspx
 # If you remove/disable this filter, MPAD will 'see' all aprs-is messages
 # (the whole APRS-IS traffic)
+#aprsis_server_filter = "g/WXBOT/WXYO"  # server filter criteria for aprs.is
 aprsis_server_filter = "g/MPAD"  # server filter criteria for aprs.is
 #
 #############################
@@ -94,6 +91,7 @@ aprsis_server_filter = "g/MPAD"  # server filter criteria for aprs.is
 # If that secondary filter is also passed, then we will have a look
 # at the user's message and try to process it
 #
+#mpad_callsigns_to_parse = ["WXBOT", "WXYO"]  # (additional) call sign filter
 mpad_callsigns_to_parse = ["MPAD"]  # (additional) call sign filter
 
 #############################################################

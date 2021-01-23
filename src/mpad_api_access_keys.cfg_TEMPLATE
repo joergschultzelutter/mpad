@@ -5,3 +5,9 @@ openweathermapdotorg_api_key = POPULATE_ME
 
 # API key for www.aprs.fi
 aprsdotfi_api_key = POPULATE_ME
+
+# Access credentials for aprs-id
+# Any callsign different from N0CALL will disable the listen-only
+# mode, meaning that MPAD will send data to APRS-IS
+aprsis_login_callsign = N0CALL
+aprsis_login_passcode = -1

@@ -228,11 +228,16 @@ def read_program_config(config_file_name: str = "mpad_api_access_keys.cfg"):
         aprs.fi API key
     openweathermapdotorg_api_key: 'str'
         openweathermap.org API key
+    aprsis_login_callsign: 'str'
+        Call sign for APRS-IS login
+    aprsis_login_passcode: 'str'
+        Passcode for APRS-IS login
     """
 
     config = configparser.ConfigParser()
     success = False
     aprsdotfi_cfg_key = openweathermapdotorg_api_key = None
+    aprsis_login_callsign = aprsis_login_passcode = None
     if check_if_file_exists(config_file_name):
         try:
             config.read(config_file_name)
@@ -240,10 +245,18 @@ def read_program_config(config_file_name: str = "mpad_api_access_keys.cfg"):
             openweathermapdotorg_api_key = config.get(
                 "mpad_config", "openweathermapdotorg_api_key"
             )
+            aprsis_login_callsign = config.get("mpad_config", "aprsis_login_callsign")
+            aprsis_login_passcode = config.get("mpad_config", "aprsis_login_passcode")
             success = True
         except:
             success = False
-    return success, aprsdotfi_cfg_key, openweathermapdotorg_api_key
+    return (
+        success,
+        aprsdotfi_cfg_key,
+        openweathermapdotorg_api_key,
+        aprsis_login_callsign,
+        aprsis_login_passcode,
+    )
 
 
 def getdaysuntil(theweekday):

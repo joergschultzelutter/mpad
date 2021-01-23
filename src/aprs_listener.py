@@ -249,9 +249,15 @@ logger = logging.getLogger(__name__)
 # Get the API access keys for OpenWeatherMap and APRS.fi. If we don't have those
 # then there is no point in continuing
 #
-success, aprsdotfi_api_key, openweathermapdotorg_api_key = read_program_config()
+(
+    success,
+    aprsdotfi_api_key,
+    openweathermapdotorg_api_key,
+    aprsis_login_callsign,
+    aprsis_login_passcode,
+) = read_program_config()
 if not success:
-    logging.error(msg="Cannot find config file; aborting")
+    logging.error(msg="Error while reading the program config file; aborting")
     sys.exit(0)
 
 # Next: check our user credentials. If our call sign is "N0CALL", we ensure:
@@ -261,8 +267,8 @@ if not success:
 #
 # Otherwise, use user/pass as specified in mpad_config.py and enable the
 # program for real transmissions to APRS-IS
-aprsis_callsign = mpad_config.aprsis_login_callsign.upper()
-aprsis_passcode = mpad_config.aprsis_login_passcode
+aprsis_callsign = aprsis_login_callsign.upper()
+aprsis_passcode = aprsis_login_passcode
 aprsis_simulate_send = False
 if aprsis_callsign == "N0CALL":
     aprsis_passcode = "-1"
