@@ -55,7 +55,8 @@ def get_position_on_aprsfi(aprsfi_callsign: str, aprsdotfi_api_key: str):
         altitude in meters if user was found on aprs.fi
     lasttime: 'datetime'
         the time when the target last reported this (current) position
-        If not found, returned default value is 1900-01-01 0:0:0.0
+        If not found, returned default value is of value datetime.min
+        (0001-01-01 00:00:00)
     aprsfi_callsign: 'str'
         Call sign converted to uppercase
     """
@@ -65,9 +66,8 @@ def get_position_on_aprsfi(aprsfi_callsign: str, aprsdotfi_api_key: str):
 
     success = False
     latitude = longitude = altitude = 0.0
-    lasttime = datetime(
-        1900, 1, 1, 0, 0, 0
-    )  # placeholder value in case we can't determine the aprs.fi 'lasttime' information
+
+    lasttime = datetime.min  # placeholder value in case we can't determine the aprs.fi 'lasttime' information
     result = "fail"
     found = 0  # number of entries found in aprs.fi request (if any)
 
