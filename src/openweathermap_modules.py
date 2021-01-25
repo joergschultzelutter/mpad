@@ -107,7 +107,7 @@ def get_daily_weather_from_openweathermapdotorg(
         return success, weather_tuple, timezone_offset, timezone_offset
 
     # Issue the request to OWN
-    url = f"https://api.openweathermap.org/data/2.5/onecall?lat={latitude}&lon={longitude}&units={units}&exclude=hourly,minutely&lang={language}&appid={openweathermap_api_key}"
+    url = f"https://api.openweathermap.org/data/2.5/onecall?lat={latitude}&lon={longitude}&units={units}&exclude=alerts,minutely&lang={language}&appid={openweathermap_api_key}"
     resp = requests.get(url)
     if resp.status_code == 200:
         x = resp.json()
@@ -332,7 +332,13 @@ if __name__ == "__main__":
     )
     logger = logging.getLogger(__name__)
 
-    success, aprsdotfi_api_key, openweathermap_api_key = read_program_config()
+    (
+        success,
+        aprsdotfi_api_key,
+        openweathermap_api_key,
+        aprsis_callsign,
+        aprsis_passcode,
+    ) = read_program_config()
     if success:
         (
             success,
