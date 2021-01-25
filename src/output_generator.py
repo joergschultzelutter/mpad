@@ -601,7 +601,7 @@ def generate_output_message_whereis(response_parameters: dict):
 
     grid = convert_latlon_to_maidenhead(latitude=latitude, longitude=longitude)
     output_list = make_pretty_aprs_messages(
-        message_to_add=f"Grid:{grid}", destination_list=output_list
+        message_to_add=f"Grid {grid}", destination_list=output_list
     )
 
     (
@@ -616,10 +616,10 @@ def generate_output_message_whereis(response_parameters: dict):
     ) = convert_latlon_to_dms(latitude=latitude, longitude=longitude)
 
     human_readable_address = (
-        f"DMS {lat_hdg}{lat_deg:02d}.{lat_min:02d}'{round(lat_sec):02d}"
+        f"DMS {lat_hdg}{lat_deg:02d}.{lat_min:02d}'{round(lat_sec,1):02.1f}"
     )
     human_readable_address += (
-        f", {lon_hdg}{lon_deg:02d}.{lon_min:02d}'{round(lon_sec):02d}"
+        f"/{lon_hdg}{lon_deg:02d}.{lon_min:02d}'{round(lon_sec,1):02.1f}"
     )
 
     output_list = make_pretty_aprs_messages(
@@ -674,17 +674,17 @@ def generate_output_message_whereis(response_parameters: dict):
         latitude=latitude, longitude=longitude
     )
     output_list = make_pretty_aprs_messages(
-        message_to_add=f"UTM:{zone_number}{zone_letter} {easting} {northing}",
+        message_to_add=f"UTM {zone_number}{zone_letter} {easting} {northing}",
         destination_list=output_list,
     )
 
     mgrs = convert_latlon_to_mgrs(latitude=latitude, longitude=longitude)
     output_list = make_pretty_aprs_messages(
-        message_to_add=f"MGRS:{mgrs}", destination_list=output_list
+        message_to_add=f"MGRS {mgrs}", destination_list=output_list
     )
 
     output_list = make_pretty_aprs_messages(
-        message_to_add=f"LatLon:{latitude}/{longitude}",
+        message_to_add=f"LatLon {latitude}/{longitude}",
         destination_list=output_list,
     )
 
