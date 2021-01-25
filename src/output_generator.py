@@ -739,35 +739,10 @@ def generate_output_message_whereis(response_parameters: dict):
         human_readable_address = None
         # Check if we have some "lasttime" information that we can provide the user with
         if lasttime is not datetime.datetime.min:
-            # Determine time difference between utc'ed systime and timestamp from aprs.fi
-            # (which is always in utc tz)
-            current_ts = datetime.datetime.utcnow()
-            last_heard = current_ts - lasttime
-
-            # calculate mins, hrs, days, yrs
-
-            _days, _secs = last_heard.days, last_heard.seconds
-            _hrs = _days * 24 + _secs // 3600
-            _min = (_secs % 3600) // 60
-            _secs = _secs % 60
-            _years = int(_days / 365)
-
-            # Now let's check what we have and add it as PosAge to our message
-            if _years != 0:
-                human_readable_address = f"PosAge {_years} yrs {_days % 365} days"
-            elif _days != 0:
-                human_readable_address = f"PosAge {_days} days {_hrs % 24} hrs"
-            elif _hrs != 0:
-                human_readable_address = f"PosAge {_hrs} hrs {_min % 60} mins"
-            elif _min != 0:
-                human_readable_address = f"PosAge {_min} min {_secs % 60} secs"
-            elif _secs != 0:
-                human_readable_address = f"PosAge {_secs}sec"
-
-            if human_readable_address:
-                output_list = make_pretty_aprs_messages(
-                    message_to_add=human_readable_address, destination_list=output_list
-                )
+            human_readable_address = f"Last heard {lasttime.strftime('%Y-%m-%d %H:%M:%S')}"
+            output_list = make_pretty_aprs_messages(
+                message_to_add=human_readable_address, destination_list=output_list
+            )
 
     success = True
     return success, output_list
