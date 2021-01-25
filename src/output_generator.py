@@ -800,6 +800,12 @@ if __name__ == "__main__":
     )
     logger = logging.getLogger(__name__)
 
-    success, aprsdotfi_api_key, openweathermap_api_key = read_program_config()
+    (
+        success,
+        aprsdotfi_api_key,
+        openweathermap_api_key,
+        aprsis_callsign,
+        aprsis_passcode,
+    ) = read_program_config()
     if success:
         logger.info("Further actions are executed here")
