@@ -20,6 +20,7 @@
 #
 
 import requests
+from datetime import datetime
 from utility_modules import read_program_config
 import logging
 
@@ -52,6 +53,9 @@ def get_position_on_aprsfi(aprsfi_callsign: str, aprsdotfi_api_key: str):
         longitude position if user was found on aprs.fi
     altitude: 'float'
         altitude in meters if user was found on aprs.fi
+    lasttime: 'datetime'
+        the time when the target last reported this (current) position
+        If not found, returned default value is 1900-01-01 0:0:0.0
     aprsfi_callsign: 'str'
         Call sign converted to uppercase
     """
@@ -61,8 +65,11 @@ def get_position_on_aprsfi(aprsfi_callsign: str, aprsdotfi_api_key: str):
 
     success = False
     latitude = longitude = altitude = 0.0
+    lasttime = datetime(
+        1900, 1, 1, 0, 0, 0
+    )  # placeholder value in case we can't determine the aprs.fi 'lasttime' information
     result = "fail"
-    found = 0
+    found = 0  # number of entries found in aprs.fi request (if any)
 
     aprsfi_callsign = aprsfi_callsign.upper()
 
@@ -86,16 +93,28 @@ def get_position_on_aprsfi(aprsfi_callsign: str, aprsdotfi_api_key: str):
                 if "found" in json_content:
                     found = json_content["found"]
                 if found > 0:
-                    # let's assume that all is good
-                    success = True
-                    # now extract lat/lon/altitude
-                    if "lat" in json_content["entries"][0]:
+                    # We extract only the very first entry and disregard
+                    # entries 2..n whereas ever present
+                    # now extract lat/lon/altitude/lasttime
+
+                    # Check if lat/lon are present; this is the essential information that we need to continue
+                    if (
+                        "lat" not in json_content["entries"][0]
+                        and "lng" in json_content["entries"][0]
+                    ):
+                        success = False
+                    else:
+                        success = True
                         latitude = float(json_content["entries"][0]["lat"])
-                    if "lng" in json_content["entries"][0]:
                         longitude = float(json_content["entries"][0]["lng"])
+                    # Now check for our optional fields
                     if "altitude" in json_content["entries"][0]:
                         altitude = float(json_content["entries"][0]["altitude"])
-        return success, latitude, longitude, altitude, aprsfi_callsign
+                    if "lasttime" in json_content["entries"][0]:
+                        _mylast = float(json_content["entries"][0]["lasttime"])
+                        lasttime = datetime.fromtimestamp(_mylast)
+
+        return success, latitude, longitude, altitude, lasttime, aprsfi_callsign
 
 
 if __name__ == "__main__":
@@ -103,6 +122,12 @@ if __name__ == "__main__":
         level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
     )
     logger = logging.getLogger(__name__)
-    success, aprsdotfi_api_key, openweathermapdotorg_api_key, aprsis_callsign, aprsis_passcode = read_program_config()
+    (
+        success,
+        aprsdotfi_api_key,
+        openweathermapdotorg_api_key,
+        aprsis_callsign,
+        aprsis_passcode,
+    ) = read_program_config()
     if success:
-        logger.info(get_position_on_aprsfi("DF1JSL-1", aprsdotfi_api_key))
+        logger.info(get_position_on_aprsfi("DF1JSL-8", aprsdotfi_api_key))
