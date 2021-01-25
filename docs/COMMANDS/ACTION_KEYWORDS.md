@@ -195,6 +195,7 @@ Returns the geocoordinates/address info of the sender's position or a specific c
 - UTM coordinates
 - Human-readable address (whereas available)
 - Distance, direction and bearing to the call sign (if requested position differs from user's position)
+- Position' age (when was this position transmitted for the last time). Note: this information is only provided for the ```whereis``` command but not for the ```whereami``` command
 - Altitude information whereas present
 
 Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __NO__
@@ -215,11 +216,13 @@ Request: ```whereis wa1gov-10``` in metric format
 
 Result:
 
-```Pos WA1GOV-10 Grid:FN41lu95 DMS N41.51'17, W71.00'24 Dst 5826 km```
+```Pos WA1GOV-10 Grid FN41lu95 DMS N41.51'17.4/W71.00'24.0 Dst 5829 km```
 
-```Brg 50deg NE UTM:19T 333431 4635605 MGRS:19TCG3343135605```
+```Brg 50deg NE UTM 19T 333431 4635605 MGRS 19TCG3343135605```
 
-```LatLon:41.85483/-71.00667 Taunton, 02718, US Seekell Street 329```
+```LatLon 41.85483/-71.00667 Taunton, 02718, US Seekell Street 329```
+
+```Last heard 2021-01-25 23:32:42```
 
 Glossary:
 
