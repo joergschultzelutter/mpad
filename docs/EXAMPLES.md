@@ -67,10 +67,10 @@ External service dependencies:
 | My own position data | ```whereami``` | ```Pos for DF1JSL-1 Grid JO41su94 DMS N51.51'13.2, E09.34'37.8 Alt 237m``` |
 | | | ```UTM 32U 539752 5744921 MGRS 32UNC3975244921 LatLon 51.85367/9.57717``` |
 | | | ```Schorborn, 37627, DE Alte Muehle``` |
-| WA1GOV-10's position | ``` whereis df1jsl-8 ```| ```Pos DF1JSL-8 Grid JO41st76 DMS N51.49'0.0/E09.33'57.0 Dst 85 km``` |
+| DF1JSL-8's position | ``` whereis df1jsl-8 ```| ```Pos DF1JSL-8 Grid JO41st76 DMS N51.49'0.0/E09.33'57.0 Dst 85 km``` |
 | | | ```Brg 272deg W Alt 366m UTM 32U 539003 5740799 MGRS 32UNC3900340799``` |
 | | | ```LatLon 51.81667/9.56583 Merxhausen, 37627, DE Neuhaeuser Strasse```|
-| | |```PosAge 2 days 4 hrs``` |
+| | |```Last heard 2021-01-23 17:32:42``` |
 
 ## METAR data
 
