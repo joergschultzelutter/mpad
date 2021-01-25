@@ -179,3 +179,5 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
 
     logger.info(get_reverse_geopy_data(37.7790262, -122.4199061))
+    geopy_query = {"city": city, "state": state, "country": country}
+    logger.info(get_geocode_geopy_data(geopy_query))
