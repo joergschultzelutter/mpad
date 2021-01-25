@@ -26,7 +26,7 @@ External service dependencies:
 | | |```hum:27% dewpt:2c wndspd:2m/s wnddeg:353```|
 | WX report for zipcode 37603 in Germany |```zip 37603;de``` | ```19-Jan-21 Holzminden,37603;DE moderate rain morn:3c day:4c eve:8c```|
 | | |```nite:5c sunrise/set 08:18/16:46UTC rain:13mm clouds:100% uvi:0.3```|
-| | |```hPa:1006 hum:90% dewpt:3c wndspd:7m/s wnddeg:217'``|
+| | |```hPa:1006 hum:90% dewpt:3c wndspd:7m/s wnddeg:217```|
 | WX report for Grid JO41du |```grid jo41du``` | ```17-Jan-21 jo41du rain and snow morn:-1c day:0c eve:1c nite:2c```|
 | |```mh jo41du``` or ```jo41du``` returns same results | ```sunrise/set 08:25/16:48UTC rain:1mm snow:2mm clouds:100% uvi:0.3```|
 | | |```hPa:1018 hum:97% dewpt:-1c wndspd:2m/s wnddeg:153```|
@@ -62,15 +62,15 @@ External service dependencies:
 - [Openstreetmap](www.openstreetmap.org) for coordinate transformation (e.g. City/country or zipcode to lat/lon)
 - [aprs.fi](www.aprs.fi) for APRS call sign coordinates
 
-
 | What do we want | Command string User > MPAD | Response example MPAD > User |
 | --------------- | -------------------------- | ---------------------------- |
-| My own position data | ```whereami``` | ```Pos for DF1JSL-1 Grid:JO41su94 DMS N51.51'13, E09.34'38 Alt 237m``` |
-| | | ```UTM:32U 539752 5744921 MGRS:32UNC3975244921 LatLon:51.85367/9.57717``` |
+| My own position data | ```whereami``` | ```Pos for DF1JSL-1 Grid JO41su94 DMS N51.51'13.2, E09.34'37.8 Alt 237m``` |
+| | | ```UTM 32U 539752 5744921 MGRS 32UNC3975244921 LatLon 51.85367/9.57717``` |
 | | | ```Schorborn, 37627, DE Alte Muehle``` |
-| WA1GOV-10's position | ``` whereis wa1gov-10 ```| ```Pos WA1GOV-10 Grid:FN41lu95 DMS N41.51'17, W71.00'24 Dst 5862 km``` |
-| | | ```Brg 50deg NE UTM:19T 333431 4635605 MGRS:19TCG3343135605``` |
-| | | ```LatLon:41.85483/-71.00667 Taunton, 02718, US Seekell Street 329``` |
+| WA1GOV-10's position | ``` whereis df1jsl-8 ```| ```Pos DF1JSL-8 Grid JO41st76 DMS N51.49'0.0/E09.33'57.0 Dst 85 km``` |
+| | | ```Brg 272deg W Alt 366m UTM 32U 539003 5740799 MGRS 32UNC3900340799``` |
+| | | ```LatLon 51.81667/9.56583 Merxhausen, 37627, DE Neuhaeuser Strasse```|
+| | |```PosAge 2 days 4 hrs``` |
 
 ## METAR data
 
