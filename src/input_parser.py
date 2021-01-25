@@ -307,12 +307,14 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                         city = response_data["city"]
                         state = response_data["state"]
                         country = response_data["country"]
-                        #zipcode = response_data["zipcode"]
+                        # zipcode = response_data["zipcode"]
                         county = response_data["county"]
                         street = response_data["street"]
                         street_number = response_data["street_number"]
                         # build the HRM message based on the given data
-                        human_readable_message = build_human_readable_address_message(response_data)
+                        human_readable_message = build_human_readable_address_message(
+                            response_data
+                        )
                 else:
                     err = True
                     human_readable_message = errmsg_cannot_find_coords_for_address
@@ -423,7 +425,9 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                     street = response_data["street"]
                     street_number = response_data["street_number"]
                     # build the HRM message based on the given data
-                    human_readable_message = build_human_readable_address_message(response_data)
+                    human_readable_message = build_human_readable_address_message(
+                        response_data
+                    )
                 else:
                     # We didn't find anything; use the original input for the HRM
                     human_readable_message = f"lat {latitude}/lon {longitude}"
@@ -781,7 +785,9 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                             street = response_data["street"]
                             street_number = response_data["street_number"]
                             # build the HRM message based on the given data
-                            human_readable_message = build_human_readable_address_message(response_data)
+                            human_readable_message = (
+                                build_human_readable_address_message(response_data)
+                            )
 
             # Look for a 4..6 character Maidenhead coordinate
             if not found_my_duty_roster and not err:
@@ -851,7 +857,9 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                             street = response_data["street"]
                             street_number = response_data["street_number"]
                             # build the HRM message based on the given data
-                            human_readable_message = build_human_readable_address_message(response_data)
+                            human_readable_message = (
+                                build_human_readable_address_message(response_data)
+                            )
 
             # Try to check if the user has submitted an ICAO code without
             # submitting a specific pre- qualifier prefix
@@ -1074,7 +1082,9 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                     street = response_data["street"]
                     street_number = response_data["street_number"]
                     # build the HRM message based on the given data
-                    human_readable_message = build_human_readable_address_message(response_data)
+                    human_readable_message = build_human_readable_address_message(
+                        response_data
+                    )
             else:
                 # we haven't found anything? Let's get rid of the SSID and
                 # give it one final try. If we still can't find anything,
@@ -1111,7 +1121,9 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                             street = response_data["street"]
                             street_number = response_data["street_number"]
                             # build the HRM message based on the given data
-                            human_readable_message = build_human_readable_address_message(response_data)
+                            human_readable_message = (
+                                build_human_readable_address_message(response_data)
+                            )
                     else:
                         human_readable_message = errmsg_cannot_find_coords_for_user
                         err = True
@@ -1336,5 +1348,11 @@ if __name__ == "__main__":
     )
     logger = logging.getLogger(__name__)
 
-    success, aprsdotfi_api_key, openweathermap_api_key = read_program_config()
+    (
+        success,
+        aprsdotfi_api_key,
+        openweathermap_api_key,
+        aprsis_callsign,
+        aprsis_passcode,
+    ) = read_program_config()
     logger.info(parse_input_message("whereis kc7oo-6", "df1jsl-1", aprsdotfi_api_key))
