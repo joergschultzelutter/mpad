@@ -33,6 +33,7 @@ from airport_data_modules import validate_icao, validate_iata, get_nearest_icao
 from utility_modules import getdaysuntil, read_program_config
 from aprsdotfi_modules import get_position_on_aprsfi
 import logging
+from datetime import datetime
 
 aprsdotfi_api_key = openweathermap_api_key = None
 
@@ -122,6 +123,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
 
     latitude = longitude = altitude = users_latitude = users_longitude = 0.0
     date_offset = -1
+    lasttime = datetime(1900, 1, 1, 0, 0, 0)  # mere default placeholder
     when = when_daytime = what = city = state = country = zipcode = cwop_id = None
     icao = human_readable_message = satellite = repeater_band = repeater_mode = None
     street = street_number = county = None
@@ -488,6 +490,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                 latitude,
                 longitude,
                 altitude,
+                lasttime,
                 message_callsign,
             ) = get_position_on_aprsfi(
                 aprsfi_callsign=message_callsign, aprsdotfi_api_key=aprsdotfi_api_key
@@ -520,11 +523,12 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                     # calculate the distance between the sender's position
                     # and the call sign that he has requested. We are only
                     # interested in the user's lat/lon info and ignore the
-                    # remaining information
+                    # remaining information such as cs, altitude and lasttime
                     (
                         success,
                         users_latitude,
                         users_longitude,
+                        _,
                         _,
                         _,
                     ) = get_position_on_aprsfi(
@@ -606,6 +610,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                     latitude,
                     longitude,
                     altitude,
+                    lasttime,
                     message_callsign,
                 ) = get_position_on_aprsfi(
                     aprsfi_callsign=users_callsign, aprsdotfi_api_key=aprsdotfi_api_key
@@ -708,6 +713,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                 latitude,
                 longitude,
                 altitude,
+                lasttime,
                 message_callsign,
             ) = get_position_on_aprsfi(
                 aprsfi_callsign=users_callsign, aprsdotfi_api_key=aprsdotfi_api_key
@@ -828,6 +834,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                         latitude,
                         longitude,
                         altitude,
+                        lasttime,
                         message_callsign,
                     ) = get_position_on_aprsfi(
                         aprsfi_callsign=message_callsign,
@@ -913,6 +920,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                     latitude,
                     longitude,
                     altitude,
+                    lasttime,
                     message_callsign,
                 ) = get_position_on_aprsfi(
                     aprsfi_callsign=users_callsign, aprsdotfi_api_key=aprsdotfi_api_key
@@ -960,6 +968,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                         latitude,
                         longitude,
                         altitude,
+                        lasttime,
                         message_callsign,
                     ) = get_position_on_aprsfi(
                         aprsfi_callsign=users_callsign,
@@ -1059,6 +1068,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                 latitude,
                 longitude,
                 altitude,
+                lasttime,
                 message_callsign,
             ) = get_position_on_aprsfi(
                 aprsfi_callsign=users_callsign, aprsdotfi_api_key=aprsdotfi_api_key
@@ -1099,6 +1109,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                         latitude,
                         longitude,
                         altitude,
+                        lasttime,
                         message_callsign,
                     ) = get_position_on_aprsfi(
                         aprsfi_callsign=matches[2].upper(),
@@ -1136,6 +1147,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         "latitude": latitude,  # numeric latitude value
         "longitude": longitude,  # numeric longitude value
         "altitude": altitude,  # altitude; UOM is always 'meters'
+        "lasttime": lasttime,  # last time the cs was heard on that given position
         "when": when,  # day setting for 'when' command keyword
         "when_daytime": when_daytime,  # daytime setting for 'when' command keyword
         "what": what,  # contains the command that the user wants us to execute
@@ -1355,4 +1367,4 @@ if __name__ == "__main__":
         aprsis_callsign,
         aprsis_passcode,
     ) = read_program_config()
-    logger.info(parse_input_message("whereis kc7oo-6", "df1jsl-1", aprsdotfi_api_key))
+    logger.info(parse_input_message("whereis df1jsl-8", "df1jsl-1", aprsdotfi_api_key))
