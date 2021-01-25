@@ -8,7 +8,7 @@ import logging
 
 
 def testcall(message_text: str, from_callsign: str):
-    success, aprsdotfi_api_key, openweathermapdotorg_api_key = read_program_config()
+    success, aprsdotfi_api_key, openweathermapdotorg_api_key, aprsis_callsign, aprsis_passcode = read_program_config()
     assert success
 
     logger.info(
@@ -35,4 +35,4 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
     logger = logging.getLogger(__name__)
 
-    testcall(message_text="whereami imperial",from_callsign="df1jsl-1")
+    testcall(message_text="whereis df1jsl-9",from_callsign="df1jsl-1")
