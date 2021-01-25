@@ -103,6 +103,6 @@ if __name__ == "__main__":
         level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
     )
     logger = logging.getLogger(__name__)
-    success, aprsdotfi_api_key, openweathermapdotorg_api_key = read_program_config()
+    success, aprsdotfi_api_key, openweathermapdotorg_api_key, aprsis_callsign, aprsis_passcode = read_program_config()
     if success:
         logger.info(get_position_on_aprsfi("DF1JSL-1", aprsdotfi_api_key))
