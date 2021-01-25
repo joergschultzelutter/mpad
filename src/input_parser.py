@@ -122,8 +122,8 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     err = False
 
     latitude = longitude = altitude = users_latitude = users_longitude = 0.0
-    date_offset = -1
-    lasttime = datetime(1900, 1, 1, 0, 0, 0)  # mere default placeholder
+    date_offset = -1  # Date offset ("Monday", "tomorrow" etc) for wx fc
+    lasttime = datetime.min  # Placeholder in case lasttime is not present on aprs.fi
     when = when_daytime = what = city = state = country = zipcode = cwop_id = None
     icao = human_readable_message = satellite = repeater_band = repeater_mode = None
     street = street_number = county = None
