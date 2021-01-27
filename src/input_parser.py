@@ -1271,6 +1271,16 @@ def parse_when(word: str):
         when = "now"
         found_when = True
         date_offset = 0
+    matches = re.search(r"^(1h)$", word, re.IGNORECASE)
+    if matches and not found_when:
+        when = "hour"
+        found_when = True
+        hour_offset = 1
+    matches = re.search(r"^(2h)$", word, re.IGNORECASE)
+    if matches and not found_when:
+        when = "hour"
+        found_when = True
+        hour_offset = 2
     matches = re.search(r"^(3h)$", word, re.IGNORECASE)
     if matches and not found_when:
         when = "hour"
@@ -1394,4 +1404,4 @@ if __name__ == "__main__":
         aprsis_callsign,
         aprsis_passcode,
     ) = read_program_config()
-    logger.info(parse_input_message("whereis df1jsl-8", "df1jsl-1", aprsdotfi_api_key))
+    logger.info(parse_input_message("3h", "df1jsl-1", aprsdotfi_api_key))
