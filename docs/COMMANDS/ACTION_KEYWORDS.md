@@ -330,7 +330,10 @@ Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME
 The positions for both parameters __band__ and __mode__ are position-interchangeable, meaning that ```repeater [band] [mode]``` and ```repeater [mode] [band]``` are both valid.
 
 ```Band``` parameter needs to be specified with '```m```' or '```cm```' unit of measure, e.g. ```70cm```, ```2m```, ```80m```
-```Mode``` parameter can be one of the following: ```fm```, ```dstar```, ```d-star```, ```dmr```, ```c4fm```, ```tetra```, ```atv```. ```d-star``` and ```dstar``` are identical; the two options just exist because of convenience issues.
+```Mode``` parameter can be one of the following: ```fm```, ```dstar```, ```d-star```, ```dmr```, ```c4fm```, ```ysf```,```tetra```, ```atv```. 
+
+```d-star``` and ```dstar``` are identical; the two options just exist because of convenience issues.
+```ysf``` will convenience-map to ```c4fm```.
 
 #### Example requests
 
