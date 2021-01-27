@@ -29,10 +29,11 @@ import logging
 def get_daily_weather_from_openweathermapdotorg(
     latitude: float,
     longitude: float,
-    date_offset: int,
+    offset: int,
     openweathermap_api_key: str,
     units: str = "metric",
     language: str = "en",
+    access_mode: str = "day",
 ):
     """
     Gets the OWM 'onecall' weather forecast for a given latitide
@@ -47,16 +48,21 @@ def get_daily_weather_from_openweathermapdotorg(
         latitude position
     longitude: 'float'
         longitude position
-    date_offset: 'int'
+    offset: 'int'
+        if 'access_mode' == 'day:
         numeric offset from 'today' to the desired
         target day; e.g. today = tuesday and desired
         day = thursday, then date_offset = 2
+        if 'access_mode' == 'hour':
+        mumeric hourly offset, e.g. 1 = one hour from now
     openweathermap_api_key: str
         API key for accessing openweathermap.org api
     units: 'str'
         Unit of measure. Can either be 'metric' or 'imperial'
     language: 'str'
         ISO3166-2 language in lowercase
+    access_mode: 'str'
+        Can either be 'day' or 'hour'
 
     Returns
     =======
@@ -74,6 +80,8 @@ def get_daily_weather_from_openweathermapdotorg(
 
     weather_tuple = timezone_offset = timezone = None
     success = False
+
+    assert access_mode in ["day", "hour"]
 
     # fmt: off
     owm_supported_languages = [
@@ -100,8 +108,12 @@ def get_daily_weather_from_openweathermapdotorg(
         language = "zh_tw"
 
     # return 'false' if user has requested a day that is out of bounds
-    if date_offset < 0 or date_offset > 7:
-        return success, weather_tuple, timezone_offset, timezone_offset
+    if access_mode == "day":
+        if offset < 0 or offset > 7:
+            return success, weather_tuple, timezone_offset, timezone_offset
+    if access_mode == "hour":
+        if offset < 0 or offset > 24:
+            return success, weather_tuple, timezone_offset, timezone_offset
 
     if units not in ["imperial", "metric"]:
         return success, weather_tuple, timezone_offset, timezone_offset
@@ -112,9 +124,14 @@ def get_daily_weather_from_openweathermapdotorg(
     if resp.status_code == 200:
         x = resp.json()
         # get weather for the given day offset
-        if "daily" in x:
-            weather_tuple = x["daily"][date_offset]
-            success = True
+        if "daily" in x and access_mode == "day":
+            if offset < len(x["daily"]):
+                weather_tuple = x["daily"][offset]
+                success = True
+        if "hourly" in x and access_mode == "hour":
+            if offset < len(x["hourly"]):
+                weather_tuple = x["hourly"][offset]
+                success = True
         if "timezone_offset" in x:
             timezone_offset = x["timezone_offset"]
         if "timezone" in x:
@@ -124,7 +141,7 @@ def get_daily_weather_from_openweathermapdotorg(
 
 
 def parse_daily_weather_from_openweathermapdotorg(
-    weather_tuple: dict, units: str, requested_address: str, when: str, when_dt: str
+    weather_tuple: dict, units: str, human_readable_text: str, when: str, when_dt: str
 ):
     """
     Parses the wx data for a given day (as returned by function
@@ -140,7 +157,7 @@ def parse_daily_weather_from_openweathermapdotorg(
         Format: see https://openweathermap.org/api/one-call-api
     units: 'str'
         Unit of measure. Can either be 'metric' or 'imperial'
-    requested_address: 'str'
+    human_readable_text: 'str'
         Contains the human-readable address for which the user
         has requested the wx forecast
     when: 'str':
@@ -162,7 +179,7 @@ def parse_daily_weather_from_openweathermapdotorg(
     w_sunrise = w_sunset = w_temp_day = w_temp_night = w_temp_eve = None
     w_temp_morn = w_pressure = w_humidity = w_dew_point = w_wind_deg = None
     w_wind_speed = w_weather_description = w_uvi = w_rain = w_snow = None
-    w_clouds = w_visibility = None
+    w_clouds = w_visibility = w_temp_min = w_temp_max = w_temp = None
 
     # This is the array that we are going to return to the user
     weather_forecast_array = []
@@ -198,11 +215,24 @@ def parse_daily_weather_from_openweathermapdotorg(
             w_sunrise = weather_tuple["sunrise"]
         if "sunset" in weather_tuple:
             w_sunset = weather_tuple["sunset"]
+        # hourly reports: temp = float value, daily reports: temp = dict value
         if "temp" in weather_tuple:
-            w_temp_day = weather_tuple["temp"]["day"]
-            w_temp_night = weather_tuple["temp"]["night"]
-            w_temp_eve = weather_tuple["temp"]["eve"]
-            w_temp_morn = weather_tuple["temp"]["morn"]
+            subset = weather_tuple["temp"]
+            if isinstance(subset, dict):
+                if "day" in subset:
+                    w_temp_day = subset["day"]
+                if "night" in subset:
+                    w_temp_night = weather_tuple["temp"]["night"]
+                if "eve" in subset:
+                    w_temp_eve = weather_tuple["temp"]["eve"]
+                if "morn" in subset:
+                    w_temp_morn = weather_tuple["temp"]["morn"]
+                if "min" in subset:
+                    w_temp_min = weather_tuple["temp"]["min"]
+                if "max" in subset:
+                    w_temp_max = weather_tuple["temp"]["max"]
+            elif isinstance(subset, float):
+                w_temp = weather_tuple["temp"]
         if "pressure" in weather_tuple:
             w_pressure = weather_tuple["pressure"]
         if "humidity" in weather_tuple:
@@ -219,10 +249,24 @@ def parse_daily_weather_from_openweathermapdotorg(
             w_uvi = weather_tuple["uvi"]
         if "clouds" in weather_tuple:
             w_clouds = weather_tuple["clouds"]
+        # when hourly data was requested, the result comes as a
+        # dictionary - otherwise as a float
         if "rain" in weather_tuple:
-            w_rain = weather_tuple["rain"]
+            subset = weather_tuple["rain"]
+            if isinstance(subset, float):
+                w_rain = weather_tuple["rain"]
+            elif isinstance(subset, dict):
+                if "1h" in subset:
+                    w_rain = weather_tuple["1h"]
+        # when hourly data was requested, the result comes as a
+        # dictionary - otherwise as a float
         if "snow" in weather_tuple:
-            w_snow = weather_tuple["snow"]
+            subset = weather_tuple["snow"]
+            if isinstance(subset,float):
+                w_snow = weather_tuple["snow"]
+            elif isinstance(subset, dict):
+                if "1h" in subset:
+                    w_snow = weather_tuple["1h"]
         if "visibility" in weather_tuple:
             w_visibility = weather_tuple["visibility"]
 
@@ -233,7 +277,7 @@ def parse_daily_weather_from_openweathermapdotorg(
 
         # Start with the human-readable address that the user has requested.
         weather_forecast_array = make_pretty_aprs_messages(
-            f"{when_text} {requested_address}", weather_forecast_array
+            f"{when_text} {human_readable_text}", weather_forecast_array
         )
 
         # Add the forecast string
@@ -243,7 +287,7 @@ def parse_daily_weather_from_openweathermapdotorg(
             )
 
         # Add temperatures whereas applicable per 'when_dt' parameters
-        if w_temp_day or w_temp_morn or w_temp_eve or w_temp_night:
+        if w_temp_day or w_temp_morn or w_temp_eve or w_temp_night or w_temp:
             if w_temp_morn and when_dt in ["full", "morning"]:
                 weather_forecast_array = make_pretty_aprs_messages(
                     f"morn:{w_temp_morn:.0f}{temp_uom}", weather_forecast_array
@@ -260,6 +304,10 @@ def parse_daily_weather_from_openweathermapdotorg(
                 weather_forecast_array = make_pretty_aprs_messages(
                     f"nite:{w_temp_night:.0f}{temp_uom}", weather_forecast_array
                 )
+            if w_temp:  # hourly report
+                weather_forecast_array = make_pretty_aprs_messages(
+                    f"temp:{w_temp:.0f}{temp_uom}", weather_forecast_array
+                )
 
         # Sunrise and Sunset
         if w_sunset and w_sunrise:
@@ -274,7 +322,7 @@ def parse_daily_weather_from_openweathermapdotorg(
             weather_forecast_array = make_pretty_aprs_messages(
                 f"sunrise {tmp.hour}:{tmp.minute}UTC", weather_forecast_array
             )
-        else:
+        elif w_sunset and not w_sunrise:
             tmp = datetime.fromtimestamp(w_sunset)
             weather_forecast_array = make_pretty_aprs_messages(
                 f"sunset {tmp.hour}:{tmp.minute}UTC", weather_forecast_array
@@ -346,10 +394,10 @@ if __name__ == "__main__":
             timezone_offset,
             timezone,
         ) = get_daily_weather_from_openweathermapdotorg(
-            51.8458575, 8.2997425, 0, openweathermap_api_key, "metric"
+            latitude=51.8458575, longitude=8.2997425, offset=0, openweathermap_api_key=openweathermap_api_key, units="metric", access_mode="hour"
         )
         if success:
             my_weather_forecast_array = parse_daily_weather_from_openweathermapdotorg(
-                weather_tuple, "metric", "Und jetzt das Wetter", "Samstag", "full"
+                weather_tuple=weather_tuple, units="metric", human_readable_text="Und jetzt das Wetter", when="Samstag", when_dt="full"
             )
             logger.info(my_weather_forecast_array)
