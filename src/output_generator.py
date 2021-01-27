@@ -288,18 +288,32 @@ def generate_output_message_wx(
     when = response_parameters["when"]
     when_daytime = response_parameters["when_daytime"]
     date_offset = response_parameters["date_offset"]
+    hour_offset = response_parameters["hour_offset"]
     language = response_parameters["language"]
     altitude = response_parameters["altitude"]
     human_readable_message = response_parameters["human_readable_message"]
+
+    # populate the correct offset, dependent on what the
+    # user wants (daily or hourly data)
+    offset = date_offset
+    access_mode = "day"
+    if when == "hour":
+        offset = hour_offset
+        access_mode = "hour"
+
     success, myweather, tz_offset, tz = get_daily_weather_from_openweathermapdotorg(
         latitude=latitude,
         longitude=longitude,
         units=units,
-        date_offset=date_offset,
+        offset=offset,
         openweathermap_api_key=openweathermapdotorg_api_key,
         language=language,
+        access_mode=access_mode,
     )
     if success:
+        if when == "hour":
+            human_readable_message = f"in {offset}h " + human_readable_message
+
         output_list = parse_daily_weather_from_openweathermapdotorg(
             myweather, units, human_readable_message, when, when_daytime
         )
