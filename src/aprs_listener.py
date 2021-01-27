@@ -32,6 +32,7 @@ from utility_modules import (
     write_number_of_served_packages,
     get_aprs_message_from_cache,
     add_aprs_message_to_cache,
+    dump_string_to_hex,
 )
 from aprs_communication import (
     parse_aprs_data,
@@ -139,6 +140,8 @@ def mycallback(raw_aprs_packet):
             # Continue if both assumptions are correct
             if format_string == "message" and message_text_string:
                 # This is a message that belongs to us
+
+                logger.info(dump_string_to_hex(message_text_string))
 
                 # Check if the message is present in our decaying message cache
                 # If the message can be located, then we can assume that we have
