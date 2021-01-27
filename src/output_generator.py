@@ -293,13 +293,16 @@ def generate_output_message_wx(
     altitude = response_parameters["altitude"]
     human_readable_message = response_parameters["human_readable_message"]
 
-    # populate the correct offset, dependent on what the
-    # user wants (daily or hourly data)
+    # populate the correct offset & mode , dependent on
+    # what the user wants (daily, hourly or current wx data)
     offset = date_offset
     access_mode = "day"
     if when == "hour":
         offset = hour_offset
         access_mode = "hour"
+    if when == "now":
+        offset = -1
+        access_mode = "current"
 
     success, myweather, tz_offset, tz = get_daily_weather_from_openweathermapdotorg(
         latitude=latitude,
@@ -313,6 +316,8 @@ def generate_output_message_wx(
     if success:
         if when == "hour":
             human_readable_message = f"in {offset}h " + human_readable_message
+        elif when == "now":
+            human_readable_message = datetime.datetime.strftime(datetime.datetime.utcnow(),"%H:%M") + "UTC " + human_readable_message
 
         output_list = parse_daily_weather_from_openweathermapdotorg(
             myweather, units, human_readable_message, when, when_daytime

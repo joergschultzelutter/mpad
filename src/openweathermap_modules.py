@@ -62,7 +62,7 @@ def get_daily_weather_from_openweathermapdotorg(
     language: 'str'
         ISO3166-2 language in lowercase
     access_mode: 'str'
-        Can either be 'day' or 'hour'
+        Can either be 'day','hour' or 'current'
 
     Returns
     =======
@@ -81,7 +81,7 @@ def get_daily_weather_from_openweathermapdotorg(
     weather_tuple = timezone_offset = timezone = None
     success = False
 
-    assert access_mode in ["day", "hour"]
+    assert access_mode in ["day", "hour", "current"]
 
     # fmt: off
     owm_supported_languages = [
@@ -124,11 +124,14 @@ def get_daily_weather_from_openweathermapdotorg(
     if resp.status_code == 200:
         x = resp.json()
         # get weather for the given day offset
-        if "daily" in x and access_mode == "day":
+        if "current" in x and access_mode == "current":
+            weather_tuple = x["current"]
+            success = True
+        elif "daily" in x and access_mode == "day":
             if offset < len(x["daily"]):
                 weather_tuple = x["daily"][offset]
                 success = True
-        if "hourly" in x and access_mode == "hour":
+        elif "hourly" in x and access_mode == "hour":
             if offset < len(x["hourly"]):
                 weather_tuple = x["hourly"][offset]
                 success = True
