@@ -375,6 +375,8 @@ def get_nearest_repeater(
         band = band.lower()
     if mode == "D-STAR":
         mode = "DSTAR"
+    if mode == "YSF":
+        mode = "C4FM"
 
     # convert lat/lon degrees to radians
     lat1 = latitude * 0.0174533

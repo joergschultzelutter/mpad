@@ -639,7 +639,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # Search for repeater-mode-band
     if not found_my_duty_roster and not err:
         regex_string = (
-            r"repeater\s*(fm|dstar|d-star|dmr|c4fm|tetra|atv)\s*(\d.?\d*(?:cm|m)\b)"
+            r"repeater\s*(fm|dstar|d-star|dmr|c4fm|ysf|tetra|atv)\s*(\d.?\d*(?:cm|m)\b)"
         )
         matches = re.search(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
@@ -653,7 +653,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             ).strip()
         # If not found, search for repeater-band-mode
         if not found_my_duty_roster:
-            regex_string = r"repeater\s*(\d.?\d*(?:cm|m)\b)\s*(fm|dstar|d-star|dmr|c4fm|tetra|atv)\b"
+            regex_string = r"repeater\s*(\d.?\d*(?:cm|m)\b)\s*(fm|dstar|d-star|dmr|c4fm|ysf|tetra|atv)\b"
             matches = re.search(
                 pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
             )
@@ -666,7 +666,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                 ).strip()
         # if not found, search for repeater - mode
         if not found_my_duty_roster:
-            regex_string = r"repeater\s*(fm|dstar|d-star|dmr|c4fm|tetra|atv)\b"
+            regex_string = r"repeater\s*(fm|dstar|d-star|dmr|c4fm|ysf|tetra|atv)\b"
             matches = re.search(
                 pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
             )
