@@ -23,6 +23,7 @@ The following Python packages need to be installed:
 - [aprs.fi](https://aprs.fi/page/api)
 - [findu.com](https://www.findu.com)
 - [openweathermap.org](https://www.openweathermap.org)
+- [aprs-is](http://www.aprs-is.net/Default.aspx)
 
 Both aprs.fi and openweathermap.org require an API access key which needs to be added to the program's configuration file - see [installation instructions](INSTALLATION.md)
 
@@ -36,5 +37,4 @@ Both aprs.fi and openweathermap.org require an API access key which needs to be 
 ## Programming & knowledge resources
 
 - [aprs101](http://www.aprs.org/doc/APRS101.PDF)
-- [aprs-is](http://www.aprs-is.net/Default.aspx)
 - [wxbot](https://sites.google.com/site/ki6wjp/wxbot)
