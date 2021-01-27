@@ -29,6 +29,7 @@ from cwop_modules import (
     get_nearest_cwop_findu,
 )
 
+from geopy_modules import get_osm_special_phrase_data
 
 from utility_modules import make_pretty_aprs_messages, read_program_config
 from airport_data_modules import get_metar_data
@@ -247,13 +248,18 @@ def generate_output_message(
         success, output_list = generate_output_message_whereis(
             response_parameters=response_parameters
         )
+    elif what == "osm_special_phrase":
+        success, output_list = generate_output_message_osm_special_phrase(
+            response_parameters=response_parameters
+        )
     else:
         success = False
         output_list = [
-            "Output parser did encounter an unknown action command",
+            "Output parser has encountered an unknown action command",
         ]
+        logger = logging.getLogger(__name__)
         logger.info(
-            f"Unable to generate output message; unknown action command: {response_parameters}"
+            f"Unable to generate output message; unknown 'what' command '{what}': {response_parameters}"
         )
 
     return success, output_list
@@ -836,6 +842,80 @@ def generate_output_message_repeater(response_parameters: dict):
     else:
         output_list = make_pretty_aprs_messages("Cannot locate nearest repeater")
         success = True
+    return success, output_list
+
+
+def generate_output_message_osm_special_phrase(response_parameters: dict):
+    """
+    Get the user's desired OSM 'special phrase' query and return the content to the user
+
+    Parameters
+    ==========
+    response_parameters: 'dict'
+        Dictionary of the data from the input processor's analysis on the user's data
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful. Will only be false in case of a
+        fatal error as we need to send something back to the user (even
+        if that message is a mere error text)
+    output_message: 'list'
+        List, containing the message text(s) that we will send to the user
+        This is plain text list without APRS message ID's
+    """
+    latitude = response_parameters["latitude"]
+    longitude = response_parameters["longitude"]
+    number_of_results = response_parameters["number_of_results"]
+    osm_special_phrase = response_parameters["osm_special_phrase"]
+    units = response_parameters["units"]
+
+    success, osm_data_list = get_osm_special_phrase_data(latitude=latitude,longitude=longitude,special_phrase=osm_special_phrase,number_of_results=number_of_results)
+
+    # We need a predefined local list as we are going to iterate multiple times
+    output_list=[]
+
+    if not success:
+        output_list = make_pretty_aprs_messages(message_to_add=f"No results for '{osm_special_phrase}' found near your pos.", destination_list=output_list)
+    else:
+        entry = 0
+        number_of_actual_results = len(osm_data_list)
+        for element in osm_data_list:
+            #msg counter
+            entry = entry + 1
+
+            osm_latitude = element["latitude"]
+            osm_longitude = element["longitude"]
+            house_number = element["house_number"]
+            amenity = element["amenity"]
+            road = element["road"]
+            city = element["city"]
+            postcode = element["postcode"]
+
+            distance, bearing, heading = haversine(latitude1=latitude,longitude1=longitude, latitude2=osm_latitude, longitude2=osm_longitude, units=units)
+
+            # Add an identification header if we have more than one result
+            if number_of_actual_results > 1:
+                output_list = make_pretty_aprs_messages(message_to_add=f"#{entry}",destination_list=output_list)
+
+            if amenity:
+                output_list = make_pretty_aprs_messages(message_to_add=amenity,destination_list=output_list)
+            if road:
+                output_list = make_pretty_aprs_messages(message_to_add=road,destination_list=output_list)
+            if house_number:
+                output_list = make_pretty_aprs_messages(message_to_add=house_number, destination_list=output_list)
+            if city:
+                output_list = make_pretty_aprs_messages(message_to_add=city, destination_list=output_list)
+
+            dst_uom = "km"
+            if units == "imperial":
+                dst_uom = "mi"
+
+            output_list = make_pretty_aprs_messages(message_to_add=f"Dst {round(distance)} {dst_uom}", destination_list=output_list)
+            output_list = make_pretty_aprs_messages(message_to_add=f"Brg {round(bearing)} deg", destination_list=output_list)
+            output_list = make_pretty_aprs_messages(message_to_add=heading, destination_list=output_list)
+
+    success = True
     return success, output_list
 
 
