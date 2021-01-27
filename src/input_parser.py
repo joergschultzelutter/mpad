@@ -34,6 +34,7 @@ from utility_modules import getdaysuntil, read_program_config
 from aprsdotfi_modules import get_position_on_aprsfi
 import logging
 from datetime import datetime
+import mpad_config
 
 aprsdotfi_api_key = openweathermap_api_key = None
 
@@ -127,7 +128,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     lasttime = datetime.min  # Placeholder in case lasttime is not present on aprs.fi
     when = when_daytime = what = city = state = country = zipcode = cwop_id = None
     icao = human_readable_message = satellite = repeater_band = repeater_mode = None
-    street = street_number = county = None
+    street = street_number = county = osm_special_phrase = None
 
     # Call sign reference (either the user's call sign or someone
     # else's call sign
@@ -946,13 +947,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                                 what = "wx"
                                 icao = None
                                 human_readable_message = f"Wx for '{icao}'"
-            #
-            # At this point, we should know now what data the user wants
-            # from us and have retrieved the associated lat/lon information
-            # (if applicable).
-            #
-            # Let's now check for other relevant keywords
-            #
 
             # User wants his own position on aprs.fi?
             if not found_my_duty_roster and not err:
@@ -998,6 +992,30 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                         # Finally, set the user's latitude / longitude
                         users_latitude = latitude
                         users_longitude = longitude
+
+            if not found_my_duty_roster and not err:
+                for osm_category in mpad_config.osm_supported_keyword_categories:
+                    regex_string = rf"^({osm_category})$"
+                    matches = re.search(regex_string, word, re.IGNORECASE)
+                    if matches:
+                        osm_special_phrase = osm_category
+                        what = "osm_special_phrase"
+                        found_my_duty_roster = True
+                        (
+                            success,
+                            latitude,
+                            longitude,
+                            altitude,
+                            lasttime,
+                            message_callsign,
+                        ) = get_position_on_aprsfi(
+                            aprsfi_callsign=users_callsign,
+                            aprsdotfi_api_key=aprsdotfi_api_key,
+                        )
+                        if not success:
+                            err = True
+                            human_readable_message = f"{errmsg_cannot_find_coords_for_user} {message_callsign}"
+                        break
 
             # Parse the "when" information if we don't have an error
             # and if we haven't retrieved the command data in a previous run
@@ -1173,6 +1191,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         "street_number": street_number,
         "users_latitude": users_latitude,  # User's own lat / lon. Only used for 'whereis' request
         "users_longitude": users_longitude,  # in reference to another user's call sign
+        "osm_special_phrase": osm_special_phrase,  # openstreetmap special phrases https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases/EN
     }
 
     # Finally, set the return code. Unless there was an error, we return a True status
@@ -1404,4 +1423,4 @@ if __name__ == "__main__":
         aprsis_callsign,
         aprsis_passcode,
     ) = read_program_config()
-    logger.info(parse_input_message("3h", "df1jsl-1", aprsdotfi_api_key))
+    logger.info(parse_input_message("police", "df1jsl-1", aprsdotfi_api_key))
