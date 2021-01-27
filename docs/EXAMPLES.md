@@ -15,7 +15,7 @@ External service dependencies:
 | localised Wx report for the city of Holzminden, Germany | ```Holzminden;de tomorrow lang de``` | ```16-Jan-21 Holzminden;DE Bedeckt morn:-3c day:-1c eve:-2c nite:-2c``` |
 | | | ```sunrise/set 08:21/16:42UTC clouds:89% uvi:0.5 hPa:1026 hum:92%``` |
 | | | ```dewpt:-5c wndspd:2m/s wnddeg:252``` |
-| WX report for monday for the user's own current position | ```monday``` | ```18-Jan-21 Hoexter;DE rain and snow morn:-1c day:1c eve:2c nite:0c``` |
+| WX report for monday for the user's own current position | ```monday``` | ```18-Jan-21 Höxter;DE rain and snow morn:-1c day:1c eve:2c nite:0c``` |
 | | | ```sunrise/set 08:25/16:48UTC rain:1mm snow:2mm clouds:100% uvi:0.3``` |
 | | | ```hPa:1017 hum:98% dewpt:1c wndspd:2m/s wnddeg:223``` |
 | WX report for monday for another user's position | ```wa1gov-10 monday``` | ```20-Jan-21 Taunton,MA,02718;US overcast clouds morn:-1c day:1c``` |
@@ -46,10 +46,10 @@ External service dependencies:
 | Nearest repeater with C4FM capability | ```repeater c4fm``` | ```Nearest repeater Hoexter 8 km 225 deg SW Rx 430.4125 Tx 439.8125``` |
 | | | ```Multimode-Digital-Relais (C4FM und DMR), DMR-ID: 262484 C4FM 70cm``` |
 | | | ```JO41QS``` |
-| Nearest repeater on 70cm band | ```repeater 70cm``` | ```Nearest repeater Hoexter 8 km 225 deg SW Rx 430.4125 Tx 439.8125``` |
+| Nearest repeater on 70cm band | ```repeater 70cm``` | ```Nearest repeater Höxter 8 km 225 deg SW Rx 430.4125 Tx 439.8125``` |
 | | | ```Multimode-Digital-Relais (C4FM und DMR), DMR-ID: 262484 C4FM 70cm``` |
 | | | ```JO41QS``` |
-| Nearest repeater with C4FM capability and on 70cm band | ```repeater c4fm 70cm``` | ```Nearest repeater Hoexter 8 km 225 deg SW Rx 430.4125 Tx 439.8125``` |
+| Nearest repeater with C4FM capability and on 70cm band | ```repeater c4fm 70cm``` | ```Nearest repeater Höxter 8 km 225 deg SW Rx 430.4125 Tx 439.8125``` |
 | (order of both band and mode are interchangable) | | ```Multimode-Digital-Relais (C4FM und DMR), DMR-ID: 262484 C4FM 70cm``` |
 | | | ```JO41QS``` |
 | Nearest repeater (disregarding band and mode) | ```repeater``` | ```Nearest repeater Alfeld 18 km 62 deg ENE Rx 145.1125 Tx 145.7125``` |
@@ -66,10 +66,10 @@ External service dependencies:
 | --------------- | -------------------------- | ---------------------------- |
 | My own position data | ```whereami``` | ```Pos for DF1JSL-1 Grid JO41su94 DMS N51.51'13.2, E09.34'37.8 Alt 237m``` |
 | | | ```UTM 32U 539752 5744921 MGRS 32UNC3975244921 LatLon 51.85367/9.57717``` |
-| | | ```Schorborn, 37627, DE Alte Muehle``` |
+| | | ```Schorborn, 37627, DE Alte Mühle``` |
 | DF1JSL-8's position | ``` whereis df1jsl-8 ```| ```Pos DF1JSL-8 Grid JO41st76 DMS N51.49'0.0/E09.33'57.0 Dst 85 km``` |
 | | | ```Brg 272deg W Alt 366m UTM 32U 539003 5740799 MGRS 32UNC3900340799``` |
-| | | ```LatLon 51.81667/9.56583 Merxhausen, 37627, DE Neuhaeuser Strasse```|
+| | | ```LatLon 51.81667/9.56583 Merxhausen, 37627, DE Neuhäuser Strasse```|
 | | |```Last heard 2021-01-23 17:32:42``` |
 
 ## METAR data
@@ -123,3 +123,20 @@ The very first usage of this command set will trigger a download of the ```de421
 | Sunrise/set and moonset/rise, relative to the user's position | ```riseset``` | ```RiseSet DF1JSL-4 17-Jan GMT sun_rs 07:25-15:49 mn_sr 20:47-09:55``` |
 | Sunrise/set and moonset/rise, relative to another user's position | ```riseset wa1gov-10``` | ```RiseSet WA1GOV-10 17-Jan GMT sun_rs 12:08-21:40 mn_sr 01:26-15:03``` |
 | Sunrise/set and moonset/rise, relative to another user's position and a specific day| ```riseset wa1gov-10 friday``` | ```RiseSet WA1GOV-10 22-Jan GMT sun_rs 12:04-21:46 mn_sr 06:31-17:00``` |
+
+
+## OpenStreetMap Category 'Near' search
+
+External service dependencies:
+
+- [Openstreetmap](www.openstreetmap.org) for coordinate transformation (e.g. City/country or zipcode to lat/lon)
+- [aprs.fi](www.aprs.fi) for APRS call sign coordinates
+
+| What do we want | Command string User > MPAD | Response example MPAD > User |
+| --------------- | -------------------------- | ---------------------------- |
+| Nearest Supermarket to my location | ```osm supermarket``` | ```Nahkauf Eversteiner Straße 17 Lobach Dst 6 km Brg 332 deg NNW``` |
+| Top3 of the nearest supermarkets to my location | ```osm supermarket top3``` | ```#1 Nahkauf Eversteiner Straße 17 Lobach Dst 6 km Brg 332 deg NNW #2``` |
+| | | ```REWE Bevern Schloss 15 Bevern Dst 7 km Brg 313 deg NW #3 Aldi``` |
+| | | ```Deenser Straße 26 Stadtoldendorf Dst 8 km Brg 26 deg NNE``` |
+| Nearest police to my location (non-keyword search) | ```police``` | ```Polizei Stadtoldendorf Amtsstraße 4 Stadtoldendorf Dst 8 km``` |
+| | | ```Brg 29 deg NNE``` |
