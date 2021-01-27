@@ -257,7 +257,7 @@ def parse_daily_weather_from_openweathermapdotorg(
                 w_rain = weather_tuple["rain"]
             elif isinstance(subset, dict):
                 if "1h" in subset:
-                    w_rain = weather_tuple["1h"]
+                    w_rain = subset["1h"]
         # when hourly data was requested, the result comes as a
         # dictionary - otherwise as a float
         if "snow" in weather_tuple:
@@ -266,7 +266,7 @@ def parse_daily_weather_from_openweathermapdotorg(
                 w_snow = weather_tuple["snow"]
             elif isinstance(subset, dict):
                 if "1h" in subset:
-                    w_snow = weather_tuple["1h"]
+                    w_snow = subset["1h"]
         if "visibility" in weather_tuple:
             w_visibility = weather_tuple["visibility"]
 
