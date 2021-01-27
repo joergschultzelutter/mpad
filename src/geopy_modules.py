@@ -174,7 +174,7 @@ def get_osm_special_phrase_data(
     latitude: float,
     longitude: float,
     special_phrase: str,
-    number_of_entries: int = 1,
+    number_of_results: int = 1,
 ):
     """
     Get human-readable address data for a lat/lon combination
@@ -188,10 +188,15 @@ def get_osm_special_phrase_data(
         special phrases that we are going to send to OSM.
         https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases/EN
         We do not perform any validation here but send the string 'as is'
+    number_of_results: 'int'
+        if OSM provides more than one result, we return a maximum of n results
+        back to the user. The actual number of results depends on the outcome
+        of the OSM query and can even be zero if no entries were found
+
     Returns
     =======
     success: 'bool'
-        True if at least one entry was found
+        True if at least one entry was found and added to the output list
     special_phrase_results: 'List'
         Contains the data that we have received from OSM
     """
@@ -205,7 +210,7 @@ def get_osm_special_phrase_data(
 
     try:
         resp = requests.get(
-            f"https://nominatim.openstreetmap.org/search?format=jsonv2&q={special_phrase}%20near%20{latitude},{longitude}&limit={number_of_entries}",
+            f"https://nominatim.openstreetmap.org/search?format=jsonv2&q={special_phrase}%20near%20{latitude},{longitude}&limit={number_of_results}",
             headers=headers,
         )
     except:
@@ -251,6 +256,21 @@ def get_osm_special_phrase_data(
                         json_content = resp.json()
                         for element in json_content:
                             house_number = road = town = postcode = amenity = None
+                            latitude = longitude = 0.0
+
+                            if "lat" in element:
+                                latitude = element["lat"]
+                                try:
+                                    latitude = float(latitude)
+                                except ValueError:
+                                    latitude = 0.0
+                            if "lon" in element:
+                                longitude = element["lon"]
+                                try:
+                                    longitude = float(longitude)
+                                except ValueError:
+                                    longitude = 0.0
+
                             if "address" in element:
                                 address_body = element["address"]
                                 if "house_number" in address_body:
@@ -269,6 +289,8 @@ def get_osm_special_phrase_data(
                                     "road": road,
                                     "town": town,
                                     "postcode": postcode,
+                                    "latitude": latitude,
+                                    "longitude": longitude,
                                 }
                                 special_phrase_results.append(special_phrase_entry)
                                 success = True
@@ -281,18 +303,18 @@ if __name__ == "__main__":
     )
     logger = logging.getLogger(__name__)
 
-    logger.info(get_reverse_geopy_data(latitude=37.7790262, longitude=-122.4199061))
-    city = "Mountain View"
-    state = "CA"
-    country = "US"
-    geopy_query = {"city": city, "state": state, "country": country}
-    logger.info(get_geocode_geopy_data(query_data=geopy_query))
+    #    logger.info(get_reverse_geopy_data(latitude=37.7790262, longitude=-122.4199061))
+    #    city = "Mountain View"
+    #    state = "CA"
+    #    country = "US"
+    #    geopy_query = {"city": city, "state": state, "country": country}
+    #    logger.info(get_geocode_geopy_data(query_data=geopy_query))
 
     logger.info(
         get_osm_special_phrase_data(
             latitude=51.82467,
             longitude=9.451,
             special_phrase="fuel",
-            number_of_entries=3,
+            number_of_results=3,
         )
     )
