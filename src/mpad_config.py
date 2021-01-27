@@ -36,8 +36,12 @@ aprs_symbol: str = "?"  # APRS symbol: Server
 # to APRS-IS. If the program has to send two bulletin messages, then the total run time of\
 # sending out those bulletins is 2 * x secs
 #
-packet_delay_message: float = 6.0  # packet delay in seconds after sending data to aprs-is
-packet_delay_other: float = 6.0  # packet delay after sending an acknowledgment, bulletin or beacon
+packet_delay_message: float = (
+    6.0  # packet delay in seconds after sending data to aprs-is
+)
+packet_delay_other: float = (
+    6.0  # packet delay after sending an acknowledgment, bulletin or beacon
+)
 #
 ##########################
 # Configuration settings #
@@ -78,7 +82,7 @@ aprsis_server_port = 14580  # server port
 # Syntax: see http://www.aprs-is.net/javAPRSFilter.aspx
 # If you remove/disable this filter, MPAD will 'see' all aprs-is messages
 # (the whole APRS-IS traffic)
-#aprsis_server_filter = "g/WXBOT/WXYO"  # server filter criteria for aprs.is
+# aprsis_server_filter = "g/WXBOT/WXYO"  # server filter criteria for aprs.is
 aprsis_server_filter = "g/MPAD"  # server filter criteria for aprs.is
 #
 #############################
@@ -91,7 +95,7 @@ aprsis_server_filter = "g/MPAD"  # server filter criteria for aprs.is
 # If that secondary filter is also passed, then we will have a look
 # at the user's message and try to process it
 #
-#mpad_callsigns_to_parse = ["WXBOT", "WXYO"]  # (additional) call sign filter
+# mpad_callsigns_to_parse = ["WXBOT", "WXYO"]  # (additional) call sign filter
 mpad_callsigns_to_parse = ["MPAD"]  # (additional) call sign filter
 #
 #############################################################
@@ -120,3 +124,57 @@ mpad_msg_cache_time_to_live = 5 * 60  # ttl = 5 minutes
 # If -for whatever reason- you do want MPAD to enforce plain ASCII messages,
 # then set this marker to True.
 mpad_enforce_plain_ascii_messages = False
+#
+# Openstreetmap 'special phrases'
+# The values in this list need to match the ones in the OSM
+# documentation: https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases/EN
+# Add/remove categories if necessary but ensure that the keywords' writing
+# matches the one in the OSM documentation (this is case sensitive data!)
+#
+osm_supported_keyword_categories = [
+    "aerodrome",
+    "ambulance_station",
+    "atm",
+    "bakery",
+    "bank",
+    "butcher",
+    "car_rental",
+    "car_repair",
+    "charging_station",
+    "chemist",
+    "clinic",
+    "college",
+    "deli",
+    "dentist",
+    "department_store",
+    "drinking_water",
+    "fire_station",
+    "fuel",
+    "hairdresser",
+    "hospital",
+    "hostel",
+    "hotel",
+    "information",
+    "laundry",
+    "mall",
+    "optician",
+    "pharmacy",
+    "photographer",
+    "police",
+    "post_box",
+    "post_office",
+    "pub",
+    "shoes",
+    "subway",
+    "supermarket",
+    "taxi",
+    "telephone",
+    "tobacco",
+    "toilets",
+    "train_station",
+    "university",
+    "water",
+]
+#
+# Default user agent for accessing aprs.fi, openstreetmap et al
+mpad_default_user_agent = "multi-purpose-aprs-daemon/0.0.1 (+https://github.com/joergschultzelutter/mpad/)"
