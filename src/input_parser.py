@@ -123,6 +123,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
 
     latitude = longitude = altitude = users_latitude = users_longitude = 0.0
     date_offset = -1  # Date offset ("Monday", "tomorrow" etc) for wx fc
+    hour_offset = -1  # Hour offset (1h, 2h, 3h, ...) for wx fc
     lasttime = datetime.min  # Placeholder in case lasttime is not present on aprs.fi
     when = when_daytime = what = city = state = country = zipcode = cwop_id = None
     icao = human_readable_message = satellite = repeater_band = repeater_mode = None
@@ -1001,7 +1002,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             # Parse the "when" information if we don't have an error
             # and if we haven't retrieved the command data in a previous run
             if not found_when and not err:
-                found_when, when, date_offset = parse_when(word)
+                found_when, when, date_offset, hour_offset = parse_when(word)
 
             # Parse the "when_daytime" information if we don't have an error
             # and if we haven't retrieved the command data in a previous run
@@ -1158,6 +1159,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         "icao": icao,  # ICAO code
         "human_readable_message": human_readable_message,  # Message text header
         "date_offset": date_offset,  # precalculated date offset, based on 'when' value
+        "hour_offset": hour_offset,  # precalculated hour offset, based on 'when' value
         "satellite": satellite,  # satellite name, e.g. 'ISS'
         "repeater_band": repeater_band,  # repeater band, e.g. '70cm'
         "repeater_mode": repeater_mode,  # repeater mode, e.g. 'c4fm'
@@ -1201,13 +1203,18 @@ def parse_when(word: str):
         If we found some 'when' content, then its normalized content is
         returned with this variable
     date_offset: 'int'
-        If we found some 'when' content, then this
+        If we found some date-related 'when' content, then this
         field contains the tnteger offset in reference to the current day.
         Value between 0 (current day) and 7
+    hour_offset: 'int'
+        If we found some time-related 'when' content, then this
+        field contains the integer offset in reference to the current
+        hour value. Default value is -1. Only use this field's value if
+        'when' value is 'hour'.
     """
     found_when = False
     when = None
-    date_offset = -1
+    date_offset = hour_offset = -1
 
     matches = re.search(r"^(nite|night|tonite|tonight)$", word, re.IGNORECASE)
     if matches and not found_when:
@@ -1264,7 +1271,27 @@ def parse_when(word: str):
         when = "now"
         found_when = True
         date_offset = 0
-    return found_when, when, date_offset
+    matches = re.search(r"^(3h)$", word, re.IGNORECASE)
+    if matches and not found_when:
+        when = "hour"
+        found_when = True
+        hour_offset = 3
+    matches = re.search(r"^(6h)$", word, re.IGNORECASE)
+    if matches and not found_when:
+        when = "hour"
+        found_when = True
+        hour_offset = 6
+    matches = re.search(r"^(9h)$", word, re.IGNORECASE)
+    if matches and not found_when:
+        when = "hour"
+        found_when = True
+        hour_offset = 9
+    matches = re.search(r"^(12h)$", word, re.IGNORECASE)
+    if matches and not found_when:
+        when = "hour"
+        found_when = True
+        hour_offset = 12
+    return found_when, when, date_offset, hour_offset
 
 
 def parse_when_daytime(word: str):
