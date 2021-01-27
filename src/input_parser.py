@@ -129,7 +129,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # If a keyword potentially returns more than one entry, we permit the user
     # to see up to 5 results per query. Default is "1". Value can be overridden
     # by "top2" ... "top5" key words
-    number_of_output_entries = 1
+    number_of_results = 1
 
     lasttime = datetime.min  # Placeholder in case lasttime is not present on aprs.fi
     when = when_daytime = what = city = state = country = zipcode = cwop_id = None
@@ -755,7 +755,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     regex_string = r"top(2|3|4|5)"
     matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
-        number_of_output_entries = int(matches[1])
+        number_of_results = int(matches[1])
         aprs_message = re.sub(
             regex_string, "", aprs_message, flags=re.IGNORECASE
         ).strip()
@@ -1255,7 +1255,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         "street_number": street_number,
         "users_latitude": users_latitude,  # User's own lat / lon. Only used for 'whereis' request
         "users_longitude": users_longitude,  # in reference to another user's call sign
-        "number_of_output_entries": number_of_output_entries,  # for keywords which may return more than 1 result
+        "number_of_results": number_of_results,  # for keywords which may return more than 1 result
         "osm_special_phrase": osm_special_phrase,  # openstreetmap special phrases https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases/EN
     }
 
