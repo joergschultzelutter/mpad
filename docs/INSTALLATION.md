@@ -49,6 +49,7 @@ You also need to set the APRS-IS access and server credentials:
 - ```aprsis_server_name``` and ```aprsis_server_port```. APRS-IS server/port that the program tries to connect with. Self-explanatory (I hope).
 - Tune the ```mpad_msg_cache_time_to_live``` parameter if too many messages are detected as duplicates and are not getting processed. Default is 5 mins
 - Configure the ```mpad_beacon_altitude_ft``` parameter. This is the beacon's altitude in __feet__ (not in meters)
+- By default, MPAD will send out UTF-8 messages. If you want to enforce plain ASCII messages to the user, set the ```mpad_enforce_plain_ascii_messages``` flag to ```True```.
 
 Excerpt from ```mpad_config.py```:
 ```python
@@ -138,5 +139,16 @@ mpad_callsigns_to_parse = ["MPAD"]  # (additional) call sign filter
 # to be ignored by the program
 #
 mpad_msg_cache_time_to_live = 5 * 60  # ttl = 5 minutes
-
+#
+############################################
+# Character encoding for outgoing messages #
+############################################
+#
+# By default, MPAD will send out UTF-8 messages to its users; this is a supported
+# feature (see http://www.aprs.org/aprs12/utf-8.txt). Note that aprs101.pdf still
+# limits the character encoding to ASCII 7bit, so the information from the previous
+# link supersedes these restrictions
+# If -for whatever reason- you do want MPAD to enforce plain ASCII messages,
+# then set this marker to True.
+mpad_enforce_plain_ascii_messages = False
 ```
