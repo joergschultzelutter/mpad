@@ -125,6 +125,12 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     latitude = longitude = altitude = users_latitude = users_longitude = 0.0
     date_offset = -1  # Date offset ("Monday", "tomorrow" etc) for wx fc
     hour_offset = -1  # Hour offset (1h, 2h, 3h, ...) for wx fc
+
+    # If a keyword potentially returns more than one entry, we permit the user
+    # to see up to 5 results per query. Default is "1". Value can be overridden
+    # by "top2" ... "top5" key words
+    number_of_output_entries = 1
+
     lasttime = datetime.min  # Placeholder in case lasttime is not present on aprs.fi
     when = when_daytime = what = city = state = country = zipcode = cwop_id = None
     icao = human_readable_message = satellite = repeater_band = repeater_mode = None
@@ -157,13 +163,19 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # Note: we do NOT examine any call sign within the APRS message text but
     # have a look at the (source) user's call sign
     matches = re.search(
-        r"^[AKNW][a-zA-Z]{0,2}[0-9][A-Z]{1,3}", users_callsign, re.IGNORECASE
+        pattern=r"^[AKNW][a-zA-Z]{0,2}[0-9][A-Z]{1,3}",
+        string=users_callsign,
+        flags=re.IGNORECASE,
     )
     if matches:
         units = "imperial"
     # Now do the same thing for users in Liberia and Myanmar - per Wikipedia,
     # these two countries also use the imperial system
-    matches = re.search(r"^(A8|D5|EL|5L|5M|6Z|XY|XZ)", users_callsign, re.IGNORECASE)
+    matches = re.search(
+        pattern=r"^(A8|D5|EL|5L|5M|6Z|XY|XZ)",
+        string=users_callsign,
+        flags=re.IGNORECASE,
+    )
     if matches:
         units = "imperial"
 
@@ -738,6 +750,48 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             regex_string, "", aprs_message, flags=re.IGNORECASE
         ).strip()
 
+    # check if the user wants more than one result (if supported by respective keyword)
+    # hint: setting is not tied to the program's duty roster
+    regex_string = r"top(2|3|4|5)"
+    matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+    if matches:
+        number_of_output_entries = int(matches[1])
+        aprs_message = re.sub(
+            regex_string, "", aprs_message, flags=re.IGNORECASE
+        ).strip()
+
+    # Check for a keyword-supplied 'special phrase' for OpenStreetMap
+    if not found_my_duty_roster and not err:
+        for osm_category in mpad_config.osm_supported_keyword_categories:
+            regex_string = rf"osm ({osm_category})"
+            matches = re.search(
+                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+            )
+            if matches:
+                osm_special_phrase = osm_category
+                what = "osm_special_phrase"
+                found_my_duty_roster = True
+                aprs_message = re.sub(
+                    regex_string, "", aprs_message, flags=re.IGNORECASE
+                ).strip()
+                (
+                    success,
+                    latitude,
+                    longitude,
+                    altitude,
+                    lasttime,
+                    message_callsign,
+                ) = get_position_on_aprsfi(
+                    aprsfi_callsign=users_callsign,
+                    aprsdotfi_api_key=aprsdotfi_api_key,
+                )
+                if not success:
+                    err = True
+                    human_readable_message = (
+                        f"{errmsg_cannot_find_coords_for_user} {message_callsign}"
+                    )
+                break
+
     #
     # We have reached the end of the 'standard' position data processing
     # for that kind of data which may come with a command AND an associated
@@ -915,7 +969,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             # if the user has specified the 'metar' keyword, then
             # try to determine the nearest airport in relation to
             # the user's own call sign position
-            matches = re.search(r"^(metar)$", word, re.IGNORECASE)
+            matches = re.search(pattern=r"^(metar)$", string=word, flags=re.IGNORECASE)
             if matches:
                 (
                     success,
@@ -950,7 +1004,9 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
 
             # User wants his own position on aprs.fi?
             if not found_my_duty_roster and not err:
-                matches = re.search(r"^(whereami)$", word, re.IGNORECASE)
+                matches = re.search(
+                    pattern=r"^(whereami)$", string=word, flags=re.IGNORECASE
+                )
                 if matches:
                     what = "whereis"
                     message_callsign = users_callsign
@@ -996,7 +1052,9 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             if not found_my_duty_roster and not err:
                 for osm_category in mpad_config.osm_supported_keyword_categories:
                     regex_string = rf"^({osm_category})$"
-                    matches = re.search(regex_string, word, re.IGNORECASE)
+                    matches = re.search(
+                        pattern=regex_string, string=word, flags=re.IGNORECASE
+                    )
                     if matches:
                         osm_special_phrase = osm_category
                         what = "osm_special_phrase"
@@ -1029,7 +1087,9 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
 
             # check if the user wants to receive the help pages
             if not found_my_duty_roster and not err:
-                matches = re.search(r"^(info|help)$", word, re.IGNORECASE)
+                matches = re.search(
+                    pattern=r"^(info|help)$", string=word, flags=re.IGNORECASE
+                )
                 if matches and not what:
                     what = "help"
                     found_my_duty_roster = True
@@ -1039,10 +1099,14 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             # format if the user explicitly asks for it
             # hint: these settings are not tied to the program's
             # duty roster
-            matches = re.search(r"^(mtr|metric)$", word, re.IGNORECASE)
+            matches = re.search(
+                pattern=r"^(mtr|metric)$", string=word, flags=re.IGNORECASE
+            )
             if matches:
                 units = "metric"
-            matches = re.search(r"^(imp|imperial)$", word, re.IGNORECASE)
+            matches = re.search(
+                pattern=r"^(imp|imperial)$", string=word, flags=re.IGNORECASE
+            )
             if matches:
                 units = "imperial"
 
@@ -1119,8 +1183,8 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                 # give it one final try. If we still can't find anything,
                 # then we will give up
                 matches = re.search(
-                    r"^(([A-Z0-9]{1,3}[0123456789][A-Z0-9]{0,3})-([A-Z0-9]{1,2}))$",
-                    users_callsign,
+                    pattern=r"^(([A-Z0-9]{1,3}[0123456789][A-Z0-9]{0,3})-([A-Z0-9]{1,2}))$",
+                    string=users_callsign,
                 )
                 if matches:
                     (
@@ -1191,6 +1255,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         "street_number": street_number,
         "users_latitude": users_latitude,  # User's own lat / lon. Only used for 'whereis' request
         "users_longitude": users_longitude,  # in reference to another user's call sign
+        "number_of_output_entries": number_of_output_entries,  # for keywords which may return more than 1 result
         "osm_special_phrase": osm_special_phrase,  # openstreetmap special phrases https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases/EN
     }
 
@@ -1235,87 +1300,89 @@ def parse_when(word: str):
     when = None
     date_offset = hour_offset = -1
 
-    matches = re.search(r"^(nite|night|tonite|tonight)$", word, re.IGNORECASE)
+    matches = re.search(
+        pattern=r"^(nite|night|tonite|tonight)$", string=word, flags=re.IGNORECASE
+    )
     if matches and not found_when:
         when = "today"
         found_when = True
         date_offset = 0
-    matches = re.search(r"^(today)$", word, re.IGNORECASE)
+    matches = re.search(pattern=r"^(today)$", string=word, flags=re.IGNORECASE)
     if matches and not found_when:
         when = "today"
         found_when = True
         date_offset = 0
-    matches = re.search(r"^(tomorrow)$", word, re.IGNORECASE)
+    matches = re.search(pattern=r"^(tomorrow)$", string=word, flags=re.IGNORECASE)
     if matches and not found_when:
         when = "tomorrow"
         found_when = True
         date_offset = 1
-    matches = re.search(r"^(monday|mon)$", word, re.IGNORECASE)
+    matches = re.search(pattern=r"^(monday|mon)$", string=word, flags=re.IGNORECASE)
     if matches and not found_when:
         when = "monday"
         found_when = True
         date_offset = getdaysuntil(calendar.MONDAY)
-    matches = re.search(r"^(tuesday|tue)$", word, re.IGNORECASE)
+    matches = re.search(pattern=r"^(tuesday|tue)$", string=word, flags=re.IGNORECASE)
     if matches and not found_when:
         when = "tuesday"
         found_when = True
         date_offset = getdaysuntil(calendar.TUESDAY)
-    matches = re.search(r"^(wednesday|wed)$", word, re.IGNORECASE)
+    matches = re.search(pattern=r"^(wednesday|wed)$", string=word, flags=re.IGNORECASE)
     if matches and not found_when:
         when = "wednesday"
         found_when = True
         date_offset = getdaysuntil(calendar.WEDNESDAY)
-    matches = re.search(r"^(thursday|thu)$", word, re.IGNORECASE)
+    matches = re.search(pattern=r"^(thursday|thu)$", string=word, flags=re.IGNORECASE)
     if matches and not found_when:
         when = "thursday"
         found_when = True
         date_offset = getdaysuntil(calendar.THURSDAY)
-    matches = re.search(r"^(friday|fri)$", word, re.IGNORECASE)
+    matches = re.search(pattern=r"^(friday|fri)$", string=word, flags=re.IGNORECASE)
     if matches and not found_when:
         when = "friday"
         found_when = True
         date_offset = getdaysuntil(calendar.FRIDAY)
-    matches = re.search(r"^(saturday|sat)$", word, re.IGNORECASE)
+    matches = re.search(pattern=r"^(saturday|sat)$", string=word, flags=re.IGNORECASE)
     if matches and not found_when:
         when = "saturday"
         found_when = True
         date_offset = getdaysuntil(calendar.SATURDAY)
-    matches = re.search(r"^(sunday|sun)$", word, re.IGNORECASE)
+    matches = re.search(pattern=r"^(sunday|sun)$", string=word, flags=re.IGNORECASE)
     if matches and not found_when:
         when = "sunday"
         found_when = True
         date_offset = getdaysuntil(calendar.SUNDAY)
-    matches = re.search(r"^(current|now)$", word, re.IGNORECASE)
+    matches = re.search(pattern=r"^(current|now)$", string=word, flags=re.IGNORECASE)
     if matches and not found_when:
         when = "now"
         found_when = True
         date_offset = 0
-    matches = re.search(r"^(1h)$", word, re.IGNORECASE)
+    matches = re.search(pattern=r"^(1h)$", string=word, flags=re.IGNORECASE)
     if matches and not found_when:
         when = "hour"
         found_when = True
         hour_offset = 1
-    matches = re.search(r"^(2h)$", word, re.IGNORECASE)
+    matches = re.search(pattern=r"^(2h)$", string=word, flags=re.IGNORECASE)
     if matches and not found_when:
         when = "hour"
         found_when = True
         hour_offset = 2
-    matches = re.search(r"^(3h)$", word, re.IGNORECASE)
+    matches = re.search(pattern=r"^(3h)$", string=word, flags=re.IGNORECASE)
     if matches and not found_when:
         when = "hour"
         found_when = True
         hour_offset = 3
-    matches = re.search(r"^(6h)$", word, re.IGNORECASE)
+    matches = re.search(pattern=r"^(6h)$", string=word, flags=re.IGNORECASE)
     if matches and not found_when:
         when = "hour"
         found_when = True
         hour_offset = 6
-    matches = re.search(r"^(9h)$", word, re.IGNORECASE)
+    matches = re.search(pattern=r"^(9h)$", string=word, flags=re.IGNORECASE)
     if matches and not found_when:
         when = "hour"
         found_when = True
         hour_offset = 9
-    matches = re.search(r"^(12h)$", word, re.IGNORECASE)
+    matches = re.search(pattern=r"^(12h)$", string=word, flags=re.IGNORECASE)
     if matches and not found_when:
         when = "hour"
         found_when = True
@@ -1343,23 +1410,27 @@ def parse_when_daytime(word: str):
     when_daytime = None
 
     # Parse the 'when_daytime' information
-    matches = re.search(r"^(full)$", word, re.IGNORECASE)
+    matches = re.search(pattern=r"^(full)$", string=word, flags=re.IGNORECASE)
     if matches and not found_when_daytime:
         when_daytime = "full"
         found_when_daytime = True
-    matches = re.search(r"^(morn|morning)$", word, re.IGNORECASE)
+    matches = re.search(pattern=r"^(morn|morning)$", string=word, flags=re.IGNORECASE)
     if matches and not found_when_daytime:
         when_daytime = "morning"
         found_when_daytime = True
-    matches = re.search(r"^(day|daytime|noon)$", word, re.IGNORECASE)
+    matches = re.search(
+        pattern=r"^(day|daytime|noon)$", string=word, flags=re.IGNORECASE
+    )
     if matches and not found_when_daytime:
         when_daytime = "daytime"
         found_when_daytime = True
-    matches = re.search(r"^(eve|evening)$", word, re.IGNORECASE)
+    matches = re.search(pattern=r"^(eve|evening)$", string=word, flags=re.IGNORECASE)
     if matches and not found_when_daytime:
         when_daytime = "evening"
         found_when_daytime = True
-    matches = re.search(r"^(nite|night|tonite|tonight)$", word, re.IGNORECASE)
+    matches = re.search(
+        pattern=r"^(nite|night|tonite|tonight)$", string=word, flags=re.IGNORECASE
+    )
     if matches and not found_when_daytime:
         when_daytime = "night"
         found_when_daytime = True
@@ -1423,4 +1494,4 @@ if __name__ == "__main__":
         aprsis_callsign,
         aprsis_passcode,
     ) = read_program_config()
-    logger.info(parse_input_message("police", "df1jsl-1", aprsdotfi_api_key))
+    logger.info(parse_input_message("police top3", "df1jsl-1", aprsdotfi_api_key))
