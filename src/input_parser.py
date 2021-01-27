@@ -763,7 +763,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # Check for a keyword-supplied 'special phrase' for OpenStreetMap
     if not found_my_duty_roster and not err:
         for osm_category in mpad_config.osm_supported_keyword_categories:
-            regex_string = rf"osm ({osm_category})"
+            regex_string = rf"osm\s*({osm_category})"
             matches = re.search(
                 pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
             )

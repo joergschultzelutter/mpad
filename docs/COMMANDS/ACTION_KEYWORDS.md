@@ -351,7 +351,78 @@ The positions for both parameters __band__ and __mode__ are position-interchange
 
 ```70cm JO42AE```
 
+### OpenStreetMap Nearby Category Searches
 
+MPAD allows you to find e.g. a supermarket or abank that the nearest one to your location. OSM offers a couple of classification categories :[https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases/EN](https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases/EN). Some - but not all - of these categories are currently supported by MPAD. These categories are:
+
+| OSM Category Code | Meaning |
+| ----------------- | ------- |
+| ```aerodrome``` | Airport |
+| ```ambulance_station``` | Ambulance |
+| ```atm``` | ATM|
+| ```bakery``` | Bakery |
+| ```bank``` | Bank |
+| ```butcher``` | Butcher |
+| ```car_rental``` | Car Rental |
+| ```car_repair``` | Car Repair |
+| ```charging_station``` | Charging Station |
+| ```chemist``` | Chemist / Pharmacy |
+| ```clinic``` | Clinic / Hospital |
+| ```college``` | College |
+| ```deli``` | Deli |
+| ```dentist``` | Dentist |
+| ```department_store``` | Department Store |
+| ```drinking_water``` | Drinking Water|
+| ```fire_station``` | Fire Station|
+| ```fuel``` | Fuel / Petrol / Gas Station|
+| ```hairdresser``` | Hairdresser |
+| ```hospital``` | Hospital |
+| ```hostel``` | Hostel |
+| ```hotel``` | Hotel |
+| ```information``` | Information |
+| ```laundry``` | Laundry |
+| ```mall``` | (Shopping) mall |
+| ```optician``` | Optician|
+| ```pharmacy``` | Pharmacy |
+| ```photographer``` | Photographer |
+| ```police``` | Police Office / Precinct|
+| ```post_box``` | Post Box |
+| ```post_office``` | Post Office |
+| ```pub``` | Pub / Bar|
+| ```shoes``` | Shoes |
+| ```subway``` | Subway Station |
+| ```supermarket``` | Supermarket |
+| ```taxi``` | Taxi |
+| ```telephone``` | Telephone (booth)|
+| ```tobacco``` | Tobacco |
+| ```toilets``` | Toilets |
+| ```train_station``` | Train Station |
+| ```university``` | University |
+| ```water``` | Water |
+
+The OSM category code can be specified with or without its associated keyword (```osm```).
+
+#### Formats
+-```osm <osm_category_name>```
+-```<osm_category_name>```
+
+#### Example requests
+-```osm police```
+-```police```
+
+Note that this keyword can be used in conjunction with the ```top_x``` keyword. If you e.g. want to see up to 3 supermarkets near your location, use
+
+-```osm supermarket top3```
+
+### Example responses
+
+Message enumerations are only included if more than one result is available.
+
+```#1 Volksbank Weserbergland eG Am Schloßpark 2 Holzminden Dst 8 km```
+```Brg 203 deg SSW #2 Braunschweigische Landessparkasse Am Wildenkiel```
+```Holzminden Dst 8 km Brg 204 deg SSW #3```
+ ```Braunschweigische Landessparkasse Angerstraße 12 Bevern Dst 6 km```
+```Brg 313 deg NW```
 
 ### General help
 
@@ -475,3 +546,17 @@ Currently, this keyword is __only__ used for WX reports from Openweathermap. In 
 - ```tw``` Chinese Traditional
 - ```zu``` Zulu
 
+### Allow to receive more than one result
+
+Certain keywords such as the ```osm``` keyword used for running a query for e.g. the nearest ATM give you an option to have more than one result returned to you. Default number of results is ```1```. You can change the number of results with the ```top``` keywords. A ```top2``` keyword will return up to 2 results and a ```top5``` keyword will try to do the same for 5 results. If not enough results are available, MPAD will return a lower number of results to the user.
+
+#### Formats
+
+- ```top2```
+- ```top3```
+- ```top4```
+- ```top5```
+
+#### Example requests
+
+see "Formats"
