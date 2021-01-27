@@ -24,11 +24,13 @@ from iso3166 import countries
 from geopy.geocoders import Nominatim
 import us
 import logging
+import mpad_config
+import requests
+import random
+import time
 
 
-def get_geocode_geopy_data(
-    query_data: dict, language: str = "en", user_agent: str = "MultiPurposeAPRSDaemon"
-):
+def get_geocode_geopy_data(query_data: dict, language: str = "en"):
     """
     Issue a GeoPy 'geocode' request (e.g. qyery for an address,
     zip code etc) and return lat/lon to the user
@@ -37,8 +39,6 @@ def get_geocode_geopy_data(
         dictionary (geopy syntax) which contains the desired geopy query
     language: 'str'
         iso3166-2 language code
-    user_agent: 'str'
-        User agent for the Geopy query
 
     Returns
     =======
@@ -49,8 +49,9 @@ def get_geocode_geopy_data(
     longitude: 'float'
         Longitude for requested query (0.0 if entry was not found)
     """
+
     # Geopy Nominatim user agent
-    geolocator = Nominatim(user_agent=user_agent)
+    geolocator = Nominatim(user_agent=mpad_config.mpad_default_user_agent)
 
     success = False
     latitude = longitude = 0.0
@@ -70,7 +71,6 @@ def get_reverse_geopy_data(
     latitude: float,
     longitude: float,
     language: str = "en",
-    user_agent: str = "MultiPurposeAPRSDaemon",
 ):
     """
     Get human-readable address data for a lat/lon combination
@@ -81,8 +81,6 @@ def get_reverse_geopy_data(
         Longitude
     language: 'str'
         iso3166-2 language code
-    user_agent: 'str'
-        User agent for the Geopy query
 
     Returns
     =======
@@ -95,7 +93,7 @@ def get_reverse_geopy_data(
     city = country = zipcode = state = street = street_number = county = None
 
     # Geopy Nominatim user agent
-    geolocator = Nominatim(user_agent=user_agent)
+    geolocator = Nominatim(user_agent=mpad_config.mpad_default_user_agent)
 
     success = False
     try:
@@ -172,12 +170,129 @@ def validate_country(country: str):
     return success
 
 
+def get_osm_special_phrase_data(
+    latitude: float,
+    longitude: float,
+    special_phrase: str,
+    number_of_entries: int = 1,
+):
+    """
+    Get human-readable address data for a lat/lon combination
+    ==========
+    latitude: 'float'
+        User's latitude cooordinates
+    longitude: 'float'
+        User's longitude coordinates
+    special_phrase: 'str'
+        One (1) entry from the list of valid OSM special
+        special phrases that we are going to send to OSM.
+        https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases/EN
+        We do not perform any validation here but send the string 'as is'
+    Returns
+    =======
+    success: 'bool'
+        True if at least one entry was found
+    special_phrase_results: 'List'
+        Contains the data that we have received from OSM
+    """
+    special_phrase_results = []
+
+    headers = {"User-Agent": mpad_config.mpad_default_user_agent}
+    success = False
+    resp = None
+
+    "https://nominatim.openstreetmap.org/search?format=jsonv2&q=fuel%20near%2051.82467,9.451&limit=1"
+
+    try:
+        resp = requests.get(
+            f"https://nominatim.openstreetmap.org/search?format=jsonv2&q={special_phrase}%20near%20{latitude},{longitude}&limit={number_of_entries}",
+            headers=headers,
+        )
+    except:
+        resp = None
+    if resp:
+        if resp.status_code == 200:
+            json_content = resp.json()
+            # We may have more than one result, so let's iterate
+            for element in json_content:
+                osm_type = osm_id = None
+                if "osm_type" in element:
+                    osm_type = element["osm_type"]
+                if "osm_id" in element:
+                    osm_id = element["osm_id"]
+
+                # build the OSM detail query
+                # see https://nominatim.org/release-docs/latest/api/Lookup/
+                osm_type = osm_type.lower()
+                if osm_type == "way":
+                    osm_query_id = f"W{osm_id}"
+                elif osm_type == "relation":
+                    osm_type = f"R{osm_id}"
+                else:
+                    osm_type = f"N{osm_id}"  # assume that "Node"
+
+                # https://operations.osmfoundation.org/policies/nominatim/ requires us
+                # to obey to its usage policy. We need to make sure that between each
+                # request to OSM that there will be a random sleep period between 1001
+                # and 2000 msec
+                sleep_time = random.uniform(1.2, 3)
+                time.sleep(sleep_time)
+
+                # Now perform the detail query
+                try:
+                    resp = requests.get(
+                        f"https://nominatim.openstreetmap.org/lookup?osm_ids={osm_type}&format=json",
+                        headers=headers,
+                    )
+                except:
+                    resp = None
+                if resp:
+                    if resp.status_code == 200:
+                        json_content = resp.json()
+                        for element in json_content:
+                            house_number = road = town = postcode = amenity = None
+                            if "address" in element:
+                                address_body = element["address"]
+                                if "house_number" in address_body:
+                                    house_number = address_body["house_number"]
+                                if "amenity" in address_body:
+                                    amenity = address_body["amenity"]
+                                if "road" in address_body:
+                                    road = address_body["road"]
+                                if "town" in address_body:
+                                    town = address_body["town"]
+                                if "postcode" in address_body:
+                                    postcode = address_body["postcode"]
+                                special_phrase_entry = {
+                                    "amenity": amenity,
+                                    "house_number": house_number,
+                                    "road": road,
+                                    "town": town,
+                                    "postcode": postcode,
+                                }
+                                special_phrase_results.append(special_phrase_entry)
+                                success = True
+    return success, special_phrase_results
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
     )
     logger = logging.getLogger(__name__)
 
-    logger.info(get_reverse_geopy_data(37.7790262, -122.4199061))
+    logger.info(get_reverse_geopy_data(latitude=37.7790262, longitude=-122.4199061))
+    city = "Mountain View"
+    state = "CA"
+    country = "US"
     geopy_query = {"city": city, "state": state, "country": country}
-    logger.info(get_geocode_geopy_data(geopy_query))
+    logger.info(get_geocode_geopy_data(query_data=geopy_query))
+
+    logger.info(
+        get_osm_special_phrase_data(
+            latitude=51.82467,
+            longitude=9.451,
+            special_phrase="fuel",
+            number_of_entries=3,
+        )
+    )
