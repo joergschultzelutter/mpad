@@ -403,25 +403,29 @@ MPAD allows you to find e.g. a supermarket or abank that the nearest one to your
 The OSM category code can be specified with or without its associated keyword (```osm```).
 
 #### Formats
--```osm <osm_category_name>```
--```<osm_category_name>```
+- ```osm <osm_category_name>```
+- ```<osm_category_name>```
 
 #### Example requests
--```osm police```
--```police```
+- ```osm police```
+- ```police```
 
 Note that this keyword can be used in conjunction with the ```top_x``` keyword. If you e.g. want to see up to 3 supermarkets near your location, use
 
--```osm supermarket top3```
+- ```osm supermarket top3```
 
 ### Example responses
 
 Message enumerations are only included if more than one result is available.
 
 ```#1 Volksbank Weserbergland eG Am Schloßpark 2 Holzminden Dst 8 km```
+
 ```Brg 203 deg SSW #2 Braunschweigische Landessparkasse Am Wildenkiel```
+
 ```Holzminden Dst 8 km Brg 204 deg SSW #3```
- ```Braunschweigische Landessparkasse Angerstraße 12 Bevern Dst 6 km```
+
+```Braunschweigische Landessparkasse Angerstraße 12 Bevern Dst 6 km```
+
 ```Brg 313 deg NW```
 
 ### General help
