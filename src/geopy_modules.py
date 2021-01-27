@@ -230,11 +230,11 @@ def get_osm_special_phrase_data(
                 # see https://nominatim.org/release-docs/latest/api/Lookup/
                 osm_type = osm_type.lower()
                 if osm_type == "way":
-                    osm_query_id = f"W{osm_id}"
+                    osm_type = f"W{osm_id}"
                 elif osm_type == "relation":
                     osm_type = f"R{osm_id}"
                 else:
-                    osm_type = f"N{osm_id}"  # assume that "Node"
+                    osm_type = f"N{osm_id}"  # assume "Node" as default
 
                 # https://operations.osmfoundation.org/policies/nominatim/ requires us
                 # to obey to its usage policy. We need to make sure that between each
@@ -255,7 +255,7 @@ def get_osm_special_phrase_data(
                     if resp.status_code == 200:
                         json_content = resp.json()
                         for element in json_content:
-                            house_number = road = town = postcode = amenity = None
+                            house_number = road = city = postcode = amenity = None
                             latitude = longitude = 0.0
 
                             if "lat" in element:
@@ -277,17 +277,28 @@ def get_osm_special_phrase_data(
                                     house_number = address_body["house_number"]
                                 if "amenity" in address_body:
                                     amenity = address_body["amenity"]
+                                if "shop" in address_body:
+                                    amenity = address_body["shop"]
                                 if "road" in address_body:
                                     road = address_body["road"]
+
+                                # we go for the most precise location
+                                if "city" in address_body:
+                                    city = address_body["city"]
                                 if "town" in address_body:
-                                    town = address_body["town"]
+                                    city = address_body["town"]
+                                if "village" in address_body:
+                                    city = address_body["village"]
+                                if "hamlet" in address_body:
+                                    city = address_body["hamlet"]
+
                                 if "postcode" in address_body:
                                     postcode = address_body["postcode"]
                                 special_phrase_entry = {
                                     "amenity": amenity,
                                     "house_number": house_number,
                                     "road": road,
-                                    "town": town,
+                                    "city": city,
                                     "postcode": postcode,
                                     "latitude": latitude,
                                     "longitude": longitude,
@@ -314,7 +325,7 @@ if __name__ == "__main__":
         get_osm_special_phrase_data(
             latitude=51.82467,
             longitude=9.451,
-            special_phrase="fuel",
+            special_phrase="supermarket",
             number_of_results=3,
         )
     )
