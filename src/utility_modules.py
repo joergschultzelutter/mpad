@@ -454,6 +454,24 @@ def get_aprs_message_from_cache(
         return None
 
 
+def dump_string_to_hex(message_text_string: str):
+    """
+    Converts string to hex format and returns that content to the user.
+    If we find that entry in our list before that entry has expired,
+    MPAD considers the request to be fulfilled and will not process it again
+
+    Parameters
+    ==========
+    message_text_string: 'str'
+        Text that needs to be converted
+
+    Returns
+    =======
+    hex-converted text to the user
+    """
+    return "".join(hex(ord(c))[2:] for c in message_text_string)
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
