@@ -23,6 +23,7 @@ import requests
 from datetime import datetime
 from utility_modules import read_program_config
 import logging
+import mpad_config
 
 # APRS.fi access key (we get this value from the config file settings)
 
@@ -61,7 +62,7 @@ def get_position_on_aprsfi(aprsfi_callsign: str, aprsdotfi_api_key: str):
         Call sign converted to uppercase
     """
     headers = {
-        "User-Agent": "multi-purpose-aprs-daemon/0.0.1-internal-alpha (+https://github.com/joergschultzelutter/mpad/)"
+        "User-Agent": mpad_config.mpad_default_user_agent
     }
 
     success = False
