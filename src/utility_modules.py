@@ -27,6 +27,7 @@ import logging
 from expiringdict import ExpiringDict
 import hashlib
 import time
+import mpad_config
 
 
 def make_pretty_aprs_messages(
@@ -109,19 +110,23 @@ def make_pretty_aprs_messages(
     # see APRS specification pg. 71
     message_to_add = re.sub("[{}|~]+", "", message_to_add)
 
-    # Convert the message to plain ascii
-    # Unidecode does not take care of German special characters
-    # Therefore, we need to 'translate' them first
-    message_to_add = (
-        message_to_add.replace("Ä", "Ae")
-        .replace("Ö", "Oe")
-        .replace("Ü", "Ue")
-        .replace("ä", "ae")
-        .replace("ö", "oe")
-        .replace("ü", "ue")
-        .replace("ß", "ss")
-    )
-    message_to_add = unidecode(message_to_add)
+    # Check if the user has enforced the usage of plain
+    # ASCII outgoing messages. By default, we send out UTF-8
+    # content to the user.
+    if mpad_config.mpad_enforce_plain_ascii_messages:
+        # Convert the message to plain ascii
+        # Unidecode does not take care of German special characters
+        # Therefore, we need to 'translate' them first
+        message_to_add = (
+            message_to_add.replace("Ä", "Ae")
+            .replace("Ö", "Oe")
+            .replace("Ü", "Ue")
+            .replace("ä", "ae")
+            .replace("ö", "oe")
+            .replace("ü", "ue")
+            .replace("ß", "ss")
+        )
+        message_to_add = unidecode(message_to_add)
 
     # If new message is longer than max len then split it up with
     # max chunks of max_len bytes and add it to the array.

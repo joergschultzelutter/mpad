@@ -93,7 +93,7 @@ aprsis_server_filter = "g/MPAD"  # server filter criteria for aprs.is
 #
 #mpad_callsigns_to_parse = ["WXBOT", "WXYO"]  # (additional) call sign filter
 mpad_callsigns_to_parse = ["MPAD"]  # (additional) call sign filter
-
+#
 #############################################################
 # Time-to-live settings for the decaying APRS message cache #
 #############################################################
@@ -108,3 +108,15 @@ mpad_callsigns_to_parse = ["MPAD"]  # (additional) call sign filter
 # to be ignored by the program
 #
 mpad_msg_cache_time_to_live = 5 * 60  # ttl = 5 minutes
+#
+############################################
+# Character encoding for outgoing messages #
+############################################
+#
+# By default, MPAD will send out UTF-8 messages to its users; this is a supported
+# feature (see http://www.aprs.org/aprs12/utf-8.txt). Note that aprs101.pdf still
+# limits the character encoding to ASCII 7bit, so the information from the previous
+# link supersedes these restrictions
+# If -for whatever reason- you do want MPAD to enforce plain ASCII messages,
+# then set this marker to True.
+mpad_enforce_plain_ascii_messages = False
