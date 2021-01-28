@@ -173,7 +173,6 @@ osm_supported_keyword_categories = [
     "toilets",
     "train_station",
     "university",
-    "water",
 ]
 #
 # Default user agent for accessing aprs.fi, openstreetmap et al
