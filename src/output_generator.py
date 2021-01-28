@@ -323,7 +323,11 @@ def generate_output_message_wx(
         if when == "hour":
             human_readable_message = f"in {offset}h " + human_readable_message
         elif when == "now":
-            human_readable_message = datetime.datetime.strftime(datetime.datetime.utcnow(),"%H:%M") + "UTC " + human_readable_message
+            human_readable_message = (
+                datetime.datetime.strftime(datetime.datetime.utcnow(), "%H:%M")
+                + "UTC "
+                + human_readable_message
+            )
 
         output_list = parse_daily_weather_from_openweathermapdotorg(
             myweather, units, human_readable_message, when, when_daytime
@@ -674,11 +678,13 @@ def generate_output_message_whereis(response_parameters: dict):
         _whereis_mode = True
 
         # Calculate distance, bearing and heading
+        # latitude1/longitude1 = the user's current position
+        # latitude2/longitude2 = the desired target position
         distance, bearing, heading = haversine(
-            latitude1=latitude,
-            longitude1=longitude,
-            latitude2=users_latitude,
-            longitude2=users_longitude,
+            latitude1=users_latitude,
+            longitude1=users_longitude,
+            latitude2=latitude,
+            longitude2=longitude,
             units=units,
         )
         distance_uom = "km"
@@ -764,7 +770,9 @@ def generate_output_message_whereis(response_parameters: dict):
         human_readable_address = None
         # Check if we have some "lasttime" information that we can provide the user with
         if lasttime is not datetime.datetime.min:
-            human_readable_address = f"Last heard {lasttime.strftime('%Y-%m-%d %H:%M')} UTC"
+            human_readable_address = (
+                f"Last heard {lasttime.strftime('%Y-%m-%d %H:%M')} UTC"
+            )
             output_list = make_pretty_aprs_messages(
                 message_to_add=human_readable_address, destination_list=output_list
             )
@@ -870,18 +878,27 @@ def generate_output_message_osm_special_phrase(response_parameters: dict):
     osm_special_phrase = response_parameters["osm_special_phrase"]
     units = response_parameters["units"]
 
-    success, osm_data_list = get_osm_special_phrase_data(latitude=latitude,longitude=longitude,special_phrase=osm_special_phrase,number_of_results=number_of_results)
+    success, osm_data_list = get_osm_special_phrase_data(
+        latitude=latitude,
+        longitude=longitude,
+        special_phrase=osm_special_phrase,
+        number_of_results=number_of_results,
+    )
 
-    # We need a predefined local list as we are going to iterate multiple times
-    output_list=[]
+    # We need a predefined local list variable as we are going to iterate
+    # multiple times through our search results
+    output_list = []
 
     if not success:
-        output_list = make_pretty_aprs_messages(message_to_add=f"No results for '{osm_special_phrase}' found near your pos.", destination_list=output_list)
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"No results for '{osm_special_phrase}' found near your pos.",
+            destination_list=output_list,
+        )
     else:
         entry = 0
         number_of_actual_results = len(osm_data_list)
         for element in osm_data_list:
-            #msg counter
+            # msg counter
             entry = entry + 1
 
             osm_latitude = element["latitude"]
@@ -892,28 +909,56 @@ def generate_output_message_osm_special_phrase(response_parameters: dict):
             city = element["city"]
             postcode = element["postcode"]
 
-            distance, bearing, heading = haversine(latitude1=latitude,longitude1=longitude, latitude2=osm_latitude, longitude2=osm_longitude, units=units)
+            # Calculate distance, bearing and heading to the target
+            # latitude1/longitude1 = the user's current position
+            # latitude2/longitude2 = the desired target position
+            distance, bearing, heading = haversine(
+                latitude1=latitude,
+                longitude1=longitude,
+                latitude2=osm_latitude,
+                longitude2=osm_longitude,
+                units=units,
+            )
 
-            # Add an identification header if we have more than one result
+            # Add an identification header (#1,#2,#3 ...)
+            # if we have more than one result that we
+            # have to return to the user
             if number_of_actual_results > 1:
-                output_list = make_pretty_aprs_messages(message_to_add=f"#{entry}",destination_list=output_list)
+                output_list = make_pretty_aprs_messages(
+                    message_to_add=f"#{entry}", destination_list=output_list
+                )
 
             if amenity:
-                output_list = make_pretty_aprs_messages(message_to_add=amenity,destination_list=output_list)
+                output_list = make_pretty_aprs_messages(
+                    message_to_add=amenity, destination_list=output_list
+                )
             if road:
-                output_list = make_pretty_aprs_messages(message_to_add=road,destination_list=output_list)
+                output_list = make_pretty_aprs_messages(
+                    message_to_add=road, destination_list=output_list
+                )
             if house_number:
-                output_list = make_pretty_aprs_messages(message_to_add=house_number, destination_list=output_list)
+                output_list = make_pretty_aprs_messages(
+                    message_to_add=house_number, destination_list=output_list
+                )
             if city:
-                output_list = make_pretty_aprs_messages(message_to_add=city, destination_list=output_list)
+                output_list = make_pretty_aprs_messages(
+                    message_to_add=city, destination_list=output_list
+                )
 
             dst_uom = "km"
             if units == "imperial":
                 dst_uom = "mi"
 
-            output_list = make_pretty_aprs_messages(message_to_add=f"Dst {round(distance)} {dst_uom}", destination_list=output_list)
-            output_list = make_pretty_aprs_messages(message_to_add=f"Brg {round(bearing)} deg", destination_list=output_list)
-            output_list = make_pretty_aprs_messages(message_to_add=heading, destination_list=output_list)
+            output_list = make_pretty_aprs_messages(
+                message_to_add=f"Dst {round(distance)} {dst_uom}",
+                destination_list=output_list,
+            )
+            output_list = make_pretty_aprs_messages(
+                message_to_add=f"Brg {round(bearing)} deg", destination_list=output_list
+            )
+            output_list = make_pretty_aprs_messages(
+                message_to_add=heading, destination_list=output_list
+            )
 
     success = True
     return success, output_list
