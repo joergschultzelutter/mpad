@@ -489,6 +489,16 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                 found_my_duty_roster = True
                 aprs_message = re.sub(regex_string, "", aprs_message).strip()
         if not found_my_duty_roster:
+            regex_string = r"(wx|forecast|whereis|riseset|cwop|metar)\s*(\w+)"
+            matches = re.search(
+                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+            )
+            if matches:
+                what = matches[1].lower()
+                message_callsign = matches[2].upper()
+                found_my_duty_roster = True
+                aprs_message = re.sub(regex_string, "", aprs_message).strip()
+        if not found_my_duty_roster:
             regex_string = r"(wx|forecast|whereis|riseset|cwop|metar)"
             matches = re.search(
                 pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
