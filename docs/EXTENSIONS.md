@@ -63,7 +63,7 @@ At the end of the parsing process where we have taken a look at the complete mes
 
 ```output_generator.py``` is responsible for generating the outgoing messages to the user. Dependent on the ```what``` keyword, the program calls the respective functions which will then do the __actual__ work (e.g. get wx report etc.). Each of these functions uses a function called ```make_pretty_aprs_messages``` in order to add the content to a ```List``` item which contains 1..n lines of ready-to-be-sent text messages. Each of these messages has a max len of 67 characters, so you won't exceed the max. APRS message length. ```make_pretty_aprs_messages``` is responsible for a couple of things:
 
-- remove any non-ASCII characters from the content. APRS only speaks ASCII.
+- optional removal of non-ASCII characters from the content if the program configuration requests this ([see INSTALLATION](docs/INSTALLATION.md))
 - Initially, call ```make_pretty_aprs_messages``` without a ```List``` reference and provide your string. As a result, you'll get a reference to the output ```List``` item which contains your string.
 
 For each new string that you are going to add, ```make_pretty_aprs_messages``` checks if the len for (current existing string plus your new string) exceed 67 characters. If that is the case, a new element is genarated (which represents your current input to the function). ```make_pretty_aprs_messages``` always tries to add the content without ripping it apart (e.g. the 67th byte of a message contains "1" and the 1st byte contains "2" for a temperature reference of 12 degrees. Yes, this might result in 'bloated' APRS messages so ensure that you add your content in a proper manner (see __Testing__).
