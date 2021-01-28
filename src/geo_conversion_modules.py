@@ -344,12 +344,20 @@ def haversine(
     ==========
     latitude1 : 'float'
         Latitude value point 1
+        This is the latitude for our point of origin
+        (e.g. our current position)
     longitude1 : 'float'
         Longitude value point 1
+        This is the longitude for our point of origin
+        (e.g. our current position)
     latitude2 : 'float'
         Latitude value point 2
+        This is the latitude for our point of destination
+        (e.g. our target position)
     longitude2 : 'float'
         Longitude value point 2
+        This is the longitude for our point of destination
+        (e.g. our target position)
     units: 'str'
         Can either be 'metric' or 'imperial'
 
