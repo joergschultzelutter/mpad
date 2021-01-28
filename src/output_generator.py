@@ -764,7 +764,7 @@ def generate_output_message_whereis(response_parameters: dict):
         human_readable_address = None
         # Check if we have some "lasttime" information that we can provide the user with
         if lasttime is not datetime.datetime.min:
-            human_readable_address = f"Last heard {lasttime.strftime('%Y-%m-%d %H:%M:%S')} UTC"
+            human_readable_address = f"Last heard {lasttime.strftime('%Y-%m-%d %H:%M')} UTC"
             output_list = make_pretty_aprs_messages(
                 message_to_add=human_readable_address, destination_list=output_list
             )
