@@ -141,7 +141,7 @@ def mycallback(raw_aprs_packet):
             if format_string == "message" and message_text_string:
                 # This is a message that belongs to us
 
-                logger.info(dump_string_to_hex(message_text_string))
+                # logger.info(dump_string_to_hex(message_text_string))
 
                 # Check if the message is present in our decaying message cache
                 # If the message can be located, then we can assume that we have
