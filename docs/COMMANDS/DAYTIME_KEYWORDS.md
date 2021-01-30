@@ -10,8 +10,9 @@ MPAD is able to understand the following keywords:
 
 - Evening (Keywords: ```eve```, ```evening```)
 
-- Night (Keywords: ```nite```, ```night```, ```tonite```, ```tonight```)
-
+- Night (Keywords: ```nite```, ```night```, ```tonite```, ```tonight```). 
+- 
+```tonite``` and ```tonight``` keywords will set the ```date``` keyword to ```today``` unless the user has already specified a different day.
 
 All references are to UTC time zone settings.
 
