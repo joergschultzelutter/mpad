@@ -1439,7 +1439,7 @@ def parse_when_daytime(word: str):
         when_daytime = "evening"
         found_when_daytime = True
     matches = re.search(
-        pattern=r"^(nite|night)$", string=word, flags=re.IGNORECASE
+        pattern=r"^(tonight|tonite|nite|night)$", string=word, flags=re.IGNORECASE
     )
     if matches and not found_when_daytime:
         when_daytime = "night"
