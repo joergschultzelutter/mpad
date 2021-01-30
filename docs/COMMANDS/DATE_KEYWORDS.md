@@ -20,7 +20,7 @@ MPAD is able to understand the following keywords:
 
 - ```sunday``` or ```sun```
 
-- ```tonight```,```tonite```, ```night``` or ```nite``` --> results in a ```today``` value
+- ```tonight```,```tonite``` --> results in date ```today``` and daytime ```night``` value
 
 Additionally, you can specify the following keywords in order to receive hourly wx reports (other [action keywords](ACTION_KEYWORDS.md) may ignore these values):
 
@@ -42,6 +42,5 @@ Whereas noted for the respective [action keyword](ACTION_KEYWORDS.md), these dat
 
 ```
 San Francisco, CA tomorrow full --> returns a full wx report for location 'San Francisco' and date setting 'tomorrow'
-satpass iss friday morning --> returns the first pass of the ISS on Friday morning
 riseset thursday --> returns sunrise/sunset and moonrise / moonset values for Thursday.
 ```
