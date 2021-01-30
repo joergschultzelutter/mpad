@@ -21,7 +21,6 @@ A decaying cache for __outgoing__ messages to the user is currently not implemen
 ## Known issues
 
 - Weather report data from openweathermap:
-    - Wx requests by hour / minute are currently not implemented. I might add this at a later point in time
     - Wx Alert data is not returned to the user. This can be added in a later version but keep in mind that the text is very long and would result in multiple (10-15) APRS messages per alert!
     - Access to openweathermap.org requires an API key which has a traffic limit
     - With its current implementation of its 'OneCall' API, Openweathermap does not return the human-readable address in case a query is performed for lat/lon coordinates - which is applicable to all queries from MAPD. As a result, additional calls to e.g. Openstreetmap etc. may be necessary in order to provide the user with a human readable address.
