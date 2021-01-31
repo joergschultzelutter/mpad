@@ -130,7 +130,7 @@ mpad_msg_cache_time_to_live = 5 * 60  # ttl = 5 minutes
 # (http://www.aprs.org/aprs11/tocalls.txt). MPAD could then decide whether a
 # device is unicode capable or not - and activate unicode whenever it is supported.
 #
-mpad_enforce_unicode_messages = True
+mpad_enforce_unicode_messages = False
 #
 # Openstreetmap 'special phrases'
 # The values in this list need to match the ones in the OSM
