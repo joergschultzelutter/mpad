@@ -117,13 +117,20 @@ mpad_msg_cache_time_to_live = 5 * 60  # ttl = 5 minutes
 # Character encoding for outgoing messages #
 ############################################
 #
-# By default, MPAD will send out UTF-8 messages to its users; this is a supported
-# feature (see http://www.aprs.org/aprs12/utf-8.txt). Note that aprs101.pdf still
-# limits the character encoding to ASCII 7bit, so the information from the previous
-# link supersedes these restrictions
-# If -for whatever reason- you do want MPAD to enforce plain ASCII messages,
-# then set this marker to True.
-mpad_enforce_plain_ascii_messages = False
+# By default, MPAD will send out ASCII messages to its users even though UTF-8 is
+# supported (see http://www.aprs.org/aprs12/utf-8.txt) for both incoming and
+# outgoing messages. However, many radios such as my FTM-400XDE and the FT3DE
+# are unable to cope with UTF-8 messages and don't display these messages in a
+# proper way.
+# If you do want MPAD to enable for OUTGOING unicode messages, then set this
+# marker to True. INCOMING messages are always processed with unicode in mind.
+#
+# Future versions of this switch should check whether it is possible to build a
+# list of supported unicode 'TOCALL' devices from the official list tocall list
+# (http://www.aprs.org/aprs11/tocalls.txt). MPAD could then decide whether a
+# device is unicode capable or not - and activate unicode whenever it is supported.
+#
+mpad_enforce_unicode_messages = True
 #
 # Openstreetmap 'special phrases'
 # The values in this list need to match the ones in the OSM
@@ -159,6 +166,7 @@ osm_supported_keyword_categories = [
     "mall",
     "optician",
     "pharmacy",
+    "phone",
     "photographer",
     "police",
     "post_box",

@@ -106,14 +106,13 @@ def make_pretty_aprs_messages(
     if not destination_list:
         destination_list = [""]
 
-    # replace non-permitted APRS characters from message
+    # replace non-permitted APRS characters from the
+    # message text
     # see APRS specification pg. 71
     message_to_add = re.sub("[{}|~]+", "", message_to_add)
 
-    # Check if the user has enforced the usage of plain
-    # ASCII outgoing messages. By default, we send out UTF-8
-    # content to the user.
-    if mpad_config.mpad_enforce_plain_ascii_messages:
+    # Check if the user wants unicode messages. Default is ASCII
+    if not mpad_config.mpad_enforce_unicode_messages:
         # Convert the message to plain ascii
         # Unidecode does not take care of German special characters
         # Therefore, we need to 'translate' them first
