@@ -46,6 +46,7 @@ from repeater_modules import get_nearest_repeater
 
 import datetime
 import logging
+import math
 
 ###
 # Help text that the user receives in case he has requested help
@@ -692,7 +693,7 @@ def generate_output_message_whereis(response_parameters: dict):
             distance_uom = "mi"
 
         output_list = make_pretty_aprs_messages(
-            message_to_add=f"Dst {round(distance)} {distance_uom}",
+            message_to_add=f"Dst {math.ceil(distance)} {distance_uom}",
             destination_list=output_list,
         )
 
@@ -950,7 +951,7 @@ def generate_output_message_osm_special_phrase(response_parameters: dict):
                 dst_uom = "mi"
 
             output_list = make_pretty_aprs_messages(
-                message_to_add=f"Dst {round(distance)} {dst_uom}",
+                message_to_add=f"Dst {math.ceil(distance)} {dst_uom}",
                 destination_list=output_list,
             )
             output_list = make_pretty_aprs_messages(
