@@ -49,7 +49,7 @@ You also need to set the APRS-IS access and server credentials:
 - ```aprsis_server_name``` and ```aprsis_server_port```. APRS-IS server/port that the program tries to connect with. Self-explanatory (I hope).
 - Tune the ```mpad_msg_cache_time_to_live``` parameter if too many messages are detected as duplicates and are not getting processed. Default is 5 mins
 - Configure the ```mpad_beacon_altitude_ft``` parameter. This is the beacon's altitude in __feet__ (not in meters)
-- By default, MPAD will send out UTF-8 messages. If you want to enforce plain ASCII messages to the user, set the ```mpad_enforce_plain_ascii_messages``` flag to ```True```.
+- By default, MPAD will send out ASCII messages. If you prefer to send unicode messages to the user, set the ```mpad_enforce_unicode_messages``` flag to ```True```. Note that this flag only applies to outgoing messages; incoming messages in unicode format are always honored.
 
 Excerpt from ```mpad_config.py```:
 ```python
@@ -144,11 +144,18 @@ mpad_msg_cache_time_to_live = 5 * 60  # ttl = 5 minutes
 # Character encoding for outgoing messages #
 ############################################
 #
-# By default, MPAD will send out UTF-8 messages to its users; this is a supported
-# feature (see http://www.aprs.org/aprs12/utf-8.txt). Note that aprs101.pdf still
-# limits the character encoding to ASCII 7bit, so the information from the previous
-# link supersedes these restrictions
-# If -for whatever reason- you do want MPAD to enforce plain ASCII messages,
-# then set this marker to True.
-mpad_enforce_plain_ascii_messages = False
+# By default, MPAD will send out ASCII messages to its users even though UTF-8 is
+# supported (see http://www.aprs.org/aprs12/utf-8.txt) for both incoming and
+# outgoing messages. However, many radios such as my FTM-400XDE and the FT3DE
+# are unable to cope with UTF-8 messages and don't display these messages in a
+# proper way.
+# If you do want MPAD to enable for OUTGOING unicode messages, then set this
+# marker to True. INCOMING messages are always processed with unicode in mind.
+#
+# Future versions of this switch should check whether it is possible to build a
+# list of supported unicode 'TOCALL' devices from the official list tocall list
+# (http://www.aprs.org/aprs11/tocalls.txt). MPAD could then decide whether a
+# device is unicode capable or not - and activate unicode whenever it is supported.
+#
+mpad_enforce_unicode_messages = True
 ```
