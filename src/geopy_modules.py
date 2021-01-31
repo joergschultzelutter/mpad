@@ -238,7 +238,7 @@ def get_osm_special_phrase_data(
 
                 # https://operations.osmfoundation.org/policies/nominatim/ requires us
                 # to obey to its usage policy. We need to make sure that between each
-                # request to OSM that there will be a random sleep period between 1001
+                # request to OSM that there will be a random sleep period between 1200
                 # and 2000 msec
                 sleep_time = random.uniform(1.2, 3)
                 time.sleep(sleep_time)
