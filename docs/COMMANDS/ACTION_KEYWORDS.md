@@ -384,6 +384,7 @@ MPAD allows you to find e.g. a supermarket or abank that the nearest one to your
 | ```mall``` | (Shopping) mall |
 | ```optician``` | Optician|
 | ```pharmacy``` | Pharmacy |
+| ```phone``` | Phone |
 | ```photographer``` | Photographer |
 | ```police``` | Police Office / Precinct|
 | ```post_box``` | Post Box |
