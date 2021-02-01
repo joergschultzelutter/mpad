@@ -343,13 +343,27 @@ The positions for both parameters __band__ and __mode__ are position-interchange
 - ```repeater c4fm 70cm``` returns the nearest c4fm repeater that runs on the 70cm band
 - ```repeater 70cm c4fm``` same command as in the previous example
 
+Note that this keyword can be used in conjunction with the ```top_x``` keyword. If you e.g. want to get the data for up to 3 repeaters near your location, use
+
+- ```repeater top3``` or
+- ```repeater c4fm 70cm top3```
+
+See the documentation for the ```top_x``` keyword on how to use it properly.
+
 #### Example response
 
-```Nearest repeater Bad Iburg / Dorenberg 40 km 335 deg NNW```
+Message enumerations are only included if more than one result is available.
 
-```Rx 430.9375 Tx 438.5375 WIRES-X,Startreflektor DL-Nordwest C4FM```
+```#1 Bad Iburg / Doerenberg Dst 43 km 333 deg NNW Rx 430.9375```
 
-```70cm JO42AE```
+```Tx 438.5375 WIRES-X,Startreflektor DL-Nordwest 70cm JO42AE #2```
+
+```Poembsen Dst 53 km 98 deg E Rx 430.5125 Tx 439.9125 70cm JO41MS```
+
+If you've specified ```band``` or ```mode``` as a query parameter, that data will not be part of the outging message (I'm trying to save some bytes here). So if you've e.g. issued a ```repeater c4fm 70cm``` command, both ```c4fm``` and ```70cm``` references will not be part of the outgoing message - I simply assume that you remember what you've requested. However, if you did not request ```band``` and/or ```mode```, the data will be added to the outgoing message.
+
+
+
 
 ### OpenStreetMap Nearby Category Searches
 
@@ -412,7 +426,10 @@ The OSM category code can be specified with or without its associated keyword (`
 
 Note that this keyword can be used in conjunction with the ```top_x``` keyword. If you e.g. want to see up to 3 supermarkets near your location, use
 
-- ```osm supermarket top3```
+- ```osm supermarket top3``` or
+- ```supermarket top3```
+
+See the documentation for the ```top_x``` keyword on how to use it properly.
 
 ### Example responses
 
@@ -552,7 +569,11 @@ Currently, this keyword is __only__ used for WX reports from Openweathermap. In 
 
 ### Allow to receive more than one result
 
-Certain keywords such as the ```osm``` keyword used for running a query for e.g. the nearest ATM give you an option to have more than one result returned to you. Default number of results is ```1```. You can change the number of results with the ```top``` keywords. A ```top2``` keyword will return up to 2 results and a ```top5``` keyword will try to do the same for 5 results. If not enough results are available, MPAD will return a lower number of results to the user.
+Certain keywords such as the ```osm``` or the ```repeater``` keyword allow more than one result. For example, an OSM query for the nearest ```supermarket``` along with the ```top5``` command will return up to 5 results to you which are even ordered by distance between your current location and the target location. For the ```repeater``` keyword, you can run a query such as ```repeater c4fm 70cm top3``` which will return the nearest 3 repeater results to you.
+
+Default number of results is ```1```. You can change the number of results with the ```top``` keywords. A ```top2``` keyword will return up to 2 results and a ```top5``` keyword will try to do the same for 5 results. If not enough results are available, MPAD will return a lower number of results to the user.
+
+Note: if you use this keyword, then either place it at the end or the beginning of the keyword that you want to use it for. ```top3 repeater c4fm``` or ```repeater c4fm top3``` are both fine. However, a ```repeater top3 c4fm``` breaks the existing regex and you will receive repeater data which may not be applicable to the ```c4fm``` filter.
 
 #### Formats
 
