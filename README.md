@@ -24,7 +24,7 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/CWOP prediction, 
 - Auto-detection of the user's system of units. Callsigns from the USA, Liberia and Myanmar will receive their data in imperial format, while for the rest of the world the metric system is preset. This auto-setting can be overriden with a separate keyword.
 - Supports APRS msg acknowledgments, beacons, etc. Also tries to extract APRS msg IDs from APRS messages that do not conform to APRS standards
 - Automatic detection of incoming duplicate / delayed APRS message requests
-- Full UTF-8 support
+- Full UTF-8 support for incoming messages. For outgoing messages, the configuration can be set to either 'plain ASCII' (default) or UTF-8.
 
 ## Usage and command syntax
 
