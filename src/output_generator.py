@@ -806,51 +806,90 @@ def generate_output_message_repeater(response_parameters: dict):
     units = response_parameters["units"]
     repeater_band = response_parameters["repeater_band"]
     repeater_mode = response_parameters["repeater_mode"]
+    number_of_results = response_parameters["number_of_results"]
 
     # Static file solution; needs dynamic refresh
-    success, nearest_repeater = get_nearest_repeater(
+    success, nearest_repeater_list = get_nearest_repeater(
         latitude=latitude,
         longitude=longitude,
         mode=repeater_mode,
         band=repeater_band,
         units=units,
+        number_of_results=number_of_results,
     )
+    # success = we have at least one dict entry in our list
     if success:
-        locator = nearest_repeater["locator"]
-        latitude = nearest_repeater["latitude"]
-        longitude = nearest_repeater["longitude"]
-        mode = nearest_repeater["mode"]
-        band = nearest_repeater["band"]
-        rx_frequency = nearest_repeater["rx_frequency"]
-        tx_frequency = nearest_repeater["tx_frequency"]
-        elevation = nearest_repeater["elevation"]
-        remarks = nearest_repeater["remarks"]
-        qth = nearest_repeater["qth"]
-        callsign = nearest_repeater["callsign"]
-        distance = nearest_repeater["distance"]
-        distance_uom = nearest_repeater["distance_uom"]
-        bearing = nearest_repeater["bearing"]
-        direction = nearest_repeater["direction"]
 
-        # Build the output message
-        output_list = make_pretty_aprs_messages(f"Nearest repeater {qth}")
-        output_list = make_pretty_aprs_messages(
-            f"{distance} {distance_uom}", output_list
-        )
-        output_list = make_pretty_aprs_messages(
-            f"{bearing} deg {direction}", output_list
-        )
-        output_list = make_pretty_aprs_messages(f"Rx {rx_frequency}", output_list)
-        output_list = make_pretty_aprs_messages(f"Tx {tx_frequency}", output_list)
-        # Remarks können leer sein
-        if remarks:
-            output_list = make_pretty_aprs_messages(f"{remarks}", output_list)
-        output_list = make_pretty_aprs_messages(f"{mode}", output_list)
-        output_list = make_pretty_aprs_messages(f"{band}", output_list)
-        output_list = make_pretty_aprs_messages(f"{locator}", output_list)
+        number_of_actual_results = len(nearest_repeater_list)
+        entry = 0
+
+        # We need a predefined local list variable as we are going to iterate
+        # multiple times through our search results
+        output_list = []
+
+        # now iterate through the dictionaries in our list
+        for nearest_repeater in nearest_repeater_list:
+            #Increase the output counter
+            entry = entry + 1
+
+            # now extract all entries from the dictionary
+            locator = nearest_repeater["locator"]
+            latitude = nearest_repeater["latitude"]
+            longitude = nearest_repeater["longitude"]
+            mode = nearest_repeater["mode"]
+            band = nearest_repeater["band"]
+            rx_frequency = nearest_repeater["rx_frequency"]
+            tx_frequency = nearest_repeater["tx_frequency"]
+            elevation = nearest_repeater["elevation"]
+            remarks = nearest_repeater["remarks"]
+            qth = nearest_repeater["qth"]
+            callsign = nearest_repeater["callsign"]
+            distance = nearest_repeater["distance"]
+            distance_uom = nearest_repeater["distance_uom"]
+            bearing = nearest_repeater["bearing"]
+            direction = nearest_repeater["direction"]
+
+            # Add an identification header (#1,#2,#3 ...)
+            # if we have more than one result that we
+            # have to return to the user
+            if number_of_actual_results > 1:
+                output_list = make_pretty_aprs_messages(
+                    message_to_add=f"#{entry}", destination_list=output_list
+                )
+
+            output_list = make_pretty_aprs_messages(
+                f"{qth}", output_list
+            )
+
+            output_list = make_pretty_aprs_messages(
+                f"Dst {distance} {distance_uom}", output_list
+            )
+            output_list = make_pretty_aprs_messages(
+                f"{bearing} deg {direction}", output_list
+            )
+            output_list = make_pretty_aprs_messages(f"Rx {rx_frequency}", output_list)
+            output_list = make_pretty_aprs_messages(f"Tx {tx_frequency}", output_list)
+
+            # Remarks can be empty
+            if remarks:
+                output_list = make_pretty_aprs_messages(f"{remarks}", output_list)
+            #
+            # "band' and 'mode' are only added to the outgoing message if the user
+            # has NOT requested these as input parameters. We can save a few bytes per
+            # message and if the user has e.g. requested c4fm on 70cm via keywords,
+            # we don't need to deliver this information as part of the resulting data.
+            # However, if the user has NOT requested band and/or mode, we will output
+            # the data to the user so that the user knows if e.g. these values are
+            # valid for c4fm, d-star, ....
+            if not repeater_mode:
+                output_list = make_pretty_aprs_messages(f"{mode}", output_list)
+            if not repeater_band:
+                output_list = make_pretty_aprs_messages(f"{band}", output_list)
+
+            output_list = make_pretty_aprs_messages(f"{locator}", output_list)
     else:
-        output_list = make_pretty_aprs_messages("Cannot locate nearest repeater")
-        success = True
+        output_list = make_pretty_aprs_messages("Cannot locate nearest repeater for your query parameter set")
+        success = True  # The operation failed but we still have message that we want to send to the user
     return success, output_list
 
 

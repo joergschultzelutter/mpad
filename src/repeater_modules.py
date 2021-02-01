@@ -31,6 +31,7 @@ from geo_conversion_modules import (
 from utility_modules import check_if_file_exists
 from geo_conversion_modules import haversine
 import logging
+import operator
 
 
 def download_repeatermap_raw_data_to_local_file(
@@ -331,143 +332,6 @@ def read_mpad_repeatermap_data_from_disc(
     return success, mpad_repeatermap
 
 
-def get_nearest_repeater(
-    latitude: float,
-    longitude: float,
-    mode: str = None,
-    band: str = None,
-    units: str = "metric",
-):
-    """
-    For a given set of lat/lon cooordinates, return nearest
-    relais from the repeatermap.de relais list
-
-    Parameters
-    ==========
-    latitude: 'float'
-        Latitude of the user's position
-    longitude: 'float'
-        Longitude of the user's position
-    mode: 'str'
-        optional query parameter. Can be used for querying e.g. for DSTAR, C4FM, ...
-    band: 'str'
-        optional query parameter. Can be used for querying e.g. for 2m, 70cm, ...
-    units: 'str'
-        either "imperial" or "metric". Default: "metric"
-
-    Returns
-    =======
-    success: 'bool'
-        True if request was successful
-    nearest_repeater: 'dict'
-        Either empty (if success=False) or contains the data for the nearest repeater
-    """
-
-    nearest_repeater_id = None
-    nearest_repeater = []
-    success = False
-    nearest = 12000
-
-    # apply some convenience settings
-    if mode:
-        mode = mode.upper()
-    if band:
-        band = band.lower()
-    if mode == "D-STAR":
-        mode = "DSTAR"
-    if mode == "YSF":
-        mode = "C4FM"
-
-    # convert lat/lon degrees to radians
-    lat1 = latitude * 0.0174533
-    lon1 = longitude * 0.0174533
-
-    # read enriched dictionary from disc
-    success, mpad_repeatermap_dictionary = read_mpad_repeatermap_data_from_disc()
-
-    if success:
-        # loop through all of the ICAO stations and calculate the distance from $lat/$lon
-        # remember the one that is closest.
-        for repeater in mpad_repeatermap_dictionary:
-            lat2 = mpad_repeatermap_dictionary[repeater]["latitude"] * 0.0174533
-            lon2 = mpad_repeatermap_dictionary[repeater]["longitude"] * 0.0174533
-
-            # use equirectangular approximation of distance
-            x = (lon2 - lon1) * math.cos((lat1 + lat2) / 2)
-            y = lat2 - lat1
-            # 3959 is radius of the earth in miles
-            d = math.sqrt(x * x + y * y) * 3959
-            # if this station is nearer than the previous nearest, hang onto it
-            if d < nearest:
-                # if the user has selected additional query parameters, check them too
-                if mode:
-                    mode_from_dict = mpad_repeatermap_dictionary[repeater]["mode"]
-                    if mode != mode_from_dict:
-                        continue
-                if band:
-                    band_from_dict = mpad_repeatermap_dictionary[repeater]["band_name"]
-                    if band != band_from_dict:
-                        continue
-                nearest = d
-                nearest_repeater_id = repeater
-
-    # Did we find something?
-    if nearest_repeater_id:
-
-        # Yes; extract the content from the dictionary
-        locator = mpad_repeatermap_dictionary[nearest_repeater_id]["locator"]
-        latitude_repeater = mpad_repeatermap_dictionary[nearest_repeater_id]["latitude"]
-        longitude_repeater = mpad_repeatermap_dictionary[nearest_repeater_id][
-            "longitude"
-        ]
-        mode = mpad_repeatermap_dictionary[nearest_repeater_id]["mode"]
-        rx_frequency = mpad_repeatermap_dictionary[nearest_repeater_id]["rx_frequency"]
-        tx_frequency = mpad_repeatermap_dictionary[nearest_repeater_id]["tx_frequency"]
-        band = mpad_repeatermap_dictionary[nearest_repeater_id]["band_name"]
-        elevation = mpad_repeatermap_dictionary[nearest_repeater_id]["elevation"]
-        remarks = mpad_repeatermap_dictionary[nearest_repeater_id]["remarks"]
-        qth = mpad_repeatermap_dictionary[nearest_repeater_id]["qth"]
-        callsign = mpad_repeatermap_dictionary[nearest_repeater_id]["callsign"]
-
-        # Calculate distance/bearing/direction between user's position and repeater position
-        distance, bearing, direction = haversine(
-            latitude, longitude, latitude_repeater, longitude_repeater, units
-        )
-        # Round both distance and bearing values
-        distance = round(distance)
-        bearing = round(bearing)
-
-        # set the unit of measure for the distance variable
-        distance_uom = "km"
-        if units == "imperial":
-            distance_uom = "mi"
-
-        # Build the 'list' response object
-        nearest_repeater = {
-            "id": nearest_repeater_id,
-            "locator": locator,
-            "latitude": latitude_repeater,
-            "longitude": longitude_repeater,
-            "mode": mode,
-            "band": band,
-            "rx_frequency": rx_frequency,
-            "tx_frequency": tx_frequency,
-            "elevation": elevation,
-            "remarks": remarks,
-            "qth": qth,
-            "callsign": callsign,
-            "distance": distance,
-            "distance_uom": distance_uom,
-            "bearing": bearing,
-            "direction": direction,
-        }
-
-        # set the success marker
-        success = True
-
-    return success, nearest_repeater
-
-
 def update_local_repeatermap_file():
     """
     Wrapper method for importing the raw data from repeatermap.de,
@@ -494,6 +358,188 @@ def update_local_repeatermap_file():
     return success
 
 
+def get_nearest_repeater(
+    latitude: float,
+    longitude: float,
+    mode: str = None,
+    band: str = None,
+    units: str = "metric",
+    number_of_results: int = 1,
+):
+    """
+    For a given set of lat/lon cooordinates, return nearest
+    relais from the repeatermap.de relais list
+
+    Parameters
+    ==========
+    latitude: 'float'
+        Latitude of the user's position
+    longitude: 'float'
+        Longitude of the user's position
+    mode: 'str'
+        optional query parameter. Can be used for querying e.g. for DSTAR, C4FM, ...
+    band: 'str'
+        optional query parameter. Can be used for querying e.g. for 2m, 70cm, ...
+    units: 'str'
+        either "imperial" or "metric". Default: "metric"
+    number_of_results: 'int'
+        If the query that is about to be executed has more than one result,
+        we return the number of results back to the user. The actual number of
+        results depends on the outcome of the repeatermap data query and can
+        even be zero if no entries were found
+
+    Returns
+    =======
+    success: 'bool'
+        True if request was successful
+    nearest_repeater: 'dict'
+        Either empty (if success=False) or contains the data for the nearest repeater
+    """
+
+    nearest_repeater_id = None
+    # This is our output list. It contains 0..n dictionaries
+    nearest_repeater_list = []
+    success = False
+    nearest = 12000
+
+    # apply some convenience settings
+    if mode:
+        mode = mode.upper()
+    if band:
+        band = band.lower()
+    if mode == "D-STAR":
+        mode = "DSTAR"
+    if mode == "YSF":
+        mode = "C4FM"
+
+    # read enriched dictionary from disc
+    dict_success, mpad_repeatermap_dictionary = read_mpad_repeatermap_data_from_disc()
+
+    if dict_success:
+        # loop through all of the ICAO stations and calculate the distance from $lat/$lon
+        # remember the one that is closest.
+
+        location_dictionary_unsorted = {}
+
+        for repeater in mpad_repeatermap_dictionary:
+
+            # get latitude/longitude from the repeatermap dictionary
+            rm_lat = mpad_repeatermap_dictionary[repeater]["latitude"]
+            rm_lon = mpad_repeatermap_dictionary[repeater]["longitude"]
+
+            # if user has requested a specific mode then check if it is present
+            if mode:
+                mode_from_dict = mpad_repeatermap_dictionary[repeater]["mode"]
+                if mode != mode_from_dict:
+                    continue
+            # if user has requested a specific band then check if it is present
+            if band:
+                band_from_dict = mpad_repeatermap_dictionary[repeater]["band_name"]
+                if band != band_from_dict:
+                    continue
+
+            # finally, calculate distance/bearing/heading from our point of origin
+            # to the repeater's position coordinates
+            distance, bearing, heading = haversine(
+                latitude1=latitude,
+                longitude1=longitude,
+                latitude2=rm_lat,
+                longitude2=rm_lon,
+                units=units,
+            )
+
+            # Build ourselves a dictionary key, consisting of:
+            # - repeater ID
+            # - heading
+            # - bearing
+            # as dicts need immutable values, render it to a tuple
+            repeater_key = tuple((repeater, heading, bearing))
+
+            # Finally, add the tumple + distance to our unsorted dictionary
+            if repeater_key not in location_dictionary_unsorted:
+                location_dictionary_unsorted[repeater_key] = distance
+
+        # Once we've generated our dictionary, sort it by its *value*
+        # In theory, a distance value can exist more than once. Therefore,
+        # the 'distance' is not the key but the dict's value
+        sorted_location_dictionary = dict(
+            sorted(location_dictionary_unsorted.items(), key=operator.itemgetter(1))
+        )
+
+        # Default: return requested number of elements to the user
+        # use the actual dict len if that number is lower
+        number_of_requested_elements = number_of_results
+        if len(sorted_location_dictionary) < number_of_results:
+            number_of_requested_elements = len(sorted_location_dictionary)
+        # Now check if we find anything at all
+        if len(sorted_location_dictionary) > 0:
+            # iterate through the number of desired elements
+            for iterator in range(number_of_requested_elements):
+                # get the key on the iterator position
+                repeater_key = list(sorted_location_dictionary.keys())[iterator]
+
+                # now deconstruct the key to its original elements
+                nearest_repeater_id = repeater_key[0]
+                direction = repeater_key[1]
+                bearing = round(repeater_key[2])
+
+                # Finally, get the distance value from dictionary
+                distance = math.ceil(sorted_location_dictionary[repeater_key])
+
+                # based on the repeater id, get the corresponding values from the dictionary
+                locator = mpad_repeatermap_dictionary[nearest_repeater_id]["locator"]
+                latitude_repeater = mpad_repeatermap_dictionary[nearest_repeater_id][
+                    "latitude"
+                ]
+                longitude_repeater = mpad_repeatermap_dictionary[nearest_repeater_id][
+                    "longitude"
+                ]
+                mode = mpad_repeatermap_dictionary[nearest_repeater_id]["mode"]
+                rx_frequency = mpad_repeatermap_dictionary[nearest_repeater_id][
+                    "rx_frequency"
+                ]
+                tx_frequency = mpad_repeatermap_dictionary[nearest_repeater_id][
+                    "tx_frequency"
+                ]
+                band = mpad_repeatermap_dictionary[nearest_repeater_id]["band_name"]
+                elevation = mpad_repeatermap_dictionary[nearest_repeater_id][
+                    "elevation"
+                ]
+                remarks = mpad_repeatermap_dictionary[nearest_repeater_id]["remarks"]
+                qth = mpad_repeatermap_dictionary[nearest_repeater_id]["qth"]
+                callsign = mpad_repeatermap_dictionary[nearest_repeater_id]["callsign"]
+
+                # set the unit of measure for the distance variable
+                distance_uom = "km"
+                if units == "imperial":
+                    distance_uom = "mi"
+
+                # Build the 'list' response object
+                nearest_repeater = {
+                    "id": nearest_repeater_id,
+                    "locator": locator,
+                    "latitude": latitude_repeater,
+                    "longitude": longitude_repeater,
+                    "mode": mode,
+                    "band": band,
+                    "rx_frequency": rx_frequency,
+                    "tx_frequency": tx_frequency,
+                    "elevation": elevation,
+                    "remarks": remarks,
+                    "qth": qth,
+                    "callsign": callsign,
+                    "distance": distance,
+                    "distance_uom": distance_uom,
+                    "bearing": bearing,
+                    "direction": direction,
+                }
+                nearest_repeater_list.append(nearest_repeater)
+                # set the success marker as we have at least one entry
+                success = True
+
+    return success, nearest_repeater_list
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -502,13 +548,12 @@ if __name__ == "__main__":
 
     update_local_repeatermap_file()
 
-    success, nearest_repeater = get_nearest_repeater(
-        latitude=51.8458575,
-        longitude=8.2997425,
-        mode="dstar",
-        band="70cm",
+    logger.info(
+        get_nearest_repeater(
+            latitude=51.8458575,
+            longitude=8.2997425,
+            mode="c4fm",
+            units="metric",
+            number_of_results=5,
+        )
     )
-    if success:
-        logger.info(nearest_repeater)
-    else:
-        logger.info("Nothing found!")
