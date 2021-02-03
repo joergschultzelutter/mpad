@@ -33,6 +33,8 @@ from geo_conversion_modules import haversine
 import logging
 import operator
 
+logger = logging.getLogger(__name__)
+
 
 def download_repeatermap_raw_data_to_local_file(
     url: str = "http://www.repeatermap.de/api.php",
@@ -63,7 +65,6 @@ def download_repeatermap_raw_data_to_local_file(
                 f.close()
             success = True
         except:
-            logger = logging.getLogger(__name__)
             logger.info(
                 f"Cannot write repeatermap.de data to local disc file '{repeatermap_raw_data_file}'"
             )
@@ -98,7 +99,6 @@ def read_repeatermap_raw_data_from_disk(
                 f.close()
                 success = True
     except:
-        logger = logging.getLogger(__name__)
         logger.info(f"Cannot read '{repeatermap_raw_data_file}' from disc")
     return success, repeatermap_raw_json_content
 
@@ -166,7 +166,7 @@ def calculate_band_name(frequency: float):
     return success, human_readable_band_name
 
 
-def create_enriched_mpad_repeatermap_data(repeatermap_raw_json_content: str):
+def create_native_mpad_repeater_data():
     """
     Processes the raw repeatermap data, enrich it with additional content and
     return the JSON tuple to the user for further processing
@@ -180,8 +180,6 @@ def create_enriched_mpad_repeatermap_data(repeatermap_raw_json_content: str):
 
     Parameters
     ==========
-    repeatermap_raw_json_content: 'str'
-        Raw JSON data from repeatermap.de
 
     Returns
     =======
@@ -193,78 +191,245 @@ def create_enriched_mpad_repeatermap_data(repeatermap_raw_json_content: str):
     """
     success = False
     mpad_repeater_dict = {}  # Create empty dict
-    try:
-        raw_repeatermap_dictionary = json.loads(repeatermap_raw_json_content)
-        success = True
-    except:
-        return False, None
 
-    mpad_repeater_dict.clear()
+    logger.info("Updating local repeater database")
 
-    for raw_entry in raw_repeatermap_dictionary["relais"]:
-        mode = rx_frequency = tx_frequency = elevation = None
-        latitude = longitude = remarks = qth = repeater_id = None
-        locator = callsign = band_name = None
-        if "id" in raw_entry:
-            repeater_id = raw_entry["id"]
-        if "mode" in raw_entry:
-            mode = raw_entry["mode"]
-            mode = mode.upper()
-        if "rx" in raw_entry:
-            rx_frequency = raw_entry["rx"]
-        if "tx" in raw_entry:
-            tx_frequency = raw_entry["tx"]
-        if "el" in raw_entry:
-            elevation = raw_entry["el"]
-        if "lat" in raw_entry:
-            latitude = raw_entry["lat"]
-        if "lon" in raw_entry:
-            longitude = raw_entry["lon"]
-        if "remarks" in raw_entry:
-            remarks = raw_entry["remarks"]
-        if "qth" in raw_entry:
-            qth = raw_entry["qth"]
-        if "call" in raw_entry:
-            callsign = raw_entry["call"]
-        if rx_frequency:
-            # get the human readable band name
-            success, band_name = calculate_band_name(rx_frequency)
-            if not success:
-                band_name = ""
-        if "locator" in raw_entry:
-            locator = raw_entry["locator"]
-            if not latitude or not longitude:
-                latitude, longitude = convert_maidenhead_to_latlon(locator)
-        # Build locator from lat/lon if not present
-        if not locator:
-            if latitude and longitude:
-                locator = convert_latlon_to_maidenhead(
-                    latitude=latitude, longitude=longitude
-                )
-        # don't add MMDVM hotspots
-        if id and "mmdvm" not in remarks.lower() and "hotspot" not in remarks.lower():
-            mpad_repeater_dict[f"{repeater_id}"] = {
-                "locator": locator,
-                "latitude": latitude,
-                "longitude": longitude,
-                "mode": mode,
-                "rx_frequency": rx_frequency,
-                "tx_frequency": tx_frequency,
-                "band_name": band_name,
-                "elevation": elevation,
-                "remarks": remarks,
-                "qth": qth,
-                "callsign": callsign,
-            }
+    success, mpad_repeater_dict = process_raw_data_from_repeatermap_de(
+        mpad_repeater_dict=mpad_repeater_dict
+    )
+    logger.info("Have processed data from repeatermap.de")
+
+    success, mpad_repeater_dict = process_raw_data_from_hearham_com(
+        mpad_repeater_dict=mpad_repeater_dict
+    )
+    logger.info("Have processed data from hearham.com")
 
     mpad_repeatermap_json = json.dumps(mpad_repeater_dict)
     success = True
+    logger.info(f"Have retrieved total of {len(mpad_repeater_dict)} repeater entries")
+
     return success, mpad_repeatermap_json
 
 
-def write_mpad_repeatermap_data_to_disc(
+def process_raw_data_from_repeatermap_de(mpad_repeater_dict: dict):
+    """
+    Processes the raw data from repeatermap.de data, enriches it with
+    additional content and returns the standardised dictionary for further processing
+    Enrichment process contains:
+    - removal of unused data from the original raw data file
+    - calculate lat/lon from Maidenhead coordinates
+    where lat/lon are not present
+    - capitalize the 'mode' (C4FM, DStar) info for normalised data storage
+    - calculate human-readable band name based on given frequency (note: this
+    value will be a guesstimate
+
+    Parameters
+    ==========
+    mpad_repeater_dict: 'dict'
+        Dictionary that will be used for
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful
+    mpad_repeater_dict: 'dict'
+        The dictionary which contains our new entries
+    """
+
+    success, repeatermap_raw_json_content = read_repeatermap_raw_data_from_disk()
+    if success:
+        try:
+            raw_repeatermap_dictionary = json.loads(repeatermap_raw_json_content)
+            success = True
+        except:
+            return False, mpad_repeater_dict
+
+        for raw_entry in raw_repeatermap_dictionary["relais"]:
+            mode = rx_frequency = tx_frequency = elevation = None
+            latitude = longitude = comments = location = repeater_id = None
+            locator = callsign = band_name = repeater_shift = None
+            repeater_frequency = None
+
+            if "id" in raw_entry:
+                repeater_id = raw_entry["id"]
+                repeater_id = f"rmap_{repeater_id}"  # add prefix for a unique ID across data sources
+            if "mode" in raw_entry:
+                mode = raw_entry["mode"]
+                mode = mode.upper()
+            if "rx" in raw_entry:
+                rx_frequency = raw_entry["rx"]
+                repeater_frequency = int(rx_frequency * 1000000)  # Save as Hz value
+            else:
+                repeater_frequency = None  # should never happen
+            if "tx" in raw_entry:
+                tx_frequency = raw_entry["tx"]
+                repeater_shift = int(
+                    round(rx_frequency - tx_frequency, 1) * 1000000
+                )  # Save as Hz value
+            else:
+                repeater_shift = None
+            if "el" in raw_entry:
+                elevation = raw_entry["el"]
+            if "lat" in raw_entry:
+                latitude = raw_entry["lat"]
+            if "lon" in raw_entry:
+                longitude = raw_entry["lon"]
+            if "remarks" in raw_entry:
+                comments = raw_entry["remarks"]
+            if "qth" in raw_entry:
+                location = raw_entry["qth"]
+            if "call" in raw_entry:
+                callsign = raw_entry["call"]
+            if rx_frequency:
+                # get the human readable band name
+                success, band_name = calculate_band_name(rx_frequency)
+                if not success:
+                    band_name = ""
+            if "locator" in raw_entry:
+                locator = raw_entry["locator"]
+                if not latitude or not longitude:
+                    latitude, longitude = convert_maidenhead_to_latlon(locator)
+            # Build locator from lat/lon if not present
+            if not locator:
+                if latitude and longitude:
+                    locator = convert_latlon_to_maidenhead(
+                        latitude=latitude, longitude=longitude
+                    )
+            # don't add MMDVM hotspots
+            if (
+                id
+                and "mmdvm" not in comments.lower()
+                and "hotspot" not in comments.lower()
+                and repeater_frequency
+            ):
+                mpad_repeater_dict[f"{repeater_id}"] = {
+                    "locator": locator,
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "mode": mode,
+                    "repeater_frequency": repeater_frequency,
+                    "repeater_shift": repeater_shift,
+                    "band_name": band_name,
+                    "elevation": elevation,
+                    "comments": comments,
+                    "location": location,
+                    "callsign": callsign,
+                    "encode": None,
+                    "decode": None,
+                }
+        return True, mpad_repeater_dict
+    else:
+        return False, mpad_repeater_dict
+
+
+def process_raw_data_from_hearham_com(mpad_repeater_dict: dict):
+    """
+    Processes the raw data from repeatermap.de data, enriches it with
+    additional content and returns the standardised dictionary for further processing
+
+    Parameters
+    ==========
+    mpad_repeater_dict: 'dict'
+        Dictionary that will be used for
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful
+    mpad_repeater_dict: 'dict'
+        The dictionary which contains our new entries
+    """
+
+    # This is our master list of bands that we import from hearham.com
+    hearham_supported_bands = ["C4FM", "DSTAR", "DMR", "FM"]
+
+    success, hearham_raw_json_content = read_hearham_raw_data_from_disk()
+    if success:
+        try:
+            raw_hearham_dictionary = json.loads(hearham_raw_json_content)
+            success = True
+        except:
+            return False, mpad_repeater_dict
+        for raw_entry in raw_hearham_dictionary:
+            mode = rx_frequency = tx_frequency = elevation = None
+            latitude = longitude = comments = location = repeater_id = None
+            locator = callsign = band_name = repeater_shift = None
+            repeater_frequency = encode = decode = operational = None
+
+            if "id" in raw_entry:
+                repeater_id = raw_entry["id"]
+                repeater_id = f"hham_{repeater_id}"
+            if callsign in raw_entry:
+                callsign = raw_entry["callsign"]
+            if "latitude" in raw_entry:
+                latitude = raw_entry["latitude"]
+            if "longitude" in raw_entry:
+                longitude = raw_entry["longitude"]
+            if "city" in raw_entry:
+                location = raw_entry["city"]
+            if "mode" in raw_entry:
+                mode = raw_entry["mode"]
+            if "encode" in raw_entry:
+                encode = raw_entry["encode"]
+            if "decode" in raw_entry:
+                decode = raw_entry["decode"]
+            if "frequency" in raw_entry:
+                repeater_frequency = raw_entry["frequency"]
+            if "offset" in raw_entry:
+                repeater_shift = raw_entry["offset"]
+            if "description" in raw_entry:
+                comments = raw_entry["description"]
+            # is rp operational: 1 = operational, 0 = offline
+            if "operational" in raw_entry:
+                operational = raw_entry["operational"]
+            if latitude and longitude:
+                # some data records seem to have invalid lat/lon values
+                # If we don't filter for them, the program will crash
+                if abs(int(latitude)) <= 90 and abs(int(longitude)) <= 180:
+                    locator = convert_latlon_to_maidenhead(
+                        latitude=latitude, longitude=longitude
+                    )
+                else:
+                    # This is a quick and dirty fix. As we cannot determine the repeater's
+                    # proper location, we simply flag it as offline and disregard it
+                    # for the data import
+                    operational = 0
+            # Have a look a the modes available via the data source. Unfortunately,
+            # there are a few inconsistencies and 'paired' modes within the source data
+            # so there WILL be a few repeaters that we are not going to import
+            mode = mode.upper().strip()
+            if mode.startswith("YSF"):
+                mode = "C4FM"
+            if mode.startswith("D-STAR"):
+                mode = "DSTAR"
+            if mode.startswith("DMR"):
+                mode = "DMR"
+            if mode in hearham_supported_bands:
+                if repeater_frequency and repeater_frequency != 0 and operational != 0:
+                    success, band_name = calculate_band_name(
+                        int(repeater_frequency / 1000000)
+                    )
+                    mpad_repeater_dict[f"{repeater_id}"] = {
+                        "locator": locator,
+                        "latitude": latitude,
+                        "longitude": longitude,
+                        "mode": mode,
+                        "repeater_frequency": repeater_frequency,
+                        "repeater_shift": repeater_shift,
+                        "band_name": band_name,
+                        "elevation": elevation,
+                        "comments": comments,
+                        "location": location,
+                        "callsign": callsign,
+                        "encode": encode,
+                        "decode": decode,
+                    }
+    return success, mpad_repeater_dict
+
+
+def write_mpad_repeater_data_to_disc(
     mpad_repeatermap_json: str,
-    mpad_repeatermap_filename: str = "repeatermap_enriched_data.json",
+    mpad_repeatermap_filename: str = "mpad_repeater_data.json",
 ):
     """
     writes the processed repeatermap data in enriched MPAD format
@@ -289,7 +454,6 @@ def write_mpad_repeatermap_data_to_disc(
             f.close()
         success = True
     except:
-        logger = logging.getLogger(__name__)
         logger.info(
             f"Cannot write native repeatermap data to local disc file '{mpad_repeatermap_filename}'"
         )
@@ -297,7 +461,7 @@ def write_mpad_repeatermap_data_to_disc(
 
 
 def read_mpad_repeatermap_data_from_disc(
-    mpad_repeatermap_filename: str = "repeatermap_enriched_data.json",
+    mpad_repeatermap_filename: str = "mpad_repeater_data.json",
 ):
     """
     Read the MPAD preprocessed repeatermap file from disc
@@ -327,7 +491,6 @@ def read_mpad_repeatermap_data_from_disc(
                     success = True
                     mpad_repeatermap = json.loads(mpad_repeatermap_json)
         except:
-            logger = logging.getLogger(__name__)
             logger.info(f"Cannot read '{mpad_repeatermap_filename}' from disc")
     return success, mpad_repeatermap
 
@@ -348,13 +511,10 @@ def update_local_repeatermap_file():
     """
 
     download_repeatermap_raw_data_to_local_file()
-    success, repeatermap_dot_de_content = read_repeatermap_raw_data_from_disk()
+    download_hearham_raw_data_to_local_file()
+    success, local_repeatermap_json = create_native_mpad_repeater_data()
     if success:
-        success, local_repeatermap_json = create_enriched_mpad_repeatermap_data(
-            repeatermap_dot_de_content
-        )
-        if success:
-            success = write_mpad_repeatermap_data_to_disc(local_repeatermap_json)
+        success = write_mpad_repeater_data_to_disc(local_repeatermap_json)
     return success
 
 
@@ -495,19 +655,22 @@ def get_nearest_repeater(
                     "longitude"
                 ]
                 mode = mpad_repeatermap_dictionary[nearest_repeater_id]["mode"]
-                rx_frequency = mpad_repeatermap_dictionary[nearest_repeater_id][
-                    "rx_frequency"
+
+                repeater_frequency = mpad_repeatermap_dictionary[nearest_repeater_id][
+                    "repeater_frequency"
                 ]
-                tx_frequency = mpad_repeatermap_dictionary[nearest_repeater_id][
-                    "tx_frequency"
+                repeater_shift = mpad_repeatermap_dictionary[nearest_repeater_id][
+                    "repeater_shift"
                 ]
                 band = mpad_repeatermap_dictionary[nearest_repeater_id]["band_name"]
                 elevation = mpad_repeatermap_dictionary[nearest_repeater_id][
                     "elevation"
                 ]
-                remarks = mpad_repeatermap_dictionary[nearest_repeater_id]["remarks"]
-                qth = mpad_repeatermap_dictionary[nearest_repeater_id]["qth"]
+                comments = mpad_repeatermap_dictionary[nearest_repeater_id]["comments"]
+                location = mpad_repeatermap_dictionary[nearest_repeater_id]["location"]
                 callsign = mpad_repeatermap_dictionary[nearest_repeater_id]["callsign"]
+                encode = mpad_repeatermap_dictionary[nearest_repeater_id]["encode"]
+                decode = mpad_repeatermap_dictionary[nearest_repeater_id]["decode"]
 
                 # set the unit of measure for the distance variable
                 distance_uom = "km"
@@ -522,16 +685,18 @@ def get_nearest_repeater(
                     "longitude": longitude_repeater,
                     "mode": mode,
                     "band": band,
-                    "rx_frequency": rx_frequency,
-                    "tx_frequency": tx_frequency,
+                    "repeater_frequency": repeater_frequency,
+                    "repeater_shift": repeater_shift,
                     "elevation": elevation,
-                    "remarks": remarks,
-                    "qth": qth,
+                    "comments": comments,
+                    "location": location,
                     "callsign": callsign,
                     "distance": distance,
                     "distance_uom": distance_uom,
                     "bearing": bearing,
                     "direction": direction,
+                    "encode": encode,
+                    "decode": decode,
                 }
                 nearest_repeater_list.append(nearest_repeater)
                 # set the success marker as we have at least one entry
@@ -540,11 +705,77 @@ def get_nearest_repeater(
     return success, nearest_repeater_list
 
 
+def download_hearham_raw_data_to_local_file(
+    url: str = "https://hearham.com/api/repeaters/v1",
+    hearham_raw_data_file: str = "hearham_raw_data.json",
+):
+    """
+    Downloads the repeatermap.de data and write it to a file 'as is'
+    That file needs to be post-processed at a later point in time
+
+    Parameters
+    ==========
+    url: 'str'
+        Source URL where we will get the data from.
+    hearham_raw_data_file: 'str'
+        Filename of the target file which will hold the raw data
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful
+    """
+    success = False
+    resp = requests.get(url)
+    if resp.status_code == 200:
+        try:
+            with open(f"{hearham_raw_data_file}", "w") as f:
+                f.write(resp.text)
+                f.close()
+            success = True
+        except:
+            logger.info(
+                f"Cannot write hearham.com data to local disc file '{hearham_raw_data_file}'"
+            )
+    return success
+
+
+def read_hearham_raw_data_from_disk(
+    hearham_raw_data_file: str = "hearham_raw_data.json",
+):
+    """
+    Read the repeatermap.de raw data from disc.
+    Return the file's content to the user as a JSON string for further processing
+
+    Parameters
+    ==========
+    hearham_raw_data_file: 'str'
+        Filename of the file which contains the raw data from hearham.de
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful
+    repeatermap_raw_json_content: 'str'
+        Contains the file's raw JSON content (otherwise 'None')
+    """
+    success = False
+    hearham_raw_json_content = None
+    try:
+        with open(f"{hearham_raw_data_file}", "r") as f:
+            if f.mode == "r":
+                hearham_raw_json_content = f.read()
+                f.close()
+                success = True
+    except:
+        logger.info(f"Cannot read '{hearham_raw_data_file}' from disc")
+    return success, hearham_raw_json_content
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
     )
-    logger = logging.getLogger(__name__)
 
     update_local_repeatermap_file()
 

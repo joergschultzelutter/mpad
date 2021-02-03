@@ -829,7 +829,7 @@ def generate_output_message_repeater(response_parameters: dict):
 
         # now iterate through the dictionaries in our list
         for nearest_repeater in nearest_repeater_list:
-            #Increase the output counter
+            # Increase the output counter
             entry = entry + 1
 
             # now extract all entries from the dictionary
@@ -838,16 +838,18 @@ def generate_output_message_repeater(response_parameters: dict):
             longitude = nearest_repeater["longitude"]
             mode = nearest_repeater["mode"]
             band = nearest_repeater["band"]
-            rx_frequency = nearest_repeater["rx_frequency"]
-            tx_frequency = nearest_repeater["tx_frequency"]
+            repeater_frequency = nearest_repeater["repeater_frequency"]
+            repeater_shift = nearest_repeater["repeater_shift"]
             elevation = nearest_repeater["elevation"]
-            remarks = nearest_repeater["remarks"]
-            qth = nearest_repeater["qth"]
+            comments = nearest_repeater["comments"]
+            location = nearest_repeater["location"]
             callsign = nearest_repeater["callsign"]
             distance = nearest_repeater["distance"]
             distance_uom = nearest_repeater["distance_uom"]
             bearing = nearest_repeater["bearing"]
             direction = nearest_repeater["direction"]
+            encode = nearest_repeater["encode"]
+            decode = nearest_repeater["decode"]
 
             # Add an identification header (#1,#2,#3 ...)
             # if we have more than one result that we
@@ -857,9 +859,7 @@ def generate_output_message_repeater(response_parameters: dict):
                     message_to_add=f"#{entry}", destination_list=output_list
                 )
 
-            output_list = make_pretty_aprs_messages(
-                f"{qth}", output_list
-            )
+            output_list = make_pretty_aprs_messages(f"{location}", output_list)
 
             output_list = make_pretty_aprs_messages(
                 f"Dst {distance} {distance_uom}", output_list
@@ -867,12 +867,27 @@ def generate_output_message_repeater(response_parameters: dict):
             output_list = make_pretty_aprs_messages(
                 f"{bearing} deg {direction}", output_list
             )
-            output_list = make_pretty_aprs_messages(f"Rx {rx_frequency}", output_list)
-            output_list = make_pretty_aprs_messages(f"Tx {tx_frequency}", output_list)
+            # Both repeater frequency and shift are in Hz. Let's convert to MHz
+            repeater_frequency = round(repeater_frequency / 1000000, 4)
+            repeater_shift = round(repeater_shift / 1000000, 4)
+            if repeater_shift != 0:
+                output_list = make_pretty_aprs_messages(
+                    f"{repeater_frequency:0.4f}{repeater_shift:+0.1f} MHz", output_list
+                )
+            else:
+                output_list = make_pretty_aprs_messages(
+                    f"{repeater_frequency:0.4f} MHz", output_list
+                )
 
-            # Remarks can be empty
-            if remarks:
-                output_list = make_pretty_aprs_messages(f"{remarks}", output_list)
+            if encode:
+                output_list = make_pretty_aprs_messages(f"Enc {encode}", output_list)
+
+            if decode:
+                output_list = make_pretty_aprs_messages(f"Dec {decode}", output_list)
+
+            # Comments can be empty
+            if comments:
+                output_list = make_pretty_aprs_messages(f"{comments}", output_list)
             #
             # "band' and 'mode' are only added to the outgoing message if the user
             # has NOT requested these as input parameters. We can save a few bytes per
@@ -883,12 +898,14 @@ def generate_output_message_repeater(response_parameters: dict):
             # valid for c4fm, d-star, ....
             if not repeater_mode:
                 output_list = make_pretty_aprs_messages(f"{mode}", output_list)
-            if not repeater_band:
-                output_list = make_pretty_aprs_messages(f"{band}", output_list)
+            #            if not repeater_band:
+            #                output_list = make_pretty_aprs_messages(f"{band}", output_list)
 
             output_list = make_pretty_aprs_messages(f"{locator}", output_list)
     else:
-        output_list = make_pretty_aprs_messages("Cannot locate nearest repeater for your query parameter set")
+        output_list = make_pretty_aprs_messages(
+            "Cannot locate nearest repeater for your query parameter set"
+        )
         success = True  # The operation failed but we still have message that we want to send to the user
     return success, output_list
 
