@@ -2,7 +2,6 @@ __pycache__
 de421.bsp
 mpad_api_access_keys.cfg
 repeatermap_raw_data.json
-repeatermap_enriched_data.json
 airport_stations.txt
 venv
 wxbot-1.26.pl
@@ -12,3 +11,5 @@ APRS101.PDF
 mpad_served_packages.txt
 tle_amateur_satellites.txt
 mgrs.py
+hearham_raw_data.json
+mpad_repeater_data.json
