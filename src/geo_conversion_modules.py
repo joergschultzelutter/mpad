@@ -117,9 +117,11 @@ def convert_latlon_to_maidenhead(
         the specified precision
     """
 
-    maidenhead_coordinates: str = maidenhead.to_maiden(
-        latitude, longitude, precision=output_precision
-    )
+    maidenhead_coordinates = None
+    if abs(int(latitude)) <= 90 and abs(int(longitude)) <= 180:
+        maidenhead_coordinates = maidenhead.to_maiden(
+            latitude, longitude, precision=output_precision
+        )
     return maidenhead_coordinates
 
 
