@@ -167,6 +167,7 @@ osm_supported_keyword_categories = [
     "information",
     "laundry",
     "mall",
+    "motorcycle",
     "optician",
     "pharmacy",
     "phone",

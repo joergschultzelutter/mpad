@@ -397,6 +397,7 @@ MPAD allows you to find e.g. a supermarket or abank that the nearest one to your
 | ```information``` | Information |
 | ```laundry``` | Laundry |
 | ```mall``` | (Shopping) mall |
+| ```motorcycle``` | Motorcycle |
 | ```optician``` | Optician|
 | ```pharmacy``` | Pharmacy |
 | ```phone``` | Phone |
