@@ -32,7 +32,7 @@ A decaying cache for __outgoing__ messages to the user is currently not implemen
 - Address data:
     - Whenever a street number is returned to the user, the message composition follows the German format: ```street```, followed by ```street_number```. This may deviate from your local address format.
 - Openstreetmap category data:
-    - MPAD honors OSM's [Nominatim usage policy](https://operations.osmfoundation.org/policies/nominatim) by artificially delaying requests to OSM. Whenever you request OSM category data and you have requested more than one result, each follow-up request of that same command experiences an artificial delay between 1.2 and 2.0 seconds (random value).
+    - MPAD honors OSM's [Nominatim usage policy](https://operations.osmfoundation.org/policies/nominatim) by artificially delaying requests to OSM. Whenever you request OSM category data and you have requested more than one result, each follow-up request of that same command experiences an artificial delay between 1.2 and 3.0 seconds (random value). Therefore, requesting 5 results can take between 6 and 15 secs.
 - General:
     - APRS 'TOCALL' identifier is currently still set to default 'APRS' (see WXBOT implementation); in the long run, MPAD needs its own identifier (see http://www.aprs.org/aprs11/tocalls.txt)
     - Call signs which deviate from a 'normal' call sign pattern may currently not be recognised (e.g. APRS bot call signs etc). In this case, the program may not know what to do and will perform a fallback to its default mode: generate a wx report for the user's call sign.
