@@ -385,6 +385,8 @@ MPAD allows you to find e.g. a supermarket or abank that the nearest one to your
 | ```dentist``` | Dentist |
 | ```department_store``` | Department Store |
 | ```drinking_water``` | Drinking Water|
+| ```dry_cleaning``` | Dry Cleaning|
+| ```electronics``` | Electronics Shop|
 | ```fire_station``` | Fire Station|
 | ```fuel``` | Fuel / Petrol / Gas Station|
 | ```hairdresser``` | Hairdresser |
