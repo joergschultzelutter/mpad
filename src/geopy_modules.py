@@ -279,12 +279,16 @@ def get_osm_special_phrase_data(
                                     amenity = address_body["amenity"]
                                 if "shop" in address_body:
                                     amenity = address_body["shop"]
+                                if "leisure" in address_body:
+                                    amenity = address_body["leisure"]
                                 if "road" in address_body:
                                     road = address_body["road"]
 
                                 # we go for the most precise location
                                 if "city" in address_body:
                                     city = address_body["city"]
+                                if "suburb" in address_body:
+                                    city = address_body["suburb"]
                                 if "town" in address_body:
                                     city = address_body["town"]
                                 if "village" in address_body:
