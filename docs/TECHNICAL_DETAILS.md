@@ -29,6 +29,8 @@ A decaying cache for __outgoing__ messages to the user is currently not implemen
     - Apart from some internal pre-processing, the data is taken from repeatermap.de 'as is'.
 - Time zones:
     - Currently, all timestamps returned by the program use UTC as time zone. Implicitly, __this constraint also applies to the time-related program keywords__ (see [USAGE.md](USAGE.md)) which instructs the program to return data for a certain time of the day. Dependent on your geographical location, a 'give me a wx report for today noon' may result in unwanted effects as the 'noon' part __is based on GMT__. When in doubt, do NOT limit your data to a certain time slot of the day ('full' day is the program default). I might implement local time zone data at a later point in time - for now, GMT applies.
+- Address data:
+    - Whenever a street number is returned to the user, the message composition follows the German format: ```street```, followed by ```street_number```. This may deviate from your local address format.
 - General:
     - APRS 'TOCALL' identifier is currently still set to default 'APRS' (see WXBOT implementation); in the long run, MPAD needs its own identifier (see http://www.aprs.org/aprs11/tocalls.txt)
     - Call signs which deviate from a 'normal' call sign pattern may currently not be recognised (e.g. APRS bot call signs etc). In this case, the program may not know what to do and will perform a fallback to its default mode: generate a wx report for the user's call sign.
