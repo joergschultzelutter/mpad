@@ -370,6 +370,7 @@ MPAD allows you to find e.g. a supermarket or abank that the nearest one to your
 | OSM Category Code | Meaning |
 | ----------------- | ------- |
 | ```aerodrome``` | Airport |
+| ```alpine_hut``` | Alpine Hut |
 | ```ambulance_station``` | Ambulance |
 | ```atm``` | ATM|
 | ```bakery``` | Bakery |

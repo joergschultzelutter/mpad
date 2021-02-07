@@ -140,6 +140,7 @@ mpad_enforce_unicode_messages = False
 #
 osm_supported_keyword_categories = [
     "aerodrome",
+    "alpine_hut",
     "ambulance_station",
     "atm",
     "bakery",
