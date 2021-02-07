@@ -24,6 +24,8 @@ Country = iso3166-a2 country (de, us, fr, uk, ...)
 - ```Mountain View, CA; US``` will try to return the Wx data for ```Mountain View, CA, United States```
 - ```Holzminden; de``` will try to return the Wx data for ```Holzminden, Germany```
 
+Spaces between the various parts of the message and the separators are permitted, meaning that e.g. both commands ```los angeles , ca ; us``` and ```los angeles,ca;us``` return the same result. This assumption is applicable to all keywords that are supported by MPAD.
+
 #### Example response
 
 (applicable to all wx request types)
@@ -56,17 +58,15 @@ Glossary:
 #### Formats
 
 - ```zip <zipcode>[;iso3166-a2 country code]```
-- ```<5-digit code>```
-
-A zip code __with__ keyword but __without__ a country setting OR a 5-digit zip code __without__ keyword will automatically assume that the given zip code is a U.S. zip code. 
+- ```<5-digit code>```. Note that a 5-digit zipcode without country code will automatically assume that the given zip code is a U.S. zip code; in this case, the country code will be set implicitly. 
 
 #### Example requests
 
 - ```zip 94043``` returns the wx information for ```Mountain View, CA, United States```
 - ```zip 85609``` returns the wx information for ```Dragoon, AZ, United States```
-- ```zip 85609; us``` returns the wx information for ```Dragoon, AZ, United States```
-- ```zip 85609; de``` returns the wx information for ```Aschheim, Germany```
-- ```94043``` returns the  wx information for ```Mountain View, CA, United States```
+- ```zip 85609;us``` returns the wx information for ```Dragoon, AZ, United States```
+- ```zip 85609;de``` returns the wx information for ```Aschheim, Germany```
+- ```94043``` returns the wx information for ```Mountain View, CA, United States```
 
 A 5-digit zip code __without__ iso-3166-a2 qualifier automatically sets the country setting to "US". 
 Zip codes can be of 3..10 characters
@@ -142,8 +142,6 @@ Get a METAR report for a specific ICAO code. If the ICAO code is valid but the a
 ```EDDF 090120Z 36005KT 9999 FEW040 00/M01 Q1019 R25L/29//95```
 
 ```R25C/29//95 R25R/////// R18/29//95 NOSIG```
-
-
 
 Specifying an ICAO code without keyword may or may not be successful as it is processed at the end of the parser's process chain.
 
@@ -507,7 +505,7 @@ Allows you to specify a language in a (somewhat) ISO639-1 format. Default langua
 
 Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __YES__
 
-Currently, this keyword is __only__ used for WX reports from Openweathermap. In addition, it only provides a localised __ASCII__ version of the wx free text, e.g. en=```snow```, de=```Schnee```, pl=```Snieg``` so don't expect to receive e.g. a wx report APRS message with the cyrillic alphabet. I might use the language option for other purposes in the future.
+Currently, this keyword is __only__ used for WX reports from Openweathermap. In addition, it only provides a localised version of the wx free text, e.g. en=```snow```, de=```Schnee```, pl=```Snieg```. If you enable your MPAD instance for UTF-8 support, those parts of the nessage may contain e.g. cyrillic characters.
 
 #### Formats
 
