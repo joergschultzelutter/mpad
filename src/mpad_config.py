@@ -155,6 +155,7 @@ osm_supported_keyword_categories = [
     "deli",
     "dentist",
     "department_store",
+    "doctors",
     "drinking_water",
     "dry_cleaning",
     "electronics",

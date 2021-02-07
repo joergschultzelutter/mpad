@@ -385,11 +385,13 @@ MPAD allows you to find e.g. a supermarket or abank that the nearest one to your
 | ```deli``` | Deli |
 | ```dentist``` | Dentist |
 | ```department_store``` | Department Store |
+| ```doctors``` | Doctors |
 | ```drinking_water``` | Drinking Water|
 | ```dry_cleaning``` | Dry Cleaning|
 | ```electronics``` | Electronics Shop|
 | ```fire_station``` | Fire Station|
 | ```fuel``` | Fuel / Petrol / Gas Station|
+| ```guest_house``` | Guest house|
 | ```hairdresser``` | Hairdresser |
 | ```hospital``` | Hospital |
 | ```hostel``` | Hostel |
@@ -397,6 +399,7 @@ MPAD allows you to find e.g. a supermarket or abank that the nearest one to your
 | ```information``` | Information |
 | ```laundry``` | Laundry |
 | ```mall``` | (Shopping) mall |
+| ```motel``` | Motel |
 | ```motorcycle``` | Motorcycle |
 | ```optician``` | Optician|
 | ```pharmacy``` | Pharmacy |
@@ -414,6 +417,7 @@ MPAD allows you to find e.g. a supermarket or abank that the nearest one to your
 | ```tobacco``` | Tobacco |
 | ```toilets``` | Toilets |
 | ```train_station``` | Train Station |
+| ```veterinary``` | Veterinary |
 | ```university``` | University |
 
 The OSM category code can be specified with or without its associated keyword (```osm```). Note that some of the categories with shorter names may be mis-interpreted by the parser as something else if you submit such a category without the ```osm``` keyword. For example, the category ```pub``` might be misinterpreted as IATA code ```PUB``` as the program parser processes the IATA data prior to the OSM category data. First come, first serve. When in doubt: submit the cagegory with a keyword :-)
