@@ -258,6 +258,8 @@ logger = logging.getLogger(__name__)
     openweathermapdotorg_api_key,
     aprsis_login_callsign,
     aprsis_login_passcode,
+    dapnet_login_callsign,
+    dapnet_login_passcode,
 ) = read_program_config()
 if not success:
     logging.error(msg="Error while reading the program config file; aborting")

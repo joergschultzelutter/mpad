@@ -1033,6 +1033,8 @@ if __name__ == "__main__":
         openweathermap_api_key,
         aprsis_callsign,
         aprsis_passcode,
+        dapnet_callsign,
+        dapnet_passcode,
     ) = read_program_config()
     if success:
         logger.info("Further actions are executed here")

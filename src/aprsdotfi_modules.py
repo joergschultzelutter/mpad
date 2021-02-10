@@ -129,6 +129,8 @@ if __name__ == "__main__":
         openweathermapdotorg_api_key,
         aprsis_callsign,
         aprsis_passcode,
+        dapnet_callsign,
+        dapnet_passcode,
     ) = read_program_config()
     if success:
         logger.info(get_position_on_aprsfi("DF1JSL-8", aprsdotfi_api_key))
