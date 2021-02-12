@@ -41,6 +41,7 @@ from geo_conversion_modules import (
     convert_latlon_to_dms,
     haversine,
 )
+from dapnet_modules import send_dapnet_message
 
 from repeater_modules import get_nearest_repeater
 
@@ -172,9 +173,7 @@ def create_cwop_content(cwop_dict: dict):
     return output_list
 
 
-def generate_output_message(
-    response_parameters: dict, openweathermapdotorg_api_key: str
-):
+def generate_output_message(response_parameters: dict):
     """
     Evaluate the input parser's output and gather the data the user
     wants to receive. If this function is called, then the parser
@@ -184,8 +183,6 @@ def generate_output_message(
     ==========
     response_parameters: 'dict'
         Dictionary of the data from the input processor's analysis on the user's data
-    openweathermapdotorg_api_key: 'str'
-        API access key to openweathermap.org
 
     Returns
     =======
@@ -213,7 +210,6 @@ def generate_output_message(
     if what == "wx":
         success, output_list = generate_output_message_wx(
             response_parameters=response_parameters,
-            openweathermapdotorg_api_key=openweathermapdotorg_api_key,
         )
     elif what == "metar":
         success, output_list = generate_output_message_metar(
@@ -221,10 +217,6 @@ def generate_output_message(
         )
     elif what == "help":
         success, output_list = generate_output_message_help()
-    elif what == "satpass":
-        success, output_list = generate_output_message_satpass(
-            response_parameters=response_parameters
-        )
     elif what == "cwop_by_latlon":
         success, output_list = generate_output_message_cwop_by_latlon(
             response_parameters=response_parameters
@@ -253,6 +245,10 @@ def generate_output_message(
         success, output_list = generate_output_message_osm_special_phrase(
             response_parameters=response_parameters
         )
+    elif what == "dapnet":
+        success, output_list = generate_output_message_dapnet(
+            response_parameters=response_parameters
+        )
     else:
         success = False
         output_list = [
@@ -266,9 +262,7 @@ def generate_output_message(
     return success, output_list
 
 
-def generate_output_message_wx(
-    response_parameters: dict, openweathermapdotorg_api_key: str
-):
+def generate_output_message_wx(response_parameters: dict):
     """
     Action keyword "wx": generate the wx report for the requested coordinates
 
@@ -276,8 +270,6 @@ def generate_output_message_wx(
     ==========
     response_parameters: 'dict'
         Dictionary of the data from the input processor's analysis on the user's data
-    openweathermapdotorg_api_key: 'str'
-        API access key to openweathermap.org
 
     Returns
     =======
@@ -299,6 +291,7 @@ def generate_output_message_wx(
     language = response_parameters["language"]
     altitude = response_parameters["altitude"]
     human_readable_message = response_parameters["human_readable_message"]
+    openweathermapdotorg_api_key = response_parameters["openweathermapdotorg_api_key"]
 
     # populate the correct offset & mode , dependent on
     # what the user wants (daily, hourly or current wx data)
@@ -588,6 +581,44 @@ def generate_output_message_riseset(response_parameters: dict):
         add_sep=False,
     )
     success = True
+    return success, output_list
+
+
+def generate_output_message_dapnet(response_parameters: dict):
+    """
+    Forward a message to DAPNET and return the status to the user
+
+    Parameters
+    ==========
+    response_parameters: 'dict'
+        Dictionary of the data from the input processor's analysis on the user's data
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful. Will only be false in case of a
+        fatal error as we need to send something back to the user (even
+        if that message is a mere error text)
+    output_message: 'list'
+        List, containing the message text(s) that we will send to the user
+        This is plain text list without APRS message ID's
+    """
+    message_callsign = response_parameters["message_callsign"]
+    users_callsign = response_parameters["users_callsign"]
+    dapnet_message = response_parameters["dapnet_message"]
+    dapnet_login_callsign = response_parameters["dapnet_login_callsign"]
+    dapnet_login_passcode = response_parameters["dapnet_login_passcode"]
+
+    success, response = send_dapnet_message(
+        from_callsign=users_callsign,
+        to_callsign=message_callsign,
+        message=dapnet_message,
+        dapnet_login_callsign=dapnet_login_callsign,
+        dapnet_login_passcode=dapnet_login_passcode,
+    )
+    output_list = make_pretty_aprs_messages(message_to_add=response)
+
+    success = True  # Always 'True' as we also return error messages to the user
     return success, output_list
 
 

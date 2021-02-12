@@ -116,16 +116,7 @@ def make_pretty_aprs_messages(
         # Convert the message to plain ascii
         # Unidecode does not take care of German special characters
         # Therefore, we need to 'translate' them first
-        message_to_add = (
-            message_to_add.replace("Ä", "Ae")
-            .replace("Ö", "Oe")
-            .replace("Ü", "Ue")
-            .replace("ä", "ae")
-            .replace("ö", "oe")
-            .replace("ü", "ue")
-            .replace("ß", "ss")
-        )
-        message_to_add = unidecode(message_to_add)
+        message_to_add = convert_text_to_plain_ascii(message_string=message_to_add)
 
     # If new message is longer than max len then split it up with
     # max chunks of max_len bytes and add it to the array.
@@ -256,8 +247,8 @@ def read_program_config(config_file_name: str = "mpad_api_access_keys.cfg"):
             )
             aprsis_login_callsign = config.get("mpad_config", "aprsis_login_callsign")
             aprsis_login_passcode = config.get("mpad_config", "aprsis_login_passcode")
-            dapnet_login_callsign = config.get("mpad_config", "aprsis_login_callsign")
-            dapnet_login_passcode = config.get("mpad_config", "aprsis_login_passcode")
+            dapnet_login_callsign = config.get("mpad_config", "dapnet_login_callsign")
+            dapnet_login_passcode = config.get("mpad_config", "dapnet_login_passcode")
             success = True
         except:
             success = False
@@ -483,6 +474,32 @@ def dump_string_to_hex(message_text_string: str):
     hex-converted text to the user
     """
     return "".join(hex(ord(c))[2:] for c in message_text_string)
+
+
+def convert_text_to_plain_ascii(message_string: str):
+    """
+    Converts a string to plain ASCII
+
+    Parameters
+    ==========
+    message_string: 'str'
+        Text that needs to be converted
+
+    Returns
+    =======
+    hex-converted text to the user
+    """
+    message_string = (
+        message_string.replace("Ä", "Ae")
+        .replace("Ö", "Oe")
+        .replace("Ü", "Ue")
+        .replace("ä", "ae")
+        .replace("ö", "oe")
+        .replace("ü", "ue")
+        .replace("ß", "ss")
+    )
+    message_string = unidecode(message_string)
+    return message_string
 
 
 if __name__ == "__main__":

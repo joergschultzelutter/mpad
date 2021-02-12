@@ -134,7 +134,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     lasttime = datetime.min  # Placeholder in case lasttime is not present on aprs.fi
     when = when_daytime = what = city = state = country = zipcode = cwop_id = None
     icao = human_readable_message = satellite = repeater_band = repeater_mode = None
-    street = street_number = county = osm_special_phrase = None
+    street = street_number = county = osm_special_phrase = dapnet_message = None
 
     # Call sign reference (either the user's call sign or someone
     # else's call sign
@@ -802,6 +802,42 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                     )
                 break
 
+    if not found_my_duty_roster and not err:
+        regex_string = r"(dapnet)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[a-zA-Z0-9]{1,2})\s*([\D\s]+)"
+        matches = re.search(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            what = matches[1].lower()
+            message_callsign = matches[2].upper()
+            dapnet_message = matches[3]
+            aprs_message = re.sub(regex_string, "", aprs_message).strip()
+            found_my_duty_roster = True
+        if not found_my_duty_roster:
+            regex_string = (
+                r"(dapnet)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3})\s*([\D\s]+)"
+            )
+            matches = re.search(
+                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+            )
+            if matches:
+                what = matches[1].lower()
+                message_callsign = matches[2].upper()
+                dapnet_message = matches[3]
+                found_my_duty_roster = True
+                aprs_message = re.sub(regex_string, "", aprs_message).strip()
+        if not found_my_duty_roster:
+            regex_string = r"(wx|forecast|whereis|riseset|cwop|metar)\s*([\D\s]+)"
+            matches = re.search(
+                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+            )
+            if matches:
+                what = matches[1].lower()
+                message_callsign = matches[2].upper()
+                dapnet_message = matches[3]
+                found_my_duty_roster = True
+                aprs_message = re.sub(regex_string, "", aprs_message).strip()
+
     #
     # We have reached the end of the 'standard' position data processing
     # for that kind of data which may come with a command AND an associated
@@ -1245,8 +1281,8 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         "when_daytime": when_daytime,  # daytime setting for 'when' command keyword
         "what": what,  # contains the command that the user wants us to execute
         "units": units,  # units of measure, 'metric' or 'imperial'
-        "message_callsign": message_callsign,  # Call sign from message (if one was specified)
-        "users_callsign": users_callsign,  # user's call sign that he has sent the message from
+        "message_callsign": message_callsign,  # This is the TARGET callsign which was either specified directly in the msg request or was assigned implicitly
+        "users_callsign": users_callsign,  # user's call sign. This is the call sign that has sent us the message request
         "language": language,  # iso639-1 a2 message code
         "icao": icao,  # ICAO code
         "human_readable_message": human_readable_message,  # Message text header
@@ -1267,6 +1303,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         "users_longitude": users_longitude,  # in reference to another user's call sign
         "number_of_results": number_of_results,  # for keywords which may return more than 1 result
         "osm_special_phrase": osm_special_phrase,  # openstreetmap special phrases https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases/EN
+        "dapnet_message": dapnet_message,
     }
 
     # Finally, set the return code. Unless there was an error, we return a True status
@@ -1310,9 +1347,7 @@ def parse_when(word: str):
     when = None
     date_offset = hour_offset = -1
 
-    matches = re.search(
-        pattern=r"^(tonite|tonight)$", string=word, flags=re.IGNORECASE
-    )
+    matches = re.search(pattern=r"^(tonite|tonight)$", string=word, flags=re.IGNORECASE)
     if matches and not found_when:
         when = "today"
         found_when = True

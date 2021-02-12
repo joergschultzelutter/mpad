@@ -190,4 +190,12 @@ osm_supported_keyword_categories = [
 #
 # Default user agent for accessing aprs.fi, openstreetmap et al
 # Change this if you run your own MPAD instance
-mpad_default_user_agent = "multi-purpose-aprs-daemon/0.0.1 (+https://github.com/joergschultzelutter/mpad/)"
+mpad_default_user_agent = (
+    "multi-purpose-aprs-daemon/0.0.1 (+https://github.com/joergschultzelutter/mpad/)"
+)
+
+#
+# DAPNET API server and transmitter group
+#
+mpad_dapnet_api_server = "http://www.hampager.de:8080/calls"
+mpad_dapnet_api_transmitter_group = "dl-all"

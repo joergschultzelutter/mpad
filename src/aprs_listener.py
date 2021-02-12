@@ -197,9 +197,20 @@ def mycallback(raw_aprs_packet):
                     # status code and a list item, containing the messages that are
                     # ready to be sent to the user.
                     if success:
+
+                        # enrich our response parameters with all API keys that we need for
+                        # the completion of the remaining tasks
+                        response_parameters.update(
+                            {
+                                "aprsdotfi_api_key": aprsdotfi_api_key,
+                                "openweathermapdotorg_api_key": openweathermapdotorg_api_key,
+                                "dapnet_login_callsign": dapnet_login_callsign,
+                                "dapnet_login_passcode": dapnet_login_passcode,
+                            }
+                        )
+
                         success, output_message = generate_output_message(
                             response_parameters=response_parameters,
-                            openweathermapdotorg_api_key=openweathermapdotorg_api_key,
                         )
                         # Regardless of a success status, fire the messages to the user
                         # in case of a failure, the list item already does contain
