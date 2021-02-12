@@ -23,7 +23,7 @@
 # Constants, do not change#
 ###########################
 #
-mpad_version: str = "0.03"
+mpad_version: str = "0.04"
 #
 # APRS position report: message symbol
 # see also http://www.aprs.org/symbols/symbolsX.txt and aprs_communication.py

@@ -8,12 +8,13 @@
 
 ### API Access
 
-Currently, MPAD uses two APIs for its purposes:
+Currently, MPAD uses three APIs for its purposes:
 
 - aprs.fi
 - openweathermap.org
+- DAPNET API
 
-If you want to host your own MPAD instance, you need to acquire your personal API access keys for both APIs and add them to MPAD's API config file (```mpad_api_access_keys.cfg```). An empty config template file is part of the repository.
+If you want to host your own MPAD instance, you need to acquire your personal API access keys for aprs.fi and openweathermap.org APIs and add these to MPAD's API config file (```mpad_api_access_keys.cfg```). An empty config template file is part of the repository. If you are not a registered DAPNET user, set the DAPNET callsign in the config file to N0CALL. When MPAD encounters this DAPNET user, it will refrain from sending content to DAPNET.
 
 Additionally, you also need to set your APRS-IS login credentials (callsign and passcode). By default, the login callsign is set to ```N0CALL``` which does permit the program to connect to APRS_IS in read-only mode. You can still receive and process messages (based on your filter settings' call signs). However, any outgoing message will not be sent to the user (via APRS-IS) but ends up in the program's log file. Setting the user's call sign to ```N0CALL``` will automatically enforce the program to enter read-only mode. ```aprsis_login_passcode``` is automatically set to ```-1``` and no data will be sent to APRS-IS.
 
@@ -31,6 +32,12 @@ aprsdotfi_api_key = 123456.abcdefGHIJKLMN
 # mode, meaning that MPAD will send data to APRS-IS
 aprsis_login_callsign = N0CALL
 aprsis_login_passcode = -1
+
+# DAPNET access credentials
+# If the callsign is set to N0CALL, APRS-DAPNET gateway
+# will be disabled
+dapnet_login_callsign = N0CALL
+dapnet_login_passcode = -1
 ```
 
 ### Program configuration
@@ -50,6 +57,8 @@ You also need to set the APRS-IS access and server credentials:
 - Tune the ```mpad_msg_cache_time_to_live``` parameter if too many messages are detected as duplicates and are not getting processed. Default is 5 mins
 - Configure the ```mpad_beacon_altitude_ft``` parameter. This is the beacon's altitude in __feet__ (not in meters)
 - By default, MPAD will send out ASCII messages. If you prefer to send unicode messages to the user, set the ```mpad_enforce_unicode_messages``` flag to ```True```. Note that this flag only applies to outgoing messages; incoming messages in unicode format are always honored.
+- By default, MPAD already supports a couple of OpenStreetMap object categories. If you want to add more categories, change the ```osm_supported_keyword_categories``` list. Note that you are required to use the OSM native category wording - see comment below.
+- Change the ```mpad_default_user_agent``` of you run your own MPAD instance and/or fork the repo.
 
 Excerpt from ```mpad_config.py```:
 ```python
@@ -158,4 +167,71 @@ mpad_msg_cache_time_to_live = 5 * 60  # ttl = 5 minutes
 # device is unicode capable or not - and activate unicode whenever it is supported.
 #
 mpad_enforce_unicode_messages = True
+#
+# Openstreetmap 'special phrases'
+# The values in this list need to match the ones in the OSM
+# documentation: https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases/EN
+# Add/remove categories if necessary but ensure that the keywords' writing
+# matches the one in the OSM documentation (this is case sensitive data!)
+#
+osm_supported_keyword_categories = [
+    "aerodrome",
+    "alpine_hut",
+    "ambulance_station",
+    "atm",
+    "bakery",
+    "bank",
+    "butcher",
+    "car_rental",
+    "car_repair",
+    "charging_station",
+    "chemist",
+    "clinic",
+    "college",
+    "deli",
+    "dentist",
+    "department_store",
+    "doctor",
+    "drinking_water",
+    "dry_cleaning",
+    "electronics",
+    "fire_station",
+    "fuel",
+    "hairdresser",
+    "hospital",
+    "hostel",
+    "hotel",
+    "information",
+    "laundry",
+    "mall",
+    "motorcycle",
+    "optician",
+    "pharmacy",
+    "phone",
+    "photographer",
+    "police",
+    "post_box",
+    "post_office",
+    "pub",
+    "shoes",
+    "subway",
+    "supermarket",
+    "taxi",
+    "telephone",
+    "tobacco",
+    "toilets",
+    "train_station",
+    "university",
+]
+#
+# Default user agent for accessing aprs.fi, openstreetmap et al
+# Change this if you run your own MPAD instance
+mpad_default_user_agent = (
+    "multi-purpose-aprs-daemon/0.0.1 (+https://github.com/joergschultzelutter/mpad/)"
+)
+#
+# DAPNET API server and transmitter group
+#
+mpad_dapnet_api_server = "http://www.hampager.de:8080/calls"
+mpad_dapnet_api_transmitter_group = "dl-all"
 ```
