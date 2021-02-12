@@ -124,7 +124,6 @@ The very first usage of this command set will trigger a download of the ```de421
 | Sunrise/set and moonset/rise, relative to another user's position | ```riseset wa1gov-10``` | ```RiseSet WA1GOV-10 17-Jan GMT sun_rs 12:08-21:40 mn_sr 01:26-15:03``` |
 | Sunrise/set and moonset/rise, relative to another user's position and a specific day| ```riseset wa1gov-10 friday``` | ```RiseSet WA1GOV-10 22-Jan GMT sun_rs 12:04-21:46 mn_sr 06:31-17:00``` |
 
-
 ## OpenStreetMap Category 'Near' search
 
 External service dependencies:
@@ -140,3 +139,13 @@ External service dependencies:
 | | | ```Deenser Straße 26 Stadtoldendorf Dst 8 km Brg 26 deg NNE``` |
 | Nearest police to my location (non-keyword search) | ```police``` | ```Polizei Stadtoldendorf Amtsstraße 4 Stadtoldendorf Dst 8 km``` |
 | | | ```Brg 29 deg NNE``` |
+
+## Send message to DAPNET user
+
+External service dependencies:
+
+- [DAPNET API](https://hampager.de/)
+
+| What do we want | Command string User > MPAD | Response example MPAD > User |
+| --------------- | -------------------------- | ---------------------------- |
+| Send message ```Hello World``` to user ```DF1JSL``` | ```dapnet df1jsl Hello World``` | ```Successfully sent DAPNET message to DF1JSL``` |

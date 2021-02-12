@@ -360,9 +360,6 @@ Message enumerations are only included if more than one result is available.
 
 If you've specified ```band``` or ```mode``` as a query parameter, that data will not be part of the outging message (I'm trying to save some bytes here). So if you've e.g. issued a ```repeater c4fm 70cm``` command, both ```c4fm``` and ```70cm``` references will not be part of the outgoing message - I simply assume that you remember what you've requested. However, if you did not request ```band``` and/or ```mode```, the data will be added to the outgoing message.
 
-
-
-
 ### OpenStreetMap Nearby Category Searches
 
 MPAD allows you to find e.g. a supermarket or abank that the nearest one to your location. OSM offers a couple of classification categories :[https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases/EN](https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases/EN). Some - but not all - of these categories are currently supported by MPAD. These categories are:
@@ -450,6 +447,30 @@ Message enumerations are only included if more than one result is available.
 ```Braunschweigische Landessparkasse Angerstraße 12 Bevern Dst 6 km```
 
 ```Brg 313 deg NW```
+
+### Send a message to DAPNET
+
+Sends a message text to a DAPNET user
+
+Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __NO__
+
+#### Formats
+
+- ```dapnet [user] [text]```
+
+```user``` can be specified with or without SSID (if specified with SSID, the SSID will be removed).
+
+#### Example requests
+
+- ```dapnet df1jsl Hello World!``` Sends the text ```Hello World!``` to DAPNET user ```df1jsl```
+
+#### Example response
+
+In case of success, MPAD will return the message
+
+```Successfully sent DAPNET message to [user]```
+
+IF MPAD had not been configured for DAPNET access or there was an error during sending the message, an error message will be sent to the user.
 
 ### General help
 
