@@ -27,6 +27,7 @@ import logging
 from pprint import pformat
 import math
 
+
 def get_daily_weather_from_openweathermapdotorg(
     latitude: float,
     longitude: float,
@@ -113,7 +114,7 @@ def get_daily_weather_from_openweathermapdotorg(
         if offset < 0 or offset > 7:
             return success, weather_tuple, timezone_offset, timezone_offset
     if access_mode == "hour":
-        if offset < 0 or offset > 24:
+        if offset < 0 or offset > 47:
             return success, weather_tuple, timezone_offset, timezone_offset
 
     if units not in ["imperial", "metric"]:
@@ -267,7 +268,7 @@ def parse_daily_weather_from_openweathermapdotorg(
         # dictionary - otherwise as a float
         if "snow" in weather_tuple:
             subset = weather_tuple["snow"]
-            if isinstance(subset,float):
+            if isinstance(subset, float):
                 w_snow = weather_tuple["snow"]
             elif isinstance(subset, dict):
                 if "1h" in subset:
@@ -364,7 +365,8 @@ def parse_daily_weather_from_openweathermapdotorg(
             )
         if w_wind_speed:
             weather_forecast_array = make_pretty_aprs_messages(
-                f"wndspd:{math.ceil(w_wind_speed)}{wind_speed_uom}", weather_forecast_array
+                f"wndspd:{math.ceil(w_wind_speed)}{wind_speed_uom}",
+                weather_forecast_array,
             )
         if w_wind_deg:
             weather_forecast_array = make_pretty_aprs_messages(
@@ -401,10 +403,19 @@ if __name__ == "__main__":
             timezone_offset,
             timezone,
         ) = get_daily_weather_from_openweathermapdotorg(
-            latitude=51.8458575, longitude=8.2997425, offset=0, openweathermap_api_key=openweathermap_api_key, units="metric", access_mode="day"
+            latitude=51.8458575,
+            longitude=8.2997425,
+            offset=0,
+            openweathermap_api_key=openweathermap_api_key,
+            units="metric",
+            access_mode="day",
         )
         if success:
             my_weather_forecast_array = parse_daily_weather_from_openweathermapdotorg(
-                weather_tuple=weather_tuple, units="metric", human_readable_text="Und jetzt das Wetter", when="Samstag", when_dt="full"
+                weather_tuple=weather_tuple,
+                units="metric",
+                human_readable_text="Und jetzt das Wetter",
+                when="Samstag",
+                when_dt="full",
             )
             logger.info(my_weather_forecast_array)

@@ -1266,7 +1266,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         "lasttime": lasttime,  # last time the cs was heard on that given position
         "when": when,  # day setting for 'when' command keyword
         "when_daytime": when_daytime,  # daytime setting for 'when' command keyword
-        "what": what.lower(),  # contains the command that the user wants us to execute
+        "what": what,  # contains the command that the user wants us to execute
         "units": units,  # units of measure, 'metric' or 'imperial'
         "message_callsign": message_callsign,  # This is the TARGET callsign which was either specified directly in the msg request or was assigned implicitly
         "users_callsign": users_callsign,  # user's call sign. This is the call sign that has sent us the message request
@@ -1389,36 +1389,21 @@ def parse_when(word: str):
         when = "now"
         found_when = True
         date_offset = 0
-    matches = re.search(pattern=r"^(1h)$", string=word, flags=re.IGNORECASE)
+    # OWM supports hourly wx forecasts for up to 47h, let's get that value
+    matches = re.search(
+        pattern=r"^(4[0-7]|3[0-9]|2[0-9]|1[0-9]|[1-9])h$",
+        string=word,
+        flags=re.IGNORECASE,
+    )
     if matches and not found_when:
         when = "hour"
         found_when = True
-        hour_offset = 1
-    matches = re.search(pattern=r"^(2h)$", string=word, flags=re.IGNORECASE)
-    if matches and not found_when:
-        when = "hour"
-        found_when = True
-        hour_offset = 2
-    matches = re.search(pattern=r"^(3h)$", string=word, flags=re.IGNORECASE)
-    if matches and not found_when:
-        when = "hour"
-        found_when = True
-        hour_offset = 3
-    matches = re.search(pattern=r"^(6h)$", string=word, flags=re.IGNORECASE)
-    if matches and not found_when:
-        when = "hour"
-        found_when = True
-        hour_offset = 6
-    matches = re.search(pattern=r"^(9h)$", string=word, flags=re.IGNORECASE)
-    if matches and not found_when:
-        when = "hour"
-        found_when = True
-        hour_offset = 9
-    matches = re.search(pattern=r"^(12h)$", string=word, flags=re.IGNORECASE)
-    if matches and not found_when:
-        when = "hour"
-        found_when = True
-        hour_offset = 12
+        try:
+            hour_offset = int(matches[1])
+        except ValueError:
+            when = None
+            found_when = False
+            hour_offset = 0
     return found_when, when, date_offset, hour_offset
 
 
@@ -1528,4 +1513,4 @@ if __name__ == "__main__":
         dapnet_callsign,
         dapnet_passcode,
     ) = read_program_config()
-    logger.info(parse_input_message("police top3", "df1jsl-1", aprsdotfi_api_key))
+    logger.info(parse_input_message("df1jsl-8 47h", "df1jsl-1", aprsdotfi_api_key))
