@@ -42,4 +42,4 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
 
 #    testcall(message_text="Córdoba;cl",from_callsign="df1jsl-1")
-    testcall(message_text="dapnet df1jsl Hello World from APRS!", from_callsign="df1jsl-8")
+    testcall(message_text="zip 33378;de today", from_callsign="df1jsl-8")

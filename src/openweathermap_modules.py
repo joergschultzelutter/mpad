@@ -24,7 +24,8 @@ from datetime import datetime
 from utility_modules import make_pretty_aprs_messages
 from utility_modules import read_program_config
 import logging
-
+from pprint import pformat
+import math
 
 def get_daily_weather_from_openweathermapdotorg(
     latitude: float,
@@ -139,7 +140,8 @@ def get_daily_weather_from_openweathermapdotorg(
             timezone_offset = x["timezone_offset"]
         if "timezone" in x:
             timezone = x["timezone"]
-
+        logger = logging.getLogger(__name__)
+        logger.info(pformat(weather_tuple))
     return success, weather_tuple, timezone_offset, timezone
 
 
@@ -293,23 +295,23 @@ def parse_daily_weather_from_openweathermapdotorg(
         if w_temp_day or w_temp_morn or w_temp_eve or w_temp_night or w_temp:
             if w_temp_morn and when_dt in ["full", "morning"]:
                 weather_forecast_array = make_pretty_aprs_messages(
-                    f"morn:{w_temp_morn:.0f}{temp_uom}", weather_forecast_array
+                    f"morn:{round(w_temp_morn)}{temp_uom}", weather_forecast_array
                 )
             if w_temp_day and when_dt in ["full", "daytime"]:
                 weather_forecast_array = make_pretty_aprs_messages(
-                    f"day:{w_temp_day:.0f}{temp_uom}", weather_forecast_array
+                    f"day:{round(w_temp_day)}{temp_uom}", weather_forecast_array
                 )
             if w_temp_eve and when_dt in ["full", "evening"]:
                 weather_forecast_array = make_pretty_aprs_messages(
-                    f"eve:{w_temp_eve:.0f}{temp_uom}", weather_forecast_array
+                    f"eve:{round(w_temp_eve)}{temp_uom}", weather_forecast_array
                 )
             if w_temp_night and when_dt in ["full", "night"]:
                 weather_forecast_array = make_pretty_aprs_messages(
-                    f"nite:{w_temp_night:.0f}{temp_uom}", weather_forecast_array
+                    f"nite:{round(w_temp_night)}{temp_uom}", weather_forecast_array
                 )
             if w_temp:  # hourly report
                 weather_forecast_array = make_pretty_aprs_messages(
-                    f"temp:{w_temp:.0f}{temp_uom}", weather_forecast_array
+                    f"temp:{round(w_temp)}{temp_uom}", weather_forecast_array
                 )
 
         # Sunrise and Sunset
@@ -334,11 +336,11 @@ def parse_daily_weather_from_openweathermapdotorg(
         # Add remaining parameters
         if w_rain:
             weather_forecast_array = make_pretty_aprs_messages(
-                f"rain:{w_rain:.0f}{rain_uom}", weather_forecast_array
+                f"rain:{math.ceil(w_rain)}{rain_uom}", weather_forecast_array
             )
         if w_snow:
             weather_forecast_array = make_pretty_aprs_messages(
-                f"snow:{w_snow:.0f}{snow_uom}", weather_forecast_array
+                f"snow:{math.ceil(w_snow)}{snow_uom}", weather_forecast_array
             )
         if w_clouds:
             weather_forecast_array = make_pretty_aprs_messages(
@@ -358,11 +360,11 @@ def parse_daily_weather_from_openweathermapdotorg(
             )
         if w_dew_point:
             weather_forecast_array = make_pretty_aprs_messages(
-                f"dewpt:{w_dew_point:.0f}{temp_uom}", weather_forecast_array
+                f"dewpt:{math.ceil(w_dew_point)}{temp_uom}", weather_forecast_array
             )
         if w_wind_speed:
             weather_forecast_array = make_pretty_aprs_messages(
-                f"wndspd:{w_wind_speed:.0f}{wind_speed_uom}", weather_forecast_array
+                f"wndspd:{math.ceil(w_wind_speed)}{wind_speed_uom}", weather_forecast_array
             )
         if w_wind_deg:
             weather_forecast_array = make_pretty_aprs_messages(
@@ -399,7 +401,7 @@ if __name__ == "__main__":
             timezone_offset,
             timezone,
         ) = get_daily_weather_from_openweathermapdotorg(
-            latitude=51.8458575, longitude=8.2997425, offset=0, openweathermap_api_key=openweathermap_api_key, units="metric", access_mode="hour"
+            latitude=51.8458575, longitude=8.2997425, offset=0, openweathermap_api_key=openweathermap_api_key, units="metric", access_mode="day"
         )
         if success:
             my_weather_forecast_array = parse_daily_weather_from_openweathermapdotorg(
