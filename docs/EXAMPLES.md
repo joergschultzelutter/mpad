@@ -33,6 +33,9 @@ External service dependencies:
 | Wx report for numeric latitude and longitude|```50.1211/8.7938``` | ```19-Jan-21 Offenbach am Main,63075;DE moderate rain morn:2c day:3c```|
 | | |```eve:5c nite:3c sunrise/set 08:14/16:56UTC rain:5mm clouds:100%```|
 | | |```uvi:0.1 hPa:1014 hum:79% dewpt:0c wndspd:8m/s wnddeg:217```|
+| WX report in 47h for zipcode 37627 in Germany |```zip 37603;de 47h``` | ```15-Feb-21 in 47h Stadtoldendorf,37627;DE overcast clouds temp:-2c```|
+| | |```clouds:100% uvi:0.5 hPa:1032 hum:87% dewpt:-8c wndspd:5m/s```|
+| | |```wnddeg:166 vis:10000m```|
 
 ## Repeater
 
@@ -148,4 +151,5 @@ External service dependencies:
 
 | What do we want | Command string User > MPAD | Response example MPAD > User |
 | --------------- | -------------------------- | ---------------------------- |
-| Send message ```Hello World``` to user ```DF1JSL``` | ```dapnet df1jsl Hello World``` | ```Successfully sent DAPNET message to DF1JSL``` |
+| Send message ```Hello World``` to user ```DF1JSL``` | ```dapnet df1jsl Hello World``` | ```DAPNET message dispatch to 'DF1JSL' via 'all' successful``` |
+| Send high priority message ```Emergency, need help``` to user ```DF1JSL``` | ```dapnethp df1jsl mergency, need help``` | ```DAPNET message dispatch to 'DF1JSL' via 'all' successful``` |

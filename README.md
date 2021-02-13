@@ -6,7 +6,7 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/CWOP prediction, 
 
 ## Supported features
 
-- Worldwide weather forecast for address / zip code / lat,lon / maidenhead / ... 
+- Worldwide daily/hourly weather forecast for address / zip code / lat,lon / maidenhead / ... 
 - METAR data for IATA/ICAO codes or the nearest airport to the user's position.
 - CWOP data for a given CWOP station (or the nearest one)
 - Sunrise/sunset and moonrise/sunset for a given callsign (or the station's callsign)

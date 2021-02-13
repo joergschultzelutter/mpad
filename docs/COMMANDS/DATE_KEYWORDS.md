@@ -22,19 +22,7 @@ MPAD is able to understand the following keywords:
 
 - ```tonight```,```tonite``` --> results in date ```today``` and daytime ```night``` value
 
-Additionally, you can specify the following keywords in order to receive hourly wx reports (other [action keywords](ACTION_KEYWORDS.md) may ignore these values):
-
-- ```1h``` represents a ```today in 1 hr``` value
-
-- ```2h``` represents a ```today in 2 hrs``` value
-
-- ```3h``` represents a ```today in 3 hrs``` value
-
-- ```6h``` represents a ```today in 6 hrs``` value
-
-- ```9h``` represents a ```today in 9 hrs``` value
-
-- ```12h``` represents a ```today in 12 hrs``` value
+Additionally, you can specify an 'hour' keyword in order to receive hourly wx reports (other [action keywords](ACTION_KEYWORDS.md) may ignore these values). ```1h``` up until ```47h``` are permitted.
 
 If you request the same weekday that is today, then the program assumes that you refer to that day in the next week.
 
@@ -43,4 +31,5 @@ Whereas noted for the respective [action keyword](ACTION_KEYWORDS.md), these dat
 ```
 San Francisco, CA tomorrow full --> returns a full wx report for location 'San Francisco' and date setting 'tomorrow'
 riseset thursday --> returns sunrise/sunset and moonrise / moonset values for Thursday.
+San Diego, CA 46h --> returns a report for location 'San Diego' for the wx in 46h 
 ```
