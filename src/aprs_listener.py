@@ -263,6 +263,7 @@ logger = logging.getLogger(__name__)
 # Get the API access keys for OpenWeatherMap and APRS.fi. If we don't have those
 # then there is no point in continuing
 #
+logger.info("Program startup ...")
 (
     success,
     aprsdotfi_api_key,
@@ -297,21 +298,26 @@ number_of_served_packages = read_number_of_served_packages()
 # Define dummy values for both APRS task schedules and AIS object
 aprs_scheduler = AIS = None
 
+logger.info("Updating my local caches; this might take a while....")
 # Initially, refresh our local data caches
 #
 # Refresh the local "airport stations" file
+logger.info("Updating airport database ...")
 update_local_airport_stations_file()
 #
 # Refresh the local "repeatermap" file
+logger.info("Updating repeater database ...")
 update_local_repeatermap_file()
 #
 # Update the satellite TLE file
+logger.info("Updating TLE database ...")
 update_local_tle_file()
 
 # Now let's set up schedulers for the refresh process
 # These schedulers will download the file(s) every x days
 # and store the data locally, thus allowing the functions
 # to read and import it whenever necessary
+logger.info("Start file schedulers ...")
 caching_scheduler = BackgroundScheduler()
 
 # Set up task for IATA/ICAO data download every 30 days
@@ -365,7 +371,7 @@ try:
         # Set the APRS_IS (call sign) filter, based on our config file
         AIS.set_filter(mpad_config.aprsis_server_filter)
 
-        # Debug what we are trying to do
+        # Debug info on what we are trying to do
         logger.info(
             msg=f"Establish connection to APRS_IS: server={mpad_config.aprsis_server_name},"
             f"port={mpad_config.aprsis_server_port}, filter={mpad_config.aprsis_server_filter},"
