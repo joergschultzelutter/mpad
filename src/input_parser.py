@@ -803,7 +803,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                 break
 
     if not found_my_duty_roster and not err:
-        regex_string = r"(dapnet)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[a-zA-Z0-9]{1,2})\s*([\D\s]+)"
+        regex_string = r"(dapnet|dapnethp)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[a-zA-Z0-9]{1,2})\s*([\D\s]+)"
         matches = re.search(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
@@ -814,20 +814,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             aprs_message = re.sub(regex_string, "", aprs_message).strip()
             found_my_duty_roster = True
         if not found_my_duty_roster:
-            regex_string = (
-                r"(dapnet)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3})\s*([\D\s]+)"
-            )
-            matches = re.search(
-                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-            )
-            if matches:
-                what = matches[1].lower()
-                message_callsign = matches[2].upper()
-                dapnet_message = matches[3]
-                found_my_duty_roster = True
-                aprs_message = re.sub(regex_string, "", aprs_message).strip()
-        if not found_my_duty_roster:
-            regex_string = r"(wx|forecast|whereis|riseset|cwop|metar)\s*([\D\s]+)"
+            regex_string = r"(dapnet|dapnethp)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3})\s*([\D\s]+)"
             matches = re.search(
                 pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
             )
@@ -1279,7 +1266,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         "lasttime": lasttime,  # last time the cs was heard on that given position
         "when": when,  # day setting for 'when' command keyword
         "when_daytime": when_daytime,  # daytime setting for 'when' command keyword
-        "what": what,  # contains the command that the user wants us to execute
+        "what": what.lower(),  # contains the command that the user wants us to execute
         "units": units,  # units of measure, 'metric' or 'imperial'
         "message_callsign": message_callsign,  # This is the TARGET callsign which was either specified directly in the msg request or was assigned implicitly
         "users_callsign": users_callsign,  # user's call sign. This is the call sign that has sent us the message request

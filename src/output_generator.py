@@ -245,7 +245,7 @@ def generate_output_message(response_parameters: dict):
         success, output_list = generate_output_message_osm_special_phrase(
             response_parameters=response_parameters
         )
-    elif what == "dapnet":
+    elif what == "dapnet" or what == "dapnethp":
         success, output_list = generate_output_message_dapnet(
             response_parameters=response_parameters
         )
@@ -609,12 +609,19 @@ def generate_output_message_dapnet(response_parameters: dict):
     dapnet_login_callsign = response_parameters["dapnet_login_callsign"]
     dapnet_login_passcode = response_parameters["dapnet_login_passcode"]
 
+    # Check if the user wants to send a high priority call
+    what = response_parameters["what"]
+    dapnet_priority_call = False
+    if what == "dapnethp":
+        dapnet_priority_call = True
+
     success, response = send_dapnet_message(
         from_callsign=users_callsign,
         to_callsign=message_callsign,
         message=dapnet_message,
         dapnet_login_callsign=dapnet_login_callsign,
         dapnet_login_passcode=dapnet_login_passcode,
+        dapnet_high_priority_message=dapnet_priority_call,
     )
     output_list = make_pretty_aprs_messages(message_to_add=response)
 

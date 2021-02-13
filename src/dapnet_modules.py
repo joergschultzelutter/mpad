@@ -33,6 +33,7 @@ def send_dapnet_message(
     message: str,
     dapnet_login_callsign: str,
     dapnet_login_passcode: str,
+    dapnet_high_priority_message: bool = False,
 ):
     success = False
     response = None
@@ -74,7 +75,7 @@ def send_dapnet_message(
             "transmitterGroupNames": [
                 f"{mpad_config.mpad_dapnet_api_transmitter_group}"
             ],
-            "emergency": False,
+            "emergency": dapnet_high_priority_message,
         }
         dapnet_payload_json = json.dumps(dapnet_payload)
         response = requests.post(
@@ -116,5 +117,6 @@ if __name__ == "__main__":
                 message="00000000001111111111222222222233333333334444444444555555555566666666667777777777",
                 dapnet_login_callsign=dapnet_login_callsign,
                 dapnet_login_passcode=dapnet_login_passcode,
+                dapnet_high_priority_message=False,
             )
         )
