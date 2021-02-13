@@ -86,9 +86,9 @@ def send_dapnet_message(
         )  # Exception handling einbauen
         if response.status_code == 201:
             success = True
-            response = f"Successfully sent DAPNET message to {dapnet_to_callsign}"
+            response = f"DAPNET message dispatch to {dapnet_to_callsign} via '{mpad_config.mpad_dapnet_api_transmitter_group}' successful"
         else:
-            response = f"Unable to send msg to DAPNET user {dapnet_to_callsign}: HTTP{response.status_code}"
+            response = f"DAPNET message dispatch to {dapnet_to_callsign} failed: HTTP{response.status_code}"
             success = False
     return success, response
 
