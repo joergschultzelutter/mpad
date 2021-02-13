@@ -18,13 +18,13 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-
+# Program version
+#
+mpad_version: str = "0.05"
+#
 ###########################
 # Constants, do not change#
 ###########################
-#
-mpad_version: str = "0.04"
-#
 # APRS position report: message symbol
 # see also http://www.aprs.org/symbols/symbolsX.txt and aprs_communication.py
 # on how this is used. Normally, you don't want to change these settings
@@ -198,4 +198,4 @@ mpad_default_user_agent = (
 # DAPNET API server and transmitter group
 #
 mpad_dapnet_api_server = "http://www.hampager.de:8080/calls"
-mpad_dapnet_api_transmitter_group = "dl-all"
+mpad_dapnet_api_transmitter_group = "all"
