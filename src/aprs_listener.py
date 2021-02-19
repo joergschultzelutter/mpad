@@ -32,7 +32,6 @@ from utility_modules import (
     write_number_of_served_packages,
     get_aprs_message_from_cache,
     add_aprs_message_to_cache,
-    dump_string_to_hex,
 )
 from aprs_communication import (
     parse_aprs_data,
@@ -353,6 +352,7 @@ caching_scheduler.start()
 # Create the decaying APRS message cache. Any APRS message that is present in
 # this cache will be considered as a duplicate / delayed and will not be processed
 # by MPAD and is going to be ignored.
+logger.info(f"APRS message dupe cache set to {mpad_config.mpad_msg_cache_max_entries} max possible entries and a TTL of {int(mpad_config.mpad_msg_cache_time_to_live/60)} mins")
 aprs_message_cache = ExpiringDict(
     max_len=mpad_config.mpad_msg_cache_max_entries, max_age_seconds=mpad_config.mpad_msg_cache_time_to_live
 )
