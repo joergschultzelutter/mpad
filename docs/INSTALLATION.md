@@ -54,7 +54,7 @@ You also need to set the APRS-IS access and server credentials:
     - ```aprsis_server_filter```. This is the filter that MPAD used for connecting to APRS-IS. It is also MPAD's __primary filter__. If an APRS message does not pass this filter, then the program won't process it. You can specify one or many call signs: Format ```g/callsign1/callsign2/callsign_n```. Example: ```g/MPAD```. See [APRS-IS Server-Side Filter Commands](http://www.aprs-is.net/javAPRSFilter.aspx) for further details.
     - ```mpad_callsigns_to_parse```. This is the __secondary filter__. Unlike the primary filter, this one is controlled by MPAD itself and similar to the APRS-IS filter, you can specify 1..n call signs. Obviously, at least a subset of these call signs must be present in the APRS-IS filter because otherwise, MPAD won't even see the message. This 2nd filter mainly exists for debugging purposes; you can broaden the APRS-IS filter (e.g. program call sign and your personal call sign) and then use the 2nd filter for some software development magic.
 - ```aprsis_server_name``` and ```aprsis_server_port```. APRS-IS server/port that the program tries to connect with. Self-explanatory (I hope).
-- Tune the ```mpad_msg_cache_time_to_live``` and/or ```mpad_msg_cache_max_entries``` parameter if too many messages are detected as duplicates and are not getting processed. Default is 10 mins
+- Tune the ```mpad_msg_cache_time_to_live``` and/or ```mpad_msg_cache_max_entries``` parameter if too many messages are detected as duplicates and are not getting processed. Default is 60 mins
 - Configure the ```mpad_beacon_altitude_ft``` parameter. This is the beacon's altitude in __feet__ (not in meters)
 - By default, MPAD will send out ASCII messages. If you prefer to send unicode messages to the user, set the ```mpad_enforce_unicode_messages``` flag to ```True```. Note that this flag only applies to outgoing messages; incoming messages in unicode format are always honored.
 - By default, MPAD already supports a couple of OpenStreetMap object categories. If you want to add more categories, change the ```osm_supported_keyword_categories``` list. Note that you are required to use the OSM native category wording - see comment below.
@@ -149,8 +149,8 @@ mpad_callsigns_to_parse = ["MPAD"]  # (additional) call sign filter
 # The 2nd value represents the max. number of entries that the decaying cache
 # is going to accept
 #
-mpad_msg_cache_time_to_live = 10 * 60  # ttl = 10 minutes
-mpad_msg_cache_max_entries = 360  # 360 possible entries
+mpad_msg_cache_time_to_live = 60 * 60  # ttl = 10 minutes
+mpad_msg_cache_max_entries = 2160  # 2160 possible entries (max. of 36 per min is possible)
 #
 ############################################
 # Character encoding for outgoing messages #

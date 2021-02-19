@@ -113,8 +113,8 @@ mpad_callsigns_to_parse = ["MPAD"]  # (additional) call sign filter
 # The 2nd value represents the max. number of entries that the decaying cache
 # is going to accept
 #
-mpad_msg_cache_time_to_live = 10 * 60  # ttl = 10 minutes
-mpad_msg_cache_max_entries = 360  # 360 possible entries
+mpad_msg_cache_time_to_live = 60 * 60  # ttl = 60 minutes
+mpad_msg_cache_max_entries = 2160  # 2160 possible entries (max. of 36 per min is possible)
 
 #
 ############################################
