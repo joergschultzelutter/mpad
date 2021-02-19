@@ -102,7 +102,7 @@ mpad_callsigns_to_parse = ["MPAD"]  # (additional) call sign filter
 # Time-to-live settings for the decaying APRS message cache #
 #############################################################
 #
-# This value represents the time span for how long MPAD considers incoming
+# The first value represents the time span for how long MPAD considers incoming
 # messages as duplicates if these messages have been sent to the program
 # For each processed message (regardless of its actual success state), MPAD
 # is going to add a key to a decaying dictionary. That key consists of
@@ -110,8 +110,12 @@ mpad_callsigns_to_parse = ["MPAD"]  # (additional) call sign filter
 # an md5'ed version of the message text. If another delayed or duplicate
 # message is received within that specified time frame, that message is going
 # to be ignored by the program
+# The 2nd value represents the max. number of entries that the decaying cache
+# is going to accept
 #
-mpad_msg_cache_time_to_live = 5 * 60  # ttl = 5 minutes
+mpad_msg_cache_time_to_live = 10 * 60  # ttl = 10 minutes
+mpad_msg_cache_max_entries = 360  # 360 possible entries
+
 #
 ############################################
 # Character encoding for outgoing messages #

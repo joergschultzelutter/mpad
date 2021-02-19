@@ -354,7 +354,7 @@ caching_scheduler.start()
 # this cache will be considered as a duplicate / delayed and will not be processed
 # by MPAD and is going to be ignored.
 aprs_message_cache = ExpiringDict(
-    max_len=180, max_age_seconds=mpad_config.mpad_msg_cache_time_to_live
+    max_len=mpad_config.mpad_msg_cache_max_entries, max_age_seconds=mpad_config.mpad_msg_cache_time_to_live
 )
 
 #
