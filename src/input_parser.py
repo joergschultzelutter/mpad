@@ -660,93 +660,30 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     #
     # Search for repeater-mode-band
     if not found_my_duty_roster and not err:
-        regex_string = (
-            r"repeater\s*(fm|dstar|d-star|dmr|c4fm|ysf|tetra|atv)\s*(\d.?\d*(?:cm|m)\b)"
+        (
+            found_my_keyword,
+            kw_err,
+            keyword_parser_response_data,
+        ) = parse_what_keyword_repeater(
+            aprs_message=aprs_message,
+            users_callsign=users_callsign,
+            aprsdotfi_api_key=aprsdotfi_api_key,
         )
-        matches = re.search(
-            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-        )
-        if matches:
-            repeater_mode = matches[1].upper()
-            repeater_band = matches[2].lower()
-            found_my_duty_roster = True
-            aprs_message = re.sub(
-                regex_string, "", aprs_message, flags=re.IGNORECASE
-            ).strip()
-        # If not found, search for repeater-band-mode
-        if not found_my_duty_roster:
-            regex_string = r"repeater\s*(\d.?\d*(?:cm|m)\b)\s*(fm|dstar|d-star|dmr|c4fm|ysf|tetra|atv)\b"
-            matches = re.search(
-                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-            )
-            if matches:
-                repeater_mode = matches[2].upper()
-                repeater_band = matches[1].lower()
-                found_my_duty_roster = True
-                aprs_message = re.sub(
-                    regex_string, "", aprs_message, flags=re.IGNORECASE
-                ).strip()
-        # if not found, search for repeater - mode
-        if not found_my_duty_roster:
-            regex_string = r"repeater\s*(fm|dstar|d-star|dmr|c4fm|ysf|tetra|atv)\b"
-            matches = re.search(
-                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-            )
-            if matches:
-                repeater_mode = matches[1].upper()
-                repeater_band = None
-                found_my_duty_roster = True
-                aprs_message = re.sub(
-                    regex_string, "", aprs_message, flags=re.IGNORECASE
-                ).strip()
-        # if not found, search for repeater-band
-        if not found_my_duty_roster:
-            regex_string = r"repeater\s*(\d.?\d*(?:cm|m)\b)"
-            matches = re.search(
-                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-            )
-            if matches:
-                repeater_band = matches[1].lower()
-                repeater_mode = None
-                found_my_duty_roster = True
-                aprs_message = re.sub(
-                    regex_string, "", aprs_message, flags=re.IGNORECASE
-                ).strip()
-        # If not found, just search for the repeater keyword
-        if not found_my_duty_roster:
-            regex_string = r"repeater"
-            matches = re.search(
-                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-            )
-            if matches:
-                repeater_band = None
-                repeater_mode = None
-                found_my_duty_roster = True
-                aprs_message = re.sub(
-                    regex_string, "", aprs_message, flags=re.IGNORECASE
-                ).strip()
-        if found_my_duty_roster:
-            what = "repeater"
-            human_readable_message = "Repeater"
-            if repeater_band:
-                human_readable_message += f" {repeater_band}"
-            if repeater_mode:
-                human_readable_message += f" {repeater_mode}"
-            (
-                success,
-                latitude,
-                longitude,
-                altitude,
-                lasttime,
-                message_callsign,
-            ) = get_position_on_aprsfi(
-                aprsfi_callsign=users_callsign, aprsdotfi_api_key=aprsdotfi_api_key
-            )
-            if not success:
-                err = True
-                human_readable_message = (
-                    f"{errmsg_cannot_find_coords_for_user} {message_callsign}"
-                )
+        if found_my_keyword or kw_err:
+            found_my_duty_roster = found_my_keyword
+            err = kw_err
+            what = keyword_parser_response_data["what"]
+            latitude = keyword_parser_response_data["latitude"]
+            longitude = keyword_parser_response_data["longitude"]
+            altitude = keyword_parser_response_data["altitude"]
+            lasttime = keyword_parser_response_data["lasttime"]
+            message_callsign = keyword_parser_response_data["message_callsign"]
+            repeater_band = keyword_parser_response_data["repeater_band"]
+            repeater_mode = keyword_parser_response_data["repeater_mode"]
+            human_readable_message = keyword_parser_response_data[
+                "human_readable_message"
+            ]
+            aprs_message = keyword_parser_response_data["aprs_message"]
 
     # check if the user wants to change the language
     # for openweathermap.com (currently fix for 'en' but
@@ -1453,6 +1390,141 @@ def parse_when_daytime(word: str):
         found_when_daytime = True
 
     return found_when_daytime, when_daytime
+
+
+def parse_what_keyword_repeater(
+    aprs_message: str, users_callsign: str, aprsdotfi_api_key: str
+):
+    """
+    Check if the user wants us to search for the nearest repeater
+    this function always relates to the user's own call sign and not to
+    foreign ones. The user can ask us for the nearest repeater in
+    optional combination with band and/or mode (FM, C4FM, DSTAR et al)
+
+    Parameters
+    ==========
+    aprs_message : 'str'
+        the original aprs pessage
+    users_callsign : 'str'
+        Call sign of the user that has sent us the message
+    aprsdotfi_api_key : 'str'
+        aprs.fi access key
+
+    Returns
+    =======
+    found_my_keyword: 'bool'
+        True if the keyword and associated parameters have been found
+    kw_err: 'bool'
+        True if an error has occurred. If found_my_keyword is also true,
+        then the error marker overrides the 'found' keyword
+    keyword_parser_response_data: 'dict'
+        dictionary, containing the keyword-relevant data
+    """
+    # Search for repeater-mode-band
+    what = repeater_band = repeater_mode = human_readable_message = None
+    lasttime = datetime.min
+    latitude = longitude = 0.0
+    altitude = 0
+    message_callsign = users_callsign
+    found_my_keyword = kw_err = False
+    regex_string = (
+        r"repeater\s*(fm|dstar|d-star|dmr|c4fm|ysf|tetra|atv)\s*(\d.?\d*(?:cm|m)\b)"
+    )
+    matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+    if matches:
+        repeater_mode = matches[1].upper()
+        repeater_band = matches[2].lower()
+        found_my_keyword = True
+        aprs_message = re.sub(
+            regex_string, "", aprs_message, flags=re.IGNORECASE
+        ).strip()
+    # If not found, search for repeater-band-mode
+    if not found_my_keyword:
+        regex_string = r"repeater\s*(\d.?\d*(?:cm|m)\b)\s*(fm|dstar|d-star|dmr|c4fm|ysf|tetra|atv)\b"
+        matches = re.search(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            repeater_mode = matches[2].upper()
+            repeater_band = matches[1].lower()
+            found_my_keyword = True
+            aprs_message = re.sub(
+                regex_string, "", aprs_message, flags=re.IGNORECASE
+            ).strip()
+    # if not found, search for repeater - mode
+    if not found_my_keyword:
+        regex_string = r"repeater\s*(fm|dstar|d-star|dmr|c4fm|ysf|tetra|atv)\b"
+        matches = re.search(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            repeater_mode = matches[1].upper()
+            repeater_band = None
+            found_my_keyword = True
+            aprs_message = re.sub(
+                regex_string, "", aprs_message, flags=re.IGNORECASE
+            ).strip()
+    # if not found, search for repeater-band
+    if not found_my_keyword:
+        regex_string = r"repeater\s*(\d.?\d*(?:cm|m)\b)"
+        matches = re.search(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            repeater_band = matches[1].lower()
+            repeater_mode = None
+            found_my_keyword = True
+            aprs_message = re.sub(
+                regex_string, "", aprs_message, flags=re.IGNORECASE
+            ).strip()
+    # If not found, just search for the repeater keyword
+    if not found_my_keyword:
+        regex_string = r"repeater"
+        matches = re.search(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            repeater_band = None
+            repeater_mode = None
+            found_my_keyword = True
+            aprs_message = re.sub(
+                regex_string, "", aprs_message, flags=re.IGNORECASE
+            ).strip()
+    if found_my_keyword:
+        what = "repeater"
+        human_readable_message = "Repeater"
+        if repeater_band:
+            human_readable_message += f" {repeater_band}"
+        if repeater_mode:
+            human_readable_message += f" {repeater_mode}"
+        (
+            success,
+            latitude,
+            longitude,
+            altitude,
+            lasttime,
+            message_callsign,
+        ) = get_position_on_aprsfi(
+            aprsfi_callsign=users_callsign, aprsdotfi_api_key=aprsdotfi_api_key
+        )
+        if not success:
+            kw_err = True
+            human_readable_message = (
+                f"{errmsg_cannot_find_coords_for_user} {message_callsign}"
+            )
+    keyword_parser_response_data = {
+        "what": what,
+        "latitude": latitude,
+        "longitude": longitude,
+        "altitude": altitude,
+        "lasttime": lasttime,
+        "message_callsign": message_callsign,
+        "repeater_band": repeater_band,
+        "repeater_mode": repeater_mode,
+        "human_readable_message": human_readable_message,
+        "aprs_message": aprs_message,
+    }
+    return found_my_keyword, kw_err, keyword_parser_response_data
 
 
 def build_human_readable_address_message(response_data: dict):
