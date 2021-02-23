@@ -36,14 +36,15 @@ bulletin_texts: dict = {
 }
 
 # APRS_IS beacon texts (will be sent every 30 mins)
-# - APRS Position (first line) needs to have 43 characters or less
+# - APRS Position (first line) needs to have 63 characters or less
 # - APRS Status can have 67 chars (as usual)
 # Details: see aprs101.pdf chapter 8
 
 # MPAD will NOT check the content and send it out 'as is'
 #
-# This message is a position report; format description can be found on pg. 23ff.
-# of aprs101.pdf. Message symbols: see http://www.aprs.org/symbols/symbolsX.txt
+# This message is a position report; format description can be found on pg. 23ff and pg. 94ff.
+# of aprs101.pdf. Message symbols: see http://www.aprs.org/symbols/symbolsX.txt and aprs101.pdf
+# on page 104ff.
 # Format is as follows: =Lat primary-symbol-table-identifier lon symbol-identifier test-message
 # Lat/lon from the configuration have to be valid or the message will not be accepted by aprs-is
 #
