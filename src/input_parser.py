@@ -35,6 +35,7 @@ from aprsdotfi_modules import get_position_on_aprsfi
 import logging
 from datetime import datetime
 import mpad_config
+from pprint import pformat
 
 aprsdotfi_api_key = openweathermap_api_key = None
 
@@ -148,212 +149,64 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # Booleans for 'what information were we able to retrieve from the msg'
     found_when = found_when_daytime = False
 
+    #
     # Start the parsing process
     #
-
     # Convert user's call sign to uppercase
     users_callsign = users_callsign.upper()
 
     # Check if we need to switch to the imperial system
-    # Have a look at the user's call sign who has sent me the message.
-    # Ignore any SSID data.
-    # If my user is located in the U.S., then assume that user wants data
-    # not in metric but in imperial format. Note: this is an auto-prefix
-    # which can be overridden by the user at a later point in time
-    # Note: we do NOT examine any call sign within the APRS message text but
-    # have a look at the (source) user's call sign
-    matches = re.search(
-        pattern=r"^[AKNW][a-zA-Z]{0,2}[0-9][A-Z]{1,3}",
-        string=users_callsign,
-        flags=re.IGNORECASE,
-    )
-    if matches:
-        units = "imperial"
-    # Now do the same thing for users in Liberia and Myanmar - per Wikipedia,
-    # these two countries also use the imperial system
-    matches = re.search(
-        pattern=r"^(A8|D5|EL|5L|5M|6Z|XY|XZ)",
-        string=users_callsign,
-        flags=re.IGNORECASE,
-    )
-    if matches:
-        units = "imperial"
+    units = get_units_based_on_users_callsign(users_callsign=users_callsign)
 
     # Now let's start with examining the message text.
     # Rule of thumb:
-    # 1) the first successful match will prevent
+    # 1) the FIRST successful match will prevent
     # parsing of *location*-related information
     # 2) If we find some data in this context, then it will
     # be removed from the original message in order to avoid
     # any additional occurrences at a later point in time.
+    # 3) The content removal process only applies to keyword
+    # searches. If we have iterated through all keywords AND
+    # we were unable to find anything, the remaining string
+    # (the default APRS message) will be split up into multiple
+    # words (if present) and re-examined for something useful.
+    # At the time when we only look at these simple words, we
+    # do not replace any content from the original message
 
-    # Check if we have been given a specific address (city, state, country)
-    if not found_my_duty_roster and not err:
-        geopy_query = None
-        # City / State / Country?
-        regex_string = r"([\D\s]+),\s*?(\w+);\s*([a-zA-Z]{2})"
-        matches = re.findall(
-            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-        )
-        if matches:
-            (city, state, country) = matches[0]
-            city = string.capwords(city)
-            country = country.upper()
-            state = state.upper()  # in theory, this could also be a non-US state
-            aprs_message = re.sub(
-                regex_string, "", aprs_message, flags=re.IGNORECASE
-            ).strip()
-            geopy_query = {"city": city, "state": state, "country": country}
-            found_my_duty_roster = True
-        # City / State
-        if not found_my_duty_roster:
-            regex_string = r"([\D\s]+),\s*?(\w+)"
-            matches = re.findall(
-                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-            )
-            if matches:
-                (city, state) = matches[0]
-                country = "US"
-                city = string.capwords(city)
-                state = state.upper()
-                aprs_message = re.sub(
-                    regex_string, "", aprs_message, flags=re.IGNORECASE
-                ).strip()
-                geopy_query = {"city": city, "state": state, "country": country}
-                found_my_duty_roster = True
-        # City / Country
-        if not found_my_duty_roster:
-            regex_string = r"([\D\s]+);\s*([a-zA-Z]{2})"
-            matches = re.findall(
-                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-            )
-            if matches:
-                (city, country) = matches[0]
-                city = string.capwords(city)
-                country = country.upper()
-                state = None
-                geopy_query = {"city": city, "country": country}
-                aprs_message = re.sub(
-                    regex_string, "", aprs_message, flags=re.IGNORECASE
-                ).strip()
-                found_my_duty_roster = True
-        # Did I find something at all?
-        # Yes; send the query to GeoPy and get lat/lon for the address
-        if found_my_duty_roster:
-            # Let's validate the given iso3166 country code
-            if not validate_country(country):
-                human_readable_message = f"{errmsg_invalid_country}: '{country}'"
-                err = True
-            # Everything seems to be ok. Try to retrieve
-            # lat/lon for the given data
-            if not err:
-                success, latitude, longitude = get_geocode_geopy_data(geopy_query)
-                if success:
-                    what = "wx"  # We know now that we want a wx report
-                    human_readable_message = city
-                    if state and country == "US":
-                        human_readable_message += f",{state}"
-                    if country and country != "US":
-                        human_readable_message += f";{country}"
-                else:
-                    err = True
-                    human_readable_message = errmsg_cannot_find_coords_for_address
+    # The parser process starts with wx-related keyword data, meaning
+    # that the user has either specified a keyword-less address, a zip code
+    # with keyword and (potentially) with country, a grid locator or
+    # a set of lat/lon coordinates.
 
-    # Look for postal/zip code information
-    # First, let's look for an international zip code
-    # Format: zip[zipcode];[country]
-    # Country = iso3166-2
     if not found_my_duty_roster and not err:
-        geopy_query = None
-        regex_string = r"(zip)\s*([a-zA-Z0-9-( )]{3,10});\s*([a-zA-Z]{2})"
-        matches = re.findall(
-            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        (
+            found_my_keyword,
+            kw_err,
+            keyword_parser_response_data_default_wx,
+        ) = parse_what_keyword_default_wx(
+            aprs_message=aprs_message, users_callsign=users_callsign, language=language
         )
-        if matches:
-            (_, zipcode, country) = matches[0]
-            state = None
-            country = country.upper()
-            aprs_message = re.sub(
-                regex_string, "", aprs_message, flags=re.IGNORECASE
-            ).strip()
-            found_my_duty_roster = True
-            # prepare the geopy reverse lookup string
-            geopy_query = {"postalcode": zipcode, "country": country}
-        if not found_my_duty_roster:
-            # check for a 5-digit zip code with keyword
-            # If match: assume that the user wants a US zip code
-            regex_string = r"(zip)\s*([0-9]{5})"
-            matches = re.findall(
-                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-            )
-            if matches:
-                (_, zipcode) = matches[0]
-                state = None
-                country = "US"
-                aprs_message = re.sub(
-                    regex_string, "", aprs_message, flags=re.IGNORECASE
-                ).strip()
-                found_my_duty_roster = True
-                # prepare the geopy reverse lookup string
-                geopy_query = {"postalcode": zipcode, "country": country}
-        # Did I find something at all?
-        # Yes; send the query to GeoPy and get lat/lon for the address
-        if found_my_duty_roster:
-            # First, let's validate the given iso3166 country code
-            if not validate_country(country):
-                human_readable_message = f"{errmsg_invalid_country}: '{country}'"
-                err = True
-                what = None
-            else:
-                # Perform a reverse lookup. Query string was already pre-prepared.
-                success, latitude, longitude = get_geocode_geopy_data(geopy_query)
-                if success:
-                    # We only need latitude/longitude in order to get the wx report
-                    # Therefore, we can already set the 'what' command keyword'
-                    what = "wx"
-                    # Pre-build the output message
-                    human_readable_message = f"Zip {zipcode};{country}"
-                    # but try to get a real city name
-                    success, response_data = get_reverse_geopy_data(
-                        latitude=latitude, longitude=longitude
-                    )
-                    if success:
-                        # extract all fields as they will be used for the creation of the
-                        # outgoing data dictionary
-                        city = response_data["city"]
-                        state = response_data["state"]
-                        country = response_data["country"]
-                        # zipcode = response_data["zipcode"]
-                        county = response_data["county"]
-                        street = response_data["street"]
-                        street_number = response_data["street_number"]
-                        # build the HRM message based on the given data
-                        human_readable_message = build_human_readable_address_message(
-                            response_data
-                        )
-                else:
-                    err = True
-                    human_readable_message = errmsg_cannot_find_coords_for_address
-
-    # check if the user has requested a set of maidenhead coordinates
-    # Can either be 4- or 6-character set of maidenhead coordinates
-    # if found, then transform to latitude/longitude coordinates
-    # and remember that the user did specify maidenhead data, henceforth
-    # we will not try to convert the coordinates to an actual
-    # human-readable address
-    if not found_my_duty_roster and not err:
-        regex_string = r"(grid|mh)\s*([a-zA-Z]{2}[0-9]{2}[a-zA-Z]{0,2})"
-        matches = re.search(
-            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-        )
-        if matches:
-            (latitude, longitude) = maidenhead.to_location(matches[2])
-            found_my_duty_roster = True
-            human_readable_message = f"{matches[2]}"
-            what = "wx"
-            aprs_message = re.sub(
-                regex_string, "", aprs_message, flags=re.IGNORECASE
-            ).strip()
+        # did we find something? Then overwrite the existing variables with the retrieved content
+        if found_my_keyword or kw_err:
+            found_my_duty_roster = found_my_keyword
+            err = kw_err
+            latitude = keyword_parser_response_data_default_wx["latitude"]
+            longitude = keyword_parser_response_data_default_wx["longitude"]
+            what = keyword_parser_response_data_default_wx["what"]
+            message_callsign = keyword_parser_response_data_default_wx[
+                "message_callsign"
+            ]
+            human_readable_message = keyword_parser_response_data_default_wx[
+                "human_readable_message"
+            ]
+            aprs_message = keyword_parser_response_data_default_wx["aprs_message"]
+            city = keyword_parser_response_data_default_wx["city"]
+            state = keyword_parser_response_data_default_wx["state"]
+            country = keyword_parser_response_data_default_wx["country"]
+            zipcode = keyword_parser_response_data_default_wx["zipcode"]
+            county = keyword_parser_response_data_default_wx["county"]
+            street = keyword_parser_response_data_default_wx["street"]
+            street_number = keyword_parser_response_data_default_wx["street_number"]
 
     # Check if the user has requested information wrt a 4-character ICAO code
     # or a 3-digit IATA code with the IATA/ICAO keywords
@@ -367,6 +220,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             users_callsign=users_callsign,
             aprsdotfi_api_key=aprsdotfi_api_key,
         )
+        # did we find something? Then overwrite the existing variables with the retrieved content
         if found_my_keyword or kw_err:
             found_my_duty_roster = found_my_keyword
             err = kw_err
@@ -379,49 +233,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                 "human_readable_message"
             ]
             aprs_message = keyword_parser_response_data_icao_iata["aprs_message"]
-
-    # Check if the user has specified lat/lon information
-    if not found_my_duty_roster and not err:
-        regex_string = r"([\d\.,\-]+)\/([\d\.,\-]+)"
-        matches = re.search(
-            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-        )
-        if matches:
-            success = True
-            try:
-                latitude = float(matches[1])
-                longitude = float(matches[2])
-            except ValueError:
-                latitude = longitude = 0
-                success = False
-            if success:
-                # try to get human-readable coordinates
-                success, response_data = get_reverse_geopy_data(
-                    latitude=latitude, longitude=longitude, language=language
-                )
-                if success:
-                    # extract all fields as they will be used for the creation of the
-                    # outgoing data dictionary
-                    city = response_data["city"]
-                    state = response_data["state"]
-                    country = response_data["country"]
-                    zipcode = response_data["zipcode"]
-                    county = response_data["county"]
-                    street = response_data["street"]
-                    street_number = response_data["street_number"]
-                    # build the HRM message based on the given data
-                    human_readable_message = build_human_readable_address_message(
-                        response_data
-                    )
-                else:
-                    # We didn't find anything; use the original input for the HRM
-                    human_readable_message = f"lat {latitude}/lon {longitude}"
-                aprs_message = re.sub(regex_string, "", aprs_message).strip()
-                found_my_duty_roster = True
-                what = "wx"
-            else:
-                human_readable_message = "Error while parsing coordinates"
-                err = True
 
     # Check if the user wants one of the following info
     # for a specific call sign WITH or withOUT SSID:
@@ -638,6 +449,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             users_callsign=users_callsign,
             aprsdotfi_api_key=aprsdotfi_api_key,
         )
+        # did we find something? Then overwrite the existing variables with the retrieved content
         if found_my_keyword or kw_err:
             found_my_duty_roster = found_my_keyword
             err = kw_err
@@ -1519,7 +1331,7 @@ def parse_what_keyword_icao_iata(
     kw_err: 'bool'
         True if an error has occurred. If found_my_keyword is also true,
         then the error marker overrides the 'found' keyword
-    keyword_parser_response_data_repeater: 'dict'
+    keyword_parser_response_data_icao_iata: 'dict'
         dictionary, containing the keyword-relevant data
     """
 
@@ -1592,6 +1404,283 @@ def parse_what_keyword_icao_iata(
     return found_my_keyword, kw_err, keyword_parser_response_data_icao_iata
 
 
+def parse_what_keyword_default_wx(
+    aprs_message: str, users_callsign: str, language: str
+):
+    """
+    wx-Keyword-less default parser for WX-related data:
+    - address data (city/state/country) (not using any keywords)
+    - zip code (using keywords)
+    - lat/lon (not using any keywords)
+    - maidenhead (using keywords)
+
+    wx-keyword-less does not mean that there aren't any keywords -
+    it just means that there is not the 'wx' keyword which relates only
+    to a user's call sign. Welcome to the wonderful world of providing
+    the best experience to your users :-)
+
+    Parameters
+    ==========
+    aprs_message : 'str'
+        the original aprs pessage
+    users_callsign : 'str'
+        Call sign of the user that has sent us the message
+    language : 'str'
+        iso639-2 language code
+
+    Returns
+    =======
+    found_my_keyword: 'bool'
+        True if the keyword and associated parameters have been found
+    kw_err: 'bool'
+        True if an error has occurred. If found_my_keyword is also true,
+        then the error marker overrides the 'found' keyword
+    keyword_parser_response_data_default_wx: 'dict'
+        dictionary, containing the keyword-relevant data
+    """
+
+    found_my_keyword = kw_err = success = False
+    human_readable_message = what = None
+    latitude = longitude = 0.0
+
+    what = city = state = country = zipcode = None
+    street = street_number = county = None
+
+    # Now let's start with examining the message text.
+    # Rule of thumb:
+    # 1) the first successful match will prevent
+    # parsing of *location*-related information
+    # 2) If we find some data in this context, then it will
+    # be removed from the original message in order to avoid
+    # any additional occurrences at a later point in time.
+
+    # Check if we have been given a specific address (city, state, country)
+    geopy_query = None
+    # City / State / Country?
+    regex_string = r"([\D\s]+),\s*?(\w+);\s*([a-zA-Z]{2})"
+    matches = re.findall(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+    if matches:
+        (city, state, country) = matches[0]
+        city = string.capwords(city)
+        country = country.upper()
+        state = state.upper()  # in theory, this could also be a non-US state
+        aprs_message = re.sub(
+            regex_string, "", aprs_message, flags=re.IGNORECASE
+        ).strip()
+        geopy_query = {"city": city, "state": state, "country": country}
+        found_my_keyword = True
+    # City / State
+    if not found_my_keyword and not kw_err:
+        regex_string = r"([\D\s]+),\s*?(\w+)"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            (city, state) = matches[0]
+            country = "US"
+            city = string.capwords(city)
+            state = state.upper()
+            aprs_message = re.sub(
+                regex_string, "", aprs_message, flags=re.IGNORECASE
+            ).strip()
+            geopy_query = {"city": city, "state": state, "country": country}
+            found_my_keyword = True
+    # City / Country
+    if not found_my_keyword and not kw_err:
+        regex_string = r"([\D\s]+);\s*([a-zA-Z]{2})"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            (city, country) = matches[0]
+            city = string.capwords(city)
+            country = country.upper()
+            state = None
+            geopy_query = {"city": city, "country": country}
+            aprs_message = re.sub(
+                regex_string, "", aprs_message, flags=re.IGNORECASE
+            ).strip()
+            found_my_keyword = True
+    # Did I find something at all?
+    # Yes; send the query to GeoPy and get lat/lon for the address
+    if found_my_keyword and not kw_err:
+        # Let's validate the given iso3166 country code
+        if not validate_country(country):
+            human_readable_message = f"{errmsg_invalid_country}: '{country}'"
+            kw_err = True
+        # Everything seems to be ok. Try to retrieve
+        # lat/lon for the given data
+        if not kw_err:
+            success, latitude, longitude = get_geocode_geopy_data(geopy_query)
+            if success:
+                what = "wx"  # We know now that we want a wx report
+                human_readable_message = city
+                if state and country == "US":
+                    human_readable_message += f",{state}"
+                if country and country != "US":
+                    human_readable_message += f";{country}"
+            else:
+                kw_err = True
+                human_readable_message = errmsg_cannot_find_coords_for_address
+
+    # Look for postal/zip code information
+    # First, let's look for an international zip code
+    # Format: zip[zipcode];[country]
+    # Country = iso3166-2
+    if not found_my_keyword and not kw_err:
+        geopy_query = None
+        regex_string = r"(zip)\s*([a-zA-Z0-9-( )]{3,10});\s*([a-zA-Z]{2})"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            (_, zipcode, country) = matches[0]
+            state = None
+            country = country.upper()
+            aprs_message = re.sub(
+                regex_string, "", aprs_message, flags=re.IGNORECASE
+            ).strip()
+            found_my_keyword = True
+            # prepare the geopy reverse lookup string
+            geopy_query = {"postalcode": zipcode, "country": country}
+        if not found_my_keyword:
+            # check for a 5-digit zip code with keyword
+            # If match: assume that the user wants a US zip code
+            regex_string = r"(zip)\s*([0-9]{5})"
+            matches = re.findall(
+                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+            )
+            if matches:
+                (_, zipcode) = matches[0]
+                state = None
+                country = "US"
+                aprs_message = re.sub(
+                    regex_string, "", aprs_message, flags=re.IGNORECASE
+                ).strip()
+                found_my_keyword = True
+                # prepare the geopy reverse lookup string
+                geopy_query = {"postalcode": zipcode, "country": country}
+        # Did I find something at all?
+        # Yes; send the query to GeoPy and get lat/lon for the address
+        if found_my_keyword:
+            # First, let's validate the given iso3166 country code
+            if not validate_country(country):
+                human_readable_message = f"{errmsg_invalid_country}: '{country}'"
+                kw_err = True
+                what = None
+            else:
+                # Perform a reverse lookup. Query string was already pre-prepared.
+                success, latitude, longitude = get_geocode_geopy_data(geopy_query)
+                if success:
+                    # We only need latitude/longitude in order to get the wx report
+                    # Therefore, we can already set the 'what' command keyword'
+                    what = "wx"
+                    # Pre-build the output message
+                    human_readable_message = f"Zip {zipcode};{country}"
+                    # but try to get a real city name
+                    success, response_data = get_reverse_geopy_data(
+                        latitude=latitude, longitude=longitude
+                    )
+                    if success:
+                        # extract all fields as they will be used for the creation of the
+                        # outgoing data dictionary
+                        city = response_data["city"]
+                        state = response_data["state"]
+                        country = response_data["country"]
+                        # zipcode = response_data["zipcode"]
+                        county = response_data["county"]
+                        street = response_data["street"]
+                        street_number = response_data["street_number"]
+                        # build the HRM message based on the given data
+                        human_readable_message = build_human_readable_address_message(
+                            response_data
+                        )
+                else:
+                    kw_err = True
+                    human_readable_message = errmsg_cannot_find_coords_for_address
+
+    # check if the user has requested a set of maidenhead coordinates
+    # Can either be 4- or 6-character set of maidenhead coordinates
+    # if found, then transform to latitude/longitude coordinates
+    # and remember that the user did specify maidenhead data, henceforth
+    # we will not try to convert the coordinates to an actual
+    # human-readable address
+    if not found_my_keyword and not kw_err:
+        regex_string = r"(grid|mh)\s*([a-zA-Z]{2}[0-9]{2}[a-zA-Z]{0,2})"
+        matches = re.search(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            (latitude, longitude) = maidenhead.to_location(matches[2])
+            found_my_keyword = True
+            human_readable_message = f"{matches[2]}"
+            what = "wx"
+            aprs_message = re.sub(
+                regex_string, "", aprs_message, flags=re.IGNORECASE
+            ).strip()
+
+    # Check if the user has specified lat/lon information
+    if not found_my_keyword and not kw_err:
+        regex_string = r"([\d\.,\-]+)\/([\d\.,\-]+)"
+        matches = re.search(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            success = True
+            try:
+                latitude = float(matches[1])
+                longitude = float(matches[2])
+            except ValueError:
+                latitude = longitude = 0
+                success = False
+            if success:
+                # try to get human-readable coordinates
+                success, response_data = get_reverse_geopy_data(
+                    latitude=latitude, longitude=longitude, language=language
+                )
+                if success:
+                    # extract all fields as they will be used for the creation of the
+                    # outgoing data dictionary
+                    city = response_data["city"]
+                    state = response_data["state"]
+                    country = response_data["country"]
+                    zipcode = response_data["zipcode"]
+                    county = response_data["county"]
+                    street = response_data["street"]
+                    street_number = response_data["street_number"]
+                    # build the HRM message based on the given data
+                    human_readable_message = build_human_readable_address_message(
+                        response_data
+                    )
+                else:
+                    # We didn't find anything; use the original input for the HRM
+                    human_readable_message = f"lat {latitude}/lon {longitude}"
+                aprs_message = re.sub(regex_string, "", aprs_message).strip()
+                found_my_keyword = True
+                what = "wx"
+            else:
+                human_readable_message = "Error while parsing coordinates"
+                kw_err = True
+
+    keyword_parser_response_data_default_wx = {
+        "latitude": latitude,
+        "longitude": longitude,
+        "what": what,
+        "message_callsign": users_callsign,
+        "human_readable_message": human_readable_message,
+        "aprs_message": aprs_message,
+        "city": city,
+        "state": state,
+        "country": country,
+        "zipcode": zipcode,
+        "county": county,
+        "street": street,
+        "street_number": street_number,
+    }
+
+    return found_my_keyword, kw_err, keyword_parser_response_data_default_wx
+
+
 def build_human_readable_address_message(response_data: dict):
     """
     Build the 'human readable message' based on the reverse-lookup
@@ -1635,6 +1724,54 @@ def build_human_readable_address_message(response_data: dict):
     return human_readable_message
 
 
+def get_units_based_on_users_callsign(users_callsign: str):
+    """
+    Based on the user's call sign (the user who has sent us the APRS
+    message, we set the default unit of measure. Per Wikipedia, there
+    are only three countries in the world that still use the imperial
+    system: the U.S., Liberia and Myanmar. Users from these countries
+    will get their results related to the imperial system whereas the
+    rest of the world will use the metric system as default.
+
+    Parameters
+    ==========
+    users_callsign : 'str'
+        Call sign of the user that has sent us the APRS message
+
+    Returns
+    =======
+    units: 'str'
+        Can be either "metric" or "imperial". Default is "metric"
+    """
+    units = "metric"
+
+    # Check if we need to switch to the imperial system
+    # Have a look at the user's call sign who has sent me the message.
+    # Ignore any SSID data.
+    # If my user is located in the U.S., then assume that user wants data
+    # not in metric but in imperial format. Note: this is an auto-prefix
+    # which can be overridden by the user at a later point in time
+    # Note: we do NOT examine any call sign within the APRS message text but
+    # have a look at the (source) user's call sign
+    matches = re.search(
+        pattern=r"^[AKNW][a-zA-Z]{0,2}[0-9][A-Z]{1,3}",
+        string=users_callsign,
+        flags=re.IGNORECASE,
+    )
+    if matches:
+        units = "imperial"
+    # Now do the same thing for users in Liberia and Myanmar - per Wikipedia,
+    # these two countries also use the imperial system
+    matches = re.search(
+        pattern=r"^(A8|D5|EL|5L|5M|6Z|XY|XZ)",
+        string=users_callsign,
+        flags=re.IGNORECASE,
+    )
+    if matches:
+        units = "imperial"
+    return units
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -1650,4 +1787,6 @@ if __name__ == "__main__":
         dapnet_callsign,
         dapnet_passcode,
     ) = read_program_config()
-    logger.info(parse_input_message("df1jsl-8 47h", "df1jsl-1", aprsdotfi_api_key))
+    logger.info(
+        pformat(parse_input_message("51.83/8.25", "df1jsl-1", aprsdotfi_api_key))
+    )
