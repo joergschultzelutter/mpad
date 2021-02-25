@@ -470,37 +470,25 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             regex_string, "", aprs_message, flags=re.IGNORECASE
         ).strip()
 
-    # Check for a keyword-supplied 'special phrase' for OpenStreetMap
+    # Check for a keyword-based OpenStreetMap category (e.g. superparket, police)
     if not found_my_duty_roster and not err:
-        for osm_category in mpad_config.osm_supported_keyword_categories:
-            regex_string = rf"osm\s*({osm_category})"
-            matches = re.search(
-                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-            )
-            if matches:
-                osm_special_phrase = osm_category
-                what = "osm_special_phrase"
-                found_my_duty_roster = True
-                aprs_message = re.sub(
-                    regex_string, "", aprs_message, flags=re.IGNORECASE
-                ).strip()
-                (
-                    success,
-                    latitude,
-                    longitude,
-                    altitude,
-                    lasttime,
-                    message_callsign,
-                ) = get_position_on_aprsfi(
-                    aprsfi_callsign=users_callsign,
-                    aprsdotfi_api_key=aprsdotfi_api_key,
-                )
-                if not success:
-                    err = True
-                    human_readable_message = (
-                        f"{errmsg_cannot_find_coords_for_user} {message_callsign}"
-                    )
-                break
+        found_my_keyword, kw_err, parser_rd_osm = parse_what_keyword_osm_category(
+            aprs_message=aprs_message,
+            users_callsign=users_callsign,
+            aprsdotfi_api_key=aprsdotfi_api_key,
+        )
+        if found_my_keyword or kw_err:
+            found_my_duty_roster = found_my_keyword
+            err = kw_err
+            what = parser_rd_osm["what"]
+            latitude = parser_rd_osm["latitude"]
+            longitude = parser_rd_osm["longitude"]
+            lasttime = parser_rd_osm["lasttime"]
+            altitude = parser_rd_osm["altitude"]
+            human_readable_message = parser_rd_osm["human_readable_message"]
+            aprs_message = parser_rd_osm["aprs_message"]
+            message_callsign = parser_rd_osm["message_callsign"]
+            osm_special_phrase = parser_rd_osm["osm_special_phrase"]
 
     if not found_my_duty_roster and not err:
         regex_string = r"(dapnet|dapnethp)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[a-zA-Z0-9]{1,2})\s*([\D\s]+)"
@@ -1663,7 +1651,7 @@ def parse_what_keyword_default_wx(
     return found_my_keyword, kw_err, parser_rd_default_wx
 
 
-def parse_what_keyword_default_osm(
+def parse_what_keyword_osm_category(
     aprs_message: str, users_callsign: str, aprsdotfi_api_key: str
 ):
     """
@@ -1685,7 +1673,7 @@ def parse_what_keyword_default_osm(
     kw_err: 'bool'
         True if an error has occurred. If found_my_keyword is also true,
         then the error marker overrides the 'found' keyword
-    parser_rd_default_osm: 'dict'
+    parser_rd_osm: 'dict'
         response data dictionary, containing the keyword-relevant data
     """
 
@@ -1726,7 +1714,7 @@ def parse_what_keyword_default_osm(
                 )
             break
 
-    parser_rd_default_osm = {
+    parser_rd_osm = {
         "latitude": latitude,
         "longitude": longitude,
         "lasttime": lasttime,
@@ -1737,7 +1725,7 @@ def parse_what_keyword_default_osm(
         "message_callsign": message_callsign,
         "osm_special_phrase": osm_special_phrase,
     }
-    return found_my_keyword, kw_err, parser_rd_default_osm
+    return found_my_keyword, kw_err, parser_rd_osm
 
 
 def build_human_readable_address_message(response_data: dict):
@@ -1847,5 +1835,5 @@ if __name__ == "__main__":
         dapnet_passcode,
     ) = read_program_config()
     logger.info(
-        pformat(parse_input_message("51.83/8.25", "df1jsl-1", aprsdotfi_api_key))
+        pformat(parse_input_message("osm supermarket", "df1jsl-1", aprsdotfi_api_key))
     )
