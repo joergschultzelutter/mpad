@@ -382,44 +382,23 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
 
     # Check if the user wants to gain information about an upcoming satellite pass
     if not found_my_duty_roster and not err:
-        regex_string = r"satpass\s*(\w*)"
-        matches = re.search(
-            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        found_my_keyword, kw_err, parser_rd_satpass = parse_what_keyword_satpass(
+            aprs_message=aprs_message,
+            users_callsign=users_callsign,
+            aprsdotfi_api_key=aprsdotfi_api_key,
         )
-        if matches:
-            # we deliberately accept ZERO..n characters for the satellite as the
-            # user may have specified the keyword without any actual satellite
-            # name. If that is the case, return an error to the user
-            # (this is to prevent the user from receiving a wx report instead -
-            # wx would kick in as default)
-            satellite = matches[1].upper().strip()
-            if len(satellite) == 0:
-                human_readable_message = errmsg_no_satellite_specified
-                err = True
-            if not err:
-                (
-                    success,
-                    latitude,
-                    longitude,
-                    altitude,
-                    lasttime,
-                    message_callsign,
-                ) = get_position_on_aprsfi(
-                    aprsfi_callsign=users_callsign, aprsdotfi_api_key=aprsdotfi_api_key
-                )
-                if success:
-                    satellite = matches[1].upper()
-                    what = "satpass"
-                    human_readable_message = f"SatPass of {satellite}"
-                    found_my_duty_roster = True
-                    aprs_message = re.sub(
-                        regex_string, "", aprs_message, flags=re.IGNORECASE
-                    ).strip()
-                else:
-                    human_readable_message = (
-                        f"{errmsg_cannot_find_coords_for_user} {users_callsign}"
-                    )
-                    err = True
+        if found_my_keyword or kw_err:
+            found_my_duty_roster = found_my_keyword
+            err = kw_err
+            what = parser_rd_satpass["what"]
+            latitude = parser_rd_satpass["latitude"]
+            longitude = parser_rd_satpass["longitude"]
+            altitude = parser_rd_satpass["altitude"]
+            lasttime = parser_rd_satpass["lasttime"]
+            message_callsign = parser_rd_satpass["message_callsign"]
+            satellite = parser_rd_satpass["satellite"]
+            human_readable_message = parser_rd_satpass["human_readable_message"]
+            aprs_message = parser_rd_satpass["aprs_message"]
 
     # Check if the user wants us to search for the nearest repeater
     # this function always relates to the user's own call sign and not to
@@ -462,7 +441,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
 
     # check if the user wants more than one result (if supported by respective keyword)
     # hint: setting is not tied to the program's duty roster
-    regex_string = r"top(2|3|4|5)"
+    regex_string = r"\btop(2|3|4|5)\b"
     matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
         number_of_results = int(matches[1])
@@ -1919,5 +1898,5 @@ if __name__ == "__main__":
         dapnet_passcode,
     ) = read_program_config()
     logger.info(
-        pformat(parse_input_message("osm supermarket", "df1jsl-1", aprsdotfi_api_key))
+        pformat(parse_input_message("satpass iss", "df1jsl-1", aprsdotfi_api_key))
     )
