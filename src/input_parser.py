@@ -182,7 +182,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         (
             found_my_keyword,
             kw_err,
-            keyword_parser_response_data_default_wx,
+            parser_rd_default_wx,
         ) = parse_what_keyword_default_wx(
             aprs_message=aprs_message, users_callsign=users_callsign, language=language
         )
@@ -190,32 +190,24 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         if found_my_keyword or kw_err:
             found_my_duty_roster = found_my_keyword
             err = kw_err
-            latitude = keyword_parser_response_data_default_wx["latitude"]
-            longitude = keyword_parser_response_data_default_wx["longitude"]
-            what = keyword_parser_response_data_default_wx["what"]
-            message_callsign = keyword_parser_response_data_default_wx[
-                "message_callsign"
-            ]
-            human_readable_message = keyword_parser_response_data_default_wx[
-                "human_readable_message"
-            ]
-            aprs_message = keyword_parser_response_data_default_wx["aprs_message"]
-            city = keyword_parser_response_data_default_wx["city"]
-            state = keyword_parser_response_data_default_wx["state"]
-            country = keyword_parser_response_data_default_wx["country"]
-            zipcode = keyword_parser_response_data_default_wx["zipcode"]
-            county = keyword_parser_response_data_default_wx["county"]
-            street = keyword_parser_response_data_default_wx["street"]
-            street_number = keyword_parser_response_data_default_wx["street_number"]
+            latitude = parser_rd_default_wx["latitude"]
+            longitude = parser_rd_default_wx["longitude"]
+            what = parser_rd_default_wx["what"]
+            message_callsign = parser_rd_default_wx["message_callsign"]
+            human_readable_message = parser_rd_default_wx["human_readable_message"]
+            aprs_message = parser_rd_default_wx["aprs_message"]
+            city = parser_rd_default_wx["city"]
+            state = parser_rd_default_wx["state"]
+            country = parser_rd_default_wx["country"]
+            zipcode = parser_rd_default_wx["zipcode"]
+            county = parser_rd_default_wx["county"]
+            street = parser_rd_default_wx["street"]
+            street_number = parser_rd_default_wx["street_number"]
 
     # Check if the user has requested information wrt a 4-character ICAO code
     # or a 3-digit IATA code with the IATA/ICAO keywords
     if not found_my_duty_roster and not err:
-        (
-            found_my_keyword,
-            kw_err,
-            keyword_parser_response_data_icao_iata,
-        ) = parse_what_keyword_icao_iata(
+        (found_my_keyword, kw_err, parser_rd_icao_iata,) = parse_what_keyword_icao_iata(
             aprs_message=aprs_message,
             users_callsign=users_callsign,
             aprsdotfi_api_key=aprsdotfi_api_key,
@@ -224,15 +216,11 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         if found_my_keyword or kw_err:
             found_my_duty_roster = found_my_keyword
             err = kw_err
-            what = keyword_parser_response_data_icao_iata["what"]
-            message_callsign = keyword_parser_response_data_icao_iata[
-                "message_callsign"
-            ]
-            icao = keyword_parser_response_data_icao_iata["icao"]
-            human_readable_message = keyword_parser_response_data_icao_iata[
-                "human_readable_message"
-            ]
-            aprs_message = keyword_parser_response_data_icao_iata["aprs_message"]
+            what = parser_rd_icao_iata["what"]
+            message_callsign = parser_rd_icao_iata["message_callsign"]
+            icao = parser_rd_icao_iata["icao"]
+            human_readable_message = parser_rd_icao_iata["human_readable_message"]
+            aprs_message = parser_rd_icao_iata["aprs_message"]
 
     # Check if the user wants one of the following info
     # for a specific call sign WITH or withOUT SSID:
@@ -440,11 +428,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     #
     # Search for repeater-mode-band
     if not found_my_duty_roster and not err:
-        (
-            found_my_keyword,
-            kw_err,
-            keyword_parser_response_data_repeater,
-        ) = parse_what_keyword_repeater(
+        (found_my_keyword, kw_err, parser_rd_repeater,) = parse_what_keyword_repeater(
             aprs_message=aprs_message,
             users_callsign=users_callsign,
             aprsdotfi_api_key=aprsdotfi_api_key,
@@ -453,18 +437,16 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         if found_my_keyword or kw_err:
             found_my_duty_roster = found_my_keyword
             err = kw_err
-            what = keyword_parser_response_data_repeater["what"]
-            latitude = keyword_parser_response_data_repeater["latitude"]
-            longitude = keyword_parser_response_data_repeater["longitude"]
-            altitude = keyword_parser_response_data_repeater["altitude"]
-            lasttime = keyword_parser_response_data_repeater["lasttime"]
-            message_callsign = keyword_parser_response_data_repeater["message_callsign"]
-            repeater_band = keyword_parser_response_data_repeater["repeater_band"]
-            repeater_mode = keyword_parser_response_data_repeater["repeater_mode"]
-            human_readable_message = keyword_parser_response_data_repeater[
-                "human_readable_message"
-            ]
-            aprs_message = keyword_parser_response_data_repeater["aprs_message"]
+            what = parser_rd_repeater["what"]
+            latitude = parser_rd_repeater["latitude"]
+            longitude = parser_rd_repeater["longitude"]
+            altitude = parser_rd_repeater["altitude"]
+            lasttime = parser_rd_repeater["lasttime"]
+            message_callsign = parser_rd_repeater["message_callsign"]
+            repeater_band = parser_rd_repeater["repeater_band"]
+            repeater_mode = parser_rd_repeater["repeater_mode"]
+            human_readable_message = parser_rd_repeater["human_readable_message"]
+            aprs_message = parser_rd_repeater["aprs_message"]
 
     # check if the user wants to change the language
     # for openweathermap.com (currently fix for 'en' but
@@ -1198,7 +1180,7 @@ def parse_what_keyword_repeater(
     kw_err: 'bool'
         True if an error has occurred. If found_my_keyword is also true,
         then the error marker overrides the 'found' keyword
-    keyword_parser_response_data_repeater: 'dict'
+    parser_rd_repeater: 'dict'
         dictionary, containing the keyword-relevant data
     """
     # Search for repeater-mode-band
@@ -1293,7 +1275,7 @@ def parse_what_keyword_repeater(
             human_readable_message = (
                 f"{errmsg_cannot_find_coords_for_user} {message_callsign}"
             )
-    keyword_parser_response_data_repeater = {
+    parser_rd_repeater = {
         "what": what,
         "latitude": latitude,
         "longitude": longitude,
@@ -1305,7 +1287,7 @@ def parse_what_keyword_repeater(
         "human_readable_message": human_readable_message,
         "aprs_message": aprs_message,
     }
-    return found_my_keyword, kw_err, keyword_parser_response_data_repeater
+    return found_my_keyword, kw_err, parser_rd_repeater
 
 
 def parse_what_keyword_icao_iata(
@@ -1331,8 +1313,8 @@ def parse_what_keyword_icao_iata(
     kw_err: 'bool'
         True if an error has occurred. If found_my_keyword is also true,
         then the error marker overrides the 'found' keyword
-    keyword_parser_response_data_icao_iata: 'dict'
-        dictionary, containing the keyword-relevant data
+    parser_rd_icao_iata: 'dict'
+        response data dictionary, containing the keyword-relevant data
     """
 
     # Error flag is not used; we keep it for output parameter
@@ -1393,7 +1375,7 @@ def parse_what_keyword_icao_iata(
             else:
                 icao = None
 
-    keyword_parser_response_data_icao_iata = {
+    parser_rd_icao_iata = {
         "what": what,
         "message_callsign": users_callsign,
         "human_readable_message": human_readable_message,
@@ -1401,7 +1383,7 @@ def parse_what_keyword_icao_iata(
         "icao": icao,
     }
 
-    return found_my_keyword, kw_err, keyword_parser_response_data_icao_iata
+    return found_my_keyword, kw_err, parser_rd_icao_iata
 
 
 def parse_what_keyword_default_wx(
@@ -1435,8 +1417,8 @@ def parse_what_keyword_default_wx(
     kw_err: 'bool'
         True if an error has occurred. If found_my_keyword is also true,
         then the error marker overrides the 'found' keyword
-    keyword_parser_response_data_default_wx: 'dict'
-        dictionary, containing the keyword-relevant data
+    parser_rd_default_wx: 'dict'
+        response data dictionary, containing the keyword-relevant data
     """
 
     found_my_keyword = kw_err = success = False
@@ -1662,7 +1644,7 @@ def parse_what_keyword_default_wx(
                 human_readable_message = "Error while parsing coordinates"
                 kw_err = True
 
-    keyword_parser_response_data_default_wx = {
+    parser_rd_default_wx = {
         "latitude": latitude,
         "longitude": longitude,
         "what": what,
@@ -1678,7 +1660,84 @@ def parse_what_keyword_default_wx(
         "street_number": street_number,
     }
 
-    return found_my_keyword, kw_err, keyword_parser_response_data_default_wx
+    return found_my_keyword, kw_err, parser_rd_default_wx
+
+
+def parse_what_keyword_default_osm(
+    aprs_message: str, users_callsign: str, aprsdotfi_api_key: str
+):
+    """
+    Keyword parser for OpenStreetMap categories
+
+    Parameters
+    ==========
+    aprs_message : 'str'
+        the original aprs pessage
+    users_callsign : 'str'
+        Call sign of the user that has sent us the message
+    aprsdotfi_api_key : 'str'
+        aprs.fi access key
+
+    Returns
+    =======
+    found_my_keyword: 'bool'
+        True if the keyword and associated parameters have been found
+    kw_err: 'bool'
+        True if an error has occurred. If found_my_keyword is also true,
+        then the error marker overrides the 'found' keyword
+    parser_rd_default_osm: 'dict'
+        response data dictionary, containing the keyword-relevant data
+    """
+
+    found_my_keyword = kw_err = success = False
+    human_readable_message = what = osm_special_phrase = None
+    latitude = longitude = 0.0
+    altitude = 0
+    lasttime = datetime.min
+
+    what = message_callsign = None
+    for osm_category in mpad_config.osm_supported_keyword_categories:
+        regex_string = rf"osm\s*({osm_category})"
+        matches = re.search(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            osm_special_phrase = osm_category
+            what = "osm_special_phrase"
+            found_my_keyword = True
+            aprs_message = re.sub(
+                regex_string, "", aprs_message, flags=re.IGNORECASE
+            ).strip()
+            (
+                success,
+                latitude,
+                longitude,
+                altitude,
+                lasttime,
+                message_callsign,
+            ) = get_position_on_aprsfi(
+                aprsfi_callsign=users_callsign,
+                aprsdotfi_api_key=aprsdotfi_api_key,
+            )
+            if not success:
+                kw_err = True
+                human_readable_message = (
+                    f"{errmsg_cannot_find_coords_for_user} {message_callsign}"
+                )
+            break
+
+    parser_rd_default_osm = {
+        "latitude": latitude,
+        "longitude": longitude,
+        "lasttime": lasttime,
+        "altitude": altitude,
+        "what": what,
+        "human_readable_message": human_readable_message,
+        "aprs_message": aprs_message,
+        "message_callsign": message_callsign,
+        "osm_special_phrase": osm_special_phrase,
+    }
+    return found_my_keyword, kw_err, parser_rd_default_osm
 
 
 def build_human_readable_address_message(response_data: dict):
