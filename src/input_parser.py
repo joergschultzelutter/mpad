@@ -431,7 +431,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # for openweathermap.com (currently fix for 'en' but
     # might change in the future
     # hint: setting is not tied to the program's duty roster
-    regex_string = r"(lang|lng)\s*([a-zA-Z]{2})"
+    regex_string = r"\b(lang|lng)\s*([a-zA-Z]{2})\b"
     matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
         language = matches[2].lower()
