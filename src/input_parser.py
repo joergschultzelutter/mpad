@@ -1728,6 +1728,90 @@ def parse_what_keyword_osm_category(
     return found_my_keyword, kw_err, parser_rd_osm
 
 
+def parse_what_keyword_satpass(
+    aprs_message: str, users_callsign: str, aprsdotfi_api_key: str
+):
+    """
+    Keyword parser for OpenStreetMap categories
+
+    Parameters
+    ==========
+    aprs_message : 'str'
+        the original aprs pessage
+    users_callsign : 'str'
+        Call sign of the user that has sent us the message
+    aprsdotfi_api_key : 'str'
+        aprs.fi access key
+
+    Returns
+    =======
+    found_my_keyword: 'bool'
+        True if the keyword and associated parameters have been found
+    kw_err: 'bool'
+        True if an error has occurred. If found_my_keyword is also true,
+        then the error marker overrides the 'found' keyword
+    parser_rd_osm: 'dict'
+        response data dictionary, containing the keyword-relevant data
+    """
+
+    found_my_keyword = kw_err = success = False
+    human_readable_message = what = osm_special_phrase = satellite = None
+    latitude = longitude = 0.0
+    altitude = 0
+    lasttime = datetime.min
+
+    what = message_callsign = None
+
+    regex_string = r"satpass\s*(\w*)"
+    matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+    if matches:
+        # we deliberately accept ZERO..n characters for the satellite as the
+        # user may have specified the keyword without any actual satellite
+        # name. If that is the case, return an error to the user
+        # (this is to prevent the user from receiving a wx report instead -
+        # wx would kick in as default)
+        satellite = matches[1].upper().strip()
+        if len(satellite) == 0:
+            human_readable_message = errmsg_no_satellite_specified
+            kw_err = True
+        if not kw_err:
+            (
+                success,
+                latitude,
+                longitude,
+                altitude,
+                lasttime,
+                message_callsign,
+            ) = get_position_on_aprsfi(
+                aprsfi_callsign=users_callsign, aprsdotfi_api_key=aprsdotfi_api_key
+            )
+            if success:
+                satellite = matches[1].upper()
+                what = "satpass"
+                human_readable_message = f"SatPass of {satellite}"
+                found_my_keyword = True
+                aprs_message = re.sub(
+                    regex_string, "", aprs_message, flags=re.IGNORECASE
+                ).strip()
+            else:
+                human_readable_message = (
+                    f"{errmsg_cannot_find_coords_for_user} {users_callsign}"
+                )
+                kw_err = True
+    parser_rd_satpass = {
+        "what": what,
+        "latitude": latitude,
+        "longitude": longitude,
+        "altitude": altitude,
+        "lasttime": lasttime,
+        "message_callsign": message_callsign,
+        "satellite": satellite,
+        "human_readable_message": human_readable_message,
+        "aprs_message": aprs_message,
+    }
+    return found_my_keyword, kw_err, parser_rd_satpass
+
+
 def build_human_readable_address_message(response_data: dict):
     """
     Build the 'human readable message' based on the reverse-lookup
