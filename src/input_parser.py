@@ -1406,13 +1406,13 @@ def parse_what_keyword_default_wx(
     # Check if we have been given a specific address (city, state, country)
     geopy_query = None
     # City / State / Country?
-    regex_string = r"([\D\s]+),\s*?(\w+);\s*([a-zA-Z]{2})"
+    regex_string = r"\b([\D\s]+),\s*?(\w+);\s*([a-zA-Z]{2})\b"
     matches = re.findall(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
         (city, state, country) = matches[0]
-        city = string.capwords(city)
-        country = country.upper()
-        state = state.upper()  # in theory, this could also be a non-US state
+        city = string.capwords(city).strip()
+        country = country.upper().strip
+        state = state.upper().strip  # in theory, this could also be a non-US state
         aprs_message = re.sub(
             regex_string, "", aprs_message, flags=re.IGNORECASE
         ).strip()
@@ -1420,15 +1420,15 @@ def parse_what_keyword_default_wx(
         found_my_keyword = True
     # City / State
     if not found_my_keyword and not kw_err:
-        regex_string = r"([\D\s]+),\s*?(\w+)"
+        regex_string = r"\b([\D\s]+),\s*?(\w+)\b"
         matches = re.findall(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
         if matches:
             (city, state) = matches[0]
             country = "US"
-            city = string.capwords(city)
-            state = state.upper()
+            city = string.capwords(city).strip()
+            state = state.upper().strip()
             aprs_message = re.sub(
                 regex_string, "", aprs_message, flags=re.IGNORECASE
             ).strip()
@@ -1436,14 +1436,14 @@ def parse_what_keyword_default_wx(
             found_my_keyword = True
     # City / Country
     if not found_my_keyword and not kw_err:
-        regex_string = r"([\D\s]+);\s*([a-zA-Z]{2})"
+        regex_string = r"\b([\D\s]+);\s*([a-zA-Z]{2})\b"
         matches = re.findall(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
         if matches:
             (city, country) = matches[0]
-            city = string.capwords(city)
-            country = country.upper()
+            city = string.capwords(city).strip()
+            country = country.upper().strip()
             state = None
             geopy_query = {"city": city, "country": country}
             aprs_message = re.sub(
@@ -1478,14 +1478,15 @@ def parse_what_keyword_default_wx(
     # Country = iso3166-2
     if not found_my_keyword and not kw_err:
         geopy_query = None
-        regex_string = r"(zip)\s*([a-zA-Z0-9-( )]{3,10});\s*([a-zA-Z]{2})"
+        regex_string = r"\b(zip)\s*([a-zA-Z0-9-( )]{3,10});\s*([a-zA-Z]{2})\b"
         matches = re.findall(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
         if matches:
             (_, zipcode, country) = matches[0]
+            zipcode = zipcode.strip()
             state = None
-            country = country.upper()
+            country = country.upper().strip()
             aprs_message = re.sub(
                 regex_string, "", aprs_message, flags=re.IGNORECASE
             ).strip()
@@ -1495,7 +1496,7 @@ def parse_what_keyword_default_wx(
         if not found_my_keyword:
             # check for a 5-digit zip code with keyword
             # If match: assume that the user wants a US zip code
-            regex_string = r"(zip)\s*([0-9]{5})"
+            regex_string = r"\b(zip)\s*([0-9]{5})\b"
             matches = re.findall(
                 pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
             )
@@ -1503,6 +1504,7 @@ def parse_what_keyword_default_wx(
                 (_, zipcode) = matches[0]
                 state = None
                 country = "US"
+                zipcode = zipcode.strip()
                 aprs_message = re.sub(
                     regex_string, "", aprs_message, flags=re.IGNORECASE
                 ).strip()
@@ -1555,12 +1557,12 @@ def parse_what_keyword_default_wx(
     # we will not try to convert the coordinates to an actual
     # human-readable address
     if not found_my_keyword and not kw_err:
-        regex_string = r"(grid|mh)\s*([a-zA-Z]{2}[0-9]{2}[a-zA-Z]{0,2})"
+        regex_string = r"\b(grid|mh)\s*([a-zA-Z]{2}[0-9]{2}[a-zA-Z]{0,2})\b"
         matches = re.search(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
         if matches:
-            (latitude, longitude) = maidenhead.to_location(matches[2])
+            (latitude, longitude) = maidenhead.to_location(matches[2].strip())
             found_my_keyword = True
             human_readable_message = f"{matches[2]}"
             what = "wx"
@@ -1570,7 +1572,7 @@ def parse_what_keyword_default_wx(
 
     # Check if the user has specified lat/lon information
     if not found_my_keyword and not kw_err:
-        regex_string = r"([\d\.,\-]+)\/([\d\.,\-]+)"
+        regex_string = r"\b([\d\.,\-]+)\/([\d\.,\-]+)\b"
         matches = re.search(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
@@ -1664,7 +1666,7 @@ def parse_what_keyword_osm_category(
 
     what = message_callsign = None
     for osm_category in mpad_config.osm_supported_keyword_categories:
-        regex_string = rf"osm\s*({osm_category})"
+        regex_string = rf"\bosm\s*({osm_category})\b"
         matches = re.search(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
@@ -1741,7 +1743,7 @@ def parse_what_keyword_satpass(
 
     what = message_callsign = None
 
-    regex_string = r"satpass\s*(\w*)"
+    regex_string = r"\bsatpass\s*(\w*)\b"
     matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
         # we deliberately accept ZERO..n characters for the satellite as the
@@ -1765,7 +1767,6 @@ def parse_what_keyword_satpass(
                 aprsfi_callsign=users_callsign, aprsdotfi_api_key=aprsdotfi_api_key
             )
             if success:
-                satellite = matches[1].upper()
                 what = "satpass"
                 human_readable_message = f"SatPass of {satellite}"
                 found_my_keyword = True
