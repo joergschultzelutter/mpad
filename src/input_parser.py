@@ -384,22 +384,17 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
 
     # Check if the user wants information about a specific CWOP ID
     if not found_my_duty_roster and not err:
-        regex_string = r"cwop\s*(\w+)"
-        matches = re.search(
-            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        found_my_keyword, kw_err, parser_rd_cwop_id = parse_what_keyword_cwop_id(
+            aprs_message=aprs_message, users_callsign=users_callsign
         )
-        if matches:
-            cwop_id = matches[1].upper().strip()
-            if len(cwop_id) == 0:
-                human_readable_message = errmsg_no_cwop_specified
-                err = True
-            else:
-                what = "cwop_by_cwop_id"
-                human_readable_message = f"CWOP for {cwop_id}"
-                found_my_duty_roster = True
-                aprs_message = re.sub(
-                    regex_string, "", aprs_message, flags=re.IGNORECASE
-                ).strip()
+        if found_my_keyword or kw_err:
+            found_my_duty_roster = found_my_keyword
+            err = kw_err
+            what = parser_rd_cwop_id["what"]
+            message_callsign = parser_rd_cwop_id["message_callsign"]
+            cwop_id = parser_rd_cwop_id["cwop_id"]
+            human_readable_message = parser_rd_cwop_id["human_readable_message"]
+            aprs_message = parser_rd_cwop_id["aprs_message"]
 
     # Check if the user wants to gain information about an upcoming satellite pass
     if not found_my_duty_roster and not err:
@@ -1717,7 +1712,7 @@ def parse_what_keyword_satpass(
     kw_err: 'bool'
         True if an error has occurred. If found_my_keyword is also true,
         then the error marker overrides the 'found' keyword
-    parser_rd_osm: 'dict'
+    parser_rd_satpass: 'dict'
         response data dictionary, containing the keyword-relevant data
     """
 
@@ -1798,7 +1793,7 @@ def parse_what_keyword_dapnet(aprs_message: str, users_callsign: str):
     kw_err: 'bool'
         True if an error has occurred. If found_my_keyword is also true,
         then the error marker overrides the 'found' keyword
-    parser_rd_osm: 'dict'
+    parser_rd_dapnet: 'dict'
         response data dictionary, containing the keyword-relevant data
     """
 
@@ -1836,6 +1831,58 @@ def parse_what_keyword_dapnet(aprs_message: str, users_callsign: str):
         "dapnet_message": dapnet_message,
     }
     return found_my_keyword, kw_err, parser_rd_dapnet
+
+
+def parse_what_keyword_cwop_id(aprs_message: str, users_callsign: str):
+    """
+    Keyword parser for a user-specified CWOP station
+
+    Parameters
+    ==========
+    aprs_message : 'str'
+        the original aprs pessage
+    users_callsign : 'str'
+        Call sign of the user that has sent us the message
+
+    Returns
+    =======
+    found_my_keyword: 'bool'
+        True if the keyword and associated parameters have been found
+    kw_err: 'bool'
+        True if an error has occurred. If found_my_keyword is also true,
+        then the error marker overrides the 'found' keyword
+    parser_rd_cwop_id: 'dict'
+        response data dictionary, containing the keyword-relevant data
+    """
+
+    found_my_keyword = kw_err = False
+    human_readable_message = cwop_id = None
+    what = None
+
+    # Check if the user wants information about a specific CWOP ID
+    regex_string = r"cwop\s*(\w+)"
+    matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+    if matches:
+        cwop_id = matches[1].upper().strip()
+        if len(cwop_id) == 0:
+            human_readable_message = errmsg_no_cwop_specified
+            kw_err = True
+        else:
+            what = "cwop_by_cwop_id"
+            human_readable_message = f"CWOP for {cwop_id}"
+            found_my_keyword = True
+            aprs_message = re.sub(
+                regex_string, "", aprs_message, flags=re.IGNORECASE
+            ).strip()
+
+    parser_rd_cwop_id = {
+        "what": what,
+        "message_callsign": users_callsign,
+        "human_readable_message": human_readable_message,
+        "aprs_message": aprs_message,
+        "cwop_id": cwop_id,
+    }
+    return found_my_keyword, kw_err, parser_rd_cwop_id
 
 
 def build_human_readable_address_message(response_data: dict):
@@ -1945,9 +1992,5 @@ if __name__ == "__main__":
         dapnet_passcode,
     ) = read_program_config()
     logger.info(
-        pformat(
-            parse_input_message(
-                "dapnet df1jsl-8     Hallo Welt   ", "df1jsl-1", aprsdotfi_api_key
-            )
-        )
+        pformat(parse_input_message("cwop abcde", "df1jsl-1", aprsdotfi_api_key))
     )
