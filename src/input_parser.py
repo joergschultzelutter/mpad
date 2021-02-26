@@ -251,136 +251,33 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # metar (nearest METAR data for the user's position)
     # CWOP (nearest CWOP data for user's position)
     #
-    # First check the APRS message and see if the user has submitted
-    # a call sign with the message (we will first check for a call
-    # sign with SSID, followed by a check for the call sign without
-    # SSID). If no SSID was found, then just check for the command
-    # sequence and -if found- use the user's call sign
-    #
     if not found_my_duty_roster and not err:
-        regex_string = r"(wx|forecast|whereis|riseset|cwop|metar)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[a-zA-Z0-9]{1,2})"
-        matches = re.search(
-            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        found_my_keyword, kw_err, parser_rd_csm = parse_what_keyword_callsign_multi(
+            aprs_message=aprs_message,
+            users_callsign=users_callsign,
+            aprsdotfi_api_key=aprsdotfi_api_key,
         )
-        if matches:
-            what = matches[1].lower()
-            message_callsign = matches[2].upper()
-            aprs_message = re.sub(regex_string, "", aprs_message).strip()
-            found_my_duty_roster = True
-        if not found_my_duty_roster:
-            regex_string = r"(wx|forecast|whereis|riseset|cwop|metar)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3})"
-            matches = re.search(
-                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-            )
-            if matches:
-                what = matches[1].lower()
-                message_callsign = matches[2].upper()
-                found_my_duty_roster = True
-                aprs_message = re.sub(regex_string, "", aprs_message).strip()
-        if not found_my_duty_roster:
-            regex_string = r"(wx|forecast|whereis|riseset|cwop|metar)\s*(\w+)"
-            matches = re.search(
-                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-            )
-            if matches:
-                what = matches[1].lower()
-                message_callsign = matches[2].upper()
-                found_my_duty_roster = True
-                aprs_message = re.sub(regex_string, "", aprs_message).strip()
-        if not found_my_duty_roster:
-            regex_string = r"(wx|forecast|whereis|riseset|cwop|metar)"
-            matches = re.search(
-                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-            )
-            if matches:
-                what = matches[1].lower()
-                message_callsign = users_callsign
-                found_my_duty_roster = True
-                aprs_message = re.sub(regex_string, "", aprs_message).strip()
-        if found_my_duty_roster:
-            (
-                success,
-                latitude,
-                longitude,
-                altitude,
-                lasttime,
-                message_callsign,
-            ) = get_position_on_aprsfi(
-                aprsfi_callsign=message_callsign, aprsdotfi_api_key=aprsdotfi_api_key
-            )
-            if success:
-                if what == "wx" or what == "forecast":
-                    human_readable_message = f"Wx {message_callsign}"
-                    if what == "forecast":
-                        what = "wx"
-                elif what == "riseset":
-                    human_readable_message = f"RiseSet {message_callsign}"
-                elif what == "whereis":
-                    human_readable_message = f"Pos {message_callsign}"
-                    # Try to get the user's human readable address based on lat/lon
-                    # we ignore any errors as all output fields will be properly initialized with default values
-                    success, response_data = get_reverse_geopy_data(
-                        latitude=latitude, longitude=longitude
-                    )
-                    # extract all fields as they will be used for the creation of the
-                    # outgoing data dictionary
-                    city = response_data["city"]
-                    state = response_data["state"]
-                    country = response_data["country"]
-                    zipcode = response_data["zipcode"]
-                    county = response_data["county"]
-                    street = response_data["street"]
-                    street_number = response_data["street_number"]
-
-                    # ultimately, get the sender's lat/lon so that we can
-                    # calculate the distance between the sender's position
-                    # and the call sign that he has requested. We are only
-                    # interested in the user's lat/lon info and ignore the
-                    # remaining information such as cs, altitude and lasttime
-                    (
-                        success,
-                        users_latitude,
-                        users_longitude,
-                        _,
-                        _,
-                        _,
-                    ) = get_position_on_aprsfi(
-                        aprsfi_callsign=users_callsign,
-                        aprsdotfi_api_key=aprsdotfi_api_key,
-                    )
-                elif what == "cwop":
-                    human_readable_message = f"CWOP for {message_callsign}"
-                    what = "cwop_by_latlon"
-                elif what == "metar":
-                    icao = get_nearest_icao(latitude=latitude, longitude=longitude)
-                    if icao:
-                        (
-                            success,
-                            latitude,
-                            longitude,
-                            metar_capable,
-                            icao,
-                        ) = validate_icao(icao_code=icao)
-                        if success:
-                            what = "metar"
-                            found_my_duty_roster = True
-                            human_readable_message = f"METAR for '{icao}'"
-                            aprs_message = re.sub(
-                                r"(icao)([a-zA-Z0-9]{4})", "", aprs_message
-                            ).strip()
-                            # If we did find the airport but it is not METAR-capable,
-                            # then supply a wx report instead
-                            if not metar_capable:
-                                what = "wx"
-                                icao = None
-                                human_readable_message = f"Wx for '{icao}'"
-                        else:
-                            icao = None
-            else:
-                human_readable_message = (
-                    f"{errmsg_cannot_find_coords_for_user} {message_callsign}"
-                )
-                err = True
+        if found_my_keyword or kw_err:
+            found_my_duty_roster = found_my_keyword
+            err = kw_err
+            latitude = parser_rd_csm["latitude"]
+            longitude = parser_rd_csm["longitude"]
+            users_latitude = parser_rd_csm["users_latitude"]
+            users_longitude = parser_rd_csm["users_longitude"]
+            lasttime = parser_rd_csm["lasttime"]
+            altitude = parser_rd_csm["altitude"]
+            what = parser_rd_csm["what"]
+            human_readable_message = parser_rd_csm["human_readable_message"]
+            aprs_message = parser_rd_csm["aprs_message"]
+            message_callsign = parser_rd_csm["message_callsign"]
+            city = parser_rd_csm["city"]
+            state = parser_rd_csm["state"]
+            county = parser_rd_csm["county"]
+            country = parser_rd_csm["country"]
+            zipcode = parser_rd_csm["zipcode"]
+            street = parser_rd_csm["street"]
+            street_number = parser_rd_csm["street_number"]
+            icao = parser_rd_csm["icao"]
 
     # Check if the user wants information about a specific CWOP ID
     if not found_my_duty_roster and not err:
@@ -1194,7 +1091,7 @@ def parse_what_keyword_repeater(
             ).strip()
     # If not found, just search for the repeater keyword
     if not found_my_keyword:
-        regex_string = r"repeater"
+        regex_string = r"\brepeater\b"
         matches = re.search(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
@@ -1885,6 +1782,201 @@ def parse_what_keyword_cwop_id(aprs_message: str, users_callsign: str):
     return found_my_keyword, kw_err, parser_rd_cwop_id
 
 
+def parse_what_keyword_callsign_multi(
+    aprs_message: str, users_callsign: str, aprsdotfi_api_key: str
+):
+    """
+    Multi-keyword parser in reference to a call sign
+    which can either be the user's call sign or one that is
+    embedded within the user's request
+
+    Check if the user wants one of the following info
+    for a specific call sign WITH or withOUT SSID:
+    wx (Weather report for the user's position)
+    whereis (location information for the user's position)
+    riseset (Sunrise/Sunset and moonrise/moonset info)
+    metar (nearest METAR data for the user's position)
+    CWOP (nearest CWOP data for user's position)
+
+    Parameters
+    ==========
+    aprs_message : 'str'
+        the original aprs pessage
+    users_callsign : 'str'
+        Call sign of the user that has sent us the message
+    aprsdotfi_api_key : 'str'
+        aprs.fi access key
+
+    Returns
+    =======
+    found_my_keyword: 'bool'
+        True if the keyword and associated parameters have been found
+    kw_err: 'bool'
+        True if an error has occurred. If found_my_keyword is also true,
+        then the error marker overrides the 'found' keyword
+    parser_rd_csm: 'dict'
+        response data dictionary, containing the keyword-relevant data
+    """
+
+    found_my_keyword = kw_err = success = False
+    human_readable_message = what = icao = None
+    latitude = longitude = users_latitude = users_longitude = 0.0
+    altitude = 0
+    lasttime = datetime.min
+    what = message_callsign = city = state = county = None
+    zipcode = country = street = street_number = None
+
+    # First check the APRS message and see if the user has submitted
+    # a call sign with the message (we will first check for a call
+    # sign with SSID, followed by a check for the call sign without
+    # SSID). If no SSID was found, then just check for the command
+    # sequence and -if found- use the user's call sign
+    #
+    # Check - full call sign with SSID
+    regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[a-zA-Z0-9]{1,2})\b"
+    matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+    if matches:
+        what = matches[1].lower()
+        message_callsign = matches[2].upper()
+        aprs_message = re.sub(regex_string, "", aprs_message).strip()
+        found_my_keyword = True
+    if not found_my_keyword:
+        # Check - call sign without SSID
+        regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3})\b"
+        matches = re.search(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            what = matches[1].lower()
+            message_callsign = matches[2].upper()
+            found_my_keyword = True
+            aprs_message = re.sub(regex_string, "", aprs_message).strip()
+    if not found_my_keyword:
+        # Check - call sign whose pattern deviates from the standard call sign pattern (e.g. bot, CWOP station etc)
+        regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar)\s*(\w+)\b"
+        matches = re.search(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            what = matches[1].lower()
+            message_callsign = matches[2].upper().strip()
+            found_my_keyword = True
+            aprs_message = re.sub(regex_string, "", aprs_message).strip()
+    if not found_my_keyword:
+        # Check - no call sign at all. In this case, we use the sender's call sign as reference
+        regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar)\b"
+        matches = re.search(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            what = matches[1].lower()
+            message_callsign = users_callsign
+            found_my_keyword = True
+            aprs_message = re.sub(regex_string, "", aprs_message).strip()
+    if found_my_keyword:
+        (
+            success,
+            latitude,
+            longitude,
+            altitude,
+            lasttime,
+            message_callsign,
+        ) = get_position_on_aprsfi(
+            aprsfi_callsign=message_callsign, aprsdotfi_api_key=aprsdotfi_api_key
+        )
+        if success:
+            if what == "wx" or what == "forecast":
+                human_readable_message = f"Wx {message_callsign}"
+                if what == "forecast":
+                    what = "wx"
+            elif what == "riseset":
+                human_readable_message = f"RiseSet {message_callsign}"
+            elif what == "whereis":
+                human_readable_message = f"Pos {message_callsign}"
+                # Try to get the msg call sign's human readable address based on lat/lon
+                # we ignore any errors as all output fields will be properly initialized with default values
+                success, response_data = get_reverse_geopy_data(
+                    latitude=latitude, longitude=longitude
+                )
+                # extract all fields as they will be used for the creation of the
+                # outgoing data dictionary
+                city = response_data["city"]
+                state = response_data["state"]
+                country = response_data["country"]
+                zipcode = response_data["zipcode"]
+                county = response_data["county"]
+                street = response_data["street"]
+                street_number = response_data["street_number"]
+
+                # ultimately, get the *sender's* lat/lon so that we can
+                # calculate the distance between the sender's position
+                # and the call sign that he has requested. We are only
+                # interested in the user's lat/lon info and ignore the
+                # remaining information such as callsign, altitude and lasttime
+                (
+                    success,
+                    users_latitude,
+                    users_longitude,
+                    _,
+                    _,
+                    _,
+                ) = get_position_on_aprsfi(
+                    aprsfi_callsign=users_callsign,
+                    aprsdotfi_api_key=aprsdotfi_api_key,
+                )
+            elif what == "cwop":
+                human_readable_message = f"CWOP for {message_callsign}"
+                what = "cwop_by_latlon"
+            elif what == "metar":
+                icao = get_nearest_icao(latitude=latitude, longitude=longitude)
+                if icao:
+                    (
+                        success,
+                        latitude,
+                        longitude,
+                        metar_capable,
+                        icao,
+                    ) = validate_icao(icao_code=icao)
+                    if success:
+                        found_my_keyword = True
+                        human_readable_message = f"METAR for '{icao}'"
+                        # If we did find the airport but it is not METAR-capable,
+                        # then supply a wx report instead
+                        if not metar_capable:
+                            what = "wx"
+                            icao = None
+                            human_readable_message = f"Wx for '{icao}'"
+                    else:
+                        icao = None
+        else:
+            human_readable_message = (
+                f"{errmsg_cannot_find_coords_for_user} {message_callsign}"
+            )
+            kw_err = True
+
+    parser_rd_csm = {
+        "latitude": latitude,
+        "longitude": longitude,
+        "users_latitude": users_latitude,
+        "users_longitude": users_longitude,
+        "lasttime": lasttime,
+        "altitude": altitude,
+        "what": what,
+        "human_readable_message": human_readable_message,
+        "aprs_message": aprs_message,
+        "message_callsign": message_callsign,
+        "city": city,
+        "state": state,
+        "county": county,
+        "country": country,
+        "zipcode": zipcode,
+        "street": street,
+        "street_number": street_number,
+        "icao": icao,
+    }
+    return found_my_keyword, kw_err, parser_rd_csm
+
+
 def build_human_readable_address_message(response_data: dict):
     """
     Build the 'human readable message' based on the reverse-lookup
@@ -1992,5 +2084,5 @@ if __name__ == "__main__":
         dapnet_passcode,
     ) = read_program_config()
     logger.info(
-        pformat(parse_input_message("cwop abcde", "df1jsl-1", aprsdotfi_api_key))
+        pformat(parse_input_message("whereis df1jsl-8", "df1jsl-1", aprsdotfi_api_key))
     )
