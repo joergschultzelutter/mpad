@@ -155,8 +155,16 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # Convert user's call sign to uppercase
     users_callsign = users_callsign.upper()
 
-    # Check if we need to switch to the imperial system
+    # Check if we need to switch to the imperial system ...
     units = get_units_based_on_users_callsign(users_callsign=users_callsign)
+
+    # ... and then check if the user wants to override this default setting
+    # because he said so in his command to us
+    # Note: this is
+    found_my_keyword, parser_rd_units = parse_keyword_units(aprs_message=aprs_message)
+    if found_my_keyword:
+        aprs_message = parser_rd_units["aprs_message"]
+        units = parser_rd_units["units"]
 
     # check if the user wants to change the language
     # for openweathermap.com (currently fix for 'en' but
@@ -632,22 +640,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                     what = "help"
                     found_my_duty_roster = True
 
-            # check if the user wants to change the numeric format
-            # metric is always default, but we also allow imperial
-            # format if the user explicitly asks for it
-            # hint: these settings are not tied to the program's
-            # duty roster
-            matches = re.search(
-                pattern=r"^(mtr|metric)$", string=word, flags=re.IGNORECASE
-            )
-            if matches:
-                units = "metric"
-            matches = re.search(
-                pattern=r"^(imp|imperial)$", string=word, flags=re.IGNORECASE
-            )
-            if matches:
-                units = "imperial"
-
     # Default checks outside of the 'for' loop - we may not have everything we
     # need to process the user's message yet so let's have a look.
 
@@ -972,7 +964,7 @@ def parse_what_keyword_repeater(
     Parameters
     ==========
     aprs_message : 'str'
-        the original aprs pessage
+        the original aprs message
     users_callsign : 'str'
         Call sign of the user that has sent us the message
     aprsdotfi_api_key : 'str'
@@ -1103,7 +1095,7 @@ def parse_what_keyword_icao_iata(aprs_message: str, users_callsign: str):
     Parameters
     ==========
     aprs_message : 'str'
-        the original aprs pessage
+        the original aprs message
     users_callsign : 'str'
         Call sign of the user that has sent us the message
 
@@ -1205,7 +1197,7 @@ def parse_what_keyword_default_wx(
     Parameters
     ==========
     aprs_message : 'str'
-        the original aprs pessage
+        the original aprs message
     users_callsign : 'str'
         Call sign of the user that has sent us the message
     language : 'str'
@@ -1475,7 +1467,7 @@ def parse_what_keyword_osm_category(
     Parameters
     ==========
     aprs_message : 'str'
-        the original aprs pessage
+        the original aprs message
     users_callsign : 'str'
         Call sign of the user that has sent us the message
     aprsdotfi_api_key : 'str'
@@ -1564,7 +1556,7 @@ def parse_what_keyword_satpass(
     Parameters
     ==========
     aprs_message : 'str'
-        the original aprs pessage
+        the original aprs message
     users_callsign : 'str'
         Call sign of the user that has sent us the message
     aprsdotfi_api_key : 'str'
@@ -1647,7 +1639,7 @@ def parse_what_keyword_dapnet(aprs_message: str, users_callsign: str):
     Parameters
     ==========
     aprs_message : 'str'
-        the original aprs pessage
+        the original aprs message
     users_callsign : 'str'
         Call sign of the user that has sent us the message
 
@@ -1705,7 +1697,7 @@ def parse_what_keyword_cwop_id(aprs_message: str, users_callsign: str):
     Parameters
     ==========
     aprs_message : 'str'
-        the original aprs pessage
+        the original aprs message
     users_callsign : 'str'
         Call sign of the user that has sent us the message
 
@@ -1769,7 +1761,7 @@ def parse_what_keyword_callsign_multi(
     Parameters
     ==========
     aprs_message : 'str'
-        the original aprs pessage
+        the original aprs message
     users_callsign : 'str'
         Call sign of the user that has sent us the message
     aprsdotfi_api_key : 'str'
@@ -1955,7 +1947,7 @@ def parse_what_keyword_whereami(
     Parameters
     ==========
     aprs_message : 'str'
-        the original aprs pessage
+        the original aprs message
     users_callsign : 'str'
         Call sign of the user that has sent us the message
     aprsdotfi_api_key : 'str'
@@ -2144,6 +2136,58 @@ def get_units_based_on_users_callsign(users_callsign: str):
     return units
 
 
+def parse_keyword_units(aprs_message: str):
+    """
+    Keyword parser for the case where the user wants to override
+    the default 'unit of measure' (metric or imperial) which is
+    determined by having a lookt at the user's call sign - see
+    get_units_based_on_users_callsign(). This function however
+    takes a look at the user's MESSAGE and allows the user to
+    override the based-on-callsign default setting
+
+    Parameters
+    ==========
+    aprs_message : 'str'
+        the original aprs message
+
+    Returns
+    =======
+    found_my_keyword: 'bool'
+        True if the keyword and associated parameters have been found
+    parser_rd_units: 'dict'
+        response data dictionary, containing the keyword-relevant data
+    """
+
+    found_my_keyword = False
+    units = None
+
+    # check if the user wants to change the numeric format
+    # metric is always default, but we also allow imperial
+    # format if the user explicitly asks for it
+    # hint: these settings are not tied to the program's
+    # duty roster so if we find this keyword we will NOT set the
+    # duty roster marker and treat this as a 'what' command
+    regex_string = r"\b(mtr|metric)\b"
+    matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+    if matches:
+        units = "metric"
+        found_my_keyword = True
+        aprs_message = re.sub(regex_string, "", aprs_message).strip()
+
+    regex_string = r"\b(imp|imperial)\b"
+    matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+    if matches:
+        units = "imperial"
+        found_my_keyword = True
+        aprs_message = re.sub(regex_string, "", aprs_message).strip()
+
+    parser_rd_units = {
+        "aprs_message": aprs_message,
+        "units": units,
+    }
+    return found_my_keyword, parser_rd_units
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -2160,5 +2204,5 @@ if __name__ == "__main__":
         dapnet_passcode,
     ) = read_program_config()
     logger.info(
-        pformat(parse_input_message("aaa supermarket bbb", "df1jsl-1", aprsdotfi_api_key))
+        pformat(parse_input_message("whereami imperial", "df1jsl-1", aprsdotfi_api_key))
     )
