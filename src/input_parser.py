@@ -157,10 +157,10 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
 
     # Check if we need to switch to the imperial system ...
     units = get_units_based_on_users_callsign(users_callsign=users_callsign)
-
+    #
     # ... and then check if the user wants to override this default setting
     # because he said so in his command to us
-    # Note: this is
+    # Note: this is not an action keyword so we don't set the duty roster flag
     found_my_keyword, parser_rd_units = parse_keyword_units(aprs_message=aprs_message)
     if found_my_keyword:
         aprs_message = parser_rd_units["aprs_message"]
@@ -169,24 +169,19 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # check if the user wants to change the language
     # for openweathermap.com (currently fix for 'en' but
     # might change in the future
-    # hint: setting is not tied to the program's duty roster
-    regex_string = r"\b(lang|lng)\s*([a-zA-Z]{2})\b"
-    matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
-    if matches:
-        language = matches[2].lower()
-        aprs_message = re.sub(
-            regex_string, "", aprs_message, flags=re.IGNORECASE
-        ).strip()
+    # Note: this is not an action keyword so we don't set the duty roster flag
+    found_my_keyword, parser_rd_language = parse_keyword_language(aprs_message=aprs_message)
+    if found_my_keyword:
+        aprs_message = parser_rd_language["aprs_message"]
+        language = parser_rd_language["language"]
 
     # check if the user wants more than one result (if supported by respective keyword)
     # hint: setting is not tied to the program's duty roster
-    regex_string = r"\btop(2|3|4|5)\b"
-    matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
-    if matches:
-        number_of_results = int(matches[1])
-        aprs_message = re.sub(
-            regex_string, "", aprs_message, flags=re.IGNORECASE
-        ).strip()
+    # Note: this is not an action keyword so we don't set the duty roster flag
+    found_my_keyword, parser_rd_number_of_results = parse_keyword_number_of_results(aprs_message=aprs_message)
+    if found_my_keyword:
+        aprs_message = parser_rd_number_of_results["aprs_message"]
+        number_of_results = parser_rd_number_of_results["number_of_results"]
 
     # Now let's start with examining the message text.
     # Rule of thumb:
@@ -314,7 +309,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             zipcode = parser_rd_whereami["zipcode"]
             street = parser_rd_whereami["street"]
             street_number = parser_rd_whereami["street_number"]
-
 
     # Check if the user wants information about a specific CWOP ID
     if not found_my_duty_roster and not err:
@@ -2159,7 +2153,7 @@ def parse_keyword_units(aprs_message: str):
     """
 
     found_my_keyword = False
-    units = None
+    units = "metric"
 
     # check if the user wants to change the numeric format
     # metric is always default, but we also allow imperial
@@ -2188,6 +2182,85 @@ def parse_keyword_units(aprs_message: str):
     return found_my_keyword, parser_rd_units
 
 
+def parse_keyword_language(aprs_message: str):
+    """
+    Keyword parser for the case where the user wants to set a specific language
+
+    Parameters
+    ==========
+    aprs_message : 'str'
+        the original aprs message
+
+    Returns
+    =======
+    found_my_keyword: 'bool'
+        True if the keyword and associated parameters have been found
+    parser_rd_language: 'dict'
+        response data dictionary, containing the keyword-relevant data
+    """
+
+    found_my_keyword = False
+    language = "en"
+
+    # check if the user wants to change the language
+    # for openweathermap.com (currently fix for 'en' but
+    # might change in the future
+    # hint: setting is not tied to the program's duty roster
+    regex_string = r"\b(lang|lng)\s*([a-zA-Z]{2})\b"
+    matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+    if matches:
+        language = matches[2].lower().strip()
+        aprs_message = re.sub(
+            regex_string, "", aprs_message, flags=re.IGNORECASE
+        ).strip()
+        found_my_keyword = True
+
+    parser_rd_language = {
+        "aprs_message": aprs_message,
+        "language": language,
+    }
+    return found_my_keyword, parser_rd_language
+
+
+def parse_keyword_number_of_results(aprs_message: str):
+    """
+    Keyword parser for the case where the user wants more than one result
+
+    Parameters
+    ==========
+    aprs_message : 'str'
+        the original aprs message
+
+    Returns
+    =======
+    found_my_keyword: 'bool'
+        True if the keyword and associated parameters have been found
+    parser_rd_number_of_results: 'dict'
+        response data dictionary, containing the keyword-relevant data
+    """
+
+    found_my_keyword = False
+    number_of_results = 1
+
+    regex_string = r"\btop(2|3|4|5)\b"
+    matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+    if matches:
+        try:
+            number_of_results = int(matches[1])
+        except ValueError:
+            number_of_results = 1
+        aprs_message = re.sub(
+            regex_string, "", aprs_message, flags=re.IGNORECASE
+        ).strip()
+        found_my_keyword = True
+
+    parser_rd_number_of_results = {
+        "aprs_message": aprs_message,
+        "number_of_results": number_of_results,
+    }
+    return found_my_keyword, parser_rd_number_of_results
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -2204,5 +2277,5 @@ if __name__ == "__main__":
         dapnet_passcode,
     ) = read_program_config()
     logger.info(
-        pformat(parse_input_message("whereami imperial", "df1jsl-1", aprsdotfi_api_key))
+        pformat(parse_input_message("lang  de   ", "df1jsl-1", aprsdotfi_api_key))
     )
