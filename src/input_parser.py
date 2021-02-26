@@ -369,7 +369,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             human_readable_message = parser_rd_repeater["human_readable_message"]
             aprs_message = parser_rd_repeater["aprs_message"]
 
-    # Check for a keyword-based OpenStreetMap category (e.g. superparket, police)
+    # Check for an OpenStreetMap category (e.g. supermarket, police)
     if not found_my_duty_roster and not err:
         found_my_keyword, kw_err, parser_rd_osm = parse_what_keyword_osm_category(
             aprs_message=aprs_message,
@@ -612,32 +612,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                                 what = "wx"
                                 icao = None
                                 human_readable_message = f"Wx for '{icao}'"
-
-            if not found_my_duty_roster and not err:
-                for osm_category in mpad_config.osm_supported_keyword_categories:
-                    regex_string = rf"^({osm_category})$"
-                    matches = re.search(
-                        pattern=regex_string, string=word, flags=re.IGNORECASE
-                    )
-                    if matches:
-                        osm_special_phrase = osm_category
-                        what = "osm_special_phrase"
-                        found_my_duty_roster = True
-                        (
-                            success,
-                            latitude,
-                            longitude,
-                            altitude,
-                            lasttime,
-                            message_callsign,
-                        ) = get_position_on_aprsfi(
-                            aprsfi_callsign=users_callsign,
-                            aprsdotfi_api_key=aprsdotfi_api_key,
-                        )
-                        if not success:
-                            err = True
-                            human_readable_message = f"{errmsg_cannot_find_coords_for_user} {message_callsign}"
-                        break
 
             # Parse the "when" information if we don't have an error
             # and if we haven't retrieved the command data in a previous run
@@ -1523,8 +1497,8 @@ def parse_what_keyword_osm_category(
     latitude = longitude = 0.0
     altitude = 0
     lasttime = datetime.min
-
     what = message_callsign = None
+
     for osm_category in mpad_config.osm_supported_keyword_categories:
         regex_string = rf"\bosm\s*({osm_category})\b"
         matches = re.search(
@@ -1532,11 +1506,23 @@ def parse_what_keyword_osm_category(
         )
         if matches:
             osm_special_phrase = osm_category
-            what = "osm_special_phrase"
             found_my_keyword = True
             aprs_message = re.sub(
                 regex_string, "", aprs_message, flags=re.IGNORECASE
             ).strip()
+        if not found_my_keyword:
+            regex_string = rf"\b({osm_category})\b"
+            matches = re.search(
+                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+            )
+            if matches:
+                osm_special_phrase = osm_category
+                found_my_keyword = True
+                aprs_message = re.sub(
+                    regex_string, "", aprs_message, flags=re.IGNORECASE
+                ).strip()
+        if found_my_keyword:
+            what = "osm_special_phrase"
             (
                 success,
                 latitude,
@@ -2174,5 +2160,5 @@ if __name__ == "__main__":
         dapnet_passcode,
     ) = read_program_config()
     logger.info(
-        pformat(parse_input_message("aaa whereami bbb", "df1jsl-1", aprsdotfi_api_key))
+        pformat(parse_input_message("aaa supermarket bbb", "df1jsl-1", aprsdotfi_api_key))
     )
