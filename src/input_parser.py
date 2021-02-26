@@ -158,6 +158,28 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # Check if we need to switch to the imperial system
     units = get_units_based_on_users_callsign(users_callsign=users_callsign)
 
+    # check if the user wants to change the language
+    # for openweathermap.com (currently fix for 'en' but
+    # might change in the future
+    # hint: setting is not tied to the program's duty roster
+    regex_string = r"\b(lang|lng)\s*([a-zA-Z]{2})\b"
+    matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+    if matches:
+        language = matches[2].lower()
+        aprs_message = re.sub(
+            regex_string, "", aprs_message, flags=re.IGNORECASE
+        ).strip()
+
+    # check if the user wants more than one result (if supported by respective keyword)
+    # hint: setting is not tied to the program's duty roster
+    regex_string = r"\btop(2|3|4|5)\b"
+    matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+    if matches:
+        number_of_results = int(matches[1])
+        aprs_message = re.sub(
+            regex_string, "", aprs_message, flags=re.IGNORECASE
+        ).strip()
+
     # Now let's start with examining the message text.
     # Rule of thumb:
     # 1) the FIRST successful match will prevent
@@ -210,7 +232,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         (found_my_keyword, kw_err, parser_rd_icao_iata,) = parse_what_keyword_icao_iata(
             aprs_message=aprs_message,
             users_callsign=users_callsign,
-            aprsdotfi_api_key=aprsdotfi_api_key,
         )
         # did we find something? Then overwrite the existing variables with the retrieved content
         if found_my_keyword or kw_err:
@@ -427,28 +448,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             human_readable_message = parser_rd_repeater["human_readable_message"]
             aprs_message = parser_rd_repeater["aprs_message"]
 
-    # check if the user wants to change the language
-    # for openweathermap.com (currently fix for 'en' but
-    # might change in the future
-    # hint: setting is not tied to the program's duty roster
-    regex_string = r"\b(lang|lng)\s*([a-zA-Z]{2})\b"
-    matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
-    if matches:
-        language = matches[2].lower()
-        aprs_message = re.sub(
-            regex_string, "", aprs_message, flags=re.IGNORECASE
-        ).strip()
-
-    # check if the user wants more than one result (if supported by respective keyword)
-    # hint: setting is not tied to the program's duty roster
-    regex_string = r"\btop(2|3|4|5)\b"
-    matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
-    if matches:
-        number_of_results = int(matches[1])
-        aprs_message = re.sub(
-            regex_string, "", aprs_message, flags=re.IGNORECASE
-        ).strip()
-
     # Check for a keyword-based OpenStreetMap category (e.g. superparket, police)
     if not found_my_duty_roster and not err:
         found_my_keyword, kw_err, parser_rd_osm = parse_what_keyword_osm_category(
@@ -469,28 +468,19 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             message_callsign = parser_rd_osm["message_callsign"]
             osm_special_phrase = parser_rd_osm["osm_special_phrase"]
 
+    # Check for a keyword-based DAPNET message command
     if not found_my_duty_roster and not err:
-        regex_string = r"(dapnet|dapnethp)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[a-zA-Z0-9]{1,2})\s*([\D\s]+)"
-        matches = re.search(
-            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        found_my_keyword, kw_err, parser_rd_dapnet = parse_what_keyword_dapnet(
+            aprs_message=aprs_message, users_callsign=users_callsign
         )
-        if matches:
-            what = matches[1].lower()
-            message_callsign = matches[2].upper()
-            dapnet_message = matches[3]
-            aprs_message = re.sub(regex_string, "", aprs_message).strip()
-            found_my_duty_roster = True
-        if not found_my_duty_roster:
-            regex_string = r"(dapnet|dapnethp)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3})\s*([\D\s]+)"
-            matches = re.search(
-                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-            )
-            if matches:
-                what = matches[1].lower()
-                message_callsign = matches[2].upper()
-                dapnet_message = matches[3]
-                found_my_duty_roster = True
-                aprs_message = re.sub(regex_string, "", aprs_message).strip()
+        if found_my_keyword or kw_err:
+            found_my_duty_roster = found_my_keyword
+            err = kw_err
+            what = parser_rd_dapnet["what"]
+            message_callsign = parser_rd_dapnet["message_callsign"]
+            human_readable_message = parser_rd_dapnet["human_readable_message"]
+            aprs_message = parser_rd_dapnet["aprs_message"]
+            dapnet_message = parser_rd_dapnet["dapnet_message"]
 
     #
     # We have reached the end of the 'standard' position data processing
@@ -1257,9 +1247,7 @@ def parse_what_keyword_repeater(
     return found_my_keyword, kw_err, parser_rd_repeater
 
 
-def parse_what_keyword_icao_iata(
-    aprs_message: str, users_callsign: str, aprsdotfi_api_key: str
-):
+def parse_what_keyword_icao_iata(aprs_message: str, users_callsign: str):
     """
     Keyword parser for the IATA/ICAO keywords (resulting in
     a request for METAR data for a specific airport)
@@ -1270,8 +1258,6 @@ def parse_what_keyword_icao_iata(
         the original aprs pessage
     users_callsign : 'str'
         Call sign of the user that has sent us the message
-    aprsdotfi_api_key : 'str'
-        aprs.fi access key
 
     Returns
     =======
@@ -1751,7 +1737,7 @@ def parse_what_keyword_satpass(
         # name. If that is the case, return an error to the user
         # (this is to prevent the user from receiving a wx report instead -
         # wx would kick in as default)
-        satellite = matches[1].upper().strip()
+        satellite = matches[1].strip().upper()
         if len(satellite) == 0:
             human_readable_message = errmsg_no_satellite_specified
             kw_err = True
@@ -1790,6 +1776,66 @@ def parse_what_keyword_satpass(
         "aprs_message": aprs_message,
     }
     return found_my_keyword, kw_err, parser_rd_satpass
+
+
+def parse_what_keyword_dapnet(aprs_message: str, users_callsign: str):
+    """
+    Keyword parser for DAPNET messaging. Supports 'dapnet' and
+    'dapnethp' keywords (the latter sends out messages to DAPNET
+    with high priority)
+
+    Parameters
+    ==========
+    aprs_message : 'str'
+        the original aprs pessage
+    users_callsign : 'str'
+        Call sign of the user that has sent us the message
+
+    Returns
+    =======
+    found_my_keyword: 'bool'
+        True if the keyword and associated parameters have been found
+    kw_err: 'bool'
+        True if an error has occurred. If found_my_keyword is also true,
+        then the error marker overrides the 'found' keyword
+    parser_rd_osm: 'dict'
+        response data dictionary, containing the keyword-relevant data
+    """
+
+    found_my_keyword = kw_err = False
+    human_readable_message = dapnet_message = None
+    what = message_callsign = None
+
+    regex_string = r"\b(dapnet|dapnethp)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[a-zA-Z0-9]{1,2})\s*([\D\s]+)"
+    matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+    if matches:
+        what = matches[1].lower()
+        message_callsign = matches[2].upper().strip()
+        dapnet_message = matches[3].strip()
+        aprs_message = re.sub(regex_string, "", aprs_message).strip()
+        found_my_keyword = True
+    if not found_my_keyword:
+        regex_string = (
+            r"\b(dapnet|dapnethp)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3})\s*([\D\s]+)"
+        )
+        matches = re.search(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            what = matches[1].lower()
+            message_callsign = matches[2].upper().strip()
+            dapnet_message = matches[3].strip()
+            found_my_keyword = True
+            aprs_message = re.sub(regex_string, "", aprs_message).strip()
+
+    parser_rd_dapnet = {
+        "what": what,
+        "message_callsign": message_callsign,
+        "human_readable_message": human_readable_message,
+        "aprs_message": aprs_message,
+        "dapnet_message": dapnet_message,
+    }
+    return found_my_keyword, kw_err, parser_rd_dapnet
 
 
 def build_human_readable_address_message(response_data: dict):
@@ -1899,5 +1945,9 @@ if __name__ == "__main__":
         dapnet_passcode,
     ) = read_program_config()
     logger.info(
-        pformat(parse_input_message("satpass iss", "df1jsl-1", aprsdotfi_api_key))
+        pformat(
+            parse_input_message(
+                "dapnet df1jsl-8     Hallo Welt   ", "df1jsl-1", aprsdotfi_api_key
+            )
+        )
     )
