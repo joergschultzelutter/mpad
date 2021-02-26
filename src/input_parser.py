@@ -1143,19 +1143,19 @@ def parse_what_keyword_repeater(
     message_callsign = users_callsign
     found_my_keyword = kw_err = False
     regex_string = (
-        r"repeater\s*(fm|dstar|d-star|dmr|c4fm|ysf|tetra|atv)\s*(\d.?\d*(?:cm|m)\b)"
+        r"\brepeater\s*(fm|dstar|d-star|dmr|c4fm|ysf|tetra|atv)\s*(\d.?\d*(?:cm|m)\b)\b"
     )
     matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
-        repeater_mode = matches[1].upper()
-        repeater_band = matches[2].lower()
+        repeater_mode = matches[1].upper().strip()
+        repeater_band = matches[2].lower().strip()
         found_my_keyword = True
         aprs_message = re.sub(
             regex_string, "", aprs_message, flags=re.IGNORECASE
         ).strip()
     # If not found, search for repeater-band-mode
     if not found_my_keyword:
-        regex_string = r"repeater\s*(\d.?\d*(?:cm|m)\b)\s*(fm|dstar|d-star|dmr|c4fm|ysf|tetra|atv)\b"
+        regex_string = r"\brepeater\s*(\d.?\d*(?:cm|m)\b)\s*(fm|dstar|d-star|dmr|c4fm|ysf|tetra|atv)\b"
         matches = re.search(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
@@ -1168,7 +1168,7 @@ def parse_what_keyword_repeater(
             ).strip()
     # if not found, search for repeater - mode
     if not found_my_keyword:
-        regex_string = r"repeater\s*(fm|dstar|d-star|dmr|c4fm|ysf|tetra|atv)\b"
+        regex_string = r"\brepeater\s*(fm|dstar|d-star|dmr|c4fm|ysf|tetra|atv)\b"
         matches = re.search(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
@@ -1181,7 +1181,7 @@ def parse_what_keyword_repeater(
             ).strip()
     # if not found, search for repeater-band
     if not found_my_keyword:
-        regex_string = r"repeater\s*(\d.?\d*(?:cm|m)\b)"
+        regex_string = r"\brepeater\s*(\d.?\d*(?:cm|m)\b)\b"
         matches = re.search(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
@@ -1275,7 +1275,7 @@ def parse_what_keyword_icao_iata(aprs_message: str, users_callsign: str):
     # that is not the case, then return the do not request METAR data but a
     # regular wx report
     #
-    regex_string = r"(icao)\s*([a-zA-Z0-9]{4})"
+    regex_string = r"\b(icao)\s*([a-zA-Z0-9]{4})\b"
     matches = re.findall(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
         (_, icao) = matches[0]
@@ -1301,7 +1301,7 @@ def parse_what_keyword_icao_iata(aprs_message: str, users_callsign: str):
     # regular wx report
     #
     if not found_my_keyword and not kw_err:
-        regex_string = r"(iata)\s*([a-zA-Z0-9]{3})"
+        regex_string = r"\b(iata)\s*([a-zA-Z0-9]{3})\b"
         matches = re.findall(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
@@ -1860,7 +1860,7 @@ def parse_what_keyword_cwop_id(aprs_message: str, users_callsign: str):
     what = None
 
     # Check if the user wants information about a specific CWOP ID
-    regex_string = r"cwop\s*(\w+)"
+    regex_string = r"\bcwop\s*(\w+)\b"
     matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
         cwop_id = matches[1].upper().strip()
