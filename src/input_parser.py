@@ -279,6 +279,35 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             street_number = parser_rd_csm["street_number"]
             icao = parser_rd_csm["icao"]
 
+    # User wants to know his own position? (WHEREAMI keyword)
+    if not found_my_duty_roster and not err:
+        found_my_keyword, kw_err, parser_rd_whereami = parse_what_keyword_whereami(
+            aprs_message=aprs_message,
+            users_callsign=users_callsign,
+            aprsdotfi_api_key=aprsdotfi_api_key,
+        )
+        if found_my_keyword or kw_err:
+            found_my_duty_roster = found_my_keyword
+            err = kw_err
+            latitude = parser_rd_whereami["latitude"]
+            longitude = parser_rd_whereami["longitude"]
+            users_latitude = parser_rd_whereami["users_latitude"]
+            users_longitude = parser_rd_whereami["users_longitude"]
+            lasttime = parser_rd_whereami["lasttime"]
+            altitude = parser_rd_whereami["altitude"]
+            what = parser_rd_whereami["what"]
+            human_readable_message = parser_rd_whereami["human_readable_message"]
+            aprs_message = parser_rd_whereami["aprs_message"]
+            message_callsign = parser_rd_whereami["message_callsign"]
+            city = parser_rd_whereami["city"]
+            state = parser_rd_whereami["state"]
+            county = parser_rd_whereami["county"]
+            country = parser_rd_whereami["country"]
+            zipcode = parser_rd_whereami["zipcode"]
+            street = parser_rd_whereami["street"]
+            street_number = parser_rd_whereami["street_number"]
+
+
     # Check if the user wants information about a specific CWOP ID
     if not found_my_duty_roster and not err:
         found_my_keyword, kw_err, parser_rd_cwop_id = parse_what_keyword_cwop_id(
@@ -583,53 +612,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                                 what = "wx"
                                 icao = None
                                 human_readable_message = f"Wx for '{icao}'"
-
-            # User wants his own position on aprs.fi?
-            if not found_my_duty_roster and not err:
-                matches = re.search(
-                    pattern=r"^(whereami)$", string=word, flags=re.IGNORECASE
-                )
-                if matches:
-                    what = "whereis"
-                    message_callsign = users_callsign
-                    found_my_duty_roster = True
-                    human_readable_message = f"Pos for {message_callsign}"
-
-                    # Try to get the user's position on aprs.fi
-                    (
-                        success,
-                        latitude,
-                        longitude,
-                        altitude,
-                        lasttime,
-                        message_callsign,
-                    ) = get_position_on_aprsfi(
-                        aprsfi_callsign=users_callsign,
-                        aprsdotfi_api_key=aprsdotfi_api_key,
-                    )
-                    if not success:
-                        err = True
-                        human_readable_message = (
-                            f"{errmsg_cannot_find_coords_for_user} {message_callsign}"
-                        )
-                    else:
-                        # Finally, try to get the user's human readable address
-                        # we ignore any errors as all output fields will be properly initialized with default values
-                        success, response_data = get_reverse_geopy_data(
-                            latitude=latitude, longitude=longitude
-                        )
-                        # extract response fields; one/all can be 'None'
-                        city = response_data["city"]
-                        state = response_data["state"]
-                        country = response_data["country"]
-                        zipcode = response_data["zipcode"]
-                        county = response_data["county"]
-                        street = response_data["street"]
-                        street_number = response_data["street_number"]
-
-                        # Finally, set the user's latitude / longitude
-                        users_latitude = latitude
-                        users_longitude = longitude
 
             if not found_my_duty_roster and not err:
                 for osm_category in mpad_config.osm_supported_keyword_categories:
@@ -1977,6 +1959,114 @@ def parse_what_keyword_callsign_multi(
     return found_my_keyword, kw_err, parser_rd_csm
 
 
+def parse_what_keyword_whereami(
+    aprs_message: str, users_callsign: str, aprsdotfi_api_key: str
+):
+    """
+
+    Keyword parser for the 'whereami' command
+
+    Parameters
+    ==========
+    aprs_message : 'str'
+        the original aprs pessage
+    users_callsign : 'str'
+        Call sign of the user that has sent us the message
+    aprsdotfi_api_key : 'str'
+        aprs.fi access key
+
+    Returns
+    =======
+    found_my_keyword: 'bool'
+        True if the keyword and associated parameters have been found
+    kw_err: 'bool'
+        True if an error has occurred. If found_my_keyword is also true,
+        then the error marker overrides the 'found' keyword
+    parser_rd_whereami: 'dict'
+        response data dictionary, containing the keyword-relevant data
+    """
+
+    found_my_keyword = kw_err = success = False
+    human_readable_message = what = None
+    latitude = longitude = users_latitude = users_longitude = 0.0
+    altitude = 0
+    lasttime = datetime.min
+    what = message_callsign = city = state = county = None
+    zipcode = country = street = street_number = None
+
+    regex_string = r"\b(whereami)\b"
+    matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+    if matches:
+        what = "whereis"
+        message_callsign = users_callsign
+        found_my_keyword = True
+        human_readable_message = f"Pos for {message_callsign}"
+        aprs_message = re.sub(regex_string, "", aprs_message).strip()
+
+        # Try to get the user's position on aprs.fi
+        (
+            success,
+            latitude,
+            longitude,
+            altitude,
+            lasttime,
+            message_callsign,
+        ) = get_position_on_aprsfi(
+            aprsfi_callsign=users_callsign,
+            aprsdotfi_api_key=aprsdotfi_api_key,
+        )
+        if not success:
+            kw_err = True
+            human_readable_message = (
+                f"{errmsg_cannot_find_coords_for_user} {message_callsign}"
+            )
+        else:
+            # Finally, try to get the user's human readable address
+            # we ignore any errors as all output fields will be properly initialized with default values
+            success, response_data = get_reverse_geopy_data(
+                latitude=latitude, longitude=longitude
+            )
+            # extract response fields; one/all can be 'None'
+            city = response_data["city"]
+            state = response_data["state"]
+            country = response_data["country"]
+            zipcode = response_data["zipcode"]
+            county = response_data["county"]
+            street = response_data["street"]
+            street_number = response_data["street_number"]
+
+            # Finally, set the user's latitude / longitude
+            # which -as we request our own position- is the
+            # same latitude/longitude. Our target output
+            # function will recognise these values and know that
+            # the user's distance between these coordinates is
+            # zero and then refrain from trying to calculate
+            # any distance values
+            users_latitude = latitude
+            users_longitude = longitude
+
+    parser_rd_whereami = {
+        "latitude": latitude,
+        "longitude": longitude,
+        "users_latitude": users_latitude,
+        "users_longitude": users_longitude,
+        "lasttime": lasttime,
+        "altitude": altitude,
+        "what": what,
+        "human_readable_message": human_readable_message,
+        "aprs_message": aprs_message,
+        "message_callsign": message_callsign,
+        "city": city,
+        "state": state,
+        "county": county,
+        "country": country,
+        "zipcode": zipcode,
+        "street": street,
+        "street_number": street_number,
+    }
+    return found_my_keyword, kw_err, parser_rd_whereami
+
+
 def build_human_readable_address_message(response_data: dict):
     """
     Build the 'human readable message' based on the reverse-lookup
@@ -2084,5 +2174,5 @@ if __name__ == "__main__":
         dapnet_passcode,
     ) = read_program_config()
     logger.info(
-        pformat(parse_input_message("whereis df1jsl-8", "df1jsl-1", aprsdotfi_api_key))
+        pformat(parse_input_message("aaa whereami bbb", "df1jsl-1", aprsdotfi_api_key))
     )
