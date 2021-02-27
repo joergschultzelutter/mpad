@@ -428,21 +428,25 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             street = parser_rd_default_wx["street"]
             street_number = parser_rd_default_wx["street_number"]
 
-    #
-    # Hint: unlike the previous parse attempts, we no longer discard the
-    # parsed information from the original string. We also don't abort
-    # the search with an error in case some content could not get parsed
-    # as the next iteration may contain still some valid data
+    # Parse the "when" information if we don't have an error
+    # and if we haven't retrieved the command data in a previous run
+    if not found_when and not err:
+        _msg, found_when, when, date_offset, hour_offset = parse_when(aprs_message)
+        # if we've found something, then replace the original APRS message with
+        # what is left of it (minus the parts that were removed by the parse_when
+        # parser code
+        if found_when:
+            aprs_message = _msg
+
+
+
+
+
 
     # Split up the remainder of the string into multiple single strings
     if not err:
         wordlist = aprs_message.split()
         for word in wordlist:
-
-            # Parse the "when" information if we don't have an error
-            # and if we haven't retrieved the command data in a previous run
-            if not found_when and not err:
-                found_when, when, date_offset, hour_offset = parse_when(word)
 
             # Parse the "when_daytime" information if we don't have an error
             # and if we haven't retrieved the command data in a previous run
@@ -617,17 +621,19 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     return success, response_parameters
 
 
-def parse_when(word: str):
+def parse_when(aprs_message: str):
     """
     Parse the 'when' information of the user's message
     (specific day or relative day such as 'tomorrow'
     Parameters
     ==========
-    word : 'str'
-        portion from the original APRS message that we want to examine
+    aprs_message : 'str'
+        the original APRS message that we want to examine
 
     Returns
     =======
+    aprs_message : 'str'
+        the original APRS message minus some potential search hits
     found_when: 'bool'
         Current state of the 'when' parser. True if content has been found
     when: 'str'
@@ -647,77 +653,153 @@ def parse_when(word: str):
     when = None
     date_offset = hour_offset = -1
 
-    matches = re.search(pattern=r"^(tonite|tonight)$", string=word, flags=re.IGNORECASE)
-    if matches and not found_when:
-        when = "today"
-        found_when = True
-        date_offset = 0
-    matches = re.search(pattern=r"^(today)$", string=word, flags=re.IGNORECASE)
-    if matches and not found_when:
-        when = "today"
-        found_when = True
-        date_offset = 0
-    matches = re.search(pattern=r"^(tomorrow)$", string=word, flags=re.IGNORECASE)
-    if matches and not found_when:
-        when = "tomorrow"
-        found_when = True
-        date_offset = 1
-    matches = re.search(pattern=r"^(monday|mon)$", string=word, flags=re.IGNORECASE)
-    if matches and not found_when:
-        when = "monday"
-        found_when = True
-        date_offset = getdaysuntil(calendar.MONDAY)
-    matches = re.search(pattern=r"^(tuesday|tue)$", string=word, flags=re.IGNORECASE)
-    if matches and not found_when:
-        when = "tuesday"
-        found_when = True
-        date_offset = getdaysuntil(calendar.TUESDAY)
-    matches = re.search(pattern=r"^(wednesday|wed)$", string=word, flags=re.IGNORECASE)
-    if matches and not found_when:
-        when = "wednesday"
-        found_when = True
-        date_offset = getdaysuntil(calendar.WEDNESDAY)
-    matches = re.search(pattern=r"^(thursday|thu)$", string=word, flags=re.IGNORECASE)
-    if matches and not found_when:
-        when = "thursday"
-        found_when = True
-        date_offset = getdaysuntil(calendar.THURSDAY)
-    matches = re.search(pattern=r"^(friday|fri)$", string=word, flags=re.IGNORECASE)
-    if matches and not found_when:
-        when = "friday"
-        found_when = True
-        date_offset = getdaysuntil(calendar.FRIDAY)
-    matches = re.search(pattern=r"^(saturday|sat)$", string=word, flags=re.IGNORECASE)
-    if matches and not found_when:
-        when = "saturday"
-        found_when = True
-        date_offset = getdaysuntil(calendar.SATURDAY)
-    matches = re.search(pattern=r"^(sunday|sun)$", string=word, flags=re.IGNORECASE)
-    if matches and not found_when:
-        when = "sunday"
-        found_when = True
-        date_offset = getdaysuntil(calendar.SUNDAY)
-    matches = re.search(pattern=r"^(current|now)$", string=word, flags=re.IGNORECASE)
-    if matches and not found_when:
-        when = "now"
-        found_when = True
-        date_offset = 0
-    # OWM supports hourly wx forecasts for up to 47h, let's get that value
-    matches = re.search(
-        pattern=r"^(4[0-7]|3[0-9]|2[0-9]|1[0-9]|[1-9])h$",
-        string=word,
-        flags=re.IGNORECASE,
+    regex_match = None
+
+    regex_string = r"\b(tonite|tonight)\b"
+    matches = re.findall(
+        pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
     )
     if matches and not found_when:
-        when = "hour"
+        when = "today"
         found_when = True
-        try:
-            hour_offset = int(matches[1])
-        except ValueError:
-            when = None
-            found_when = False
-            hour_offset = 0
-    return found_when, when, date_offset, hour_offset
+        date_offset = 0
+        regex_match = regex_string
+    
+    if not found_when:
+        regex_string = r"\b(today)\b"        
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            when = "today"
+            found_when = True
+            date_offset = 0
+            regex_match = regex_string
+
+    if not found_when:
+        regex_string = r"\b(tomorrow)\b"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            when = "tomorrow"
+            found_when = True
+            date_offset = 1
+            regex_match = regex_string
+
+    if not found_when:
+        regex_string = r"\b(monday|mon)\b"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            when = "monday"
+            found_when = True
+            date_offset = getdaysuntil(calendar.MONDAY)
+            regex_match = regex_string
+
+    if not found_when:
+        regex_string = r"\b(tuesday|tue)\b"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            when = "tuesday"
+            found_when = True
+            date_offset = getdaysuntil(calendar.TUESDAY)
+            regex_match = regex_string
+
+    if not found_when:
+        regex_string = r"\b(wednesday|wed)\b"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            when = "wednesday"
+            found_when = True
+            date_offset = getdaysuntil(calendar.WEDNESDAY)
+            regex_match = regex_string
+
+    if not found_when:
+        regex_string = r"\b(thursday|thu)\b"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            when = "thursday"
+            found_when = True
+            date_offset = getdaysuntil(calendar.THURSDAY)
+            regex_match = regex_string
+
+    if not found_when:
+        regex_string = r"\b(friday|fri)\b"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            when = "friday"
+            found_when = True
+            date_offset = getdaysuntil(calendar.FRIDAY)
+            regex_match = regex_string
+
+    if not found_when:
+        regex_string = r"\b(saturday|sat)\b"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            when = "saturday"
+            found_when = True
+            date_offset = getdaysuntil(calendar.SATURDAY)
+            regex_match = regex_string
+
+    if not found_when:
+        regex_string = r"\b(sunday|sun)\b"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            when = "sunday"
+            found_when = True
+            date_offset = getdaysuntil(calendar.SUNDAY)
+            regex_match = regex_string
+
+    if not found_when:
+        regex_string = r"\b(current|now)\b"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            when = "now"
+            found_when = True
+            date_offset = 0
+            regex_match = regex_string
+
+    # OWM supports hourly wx forecasts for up to 47h, let's get that value
+    if not found_when:
+        regex_string = r"\b(4[0-7]|3[0-9]|2[0-9]|1[0-9]|[1-9])h\b"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            when = "hour"
+            found_when = True
+            try:
+                hour_offset = int(matches[1])
+                regex_match = regex_string
+            except ValueError:
+                when = None
+                found_when = False
+                hour_offset = 0
+
+    # If we have found an entry AND have a matching regex,
+    # then remove that string from the APRS message
+    if found_when and regex_match:
+        aprs_message = re.sub(
+            regex_match, "", aprs_message, flags=re.IGNORECASE
+        ).strip()
+
+    return aprs_message, found_when, when, date_offset, hour_offset
 
 
 def parse_when_daytime(word: str):
