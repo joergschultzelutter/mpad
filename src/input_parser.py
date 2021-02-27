@@ -403,30 +403,26 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # chance of misinterpreting the user's message
 
     if not found_my_duty_roster and not err:
-        (
-            found_my_keyword,
-            kw_err,
-            parser_rd_default_wx,
-        ) = parse_what_keyword_default_wx(
+        (found_my_keyword, kw_err, parser_rd_wx,) = parse_what_keyword_default_wx(
             aprs_message=aprs_message, users_callsign=users_callsign, language=language
         )
         # did we find something? Then overwrite the existing variables with the retrieved content
         if found_my_keyword or kw_err:
             found_my_duty_roster = found_my_keyword
             err = kw_err
-            latitude = parser_rd_default_wx["latitude"]
-            longitude = parser_rd_default_wx["longitude"]
-            what = parser_rd_default_wx["what"]
-            message_callsign = parser_rd_default_wx["message_callsign"]
-            human_readable_message = parser_rd_default_wx["human_readable_message"]
-            aprs_message = parser_rd_default_wx["aprs_message"]
-            city = parser_rd_default_wx["city"]
-            state = parser_rd_default_wx["state"]
-            country = parser_rd_default_wx["country"]
-            zipcode = parser_rd_default_wx["zipcode"]
-            county = parser_rd_default_wx["county"]
-            street = parser_rd_default_wx["street"]
-            street_number = parser_rd_default_wx["street_number"]
+            latitude = parser_rd_wx["latitude"]
+            longitude = parser_rd_wx["longitude"]
+            what = parser_rd_wx["what"]
+            message_callsign = parser_rd_wx["message_callsign"]
+            human_readable_message = parser_rd_wx["human_readable_message"]
+            aprs_message = parser_rd_wx["aprs_message"]
+            city = parser_rd_wx["city"]
+            state = parser_rd_wx["state"]
+            country = parser_rd_wx["country"]
+            zipcode = parser_rd_wx["zipcode"]
+            county = parser_rd_wx["county"]
+            street = parser_rd_wx["street"]
+            street_number = parser_rd_wx["street_number"]
 
     # Parse the "when" information if we don't have an error
     # and if we haven't retrieved the command data in a previous run
@@ -438,23 +434,15 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         if found_when:
             aprs_message = _msg
 
-
-
-
-
-
-    # Split up the remainder of the string into multiple single strings
-    if not err:
-        wordlist = aprs_message.split()
-        for word in wordlist:
-
-            # Parse the "when_daytime" information if we don't have an error
-            # and if we haven't retrieved the command data in a previous run
-            if not found_when_daytime and not err:
-                found_when_daytime, when_daytime = parse_when_daytime(word)
-
-    # Default checks outside of the 'for' loop - we may not have everything we
-    # need to process the user's message yet so let's have a look.
+    # Parse the "when_daytime" information if we don't have an error
+    # and if we haven't retrieved the command data in a previous run
+    if not found_when_daytime and not err:
+        _msg, found_when_daytime, when_daytime = parse_when_daytime(aprs_message)
+        # if we've found something, then replace the original APRS message with
+        # what is left of it (minus the parts that were removed by the parse_when
+        # parser code
+        if found_when_daytime:
+            aprs_message = _msg
 
     #
     # We have reached the very end of the parser
@@ -656,17 +644,15 @@ def parse_when(aprs_message: str):
     regex_match = None
 
     regex_string = r"\b(tonite|tonight)\b"
-    matches = re.findall(
-        pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-    )
-    if matches and not found_when:
+    matches = re.findall(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+    if matches:
         when = "today"
         found_when = True
         date_offset = 0
         regex_match = regex_string
-    
+
     if not found_when:
-        regex_string = r"\b(today)\b"        
+        regex_string = r"\b(today)\b"
         matches = re.findall(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
@@ -796,22 +782,24 @@ def parse_when(aprs_message: str):
     # then remove that string from the APRS message
     if found_when and regex_match:
         aprs_message = re.sub(
-            regex_match, "", aprs_message, flags=re.IGNORECASE
+            pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
         ).strip()
 
     return aprs_message, found_when, when, date_offset, hour_offset
 
 
-def parse_when_daytime(word: str):
+def parse_when_daytime(aprs_message: str):
     """
     Parse the 'when_daytime' information of the user's message
     (can either be the 'full' day or something like 'night','morning')
     ==========
-    word : 'str'
-        portion from the original APRS message that we want to examine
+    aprs_message : 'str'
+        the original APRS message that we want to examine
 
     Returns
     =======
+    aprs_message : 'str'
+        the original APRS message minus some potential search hits
     found_when_daytime: 'bool'
         Current state of the 'when_daytime' parser. True if content has been found
     when_daytime: 'str'
@@ -821,33 +809,63 @@ def parse_when_daytime(word: str):
     found_when_daytime = False
     when_daytime = None
 
-    # Parse the 'when_daytime' information
-    matches = re.search(pattern=r"^(full)$", string=word, flags=re.IGNORECASE)
-    if matches and not found_when_daytime:
+    regex_match = None
+
+    regex_string = r"\b(full)\b"
+    matches = re.findall(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+    if matches:
         when_daytime = "full"
         found_when_daytime = True
-    matches = re.search(pattern=r"^(morn|morning)$", string=word, flags=re.IGNORECASE)
-    if matches and not found_when_daytime:
-        when_daytime = "morning"
-        found_when_daytime = True
-    matches = re.search(
-        pattern=r"^(day|daytime|noon)$", string=word, flags=re.IGNORECASE
-    )
-    if matches and not found_when_daytime:
-        when_daytime = "daytime"
-        found_when_daytime = True
-    matches = re.search(pattern=r"^(eve|evening)$", string=word, flags=re.IGNORECASE)
-    if matches and not found_when_daytime:
-        when_daytime = "evening"
-        found_when_daytime = True
-    matches = re.search(
-        pattern=r"^(tonight|tonite|nite|night)$", string=word, flags=re.IGNORECASE
-    )
-    if matches and not found_when_daytime:
-        when_daytime = "night"
-        found_when_daytime = True
+        regex_match = regex_string
 
-    return found_when_daytime, when_daytime
+    if not when_daytime:
+        regex_string = r"\b(morn|morning)\b"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            when_daytime = "morning"
+            found_when_daytime = True
+            regex_match = regex_string
+
+    if not when_daytime:
+        regex_string = r"\b(day|daytime|noon)\b"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            when_daytime = "daytime"
+            found_when_daytime = True
+            regex_match = regex_string
+
+    if not when_daytime:
+        regex_string = r"\b(eve|evening)\b"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            when_daytime = "evening"
+            found_when_daytime = True
+            regex_match = regex_string
+
+    if not when_daytime:
+        regex_string = r"\b(tonight|tonite|nite|night)\b"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            when_daytime = "night"
+            found_when_daytime = True
+            regex_match = regex_string
+
+    # If we have found an entry AND have a matching regex,
+    # then remove that string from the APRS message
+    if found_when_daytime and regex_match:
+        aprs_message = re.sub(
+            pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
+        ).strip()
+
+    return aprs_message, found_when_daytime, when_daytime
 
 
 def parse_what_keyword_repeater(
@@ -894,7 +912,7 @@ def parse_what_keyword_repeater(
         repeater_band = matches[2].lower().strip()
         found_my_keyword = True
         aprs_message = re.sub(
-            regex_string, "", aprs_message, flags=re.IGNORECASE
+            pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
         ).strip()
     # If not found, search for repeater-band-mode
     if not found_my_keyword:
@@ -907,7 +925,7 @@ def parse_what_keyword_repeater(
             repeater_band = matches[1].lower()
             found_my_keyword = True
             aprs_message = re.sub(
-                regex_string, "", aprs_message, flags=re.IGNORECASE
+                pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
             ).strip()
     # if not found, search for repeater - mode
     if not found_my_keyword:
@@ -920,7 +938,7 @@ def parse_what_keyword_repeater(
             repeater_band = None
             found_my_keyword = True
             aprs_message = re.sub(
-                regex_string, "", aprs_message, flags=re.IGNORECASE
+                pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
             ).strip()
     # if not found, search for repeater-band
     if not found_my_keyword:
@@ -933,7 +951,7 @@ def parse_what_keyword_repeater(
             repeater_mode = None
             found_my_keyword = True
             aprs_message = re.sub(
-                regex_string, "", aprs_message, flags=re.IGNORECASE
+                pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
             ).strip()
     # If not found, just search for the repeater keyword
     if not found_my_keyword:
@@ -946,7 +964,7 @@ def parse_what_keyword_repeater(
             repeater_mode = None
             found_my_keyword = True
             aprs_message = re.sub(
-                regex_string, "", aprs_message, flags=re.IGNORECASE
+                pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
             ).strip()
     if found_my_keyword:
         what = "repeater"
@@ -1026,9 +1044,13 @@ def parse_what_keyword_metar(
     matches = re.findall(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
         (_, icao) = matches[0]
-        aprs_message = re.sub(regex_string, "", aprs_message).strip()
+        aprs_message = re.sub(
+            pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
+        ).strip()
         # try to look up the airport coordinates based on the ICAO code
-        success, latitude, longitude, metar_capable, icao = validate_icao(icao)
+        success, latitude, longitude, metar_capable, icao = validate_icao(
+            icao_code=icao
+        )
         if success:
             what = "metar"
             found_my_keyword = True
@@ -1057,9 +1079,13 @@ def parse_what_keyword_metar(
         )
         if matches:
             (_, iata) = matches[0]
-            aprs_message = re.sub(regex_string, "", aprs_message).strip()
+            aprs_message = re.sub(
+                pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
+            ).strip()
             # try to look up the airport coordinates based on the IATA code
-            success, latitude, longitude, metar_capable, icao = validate_iata(iata)
+            success, latitude, longitude, metar_capable, icao = validate_iata(
+                iata_code=iata
+            )
             if success:
                 what = "metar"
                 found_my_keyword = True
@@ -1086,7 +1112,7 @@ def parse_what_keyword_metar(
             # Check if what we found is a potential and existing ICAO code
             # it CAN be something else - so we need to check first
             success, latitude, longitude, metar_capable, icao = validate_icao(
-                matches[0].strip()
+                icao_code=matches[0].strip()
             )
             if success:
                 # Yes, we have verified this as a valid ICAO code
@@ -1094,7 +1120,10 @@ def parse_what_keyword_metar(
                 found_my_keyword = True
                 human_readable_message = f"METAR for '{icao}'"
                 aprs_message = re.sub(
-                    regex_string, "", aprs_message, flags=re.IGNORECASE
+                    pattern=regex_string,
+                    repl="",
+                    string=aprs_message,
+                    flags=re.IGNORECASE,
                 ).strip()
                 # If we did find the airport but it is not METAR-capable,
                 # then supply a wx report instead
@@ -1112,7 +1141,7 @@ def parse_what_keyword_metar(
             # Check if what we found is a potential and existing IATA code
             # it CAN be something else - so we need to check first
             success, latitude, longitude, metar_capable, icao = validate_iata(
-                matches[0].strip()
+                iata_code=matches[0].strip()
             )
             if success:
                 # Yes, we have verified this as a valid IATA code and have received the
@@ -1121,7 +1150,10 @@ def parse_what_keyword_metar(
                 found_my_keyword = True
                 human_readable_message = f"METAR for '{icao}'"
                 aprs_message = re.sub(
-                    regex_string, "", aprs_message, flags=re.IGNORECASE
+                    pattern=regex_string,
+                    repl="",
+                    string=aprs_message,
+                    flags=re.IGNORECASE,
                 ).strip()
                 # If we did find the airport but it is not METAR-capable,
                 # then supply a wx report instead
@@ -1149,7 +1181,7 @@ def parse_what_keyword_metar(
                 aprsfi_callsign=users_callsign, aprsdotfi_api_key=aprsdotfi_api_key
             )
             if success:
-                icao = get_nearest_icao(latitude, longitude)
+                icao = get_nearest_icao(latitude=latitude, longitude=longitude)
                 if icao:
                     (
                         success,
@@ -1162,6 +1194,12 @@ def parse_what_keyword_metar(
                         what = "metar"
                         human_readable_message = f"METAR for '{icao}'"
                         found_my_keyword = True
+                        aprs_message = re.sub(
+                            pattern=regex_string,
+                            repl="",
+                            string=aprs_message,
+                            flags=re.IGNORECASE,
+                        ).strip()
                         # If we did find the airport but it is not METAR-capable,
                         # then supply a wx report instead
                         if not metar_capable:
@@ -1211,7 +1249,7 @@ def parse_what_keyword_default_wx(
     kw_err: 'bool'
         True if an error has occurred. If found_my_keyword is also true,
         then the error marker overrides the 'found' keyword
-    parser_rd_default_wx: 'dict'
+    parser_rd_wx: 'dict'
         response data dictionary, containing the keyword-relevant data
     """
 
@@ -1247,7 +1285,7 @@ def parse_what_keyword_default_wx(
         country = country.upper().strip
         state = state.upper().strip  # in theory, this could also be a non-US state
         aprs_message = re.sub(
-            regex_string, "", aprs_message, flags=re.IGNORECASE
+            pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
         ).strip()
         geopy_query = {"city": city, "state": state, "country": country}
         found_my_keyword = True
@@ -1263,7 +1301,7 @@ def parse_what_keyword_default_wx(
             city = string.capwords(city).strip()
             state = state.upper().strip()
             aprs_message = re.sub(
-                regex_string, "", aprs_message, flags=re.IGNORECASE
+                pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
             ).strip()
             geopy_query = {"city": city, "state": state, "country": country}
             found_my_keyword = True
@@ -1280,7 +1318,7 @@ def parse_what_keyword_default_wx(
             state = None
             geopy_query = {"city": city, "country": country}
             aprs_message = re.sub(
-                regex_string, "", aprs_message, flags=re.IGNORECASE
+                pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
             ).strip()
             found_my_keyword = True
     # Did I find something at all?
@@ -1321,7 +1359,7 @@ def parse_what_keyword_default_wx(
             state = None
             country = country.upper().strip()
             aprs_message = re.sub(
-                regex_string, "", aprs_message, flags=re.IGNORECASE
+                pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
             ).strip()
             found_my_keyword = True
             # prepare the geopy reverse lookup string
@@ -1339,7 +1377,10 @@ def parse_what_keyword_default_wx(
                 country = "US"
                 zipcode = zipcode.strip()
                 aprs_message = re.sub(
-                    regex_string, "", aprs_message, flags=re.IGNORECASE
+                    pattern=regex_string,
+                    repl="",
+                    string=aprs_message,
+                    flags=re.IGNORECASE,
                 ).strip()
                 found_my_keyword = True
                 # prepare the geopy reverse lookup string
@@ -1396,7 +1437,7 @@ def parse_what_keyword_default_wx(
             state = None
             country = "US"
             aprs_message = re.sub(
-                regex_string, "", aprs_message, flags=re.IGNORECASE
+                pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
             ).strip()
             found_my_keyword = True
             what = "wx"
@@ -1444,7 +1485,7 @@ def parse_what_keyword_default_wx(
             human_readable_message = f"{matches[2]}"
             what = "wx"
             aprs_message = re.sub(
-                regex_string, "", aprs_message, flags=re.IGNORECASE
+                pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
             ).strip()
 
     # Not run another parser attempt on a keyword-less grid locator
@@ -1459,7 +1500,7 @@ def parse_what_keyword_default_wx(
             human_readable_message = f"{matches[0]}"
             what = "wx"
             aprs_message = re.sub(
-                regex_string, "", aprs_message, flags=re.IGNORECASE
+                pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
             ).strip()
 
     # Check if the user has specified lat/lon information
@@ -1499,7 +1540,10 @@ def parse_what_keyword_default_wx(
                     # We didn't find anything; use the original input for the HRM
                     human_readable_message = f"lat {latitude}/lon {longitude}"
                 aprs_message = re.sub(
-                    regex_string, "", aprs_message, flags=re.IGNORECASE
+                    pattern=regex_string,
+                    repl="",
+                    string=aprs_message,
+                    flags=re.IGNORECASE,
                 ).strip()
                 found_my_keyword = True
                 what = "wx"
@@ -1520,7 +1564,7 @@ def parse_what_keyword_default_wx(
             message_callsign = matches[0].upper()
             found_my_keyword = True
             aprs_message = re.sub(
-                regex_string, "", aprs_message, flags=re.IGNORECASE
+                pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
             ).strip()
         else:
             regex_string = r"\b([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3})\b"
@@ -1530,7 +1574,10 @@ def parse_what_keyword_default_wx(
             if matches:
                 message_callsign = matches[0].upper()
                 aprs_message = re.sub(
-                    regex_string, "", aprs_message, flags=re.IGNORECASE
+                    pattern=regex_string,
+                    repl="",
+                    string=aprs_message,
+                    flags=re.IGNORECASE,
                 ).strip()
                 found_my_keyword = True
         if found_my_keyword and message_callsign:
@@ -1573,7 +1620,7 @@ def parse_what_keyword_default_wx(
                         response_data
                     )
 
-    parser_rd_default_wx = {
+    parser_rd_wx = {
         "latitude": latitude,
         "longitude": longitude,
         "what": what,
@@ -1589,7 +1636,7 @@ def parse_what_keyword_default_wx(
         "street_number": street_number,
     }
 
-    return found_my_keyword, kw_err, parser_rd_default_wx
+    return found_my_keyword, kw_err, parser_rd_wx
 
 
 def parse_what_keyword_osm_category(
@@ -1634,7 +1681,7 @@ def parse_what_keyword_osm_category(
             osm_special_phrase = osm_category
             found_my_keyword = True
             aprs_message = re.sub(
-                regex_string, "", aprs_message, flags=re.IGNORECASE
+                pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
             ).strip()
         if not found_my_keyword:
             regex_string = rf"\b({osm_category})\b"
@@ -1645,7 +1692,10 @@ def parse_what_keyword_osm_category(
                 osm_special_phrase = osm_category
                 found_my_keyword = True
                 aprs_message = re.sub(
-                    regex_string, "", aprs_message, flags=re.IGNORECASE
+                    pattern=regex_string,
+                    repl="",
+                    string=aprs_message,
+                    flags=re.IGNORECASE,
                 ).strip()
         if found_my_keyword:
             what = "osm_special_phrase"
@@ -1743,7 +1793,10 @@ def parse_what_keyword_satpass(
                 human_readable_message = f"SatPass of {satellite}"
                 found_my_keyword = True
                 aprs_message = re.sub(
-                    regex_string, "", aprs_message, flags=re.IGNORECASE
+                    pattern=regex_string,
+                    repl="",
+                    string=aprs_message,
+                    flags=re.IGNORECASE,
                 ).strip()
             else:
                 human_readable_message = (
@@ -1798,7 +1851,9 @@ def parse_what_keyword_dapnet(aprs_message: str, users_callsign: str):
         what = matches[1].lower()
         message_callsign = matches[2].upper().strip()
         dapnet_message = matches[3].strip()
-        aprs_message = re.sub(regex_string, "", aprs_message).strip()
+        aprs_message = re.sub(
+            pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
+        ).strip()
         found_my_keyword = True
     if not found_my_keyword:
         regex_string = (
@@ -1812,7 +1867,9 @@ def parse_what_keyword_dapnet(aprs_message: str, users_callsign: str):
             message_callsign = matches[2].upper().strip()
             dapnet_message = matches[3].strip()
             found_my_keyword = True
-            aprs_message = re.sub(regex_string, "", aprs_message).strip()
+            aprs_message = re.sub(
+                pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
+            ).strip()
 
     parser_rd_dapnet = {
         "what": what,
@@ -1863,7 +1920,7 @@ def parse_what_keyword_cwop_id(aprs_message: str, users_callsign: str):
             human_readable_message = f"CWOP for {cwop_id}"
             found_my_keyword = True
             aprs_message = re.sub(
-                regex_string, "", aprs_message, flags=re.IGNORECASE
+                pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
             ).strip()
 
     parser_rd_cwop_id = {
@@ -1932,7 +1989,9 @@ def parse_what_keyword_callsign_multi(
     if matches:
         what = matches[1].lower()
         message_callsign = matches[2].upper()
-        aprs_message = re.sub(regex_string, "", aprs_message).strip()
+        aprs_message = re.sub(
+            pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
+        ).strip()
         found_my_keyword = True
     if not found_my_keyword:
         # Check - call sign without SSID
@@ -1944,7 +2003,9 @@ def parse_what_keyword_callsign_multi(
             what = matches[1].lower()
             message_callsign = matches[2].upper()
             found_my_keyword = True
-            aprs_message = re.sub(regex_string, "", aprs_message).strip()
+            aprs_message = re.sub(
+                pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
+            ).strip()
     if not found_my_keyword:
         # Check - call sign whose pattern deviates from the standard call sign pattern (e.g. bot, CWOP station etc)
         regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar)\s*(\w+)\b"
@@ -1955,7 +2016,9 @@ def parse_what_keyword_callsign_multi(
             what = matches[1].lower()
             message_callsign = matches[2].upper().strip()
             found_my_keyword = True
-            aprs_message = re.sub(regex_string, "", aprs_message).strip()
+            aprs_message = re.sub(
+                pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
+            ).strip()
     if not found_my_keyword:
         # Check - no call sign at all. In this case, we use the sender's call sign as reference
         regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar)\b"
@@ -1966,7 +2029,9 @@ def parse_what_keyword_callsign_multi(
             what = matches[1].lower()
             message_callsign = users_callsign
             found_my_keyword = True
-            aprs_message = re.sub(regex_string, "", aprs_message).strip()
+            aprs_message = re.sub(
+                pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
+            ).strip()
     if found_my_keyword:
         (
             success,
@@ -2113,7 +2178,9 @@ def parse_what_keyword_whereami(
         message_callsign = users_callsign
         found_my_keyword = True
         human_readable_message = f"Pos for {message_callsign}"
-        aprs_message = re.sub(regex_string, "", aprs_message).strip()
+        aprs_message = re.sub(
+            pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
+        ).strip()
 
         # Try to get the user's position on aprs.fi
         (
@@ -2306,14 +2373,18 @@ def parse_keyword_units(aprs_message: str):
     if matches:
         units = "metric"
         found_my_keyword = True
-        aprs_message = re.sub(regex_string, "", aprs_message).strip()
+        aprs_message = re.sub(
+            pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
+        ).strip()
 
     regex_string = r"\b(imp|imperial)\b"
     matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
         units = "imperial"
         found_my_keyword = True
-        aprs_message = re.sub(regex_string, "", aprs_message).strip()
+        aprs_message = re.sub(
+            pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
+        ).strip()
 
     parser_rd_units = {
         "aprs_message": aprs_message,
@@ -2351,7 +2422,7 @@ def parse_keyword_language(aprs_message: str):
     if matches:
         language = matches[2].lower().strip()
         aprs_message = re.sub(
-            regex_string, "", aprs_message, flags=re.IGNORECASE
+            pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
         ).strip()
         found_my_keyword = True
 
@@ -2390,7 +2461,7 @@ def parse_keyword_number_of_results(aprs_message: str):
         except ValueError:
             number_of_results = 1
         aprs_message = re.sub(
-            regex_string, "", aprs_message, flags=re.IGNORECASE
+            pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
         ).strip()
         found_my_keyword = True
 
@@ -2416,4 +2487,6 @@ if __name__ == "__main__":
         dapnet_callsign,
         dapnet_passcode,
     ) = read_program_config()
-    logger.info(pformat(parse_input_message("metar", "df1jsl-1", aprsdotfi_api_key)))
+    logger.info(
+        pformat(parse_input_message("metar friday nite", "df1jsl-1", aprsdotfi_api_key))
+    )
