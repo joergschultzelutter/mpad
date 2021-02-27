@@ -425,45 +425,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         wordlist = aprs_message.split()
         for word in wordlist:
 
-            # Look for a single 5-digit code
-            # if found then assume that it is a zip code from the US
-            # and set all variables accordingly
-            if not found_my_duty_roster and not err:
-                matches = re.findall(pattern=r"^([0-9]{5})$", string=word)
-                if matches:
-                    zipcode = matches[0]
-                    state = None
-                    country = "US"
-                    found_my_duty_roster = True
-                    what = "wx"
-                    human_readable_message = f"Zip {zipcode};{country}"
-                    success, latitude, longitude = get_geocode_geopy_data(
-                        {"postalcode": zipcode, "country": country}
-                    )
-                    if not success:
-                        err = True
-                        human_readable_message = errmsg_cannot_find_coords_for_address
-                        break
-                    else:
-                        # Finally, try to get a real city name
-                        success, response_data = get_reverse_geopy_data(
-                            latitude=latitude, longitude=longitude
-                        )
-                        if success:
-                            # extract all fields as they will be used for the creation of the
-                            # outgoing data dictionary
-                            city = response_data["city"]
-                            state = response_data["state"]
-                            country = response_data["country"]
-                            # zipcode = response_data["zipcode"]
-                            county = response_data["county"]
-                            street = response_data["street"]
-                            street_number = response_data["street_number"]
-                            # build the HRM message based on the given data
-                            human_readable_message = (
-                                build_human_readable_address_message(response_data)
-                            )
-
             # Look for a 4..6 character Maidenhead coordinate
             if not found_my_duty_roster and not err:
                 matches = re.search(
@@ -1369,6 +1330,50 @@ def parse_what_keyword_default_wx(
                 else:
                     kw_err = True
                     human_readable_message = errmsg_cannot_find_coords_for_address
+
+    # Look for a single 5-digit code
+    # if found then assume that it is a zip code from the US
+    # and set all other variables accordingly
+    if not found_my_keyword and not kw_err:
+        regex_string = r"\b([0-9]{5})\b"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            zipcode = matches[0]
+            state = None
+            country = "US"
+            aprs_message = re.sub(
+                regex_string, "", aprs_message, flags=re.IGNORECASE
+            ).strip()
+            found_my_keyword = True
+            what = "wx"
+            human_readable_message = f"Zip {zipcode};{country}"
+            success, latitude, longitude = get_geocode_geopy_data(
+                {"postalcode": zipcode, "country": country}
+            )
+            if not success:
+                kw_err = True
+                human_readable_message = errmsg_cannot_find_coords_for_address
+            else:
+                # Finally, try to get a real city name
+                success, response_data = get_reverse_geopy_data(
+                    latitude=latitude, longitude=longitude
+                )
+                if success:
+                    # extract all fields as they will be used for the creation of the
+                    # outgoing data dictionary
+                    city = response_data["city"]
+                    state = response_data["state"]
+                    country = response_data["country"]
+                    zipcode = response_data["zipcode"]
+                    county = response_data["county"]
+                    street = response_data["street"]
+                    street_number = response_data["street_number"]
+                    # build the HRM message based on the given data
+                    human_readable_message = (
+                        build_human_readable_address_message(response_data)
+                    )
 
     # check if the user has requested a set of maidenhead coordinates
     # Can either be 4- or 6-character set of maidenhead coordinates
@@ -2277,5 +2282,5 @@ if __name__ == "__main__":
         dapnet_passcode,
     ) = read_program_config()
     logger.info(
-        pformat(parse_input_message("lang  de   ", "df1jsl-1", aprsdotfi_api_key))
+        pformat(parse_input_message("aaa 90403 lang  de   ", "df1jsl-1", aprsdotfi_api_key))
     )
