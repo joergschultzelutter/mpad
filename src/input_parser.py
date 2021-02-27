@@ -424,6 +424,11 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             street = parser_rd_wx["street"]
             street_number = parser_rd_wx["street_number"]
 
+    # By now, we should know WHAT the user wants. Now let's try to
+    # figure out WHEN certain things are expected for. We only enter
+    # the WHEN parser routines in case the previous parser did not
+    # encounter any errors.
+    #
     # Parse the "when" information if we don't have an error
     # and if we haven't retrieved the command data in a previous run
     if not found_when and not err:
