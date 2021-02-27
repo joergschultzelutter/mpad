@@ -170,7 +170,9 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # for openweathermap.com (currently fix for 'en' but
     # might change in the future
     # Note: this is not an action keyword so we don't set the duty roster flag
-    found_my_keyword, parser_rd_language = parse_keyword_language(aprs_message=aprs_message)
+    found_my_keyword, parser_rd_language = parse_keyword_language(
+        aprs_message=aprs_message
+    )
     if found_my_keyword:
         aprs_message = parser_rd_language["aprs_message"]
         language = parser_rd_language["language"]
@@ -178,10 +180,21 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # check if the user wants more than one result (if supported by respective keyword)
     # hint: setting is not tied to the program's duty roster
     # Note: this is not an action keyword so we don't set the duty roster flag
-    found_my_keyword, parser_rd_number_of_results = parse_keyword_number_of_results(aprs_message=aprs_message)
+    found_my_keyword, parser_rd_number_of_results = parse_keyword_number_of_results(
+        aprs_message=aprs_message
+    )
     if found_my_keyword:
         aprs_message = parser_rd_number_of_results["aprs_message"]
         number_of_results = parser_rd_number_of_results["number_of_results"]
+
+    # check if the user wants to receive the MPAD help pages
+    if not found_my_duty_roster and not err:
+        matches = re.search(
+            pattern=r"\b(info|help)\b", string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches and not what:
+            what = "help"
+            found_my_duty_roster = True
 
     # Now let's start with examining the message text.
     # Rule of thumb:
@@ -198,22 +211,24 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # At the time when we only look at these simple words, we
     # do not replace any content from the original message
 
-    # Check if the user has requested information wrt a 4-character ICAO code
-    # or a 3-digit IATA code with the IATA/ICAO keywords
+    # Check if the user has requested information wrt METAR data
+    # potential inputs: ICAO/IATA qualifiers with/without keyword
+    # and METAR keyword
     if not found_my_duty_roster and not err:
-        (found_my_keyword, kw_err, parser_rd_icao_iata,) = parse_what_keyword_icao_iata(
+        (found_my_keyword, kw_err, parser_rd_metar,) = parse_what_keyword_metar(
             aprs_message=aprs_message,
             users_callsign=users_callsign,
+            aprsdotfi_api_key=aprsdotfi_api_key,
         )
         # did we find something? Then overwrite the existing variables with the retrieved content
         if found_my_keyword or kw_err:
             found_my_duty_roster = found_my_keyword
             err = kw_err
-            what = parser_rd_icao_iata["what"]
-            message_callsign = parser_rd_icao_iata["message_callsign"]
-            icao = parser_rd_icao_iata["icao"]
-            human_readable_message = parser_rd_icao_iata["human_readable_message"]
-            aprs_message = parser_rd_icao_iata["aprs_message"]
+            what = parser_rd_metar["what"]
+            message_callsign = parser_rd_metar["message_callsign"]
+            icao = parser_rd_metar["icao"]
+            human_readable_message = parser_rd_metar["human_readable_message"]
+            aprs_message = parser_rd_metar["aprs_message"]
 
     # Check if the user wants one of the following info
     # for a specific call sign WITH or withOUT SSID:
@@ -381,7 +396,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     #
     # IMPORTANT:
     #
-    # This is the default/fallback branch which makes a lot of guesstimates
+    # This is the default/fallback branch which makes a LOT of guesstimates.
     # For example, if you simply send a call sign to MPAD, it will assume that
     # you want the wx for this call sign. Therefore, this parser process
     # has to be placed at the END of the parser - otherwise, there is a high
@@ -414,15 +429,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             street_number = parser_rd_default_wx["street_number"]
 
     #
-    # We have reached the end of the 'standard' position data processing
-    # for that kind of data which may come with a command AND an associated
-    # parameter. By this point in time, we may know 'what' the user wants.
-    # However, we still don't know for what time slot the user wants the
-    # data. In addition, the 'what' question might still be unanswered.
-    # Henceforth, the remainder of the original message is going to be
-    # split up into separate sub string which we are now going to examine
-    # in a more detailed approach.
-    #
     # Hint: unlike the previous parse attempts, we no longer discard the
     # parsed information from the original string. We also don't abort
     # the search with an error in case some content could not get parsed
@@ -432,84 +438,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     if not err:
         wordlist = aprs_message.split()
         for word in wordlist:
-
-            # Try to check if the user has submitted an ICAO code without
-            # submitting a specific pre- qualifier prefix
-            # If yes, then assume that we want METAR data unless the airport
-            # does not support METAR (in that case, we will go for standard wx)
-            if not found_my_duty_roster and not err:
-                matches = re.search(pattern=r"^([a-zA-Z0-9]{4})$", string=word)
-                if matches:
-                    success, latitude, longitude, metar_capable, icao = validate_icao(
-                        word
-                    )
-                    if success:
-                        what = "metar"
-                        found_my_duty_roster = True
-                        human_readable_message = f"METAR for '{icao}'"
-                        # If we did find the airport but it is not METAR-capable,
-                        # then supply a wx report instead
-                        if not metar_capable:
-                            what = "wx"
-                            icao = None
-                            human_readable_message = f"Wx for '{icao}'"
-
-            # Try to check if the user has submitted an IATA code without
-            # submitting a specific pre- qualifier prefix
-            # If yes, then assume that we want METAR data unless the airport
-            # does not support METAR (in that case, we will go for standard wx)
-            if not found_my_duty_roster:
-                matches = re.search(pattern=r"^([a-zA-Z0-9]{3})$", string=word)
-                if matches:
-                    success, latitude, longitude, metar_capable, icao = validate_iata(
-                        word
-                    )
-                    if success:
-                        found_my_duty_roster = True
-                        what = "metar"
-                        human_readable_message = f"METAR for '{icao}'"
-                        # If we did find the airport but it is not METAR-capable,
-                        # then supply a wx report instead
-                        if not metar_capable:
-                            what = "wx"
-                            icao = None
-                            human_readable_message = f"Wx for '{icao}'"
-
-            # if the user has specified the 'metar' keyword, then
-            # try to determine the nearest airport in relation to
-            # the user's own call sign position
-            matches = re.search(pattern=r"^(metar)$", string=word, flags=re.IGNORECASE)
-            if matches:
-                (
-                    success,
-                    latitude,
-                    longitude,
-                    altitude,
-                    lasttime,
-                    message_callsign,
-                ) = get_position_on_aprsfi(
-                    aprsfi_callsign=users_callsign, aprsdotfi_api_key=aprsdotfi_api_key
-                )
-                if success:
-                    icao = get_nearest_icao(latitude, longitude)
-                    if icao:
-                        (
-                            success,
-                            latitude,
-                            longitude,
-                            metar_capable,
-                            icao,
-                        ) = validate_icao(icao)
-                        if success:
-                            what = "metar"
-                            human_readable_message = f"METAR for '{icao}'"
-                            found_my_duty_roster = True
-                            # If we did find the airport but it is not METAR-capable,
-                            # then supply a wx report instead
-                            if not metar_capable:
-                                what = "wx"
-                                icao = None
-                                human_readable_message = f"Wx for '{icao}'"
 
             # Parse the "when" information if we don't have an error
             # and if we haven't retrieved the command data in a previous run
@@ -521,21 +449,18 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             if not found_when_daytime and not err:
                 found_when_daytime, when_daytime = parse_when_daytime(word)
 
-            # check if the user wants to receive the help pages
-            if not found_my_duty_roster and not err:
-                matches = re.search(
-                    pattern=r"^(info|help)$", string=word, flags=re.IGNORECASE
-                )
-                if matches and not what:
-                    what = "help"
-                    found_my_duty_roster = True
-
     # Default checks outside of the 'for' loop - we may not have everything we
     # need to process the user's message yet so let's have a look.
 
+    #
+    # We have reached the very end of the parser
+    # Now check if we have received something useful
+    #
+    #
     # Check if we found ANYTHING valid at all
     if not what and not when and not when_daytime:
-        human_readable_message = errmsg_invalid_command
+        if not human_readable_message:
+            human_readable_message = errmsg_invalid_command
         err = True
 
     # Apply default to 'when' setting if still not populated
@@ -642,7 +567,8 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                         human_readable_message = errmsg_cannot_find_coords_for_user
                         err = True
         else:
-            human_readable_message = errmsg_invalid_command
+            if not human_readable_message:
+                human_readable_message = errmsg_invalid_command
             err = True
 
     # Generate dictionary which contains what we have fund out about the user's request
@@ -977,9 +903,11 @@ def parse_what_keyword_repeater(
     return found_my_keyword, kw_err, parser_rd_repeater
 
 
-def parse_what_keyword_icao_iata(aprs_message: str, users_callsign: str):
+def parse_what_keyword_metar(
+    aprs_message: str, users_callsign: str, aprsdotfi_api_key: str
+):
     """
-    Keyword parser for the IATA/ICAO keywords (resulting in
+    Keyword parser for the IATA/ICAO/METAR keywords (resulting in
     a request for METAR data for a specific airport)
 
     Parameters
@@ -988,6 +916,8 @@ def parse_what_keyword_icao_iata(aprs_message: str, users_callsign: str):
         the original aprs message
     users_callsign : 'str'
         Call sign of the user that has sent us the message
+    aprsdotfi_api_key : 'str'
+        aprs.fi access key
 
     Returns
     =======
@@ -996,7 +926,7 @@ def parse_what_keyword_icao_iata(aprs_message: str, users_callsign: str):
     kw_err: 'bool'
         True if an error has occurred. If found_my_keyword is also true,
         then the error marker overrides the 'found' keyword
-    parser_rd_icao_iata: 'dict'
+    parser_rd_metar: 'dict'
         response data dictionary, containing the keyword-relevant data
     """
 
@@ -1025,10 +955,13 @@ def parse_what_keyword_icao_iata(aprs_message: str, users_callsign: str):
             # then provide a wx report instead
             if not metar_capable:
                 what = "wx"
-                icao = None
                 human_readable_message = f"Wx for '{icao}'"
         else:
+            # the user has explicitly requested an ICAO code which seems to be invalid
+            # Therefore, flag this as error and return the message back to the user
+            human_readable_message = f"Cannot locate airport ICAO code {icao}"
             icao = None
+            kw_err = True
 
     # Check if the user has requested information wrt a 3-character IATA code
     # if we can find the code, then check if the airport is METAR-capable. If
@@ -1053,12 +986,108 @@ def parse_what_keyword_icao_iata(aprs_message: str, users_callsign: str):
                 # then provide a wx report instead
                 if not metar_capable:
                     what = "wx"
-                    icao = None
                     human_readable_message = f"Wx for '{icao}'"
             else:
+                # the user has explicitly requested an IATA code which seems to be invalid
+                # Therefore, flag this as error and return the message back to the user
+                human_readable_message = f"Cannot locate airport IATA code {iata}"
                 icao = None
+                kw_err = True
 
-    parser_rd_icao_iata = {
+    # Check for a keyword-less ICAO code
+    if not found_my_keyword and not kw_err:
+        regex_string = r"\b([a-zA-Z0-9]{4})\b"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            # Check if what we found is a potential and existing ICAO code
+            # it CAN be something else - so we need to check first
+            success, latitude, longitude, metar_capable, icao = validate_icao(
+                matches[0].strip()
+            )
+            if success:
+                # Yes, we have verified this as a valid ICAO code
+                what = "metar"
+                found_my_keyword = True
+                human_readable_message = f"METAR for '{icao}'"
+                aprs_message = re.sub(
+                    regex_string, "", aprs_message, flags=re.IGNORECASE
+                ).strip()
+                # If we did find the airport but it is not METAR-capable,
+                # then supply a wx report instead
+                if not metar_capable:
+                    what = "wx"
+                    human_readable_message = f"Wx for '{icao}'"
+
+    # Check for a keyword-less IATA code
+    if not found_my_keyword and not kw_err:
+        regex_string = r"\b([a-zA-Z0-9]{3})\b"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            # Check if what we found is a potential and existing IATA code
+            # it CAN be something else - so we need to check first
+            success, latitude, longitude, metar_capable, icao = validate_iata(
+                matches[0].strip()
+            )
+            if success:
+                # Yes, we have verified this as a valid IATA code and have received the
+                # corresponding ICAO code
+                what = "metar"
+                found_my_keyword = True
+                human_readable_message = f"METAR for '{icao}'"
+                aprs_message = re.sub(
+                    regex_string, "", aprs_message, flags=re.IGNORECASE
+                ).strip()
+                # If we did find the airport but it is not METAR-capable,
+                # then supply a wx report instead
+                if not metar_capable:
+                    what = "wx"
+                    human_readable_message = f"Wx for '{icao}'"
+
+    # if the user has specified the 'metar' keyword, then
+    # try to determine the nearest airport in relation to
+    # the user's own call sign position
+    if not found_my_keyword and not kw_err:
+        regex_string = r"\b(metar)\b"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            (
+                success,
+                latitude,
+                longitude,
+                altitude,
+                lasttime,
+                message_callsign,
+            ) = get_position_on_aprsfi(
+                aprsfi_callsign=users_callsign, aprsdotfi_api_key=aprsdotfi_api_key
+            )
+            if success:
+                icao = get_nearest_icao(latitude, longitude)
+                if icao:
+                    (
+                        success,
+                        latitude,
+                        longitude,
+                        metar_capable,
+                        icao,
+                    ) = validate_icao(icao)
+                    if success:
+                        what = "metar"
+                        human_readable_message = f"METAR for '{icao}'"
+                        found_my_keyword = True
+                        # If we did find the airport but it is not METAR-capable,
+                        # then supply a wx report instead
+                        if not metar_capable:
+                            what = "wx"
+                            icao = None
+                            human_readable_message = f"Wx for '{icao}'"
+
+    parser_rd_metar = {
         "what": what,
         "message_callsign": users_callsign,
         "human_readable_message": human_readable_message,
@@ -1066,7 +1095,7 @@ def parse_what_keyword_icao_iata(aprs_message: str, users_callsign: str):
         "icao": icao,
     }
 
-    return found_my_keyword, kw_err, parser_rd_icao_iata
+    return found_my_keyword, kw_err, parser_rd_metar
 
 
 def parse_what_keyword_default_wx(
@@ -1312,8 +1341,8 @@ def parse_what_keyword_default_wx(
                     street = response_data["street"]
                     street_number = response_data["street_number"]
                     # build the HRM message based on the given data
-                    human_readable_message = (
-                        build_human_readable_address_message(response_data)
+                    human_readable_message = build_human_readable_address_message(
+                        response_data
                     )
 
     # check if the user has requested a set of maidenhead coordinates
@@ -1387,7 +1416,9 @@ def parse_what_keyword_default_wx(
                 else:
                     # We didn't find anything; use the original input for the HRM
                     human_readable_message = f"lat {latitude}/lon {longitude}"
-                aprs_message = re.sub(regex_string, "", aprs_message,flags=re.IGNORECASE).strip()
+                aprs_message = re.sub(
+                    regex_string, "", aprs_message, flags=re.IGNORECASE
+                ).strip()
                 found_my_keyword = True
                 what = "wx"
             else:
@@ -1456,8 +1487,8 @@ def parse_what_keyword_default_wx(
                     street = response_data["street"]
                     street_number = response_data["street_number"]
                     # build the HRM message based on the given data
-                    human_readable_message = (
-                        build_human_readable_address_message(response_data)
+                    human_readable_message = build_human_readable_address_message(
+                        response_data
                     )
 
     parser_rd_default_wx = {
@@ -2303,6 +2334,4 @@ if __name__ == "__main__":
         dapnet_callsign,
         dapnet_passcode,
     ) = read_program_config()
-    logger.info(
-        pformat(parse_input_message("dapnet df1jsl-8 hello World  ", "df1jsl-1", aprsdotfi_api_key))
-    )
+    logger.info(pformat(parse_input_message("metar", "df1jsl-1", aprsdotfi_api_key)))
