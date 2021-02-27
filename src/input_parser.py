@@ -198,37 +198,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # At the time when we only look at these simple words, we
     # do not replace any content from the original message
 
-    # The parser process starts with wx-related keyword data, meaning
-    # that the user has either specified a keyword-less address, a zip code
-    # with keyword and (potentially) with country, a grid locator or
-    # a set of lat/lon coordinates.
-
-    if not found_my_duty_roster and not err:
-        (
-            found_my_keyword,
-            kw_err,
-            parser_rd_default_wx,
-        ) = parse_what_keyword_default_wx(
-            aprs_message=aprs_message, users_callsign=users_callsign, language=language
-        )
-        # did we find something? Then overwrite the existing variables with the retrieved content
-        if found_my_keyword or kw_err:
-            found_my_duty_roster = found_my_keyword
-            err = kw_err
-            latitude = parser_rd_default_wx["latitude"]
-            longitude = parser_rd_default_wx["longitude"]
-            what = parser_rd_default_wx["what"]
-            message_callsign = parser_rd_default_wx["message_callsign"]
-            human_readable_message = parser_rd_default_wx["human_readable_message"]
-            aprs_message = parser_rd_default_wx["aprs_message"]
-            city = parser_rd_default_wx["city"]
-            state = parser_rd_default_wx["state"]
-            country = parser_rd_default_wx["country"]
-            zipcode = parser_rd_default_wx["zipcode"]
-            county = parser_rd_default_wx["county"]
-            street = parser_rd_default_wx["street"]
-            street_number = parser_rd_default_wx["street_number"]
-
     # Check if the user has requested information wrt a 4-character ICAO code
     # or a 3-digit IATA code with the IATA/ICAO keywords
     if not found_my_duty_roster and not err:
@@ -405,6 +374,45 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             aprs_message = parser_rd_dapnet["aprs_message"]
             dapnet_message = parser_rd_dapnet["dapnet_message"]
 
+    # The parser process ends with wx-related keyword data, meaning
+    # that the user has either specified a keyword-less address, a zip code
+    # with keyword and (potentially) with country, a grid locator or
+    # a set of lat/lon coordinates.
+    #
+    # IMPORTANT:
+    #
+    # This is the default/fallback branch which makes a lot of guesstimates
+    # For example, if you simply send a call sign to MPAD, it will assume that
+    # you want the wx for this call sign. Therefore, this parser process
+    # has to be placed at the END of the parser - otherwise, there is a high
+    # chance of misinterpreting the user's message
+
+    if not found_my_duty_roster and not err:
+        (
+            found_my_keyword,
+            kw_err,
+            parser_rd_default_wx,
+        ) = parse_what_keyword_default_wx(
+            aprs_message=aprs_message, users_callsign=users_callsign, language=language
+        )
+        # did we find something? Then overwrite the existing variables with the retrieved content
+        if found_my_keyword or kw_err:
+            found_my_duty_roster = found_my_keyword
+            err = kw_err
+            latitude = parser_rd_default_wx["latitude"]
+            longitude = parser_rd_default_wx["longitude"]
+            what = parser_rd_default_wx["what"]
+            message_callsign = parser_rd_default_wx["message_callsign"]
+            human_readable_message = parser_rd_default_wx["human_readable_message"]
+            aprs_message = parser_rd_default_wx["aprs_message"]
+            city = parser_rd_default_wx["city"]
+            state = parser_rd_default_wx["state"]
+            country = parser_rd_default_wx["country"]
+            zipcode = parser_rd_default_wx["zipcode"]
+            county = parser_rd_default_wx["county"]
+            street = parser_rd_default_wx["street"]
+            street_number = parser_rd_default_wx["street_number"]
+
     #
     # We have reached the end of the 'standard' position data processing
     # for that kind of data which may come with a command AND an associated
@@ -424,19 +432,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     if not err:
         wordlist = aprs_message.split()
         for word in wordlist:
-
-            # Look for a 4..6 character Maidenhead coordinate
-            if not found_my_duty_roster and not err:
-                matches = re.search(
-                    pattern=r"^([a-zA-Z]{2}[0-9]{2}[a-zA-Z]{0,2})$",
-                    string=word,
-                    flags=re.IGNORECASE,
-                )
-                if matches:
-                    (latitude, longitude) = maidenhead.to_location(matches[0])
-                    found_my_duty_roster = True
-                    what = "wx"
-                    human_readable_message = f"{matches[0]}"
 
             # Look for a call sign either with or without SSID
             # note: in 99% of all cases, a single call sign means that
@@ -1395,6 +1390,21 @@ def parse_what_keyword_default_wx(
                 regex_string, "", aprs_message, flags=re.IGNORECASE
             ).strip()
 
+    # Not run another parser attempt on a keyword-less grid locator
+    if not found_my_keyword and not kw_err:
+        regex_string = r"\b([a-zA-Z]{2}[0-9]{2}[a-zA-Z]{0,2})\b"
+        matches = re.search(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            (latitude, longitude) = maidenhead.to_location(matches[0].strip())
+            found_my_keyword = True
+            human_readable_message = f"{matches[0]}"
+            what = "wx"
+            aprs_message = re.sub(
+                regex_string, "", aprs_message, flags=re.IGNORECASE
+            ).strip()
+
     # Check if the user has specified lat/lon information
     if not found_my_keyword and not kw_err:
         regex_string = r"\b([\d\.,\-]+)\/([\d\.,\-]+)\b"
@@ -2282,5 +2292,5 @@ if __name__ == "__main__":
         dapnet_passcode,
     ) = read_program_config()
     logger.info(
-        pformat(parse_input_message("aaa 90403 lang  de   ", "df1jsl-1", aprsdotfi_api_key))
+        pformat(parse_input_message("aaa jo41du lang  de   ", "df1jsl-1", aprsdotfi_api_key))
     )
