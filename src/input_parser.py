@@ -433,66 +433,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         wordlist = aprs_message.split()
         for word in wordlist:
 
-            # Look for a call sign either with or without SSID
-            # note: in 99% of all cases, a single call sign means that
-            # the user wants to get wx data - but we are not going to
-            # assign the 'what' info for now and just extract the call sign
-            if not found_my_duty_roster and not err:
-                matches = re.search(
-                    pattern=r"^([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[0-9]{1,2})$",
-                    string=word,
-                )
-                if matches:
-                    message_callsign = matches[0].upper()
-                    found_my_duty_roster = True
-                if not found_my_duty_roster:
-                    matches = re.search(
-                        pattern=r"^([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3})$",
-                        string=word,
-                    )
-                    if matches:
-                        message_callsign = matches[0].upper()
-                        found_my_duty_roster = True
-                if found_my_duty_roster:
-                    (
-                        success,
-                        latitude,
-                        longitude,
-                        altitude,
-                        lasttime,
-                        message_callsign,
-                    ) = get_position_on_aprsfi(
-                        aprsfi_callsign=message_callsign,
-                        aprsdotfi_api_key=aprsdotfi_api_key,
-                    )
-                    if not success:
-                        human_readable_message = (
-                            f"{errmsg_cannot_find_coords_for_user} {message_callsign}"
-                        )
-                        err = True
-                    else:
-                        # Prepopulate our message to the user with a default
-                        human_readable_message = message_callsign
-                        what = "wx"
-                        # now try to build a human readable message
-                        success, response_data = get_reverse_geopy_data(
-                            latitude=latitude, longitude=longitude
-                        )
-                        if success:
-                            # extract all fields as they will be used for the creation of the
-                            # outgoing data dictionary
-                            city = response_data["city"]
-                            state = response_data["state"]
-                            country = response_data["country"]
-                            zipcode = response_data["zipcode"]
-                            county = response_data["county"]
-                            street = response_data["street"]
-                            street_number = response_data["street_number"]
-                            # build the HRM message based on the given data
-                            human_readable_message = (
-                                build_human_readable_address_message(response_data)
-                            )
-
             # Try to check if the user has submitted an ICAO code without
             # submitting a specific pre- qualifier prefix
             # If yes, then assume that we want METAR data unless the airport
@@ -1171,6 +1111,12 @@ def parse_what_keyword_default_wx(
     what = city = state = country = zipcode = None
     street = street_number = county = None
 
+    # By default, we assume that the callsign that is in relevance to
+    # the wx data is our own call sign. However, this setting can be
+    # overwritten if the user requests wx data for a different
+    # user's position
+    message_callsign = users_callsign
+
     # Now let's start with examining the message text.
     # Rule of thumb:
     # 1) the first successful match will prevent
@@ -1441,18 +1387,84 @@ def parse_what_keyword_default_wx(
                 else:
                     # We didn't find anything; use the original input for the HRM
                     human_readable_message = f"lat {latitude}/lon {longitude}"
-                aprs_message = re.sub(regex_string, "", aprs_message).strip()
+                aprs_message = re.sub(regex_string, "", aprs_message,flags=re.IGNORECASE).strip()
                 found_my_keyword = True
                 what = "wx"
             else:
                 human_readable_message = "Error while parsing coordinates"
                 kw_err = True
 
+    # Look for a call sign either with or without SSID
+    # note: in 99% of all cases, a single call sign means that
+    # the user wants to get wx data - but we are not going to
+    # assign the 'what' info for now and just extract the call sign
+    if not found_my_keyword and not kw_err:
+        regex_string = r"\b([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[0-9]{1,2})\b"
+        matches = re.search(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            message_callsign = matches[0].upper()
+            found_my_keyword = True
+            aprs_message = re.sub(
+                regex_string, "", aprs_message, flags=re.IGNORECASE
+            ).strip()
+        else:
+            regex_string = r"\b([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3})\b"
+            matches = re.search(
+                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+            )
+            if matches:
+                message_callsign = matches[0].upper()
+                aprs_message = re.sub(
+                    regex_string, "", aprs_message, flags=re.IGNORECASE
+                ).strip()
+                found_my_keyword = True
+        if found_my_keyword and message_callsign:
+            (
+                success,
+                latitude,
+                longitude,
+                altitude,
+                lasttime,
+                message_callsign,
+            ) = get_position_on_aprsfi(
+                aprsfi_callsign=message_callsign,
+                aprsdotfi_api_key=aprsdotfi_api_key,
+            )
+            if not success:
+                human_readable_message = (
+                    f"{errmsg_cannot_find_coords_for_user} {message_callsign}"
+                )
+                kw_err = True
+            else:
+                # Prepopulate our message to the user with a default
+                human_readable_message = message_callsign
+                what = "wx"
+                # now try to build a human readable message
+                success, response_data = get_reverse_geopy_data(
+                    latitude=latitude, longitude=longitude
+                )
+                if success:
+                    # extract all fields as they will be used for the creation of the
+                    # outgoing data dictionary
+                    city = response_data["city"]
+                    state = response_data["state"]
+                    country = response_data["country"]
+                    zipcode = response_data["zipcode"]
+                    county = response_data["county"]
+                    street = response_data["street"]
+                    street_number = response_data["street_number"]
+                    # build the HRM message based on the given data
+                    human_readable_message = (
+                        build_human_readable_address_message(response_data)
+                    )
+
     parser_rd_default_wx = {
         "latitude": latitude,
         "longitude": longitude,
         "what": what,
-        "message_callsign": users_callsign,
+        "message_callsign": message_callsign,
         "human_readable_message": human_readable_message,
         "aprs_message": aprs_message,
         "city": city,
@@ -2292,5 +2304,5 @@ if __name__ == "__main__":
         dapnet_passcode,
     ) = read_program_config()
     logger.info(
-        pformat(parse_input_message("aaa jo41du lang  de   ", "df1jsl-1", aprsdotfi_api_key))
+        pformat(parse_input_message("dapnet df1jsl-8 hello World  ", "df1jsl-1", aprsdotfi_api_key))
     )
