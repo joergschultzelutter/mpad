@@ -203,13 +203,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # 2) If we find some data in this context, then it will
     # be removed from the original message in order to avoid
     # any additional occurrences at a later point in time.
-    # 3) The content removal process only applies to keyword
-    # searches. If we have iterated through all keywords AND
-    # we were unable to find anything, the remaining string
-    # (the default APRS message) will be split up into multiple
-    # words (if present) and re-examined for something useful.
-    # At the time when we only look at these simple words, we
-    # do not replace any content from the original message
 
     # Check if the user has requested information wrt METAR data
     # potential inputs: ICAO/IATA qualifiers with/without keyword
@@ -328,11 +321,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             human_readable_message = parser_rd_satpass["human_readable_message"]
             aprs_message = parser_rd_satpass["aprs_message"]
 
-    # Check if the user wants us to search for the nearest repeater
-    # this function always relates to the user's own call sign and not to
-    # foreign ones. The user can ask us for the nearest repeater in
-    # optional combination with band and/or mode (FM, C4FM, DSTAR et al)
-    #
     # Search for repeater-mode-band
     if not found_my_duty_roster and not err:
         (found_my_keyword, kw_err, parser_rd_repeater,) = parse_what_keyword_repeater(
@@ -403,7 +391,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # chance of misinterpreting the user's message
 
     if not found_my_duty_roster and not err:
-        (found_my_keyword, kw_err, parser_rd_wx,) = parse_what_keyword_default_wx(
+        (found_my_keyword, kw_err, parser_rd_wx,) = parse_what_keyword_wx(
             aprs_message=aprs_message, users_callsign=users_callsign, language=language
         )
         # did we find something? Then overwrite the existing variables with the retrieved content
@@ -1223,7 +1211,7 @@ def parse_what_keyword_metar(
     return found_my_keyword, kw_err, parser_rd_metar
 
 
-def parse_what_keyword_default_wx(
+def parse_what_keyword_wx(
     aprs_message: str, users_callsign: str, language: str
 ):
     """
