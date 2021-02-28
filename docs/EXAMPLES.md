@@ -90,9 +90,9 @@ METAR reports always return the latest wx data to the user. So METAR data cannot
 | METAR data of a METAR-enabled airport, related to the user's position | ```metar``` | |
 | METAR data of a METAR-enabled airport, related to another user's position | ```metar wa1gov-10``` | ```KTAN 171752Z AUTO 25013G27KT 10SM BKN055 07/M05 A2945 RMK AO2 PK``` |
 | | | ```WND 22027/1747 SLP971 T00721050 10083 20022 56007``` |
-| METAR data for ICAO code EDDF | ```icao eddf``` | ```EDDF 171750Z 22004KT 5000 BR BKN004 OVC011 00/M01 Q1022 R25C/290095``` |
+| METAR data for ICAO code EDDF | ```icao eddf``` or ```eddf``` | ```EDDF 171750Z 22004KT 5000 BR BKN004 OVC011 00/M01 Q1022 R25C/290095``` |
 | | | ```R25L/290095 R18/290095 TEMPO SCT004``` |
-| METAR data for IATA code FRA | ```iata fra``` | ```EDDF 171750Z 22004KT 5000 BR BKN004 OVC011 00/M01 Q1022 R25C/290095``` |
+| METAR data for IATA code FRA | ```iata fra``` or ```fra``` | ```EDDF 171750Z 22004KT 5000 BR BKN004 OVC011 00/M01 Q1022 R25C/290095``` |
 | | | ```R25L/290095 R18/290095 TEMPO SCT004``` |
 
 ## CWOP data
@@ -153,3 +153,5 @@ External service dependencies:
 | --------------- | -------------------------- | ---------------------------- |
 | Send message ```Hello World``` to user ```DF1JSL``` | ```dapnet df1jsl Hello World``` | ```DAPNET message dispatch to 'DF1JSL' via 'all' successful``` |
 | Send high priority message ```Emergency, need help``` to user ```DF1JSL``` | ```dapnethp df1jsl mergency, need help``` | ```DAPNET message dispatch to 'DF1JSL' via 'all' successful``` |
+
+MPAD's response message indicates which transmitter group was used for sending the message to the user (previous example: "all")
