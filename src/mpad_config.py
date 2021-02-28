@@ -20,7 +20,7 @@
 #
 # Program version
 #
-mpad_version: str = "0.06"
+mpad_version: str = "0.07"
 #
 ###########################
 # Constants, do not change#
@@ -82,7 +82,6 @@ aprsis_server_port = 14580  # server port
 # Syntax: see http://www.aprs-is.net/javAPRSFilter.aspx
 # If you remove/disable this filter, MPAD will 'see' all aprs-is messages
 # (the whole APRS-IS traffic)
-# aprsis_server_filter = "g/WXBOT/WXYO"  # server filter criteria for aprs.is
 aprsis_server_filter = "g/MPAD"  # server filter criteria for aprs.is
 #
 #############################
@@ -95,7 +94,6 @@ aprsis_server_filter = "g/MPAD"  # server filter criteria for aprs.is
 # If that secondary filter is also passed, then we will have a look
 # at the user's message and try to process it
 #
-# mpad_callsigns_to_parse = ["WXBOT", "WXYO"]  # (additional) call sign filter
 mpad_callsigns_to_parse = ["MPAD"]  # (additional) call sign filter
 #
 #############################################################
@@ -195,7 +193,7 @@ osm_supported_keyword_categories = [
 # Default user agent for accessing aprs.fi, openstreetmap et al
 # Change this if you run your own MPAD instance
 mpad_default_user_agent = (
-    "multi-purpose-aprs-daemon/0.0.1 (+https://github.com/joergschultzelutter/mpad/)"
+    f"multi-purpose-aprs-daemon/{mpad_version} (+https://github.com/joergschultzelutter/mpad/)"
 )
 
 #
