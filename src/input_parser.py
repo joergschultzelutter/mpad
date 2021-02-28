@@ -444,6 +444,8 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     #
     # Check if we found ANYTHING valid at all
     if not what and not when and not when_daytime:
+        # If the parser function has not returned an error message,
+        # then set a default error message
         if not human_readable_message:
             human_readable_message = errmsg_invalid_command
         err = True
