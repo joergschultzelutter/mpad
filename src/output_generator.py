@@ -656,7 +656,9 @@ def generate_output_message_whereis(response_parameters: dict):
     # True = we run the 'whereis' mode
     _whereis_mode = False
 
-    # https://en.wikipedia.org/wiki/Address. This is a list of countries where the
+    # https://en.wikipedia.org/wiki/Address.
+    # https://wiki.openstreetmap.org/wiki/Name_finder/Address_format
+    # This is a list of countries where the
     # street number has to be listed before the street name.
     # example:
     # US: 555 Test Way
@@ -668,8 +670,10 @@ def generate_output_message_whereis(response_parameters: dict):
         "FR",
         "HK",
         "IE",
+        "IN",
         "IL",
         "JP",
+        "LU",
         "MY",
         "NZ",
         "OM",
@@ -681,6 +685,7 @@ def generate_output_message_whereis(response_parameters: dict):
         "TH",
         "US",
         "GB",
+        "UK",
     ]
 
     latitude = response_parameters["latitude"]
