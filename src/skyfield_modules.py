@@ -194,6 +194,7 @@ def get_next_satellite_pass_for_latlon(
     requested_date: datetime.datetime,
     tle_satellite_name: str,
     elevation: float = 0.0,
+    number_of_results: int = 1,
 ):
     """
     Determine the next pass of the ISS for a given set
@@ -213,6 +214,8 @@ def get_next_satellite_pass_for_latlon(
     elevation : 'float'
         Elevation in meters above sea levels
         Default is 0 (sea level)
+    number_of_results: int
+        default: 1, supports up to 5 max results
 
     Returns
     =======
@@ -230,6 +233,8 @@ def get_next_satellite_pass_for_latlon(
         Set azimuth
 
     """
+
+    assert 1 <= number_of_results <= 5
 
     rise_time = (
         rise_azimuth
@@ -379,14 +384,14 @@ if __name__ == "__main__":
 
     logger.info(
         get_sun_moon_rise_set_for_latlon(
-            51.838860,
-            8.326871,
-            datetime.datetime.now() + datetime.timedelta(days=1),
-            74.0,
+            latitude=51.838860,
+            longitude=8.326871,
+            requested_date=datetime.datetime.now() + datetime.timedelta(days=1),
+            elevation=74.0,
         )
     )
 
-    update_local_tle_file()
+    #    update_local_tle_file()
 
     logger.info("Get TLE data for Es'Hail2")
     logger.info(get_tle_data("ES'HAIL-2"))
@@ -394,6 +399,11 @@ if __name__ == "__main__":
     thedate = datetime.datetime.now()
     logger.info(
         get_next_satellite_pass_for_latlon(
-            51.838890, 8.326747, thedate + datetime.timedelta(days=0), "ISS", 74.0
+            latitude=51.838890,
+            longitude=8.326747,
+            requested_date=thedate + datetime.timedelta(days=0),
+            tle_satellite_name="ISS",
+            elevation=74.0,
+            number_of_results=5,
         )
     )
