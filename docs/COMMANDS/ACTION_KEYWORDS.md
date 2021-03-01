@@ -196,6 +196,8 @@ Returns the geocoordinates/address info of the sender's position or a specific c
 - Position' age (when was this position transmitted for the last time). Note: this information is only provided for the ```whereis``` command but not for the ```whereami``` command
 - Altitude information whereas present
 
+MAPD tries to honor the respective countries' native street / street number format.
+
 Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __NO__
 
 #### Formats
