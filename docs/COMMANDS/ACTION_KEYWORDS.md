@@ -196,7 +196,7 @@ Returns the geocoordinates/address info of the sender's position or a specific c
 - Position' age (when was this position transmitted for the last time). Note: this information is only provided for the ```whereis``` command but not for the ```whereami``` command
 - Altitude information whereas present
 
-MAPD tries to honor the respective countries' native street / street number format.
+If address data is available for the requested coordinates, MPAD tries to honor the respective countries' native street / street number format. If the domestic format for your country is unknown, the address format for the street/street number data will always be ```street street_number```, e.g. ```Yellow Brick Road 12```.
 
 Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __NO__
 
