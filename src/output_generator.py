@@ -745,7 +745,8 @@ def generate_output_message_whereis(response_parameters: dict):
     if latitude != users_latitude and longitude != users_longitude:
 
         # We have different identities and switch from "whereami" mode
-        # to "whereis" mode
+        # to the "whereis" mode where we will also calculate the distance,
+        # heading and direction between these two positions
         _whereis_mode = True
 
         # Calculate distance, bearing and heading
