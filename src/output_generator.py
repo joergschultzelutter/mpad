@@ -656,6 +656,33 @@ def generate_output_message_whereis(response_parameters: dict):
     # True = we run the 'whereis' mode
     _whereis_mode = False
 
+    # https://en.wikipedia.org/wiki/Address. This is a list of countries where the
+    # street number has to be listed before the street name.
+    # example:
+    # US: 555 Test Way
+    # DE: Test Way 555 (default format)
+    #
+    street_number_precedes_street = [
+        "AU",
+        "CA",
+        "FR",
+        "HK",
+        "IE",
+        "IL",
+        "JP",
+        "MY",
+        "NZ",
+        "OM",
+        "PH",
+        "SA",
+        "SG",
+        "LK",
+        "TW",
+        "TH",
+        "US",
+        "GB",
+    ]
+
     latitude = response_parameters["latitude"]
     longitude = response_parameters["longitude"]
     altitude = response_parameters["altitude"]
@@ -799,7 +826,12 @@ def generate_output_message_whereis(response_parameters: dict):
     if street:
         human_readable_address = street
         if street_number:
-            human_readable_address += f" {street_number}"
+            # per https://en.wikipedia.org/wiki/Address, we try to honor the native format
+            # for those countries who list the street number before the street name
+            if country in street_number_precedes_street:
+                human_readable_address = f"{street_number} " + human_readable_address
+            else:
+                human_readable_address = human_readable_address + f" {street_number}"
     if human_readable_address:
         output_list = make_pretty_aprs_messages(
             message_to_add=human_readable_address, destination_list=output_list
