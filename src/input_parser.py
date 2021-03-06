@@ -412,10 +412,18 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             street = parser_rd_wx["street"]
             street_number = parser_rd_wx["street_number"]
 
-    # By now, we should know WHAT the user wants. Now let's try to
-    # figure out WHEN certain things are expected for. We only enter
-    # the WHEN parser routines in case the previous parser did not
-    # encounter any errors.
+    # By now, we should know WHAT the user wants.
+    #
+    # Exception: user wants a wx report for his position
+    # in this case, the 'what' keyword is still empty and is
+    # implicitly defined via the 'when' keyword. In this particular
+    # case, the use may send a simple e.g. 'tomorrow' request to us
+    # and we set the 'wx' 'what' command implicitly.
+    #
+    # For all other cases, 'when' should now be set
+    # Now let's try to figure out WHEN certain things are expected
+    # for. We only enter the WHEN parser routines in case the
+    # previous parser did nor encounter any errors.
     #
     # Parse the "when" information if we don't have an error
     # and if we haven't retrieved the command data in a previous run
@@ -450,6 +458,23 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             human_readable_message = errmsg_invalid_command
         err = True
 
+    # This is somewhat of a message garbage handler. Check
+    # If we have received a 'when' or 'when_daytime' message
+    # from the user. If we have received one AND 'what' is still
+    # not set AND the remainder of the incoming APRS_message has
+    # still content, then we were unable to digest parts of the
+    # user's message. Rather than running the default wx command,
+    # we return an error and tell the user to be more precise in
+    # his commands.
+    if not what:
+        if when or when_daytime:
+            if len(aprs_message) > 0:
+                err = True
+                human_readable_message = errmsg_invalid_command
+
+    # Finally, apply the default settings in case the user
+    # hasn't filled in all of the gaps
+    #
     # Apply default to 'when' setting if still not populated
     if not found_when and not err:
         when = "today"
@@ -1213,9 +1238,7 @@ def parse_what_keyword_metar(
     return found_my_keyword, kw_err, parser_rd_metar
 
 
-def parse_what_keyword_wx(
-    aprs_message: str, users_callsign: str, language: str
-):
+def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str):
     """
     wx-Keyword-less default parser for WX-related data:
     - address data (city/state/country) (not using any keywords)
@@ -1371,6 +1394,28 @@ def parse_what_keyword_wx(
                 state = None
                 country = "US"
                 zipcode = zipcode.strip()
+                aprs_message = re.sub(
+                    pattern=regex_string,
+                    repl="",
+                    string=aprs_message,
+                    flags=re.IGNORECASE,
+                ).strip()
+                found_my_keyword = True
+                # prepare the geopy reverse lookup string
+                geopy_query = {"postalcode": zipcode, "country": country}
+        if not found_my_keyword:
+            # check if the user has submitted a 3-10 digit zipcode WITH
+            # country code but WITHOUT keyword
+            geopy_query = None
+            regex_string = r"\b([a-zA-Z0-9-( )]{3,10});\s*([a-zA-Z]{2})\b"
+            matches = re.findall(
+                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+            )
+            if matches:
+                (zipcode, country) = matches[0]
+                zipcode = zipcode.strip()
+                state = None
+                country = country.upper().strip()
                 aprs_message = re.sub(
                     pattern=regex_string,
                     repl="",
@@ -2336,7 +2381,7 @@ def parse_keyword_units(aprs_message: str):
     """
     Keyword parser for the case where the user wants to override
     the default 'unit of measure' (metric or imperial) which is
-    determined by having a lookt at the user's call sign - see
+    determined by having a look at the user's call sign - see
     get_units_based_on_users_callsign(). This function however
     takes a look at the user's MESSAGE and allows the user to
     override the based-on-callsign default setting
@@ -2483,5 +2528,5 @@ if __name__ == "__main__":
         dapnet_passcode,
     ) = read_program_config()
     logger.info(
-        pformat(parse_input_message("metar friday nite", "df1jsl-1", aprsdotfi_api_key))
+        pformat(parse_input_message("schrotto tomorrow", "df1jsl-1", aprsdotfi_api_key))
     )
