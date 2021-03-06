@@ -22,10 +22,10 @@ External service dependencies:
 | | | ```eve:0c nite:-4c sunrise/set 13:06/22:43UTC clouds:100% uvi:0.9```|
 | | |```hPa:1010 hum:84% dewpt:-4c wndspd:1m/s wnddeg:280```|
 | Wx report for zipcode 94043 |```94043``` | ```17-Jan-21 Mountain View,94043;US clear sky morn:13c day:22c eve:16c```|
-| country code is added implicitly for a 5-digit zip - see keyword spec |```zip 94043``` returns same results| ```nite:14c sunrise/set 16:20/02:16UTC clouds:1% uvi:2.6 hPa:1019```|
-| | |```hum:27% dewpt:2c wndspd:2m/s wnddeg:353```|
+| U.S. country code is added implicitly for a 5-digit zip|```zip 94043``` returns same results| ```nite:14c sunrise/set 16:20/02:16UTC clouds:1% uvi:2.6 hPa:1019```|
+| (see keyword specification) | |```hum:27% dewpt:2c wndspd:2m/s wnddeg:353```|
 | WX report for zipcode 37603 in Germany |```zip 37603;de``` | ```19-Jan-21 Holzminden,37603;DE moderate rain morn:3c day:4c eve:8c```|
-| | |```nite:5c sunrise/set 08:18/16:46UTC rain:13mm clouds:100% uvi:0.3```|
+| | same as ```37603;de``` |```nite:5c sunrise/set 08:18/16:46UTC rain:13mm clouds:100% uvi:0.3```|
 | | |```hPa:1006 hum:90% dewpt:3c wndspd:7m/s wnddeg:217```|
 | WX report for Grid JO41du |```grid jo41du``` | ```17-Jan-21 jo41du rain and snow morn:-1c day:0c eve:1c nite:2c```|
 | |```mh jo41du``` or ```jo41du``` returns same results | ```sunrise/set 08:25/16:48UTC rain:1mm snow:2mm clouds:100% uvi:0.3```|

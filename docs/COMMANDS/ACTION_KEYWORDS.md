@@ -57,7 +57,7 @@ Glossary:
 
 #### Formats
 
-- ```zip <zipcode>[;iso3166-a2 country code]```
+- ```zip <3-10 char/digit zipcode>[;iso3166-a2 country code]``` or ```zip <3-10 char/digit zipcode>[;iso3166-a2 country code]```
 - ```<5-digit code>```. Note that a 5-digit zipcode without country code will automatically assume that the given zip code is a U.S. zip code; in this case, the country code will be set implicitly. 
 
 #### Example requests
@@ -67,9 +67,10 @@ Glossary:
 - ```zip 85609;us``` returns the wx information for ```Dragoon, AZ, United States```
 - ```zip 85609;de``` returns the wx information for ```Aschheim, Germany```
 - ```94043``` returns the wx information for ```Mountain View, CA, United States```
+- ```37627;de``` returns wx information for ```Stadtoldendorf, Germany```
 
-A 5-digit zip code __without__ iso-3166-a2 qualifier automatically sets the country setting to "US". 
-Zip codes can be of 3..10 characters
+A 5-digit zip code __without__ iso-3166-a2 qualifier automatically sets the country setting to "US".
+Zip codes can be of 3..10 characters. If a zipcode consists of multiple parts which are separated by spaces, using such a zipcode is very likely not going to work.
 
 ### Numeric Coordinates
 
@@ -96,8 +97,6 @@ Whereas possible, the program will try to turn these coordinates into a human re
 - ```mh jo41```
 
 #### Example response
-
-
 
 ```jo41du overcast clouds morn:-0c day:1c eve:1c nite:-0c```
 
