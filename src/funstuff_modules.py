@@ -277,4 +277,4 @@ if __name__ == "__main__":
         level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
     )
     logger = logging.getLogger(__name__)
-    print(get_fortune_cookie("de"))
+    print(get_fortuneteller_message("de"))
