@@ -41,5 +41,4 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(module)s -%(levelname)s- %(message)s')
     logger = logging.getLogger(__name__)
 
-#    testcall(message_text="Córdoba;cl",from_callsign="df1jsl-1")
-    testcall(message_text="zip 33378;de 47h", from_callsign="df1jsl-8")
+    testcall(message_text="fortuneteller lang en", from_callsign="df1jsl-8")

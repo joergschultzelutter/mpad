@@ -377,6 +377,19 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             aprs_message = parser_rd_dapnet["aprs_message"]
             dapnet_message = parser_rd_dapnet["dapnet_message"]
 
+    # Check for a fortune cookie command
+    if not found_my_duty_roster and not err:
+        (
+            found_my_keyword,
+            kw_err,
+            parser_rd_fortuneteller,
+        ) = parse_what_keyword_fortuneteller(aprs_message=aprs_message)
+        if found_my_keyword or kw_err:
+            found_my_duty_roster = found_my_keyword
+            err = kw_err
+            what = parser_rd_fortuneteller["what"]
+            aprs_message = parser_rd_fortuneteller["aprs_message"]
+
     # The parser process ends with wx-related keyword data, meaning
     # that the user has either specified a keyword-less address, a zip code
     # with keyword and (potentially) with country, a grid locator or
@@ -2512,6 +2525,44 @@ def parse_keyword_number_of_results(aprs_message: str):
     return found_my_keyword, parser_rd_number_of_results
 
 
+def parse_what_keyword_fortuneteller(aprs_message: str):
+    """
+    Keyword parser for our fortuneteller language + UTF-8 testing
+
+    Parameters
+    ==========
+    aprs_message : 'str'
+        the original aprs message
+
+    Returns
+    =======
+    found_my_keyword: 'bool'
+        True if the keyword and associated parameters have been found
+    kw_err: 'bool'
+        True if an error has occurred (not used in this function)
+    parser_rd_fortuneteller: 'dict'
+        response data dictionary, containing the keyword-relevant data
+    """
+
+    found_my_keyword = kw_err = False
+    what = None
+
+    regex_string = r"\b(fortuneteller|magic8ball|magic8|m8b)\b"
+    matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+    if matches:
+        what = "fortuneteller"
+        aprs_message = re.sub(
+            pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
+        ).strip()
+        found_my_keyword = True
+
+    parser_rd_fortuneteller = {
+        "aprs_message": aprs_message,
+        "what": what,
+    }
+    return found_my_keyword, kw_err, parser_rd_fortuneteller
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -2528,5 +2579,5 @@ if __name__ == "__main__":
         dapnet_passcode,
     ) = read_program_config()
     logger.info(
-        pformat(parse_input_message("schrotto tomorrow", "df1jsl-1", aprsdotfi_api_key))
+        pformat(parse_input_message("fortuneteller", "df1jsl-1", aprsdotfi_api_key))
     )

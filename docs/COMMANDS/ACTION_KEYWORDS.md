@@ -473,6 +473,31 @@ In case of success, MPAD will return the message
 
 IF MPAD had not been configured for DAPNET access or there was an error during sending the message, an error message will be sent to the user.
 
+### Fortuneteller
+
+MPAD has the power to predict your future - all you have to do is ask a question (and send an APRS message of course).
+
+Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __NO__
+
+#### Formats
+
+- ```fortuneteller```
+- ```magic8ball```
+- ```magic8```
+- ```m8b```
+
+This keyword can be combined with the ```lang``` keyword, meaning that for certain languages, you will receive a localised prediction of your future :-) Default language is ```en```. Supported languages so far are ```en```,```de```,```es```,```it```,```fr```,```nl```,```ru```,```tr``` and ```cn```
+
+The purpose for this keyword is mainly for UTF-8 / localised content testing.
+
+#### Example requests
+
+- ```magic8ball lang de``` will request a localised Magic 8 Ball prediction in German.
+
+#### Example response
+
+Well .... ```Better not tell you now``` :-)
+
 ### General help
 
 Returns general program help to the user.

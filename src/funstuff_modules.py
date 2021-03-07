@@ -4,8 +4,9 @@
 #
 # Magic-8-ball routine which is mainly used for UTF-8 outpit and
 # language selection testing. Nevertheless, it still might be able
-# to preduct your future - so I decided to keep it after the test
-# got completed :-)
+# to preduct YOUR future :-) - so I decided to keep it after the test
+# got completed. Localised Magic 8 ball answers have been taken from
+# my source of wisdom (Wikipedia)
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,8 +23,9 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 import logging
+import random
 
-lang_en_fortunes = [
+lang_en_fortunes = (
     "It is certain",
     "It is decidedly so",
     "Without a doubt",
@@ -44,9 +46,9 @@ lang_en_fortunes = [
     "My sources say no",
     "Outlook not so good",
     "Very doubtful",
-]
+)
 
-lang_de_fortunes = [
+lang_de_fortunes = (
     "Es ist sicher",
     "Es ist eindeutig so",
     "Zweifelsfrei",
@@ -54,21 +56,22 @@ lang_de_fortunes = [
     "Du kannst Dich darauf verlassen",
     "So wie ich es sehe: ja",
     "Sehr wahrscheinlich",
-    "Meine Prognose ist: gut",
+    "Meine Prognose sagt: ja",
     "Ja",
     "Alle Zeichen sagen: ja",
     "Antwort unklar; versuche es noch einmal",
     "Frag mich später noch einmal",
-    "Ich verrate es Dir besser jetzt noch nicht",
+    "Das verrate ich Dir besser jetzt noch nicht",
     "Vorhersage derzeit nicht möglich",
     "Konzentriere Dich und frage mich nochmals",
     "Verlass Dich nicht darauf",
     "Meine Antwort ist nein",
-    "Meine Prognose ist: nicht gut",
+    "Meine Quellen sagen: nein",
+    "Meine Prognose sagt: nicht gut",
     "Sehr zweifelhaft",
-]
+)
 
-lang_es_fortunes = [
+lang_es_fortunes = (
     "En mi opinión, sí",
     "Es cierto",
     "Es decididamente así",
@@ -89,9 +92,9 @@ lang_es_fortunes = [
     "Mis fuentes me dicen que no",
     "Las perspectivas no son buenas",
     "Muy dudoso",
-]
+)
 
-lang_fr_fortunes = [
+lang_fr_fortunes = (
     "D'après moi oui",
     "C'est certain",
     "Oui absolument",
@@ -112,9 +115,9 @@ lang_fr_fortunes = [
     "Faut pas rêver",
     "N'y compte pas",
     "Impossible",
-]
+)
 
-lang_it_fortunes = [
+lang_it_fortunes = (
     "Per quanto posso vedere, sì",
     "È certo",
     "È decisamente così",
@@ -135,11 +138,138 @@ lang_it_fortunes = [
     "Le mie fonti dicono di no",
     "Le prospettive non sono buone",
     "Molto incerto",
-]
+)
+
+lang_nl_fortunes = (
+    "Het is zeker",
+    "Het is beslist zo",
+    "Zonder twijfel",
+    "Zeer zeker",
+    "Je kunt erop vertrouwe",
+    "Volgens mij wel",
+    "Zeer waarschijnlijk",
+    "Goed vooruitzicht",
+    "Ja",
+    "Tekenen wijzen op ja",
+    "Reactie is wazig, probeer opnieuw",
+    "Vraag later opnieuw",
+    "Beter je nu niet te zeggen",
+    "Niet nu te voorspellen",
+    "Concentreer je en vraag opnieuw",
+    "Reken er niet op",
+    "Mijn antwoord is nee",
+    "Mijn bronnen zeggen nee",
+    "Vooruitzicht is niet zo goed",
+    "Zeer twijfelachtig",
+)
+
+lang_ru_fortunes = (
+    "Бесспорно",
+    "Предрешено",
+    "Никаких сомнений",
+    "Определённо да",
+    "Можешь быть уверен в этом",
+    "Мне кажется: да",
+    "Вероятнее всего",
+    "Хорошие перспективы",
+    "Знаки говорят — да",
+    "Да",
+    "Пока не ясно, попробуй снова",
+    "Спроси позже",
+    "Лучше не рассказывать",
+    "Сейчас нельзя предсказать",
+    "Сконцентрируйся и спроси опять",
+    "Даже не думай",
+    "Мой ответ — нет",
+    "По моим данным — нет",
+    "Перспективы не очень хорошие",
+    "Весьма сомнительно",
+)
+
+lang_tr_fortunes = (
+    "Kesinlikle",
+    "Kesinlikle öyle",
+    "Kuşkusuz",
+    "Evet - elbette",
+    "Bana güvenebilirsin",
+    "Gördüğüm kadarıyla, evet",
+    "Çoğunlukla",
+    "Dışarıdan iyi görünüyor",
+    "Evet",
+    "Belirtiler olduğu yönünde",
+    "Biraz belirsiz, tekrar dene",
+    "Sonra tekrar dene",
+    "Şimdi söylemesem daha iyi",
+    "Şimdi kehanette bulunamam",
+    "Konsantre ol ve tekrar sor",
+    "Bana öyle bakma",
+    "Yanıtım hayır",
+    "Kaynaklarım hayır diyor",
+    "Pek iyi görünmüyor",
+    "Çok şüpheli",
+)
+
+lang_cn_fortunes = (
+    "這是必然",
+    "肯定是的",
+    "不用懷疑",
+    "毫無疑問",
+    "你能依靠它",
+    "如我所見，是的",
+    "很有可能",
+    "外表很好",
+    "是的",
+    "種種跡象指出:是的",
+    "回覆攏統，再試試",
+    "待會再問",
+    "最好現在不告訴你",
+    "現在無法預測",
+    "專心再問一遍",
+    "想的美",
+    "我的回覆是:不",
+    "我的來源說:不",
+    "外表不太好",
+    "很可疑",
+)
+
+fortunes_dictionary = {
+    "en": lang_en_fortunes,
+    "de": lang_de_fortunes,
+    "es": lang_es_fortunes,
+    "fr": lang_fr_fortunes,
+    "it": lang_it_fortunes,
+    "nl": lang_nl_fortunes,
+    "ru": lang_ru_fortunes,
+    "tr": lang_tr_fortunes,
+    "cn": lang_cn_fortunes,
+}
 
 
+def get_fortuneteller_message(language: str = "en"):
+    """
+    This is a standard "fortune cookie" / Magic 8 Ball generator
+    where some of the answers exist in localised formats. Apart
+    from returning Unicode/localised content, it does not do
+    anything useful
 
+    Parameters
+    ==========
+    language : 'str'
+        ISO639-a2 language code
 
+    Returns
+    =======
+    fortune: 'str'
+        localised magic 8 ball / fortune cookie string
+    """
+
+    if language in fortunes_dictionary:
+        lang_fortunes = fortunes_dictionary[language]
+    else:
+        lang_fortunes = fortunes_dictionary["en"]
+
+    value = random.randint(0, len(lang_fortunes) - 1)
+    return lang_fortunes[value]
 
 
 if __name__ == "__main__":
@@ -147,3 +277,4 @@ if __name__ == "__main__":
         level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
     )
     logger = logging.getLogger(__name__)
+    print(get_fortune_cookie("de"))

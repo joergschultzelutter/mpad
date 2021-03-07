@@ -44,6 +44,7 @@ from geo_conversion_modules import (
 from dapnet_modules import send_dapnet_message
 
 from repeater_modules import get_nearest_repeater
+from funstuff_modules import get_fortuneteller_message
 
 import datetime
 import logging
@@ -247,6 +248,10 @@ def generate_output_message(response_parameters: dict):
         )
     elif what == "dapnet" or what == "dapnethp":
         success, output_list = generate_output_message_dapnet(
+            response_parameters=response_parameters
+        )
+    elif what == "fortuneteller":
+        success, output_list = generate_output_message_fortuneteller(
             response_parameters=response_parameters
         )
     else:
@@ -1093,6 +1098,34 @@ def generate_output_message_osm_special_phrase(response_parameters: dict):
                 message_to_add=heading, destination_list=output_list
             )
 
+    success = True
+    return success, output_list
+
+
+def generate_output_message_fortuneteller(response_parameters: dict):
+    """
+    Get sunrise/sunset and moonrise/moonset for latitude/longitude
+
+    Parameters
+    ==========
+    response_parameters: 'dict'
+        Dictionary of the data from the input processor's analysis on the user's data
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful. Will only be false in case of a
+        fatal error as we need to send something back to the user (even
+        if that message is a mere error text)
+    output_message: 'list'
+        List, containing the message text(s) that we will send to the user
+        This is plain text list without APRS message ID's
+    """
+    language = response_parameters["language"]
+
+    output_list = make_pretty_aprs_messages(
+        message_to_add=get_fortuneteller_message(language=language)
+    )
     success = True
     return success, output_list
 

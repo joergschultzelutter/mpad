@@ -155,3 +155,16 @@ External service dependencies:
 | Send high priority message ```Emergency, need help``` to user ```DF1JSL``` | ```dapnethp df1jsl mergency, need help``` | ```DAPNET message dispatch to 'DF1JSL' via 'all' successful``` |
 
 MPAD's response message indicates which transmitter group was used for sending the message to the user (previous example: "all")
+
+## Fortune Teller
+
+External service dependencies:
+
+- Fortuna :-)
+
+| What do we want | Command string User > MPAD | Response example MPAD > User |
+| --------------- | -------------------------- | ---------------------------- |
+| Our fortune in English language| ```fortune``` | ```Outlook good``` |
+| Our fortune in Russian language| ```fortune lang ru``` | ```Знаки говорят — да``` |
+
+Note that outgoing UTF-8 content will be converted to plain ASCII content unless specified otherwise in the program's config file (see [installation instructions](INSTALLATION.md))
