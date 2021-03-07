@@ -232,6 +232,53 @@ lang_cn_fortunes = (
     "很可疑",
 )
 
+lang_pl_fortunes = (
+    "To pewne",
+    "Zdecydowanie tak",
+    "Bez wątpienia",
+    "Tak - zdecydowanie",
+    "Możesz na tym polegać",
+    "Tak, jak ja to widzę",
+    "Najprawdopodobniej",
+    "Perspektywa dobra",
+    "tak",
+    "Znaki wskazujące na tak",
+    "Odpowiedz niewyraźnie, spróbuj ponownie",
+    "Zapytaj ponownie później",
+    "Lepiej ci teraz nie mówić",
+    "Nie mogę teraz przewidzieć",
+    "Skoncentruj się i zapytaj ponownie",
+    "Nie licz na to",
+    "Moja odpowiedź brzmi: nie",
+    "Według moich źródeł, nie",
+    "Perspektywa niezbyt dobra",
+    "Bardzo wątpliwe",
+)
+
+lang_hr_fortunes = (
+    "Sigurno je",
+    "To je definitivno tako",
+    "Bez sumnje",
+    "Da definitivno",
+    "Možete se osloniti na to",
+    "Koliko vidim, da",
+    "Najvjerojatnije",
+    "Outlook dobar",
+    "Da",
+    "Znakovi upućuju na da",
+    "Odgovorite maglovito, pokušajte ponovo",
+    "Pitajte ponovo kasnije",
+    "Bolje da ti sada ne kažem",
+    "Ne mogu sada predvidjeti",
+    "Koncentrirajte se i pitajte ponovno",
+    "Ne računajte na to",
+    "Moj odgovor je ne",
+    "Moji izvori kažu ne",
+    "Outlook nije tako dobar",
+    "Vrlo sumnjivo",
+)
+
+
 fortunes_dictionary = {
     "en": lang_en_fortunes,
     "de": lang_de_fortunes,
@@ -242,6 +289,8 @@ fortunes_dictionary = {
     "ru": lang_ru_fortunes,
     "tr": lang_tr_fortunes,
     "cn": lang_cn_fortunes,
+    "pl": lang_pl_fortunes,
+    "hr": lang_hr_fortunes,
 }
 
 
