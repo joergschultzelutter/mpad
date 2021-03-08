@@ -247,6 +247,8 @@ def get_next_satellite_pass_for_latlon(
     )
     if success:
         ts = api.load.timescale()
+        eph = api.load('de421.bsp')
+
         satellite = EarthSatellite(tle_data_line1, tle_data_line2, tle_satellite, ts)
 
         pos = api.Topos(
@@ -256,19 +258,19 @@ def get_next_satellite_pass_for_latlon(
         )
 
         today = requested_date
-        tomorrow = requested_date + datetime.timedelta(days=1)
+        tomorrow = requested_date + datetime.timedelta(days=3)
 
-        t = ts.utc(
-            year=today.year,
-            month=today.month,
-            day=today.day,
-            hour=today.hour,
-            minute=today.minute,
-            second=today.second,
-        )
-        days = t - satellite.epoch
-        logger = logging.getLogger(__name__)
-        logger.info("{:.3f} days away from epoch".format(days))
+        #t = ts.utc(
+        #    year=today.year,
+        #    month=today.month,
+        #    day=today.day,
+        #    hour=today.hour,
+        #    minute=today.minute,
+        #    second=today.second,
+        #)
+        #days = t - satellite.epoch
+        #logger = logging.getLogger(__name__)
+        #logger.info("{:.3f} days away from epoch".format(days))
 
         t0 = ts.utc(
             today.year, today.month, today.day, today.hour, today.minute, today.second
@@ -284,9 +286,47 @@ def get_next_satellite_pass_for_latlon(
 
         t, events = satellite.find_events(pos, t0, t1, altitude_degrees=10.0)
 
-    #    for ti, event in zip(t, events):
-    #        name = ("rise above 10°", "culminate", "set below 10°")[event]
-    #        logger.info(ti.utc_strftime("%Y %b %d %H:%M:%S"), name)
+        for ti, event in zip(t, events):
+            print (ti)
+            print (satellite.at(ti))
+            name = ("rise above 10°", "culminate", "set below 10°")[event]
+            print(ti.utc_strftime("%Y %b %d %H:%M:%S"), name)
+
+            # Geographic point beneath satellite
+            geometry = satellite.at(ti)
+            subpoint = geometry.subpoint()
+            latitude = subpoint.latitude
+            longitude = subpoint.longitude
+            elevation = subpoint.elevation
+            sunlit = satellite.at(ti).is_sunlit(eph)
+
+            # Topocentric
+            difference = satellite - pos
+            geometry = difference.at(ti)
+            topoc = pos.at(ti)
+            #
+            topocentric = difference.at(ti)
+            geocentric = satellite.at(ti)
+            # ------ Start outputs -----------
+            #    print ('\n Ephemeris time:', ti.utc_strftime("%Y %b %d %H:%M:%S"))
+            #    print (' JD time: ',ti)
+            #    print ('',loc)
+            #    print ('\n Subpoint Longitude= ', longitude )
+            #    print (' Subpoint Latitude = ', latitude )
+            print(' Subpoint Elevation=  {0:.3f}'.format(elevation.km), 'km')
+            # ------ Step 1: compute sat horizontal coords ------
+            alt, az, distance = topocentric.altaz()
+            if alt.degrees > 0:
+                print('\n', satellite, '\n is above the horizon')
+            print('\n Altitude= ', alt)
+            print(' Azimuth = ', az)
+            print(' Distance=  {0:.3f}'.format(distance.km), 'km')
+            print("Sunlit: ", sunlit)
+            #
+            # ------ Step 2: compute sat RA,Dec [equinox of date] ------
+            ra, dec, distance = topocentric.radec(epoch='date')
+            print('\n Right Ascension RA= ', ra)
+            print(' Declination     de= ', dec)
 
     # some magic is still missing here
 
@@ -393,10 +433,10 @@ if __name__ == "__main__":
 
     #    update_local_tle_file()
 
-    logger.info("Get TLE data for Es'Hail2")
-    logger.info(get_tle_data("ES'HAIL-2"))
+#    logger.info("Get TLE data for Es'Hail2")
+#    logger.info(get_tle_data("ES'HAIL-2"))
     logger.info("Get next ISS pass")
-    thedate = datetime.datetime.now()
+    thedate = datetime.datetime.utcnow()
     logger.info(
         get_next_satellite_pass_for_latlon(
             latitude=51.838890,
