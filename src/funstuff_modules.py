@@ -241,9 +241,9 @@ lang_pl_fortunes = (
     "Tak, jak ja to widzę",
     "Najprawdopodobniej",
     "Perspektywa dobra",
-    "tak",
+    "Tak",
     "Znaki wskazujące na tak",
-    "Odpowiedz niewyraźnie, spróbuj ponownie",
+    "Odpowiedź niewyraźna, spróbuj ponownie",
     "Zapytaj ponownie później",
     "Lepiej ci teraz nie mówić",
     "Nie mogę teraz przewidzieć",
@@ -326,4 +326,4 @@ if __name__ == "__main__":
         level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
     )
     logger = logging.getLogger(__name__)
-    print(get_fortuneteller_message("de"))
+    print(get_fortuneteller_message())
