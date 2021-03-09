@@ -25,6 +25,13 @@ import requests
 from skyfield import api, almanac
 from skyfield.api import EarthSatellite
 import logging
+from math import floor, ceil
+from pprint import pformat, pprint
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 
 def update_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
@@ -53,7 +60,6 @@ def update_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
     try:
         r = requests.get(tle_data_file_url)
     except:
-        logger = logging.getLogger(__name__)
         logger.info(f"Cannot download TLE data from {tle_data_file_url}")
         r = None
     if r:
@@ -64,7 +70,6 @@ def update_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
                     f.close()
                     success = True
             except:
-                logger = logging.getLogger(__name__)
                 logger.info(f"Cannot update TLE data to file {tle_filename}")
     return success
 
@@ -117,7 +122,6 @@ def read_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
 
     if lines:
         if len(lines) % 3 != 0:
-            logger = logging.getLogger(__name__)
             logger.info(f"Invalid TLE file structure for file {tle_filename}")
             success = False
             return success, tle_data
@@ -195,6 +199,9 @@ def get_next_satellite_pass_for_latlon(
     tle_satellite_name: str,
     elevation: float = 0.0,
     number_of_results: int = 1,
+    visible_passes_only: bool = False,
+    altitude_degrees: float = 10.0,
+    units: str = "metric",
 ):
     """
     Determine the next pass of the ISS for a given set
@@ -207,7 +214,7 @@ def get_next_satellite_pass_for_latlon(
     longitude : 'float'
         Longitude value
     requested_date: class 'datetime'
-        Datestamp for the given calculation
+        Start-datestamp for the given calculation
     tle_satellite_name: 'str'
         Name of the satellite whose pass we want to
         calculate (see http://www.celestrak.com/NORAD/elements/amateur.txt)
@@ -216,6 +223,12 @@ def get_next_satellite_pass_for_latlon(
         Default is 0 (sea level)
     number_of_results: int
         default: 1, supports up to 5 max results
+    visible_passes_only: bool
+        If True, then show only visible passes to the user
+    altitude_degrees: float
+        default: 10.0 degrees
+    units: str
+        units of measure, either metric or imperial
 
     Returns
     =======
@@ -235,6 +248,7 @@ def get_next_satellite_pass_for_latlon(
     """
 
     assert 1 <= number_of_results <= 5
+    assert units in ["metric", "imperial"]
 
     rise_time = (
         rise_azimuth
@@ -247,7 +261,7 @@ def get_next_satellite_pass_for_latlon(
     )
     if success:
         ts = api.load.timescale()
-        eph = api.load('de421.bsp')
+        eph = api.load("de421.bsp")
 
         satellite = EarthSatellite(tle_data_line1, tle_data_line2, tle_satellite, ts)
 
@@ -258,19 +272,19 @@ def get_next_satellite_pass_for_latlon(
         )
 
         today = requested_date
-        tomorrow = requested_date + datetime.timedelta(days=3)
+        tomorrow = requested_date + datetime.timedelta(days=10)
 
-        #t = ts.utc(
+        #
+        # t = ts.utc(
         #    year=today.year,
         #    month=today.month,
         #    day=today.day,
         #    hour=today.hour,
         #    minute=today.minute,
         #    second=today.second,
-        #)
-        #days = t - satellite.epoch
-        #logger = logging.getLogger(__name__)
-        #logger.info("{:.3f} days away from epoch".format(days))
+        # )
+        # days = t - satellite.epoch
+        # logger.info("{:.3f} days away from epoch".format(days))
 
         t0 = ts.utc(
             today.year, today.month, today.day, today.hour, today.minute, today.second
@@ -284,61 +298,101 @@ def get_next_satellite_pass_for_latlon(
             tomorrow.second,
         )
 
-        t, events = satellite.find_events(pos, t0, t1, altitude_degrees=10.0)
+        t, events = satellite.find_events(
+            pos, t0, t1, altitude_degrees=altitude_degrees
+        )
 
+        events_dictionary = {}
+
+        found_rise = False
         for ti, event in zip(t, events):
-            print (ti)
-            print (satellite.at(ti))
-            name = ("rise above 10°", "culminate", "set below 10°")[event]
-            print(ti.utc_strftime("%Y %b %d %H:%M:%S"), name)
+            #            name = ("rise above 10°", "culminate", "set below 10°")[event]
+            #            print(ti.utc_strftime("%Y %b %d %H:%M:%S"), name)
 
-            # Geographic point beneath satellite
-            geometry = satellite.at(ti)
-            subpoint = geometry.subpoint()
-            latitude = subpoint.latitude
-            longitude = subpoint.longitude
-            elevation = subpoint.elevation
-            sunlit = satellite.at(ti).is_sunlit(eph)
-
-            # Topocentric
+            # create a datetime object out of the skyfield date/time-stamp
+            # we don't really need the microsecond information but keeping this data
+            # should make our dictionary key unique :-)
+            timestamp = datetime.datetime(
+                year=ti.utc.year,
+                month=ti.utc.month,
+                day=ti.utc.day,
+                hour=ti.utc.hour,
+                minute=ti.utc.minute,
+                second=floor(ti.utc.second),
+                microsecond=floor(1000000 * (ti.utc.second - floor(ti.utc.second))),
+            )
+            is_sunlit = satellite.at(ti).is_sunlit(eph)
             difference = satellite - pos
-            geometry = difference.at(ti)
-            topoc = pos.at(ti)
-            #
             topocentric = difference.at(ti)
-            geocentric = satellite.at(ti)
-            # ------ Start outputs -----------
-            #    print ('\n Ephemeris time:', ti.utc_strftime("%Y %b %d %H:%M:%S"))
-            #    print (' JD time: ',ti)
-            #    print ('',loc)
-            #    print ('\n Subpoint Longitude= ', longitude )
-            #    print (' Subpoint Latitude = ', latitude )
-            print(' Subpoint Elevation=  {0:.3f}'.format(elevation.km), 'km')
-            # ------ Step 1: compute sat horizontal coords ------
             alt, az, distance = topocentric.altaz()
-            if alt.degrees > 0:
-                print('\n', satellite, '\n is above the horizon')
-            print('\n Altitude= ', alt)
-            print(' Azimuth = ', az)
-            print(' Distance=  {0:.3f}'.format(distance.km), 'km')
-            print("Sunlit: ", sunlit)
-            #
-            # ------ Step 2: compute sat RA,Dec [equinox of date] ------
-            ra, dec, distance = topocentric.radec(epoch='date')
-            print('\n Right Ascension RA= ', ra)
-            print(' Declination     de= ', dec)
+            above_horizon = True if alt.degrees > 0 else False
 
-    # some magic is still missing here
+            # (re)calculate km distance in miles if the user has requested imperial units
+            _div = 1.0
+            if units == "imperial":
+                _div = 1.609  # change km to miles
 
-    return (
-        success,
-        rise_time,
-        rise_azimuth,
-        maximum_time,
-        maximum_altitude,
-        set_time,
-        set_azimuth,
-    )
+            # 'event' values: '0' = rise above, '1' = culminate, '2' = set below
+            # at the point in time for which the user has requested the data
+            # there might happen a flyby (meaning that we receive a '1'/'2'
+            # even as first event). We are going to skip those until we receive
+            # the first '0' event
+            if event == 0 or found_rise:
+                events_dictionary[timestamp] = {
+                    "event": event,
+                    "above_horizon": above_horizon,
+                    "altitude": ceil(altitude_degrees),
+                    "azimuth": ceil(az.degrees),
+                    "distance": floor(
+                        distance.km / _div
+                    ),  # Change km to miles if necessary
+                    "is_sunlit": is_sunlit,
+                }
+                found_rise = True
+
+        # We now have a dictionary that is a) in the correct order and b) starts with a '0' event
+        # Try to process the data
+
+        is_visible = False
+        rise_date = culmination_date = set_date = datetime.datetime.min
+        alt = az = dst = 0.0
+
+        for event_datetime in events_dictionary:
+            event_item = events_dictionary[event_datetime]
+            event = event_item["event"]
+            above_horizon = event_item["above_horizon"]
+            altitude = event_item["altitude"]
+            azimuth = event_item["azimuth"]
+            distance = event_item["distance"]
+            is_sunlit = event_item["is_sunlit"]
+
+            if event == 0:
+                rise_date = event_datetime
+                if is_sunlit:
+                    is_visible = True
+            elif event == 1:
+                culmination_date = event_datetime
+                alt = altitude
+                az = azimuth
+                dst = distance
+                if is_sunlit:
+                    is_visible = True
+            elif event == 2:
+                set_date = event_datetime
+                if is_sunlit:
+                    is_visible = True
+                if visible_passes_only:
+                    if is_visible:
+                        print(
+                            f"{rise_date} {culmination_date} {set_date} {alt} {az} {dst} {is_visible}"
+                        )
+                else:
+                    print(
+                        f"{rise_date} {culmination_date} {set_date} {alt} {az} {dst} {is_visible}"
+                    )
+                is_visible = False
+                rise_date = culmination_date = set_date = datetime.datetime.min
+                alt = az = dst = 0.0
 
 
 def get_sun_moon_rise_set_for_latlon(
@@ -417,11 +471,6 @@ def get_sun_moon_rise_set_for_latlon(
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
-    )
-    logger = logging.getLogger(__name__)
-
     logger.info(
         get_sun_moon_rise_set_for_latlon(
             latitude=51.838860,
@@ -433,17 +482,20 @@ if __name__ == "__main__":
 
     #    update_local_tle_file()
 
-#    logger.info("Get TLE data for Es'Hail2")
-#    logger.info(get_tle_data("ES'HAIL-2"))
+    #    logger.info("Get TLE data for Es'Hail2")
+    #    logger.info(get_tle_data("ES'HAIL-2"))
     logger.info("Get next ISS pass")
     thedate = datetime.datetime.utcnow()
     logger.info(
-        get_next_satellite_pass_for_latlon(
-            latitude=51.838890,
-            longitude=8.326747,
-            requested_date=thedate + datetime.timedelta(days=0),
-            tle_satellite_name="ISS",
-            elevation=74.0,
-            number_of_results=5,
+        pformat(
+            get_next_satellite_pass_for_latlon(
+                latitude=51.838890,
+                longitude=8.326747,
+                requested_date=thedate + datetime.timedelta(days=0),
+                tle_satellite_name="ISS",
+                elevation=74.0,
+                number_of_results=5,
+                visible_passes_only=True,
+            )
         )
     )

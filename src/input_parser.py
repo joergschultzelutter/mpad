@@ -49,6 +49,11 @@ errmsg_invalid_command: str = "Cannot grok command"
 errmsg_no_satellite_specified: str = "No satellite specified"
 errmsg_no_cwop_specified: str = "No cwop id specified"
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+)
+logger = logging.getLogger(__name__)
+
 
 def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_key: str):
     """
@@ -2564,11 +2569,6 @@ def parse_what_keyword_fortuneteller(aprs_message: str):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
-    )
-    logger = logging.getLogger(__name__)
-
     (
         success,
         aprsdotfi_api_key,
