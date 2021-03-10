@@ -350,6 +350,8 @@ def get_next_satellite_pass_for_latlon(
         rise_date = culmination_date = set_date = datetime.datetime.min
         alt = az = dst = 0.0
 
+        count = 0
+
         for event_datetime in events_dictionary:
             event_item = events_dictionary[event_datetime]
             event = event_item["event"]
@@ -359,30 +361,39 @@ def get_next_satellite_pass_for_latlon(
             distance = event_item["distance"]
             is_sunlit = event_item["is_sunlit"]
 
-            if event == 0:
+            if event == 0:  # rise
                 rise_date = event_datetime
                 if is_sunlit:
                     is_visible = True
-            elif event == 1:
+            elif event == 1:  # culmination
                 culmination_date = event_datetime
                 alt = altitude
                 az = azimuth
                 dst = distance
                 if is_sunlit:
                     is_visible = True
-            elif event == 2:
+            elif event == 2:  # set
                 set_date = event_datetime
                 if is_sunlit:
                     is_visible = True
+                # we should now have all of the required data for creating
+                # a full entry. Now check if we need to add it
                 if is_visible or not visible_passes_only:
                     satellite_response_data[rise_date] = {
                         "culmination_date": culmination_date,
                         "set_date": set_date,
-                        "altitude_deg": alt,
-                        "azimuth_deg": az,
+                        "altitude": alt,
+                        "azimuth": az,
                         "distance": dst,
                         "is_visible": is_visible,
                     }
+                    # Increase entry counter and end for loop
+                    # if we have enough results
+                    count = count + 1
+                    if count >= number_of_results:
+                        break
+                # Otherwise, we are going to reset our work variables for
+                # the next loop that we are going to enter
                 is_visible = False
                 rise_date = culmination_date = set_date = datetime.datetime.min
                 alt = az = dst = 0.0
@@ -489,7 +500,7 @@ if __name__ == "__main__":
                 tle_satellite_name="ISS",
                 elevation=74.0,
                 number_of_results=5,
-                visible_passes_only=False,
+                visible_passes_only=True,
             )
         )
     )

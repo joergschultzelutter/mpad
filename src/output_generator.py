@@ -33,7 +33,10 @@ from geopy_modules import get_osm_special_phrase_data
 
 from utility_modules import make_pretty_aprs_messages, read_program_config
 from airport_data_modules import get_metar_data
-from skyfield_modules import get_sun_moon_rise_set_for_latlon
+from skyfield_modules import (
+    get_sun_moon_rise_set_for_latlon,
+    get_next_satellite_pass_for_latlon,
+)
 from geo_conversion_modules import (
     convert_latlon_to_maidenhead,
     convert_latlon_to_mgrs,
@@ -230,10 +233,10 @@ def generate_output_message(response_parameters: dict):
         success, output_list = generate_output_message_riseset(
             response_parameters=response_parameters
         )
-    #    elif what == "satpass":
-    #        success, output_list = generate_output_message_satpass(
-    #            response_parameters=response_parameters
-    #        )
+    elif what == "satpass" or what == "vispass":
+        success, output_list = generate_output_message_satpass(
+            response_parameters=response_parameters
+        )
     elif what == "repeater":
         success, output_list = generate_output_message_repeater(
             response_parameters=response_parameters
@@ -441,11 +444,148 @@ def generate_output_message_satpass(response_parameters: dict):
     longitude = response_parameters["longitude"]
     altitude = response_parameters["altitude"]
     when_daytime = response_parameters["when_daytime"]
+    what = response_parameters["what"]
     when = response_parameters["when"]
-    human_readable_message = response_parameters["human_readable_message"]
+    number_of_results = response_parameters["number_of_results"]
+    date_offset = response_parameters["date_offset"]
+    hour_offset = response_parameters["hour_offset"]
+    units = response_parameters["units"]
+    message_callsign = response_parameters["message_callsign"]
 
-    output_list = ["Currently not implemented"]
-    success = True
+    visible_passes_only = True if what == "vispass" else False
+
+    vis_text = "visible " if visible_passes_only else ""
+
+    # Determine the correct timestamp:
+    # First, we will get the current UTC time
+    # If an hourly offset was specified, we will add this to the current datestamp
+    # If no hourly offset was specified:
+    # if our date is set to the future, add the additional days to the date and
+    # then set the time information to zero
+    # if additional time information was specified, set it accordingly
+    # As always, ALL of these settings (including the 'relative' ones like
+    # "night" refer to UTC.
+    request_datestamp = datetime.datetime.utcnow()
+    if when == "hour":
+        request_datestamp += datetime.timedelta(hours=hour_offset)
+    else:
+        if date_offset > 0:
+            request_datestamp += datetime.timedelta(days=date_offset)
+            ds = datetime.datetime(
+                year=request_datestamp.year,
+                month=request_datestamp.month,
+                day=request_datestamp.day,
+                hour=0,
+                minute=0,
+                second=0,
+                microsecond=0,
+            )
+            request_datestamp = ds
+        if when_daytime != "full":
+            ds = datetime.datetime(
+                year=request_datestamp.year,
+                month=request_datestamp.month,
+                day=request_datestamp.day,
+                hour=0,
+                minute=0,
+                second=0,
+                microsecond=0,
+            )
+            if when_daytime == "morning":
+                ds += datetime.timedelta(hours=3)
+            elif when_daytime == "daytime":
+                ds += datetime.timedelta(hours=12)
+            elif when_daytime == "evening":
+                ds += datetime.timedelta(hours=17)
+            elif when_daytime == "night":
+                ds += datetime.timedelta(hours=22)
+            request_datestamp = ds
+
+    success, satellite_response_data = get_next_satellite_pass_for_latlon(
+        latitude=latitude,
+        longitude=longitude,
+        requested_date=request_datestamp,
+        tle_satellite_name=satellite,
+        elevation=altitude,
+        units=units,
+        number_of_results=number_of_results,
+        visible_passes_only=visible_passes_only,
+    )
+    output_list = []
+    list_number = 1
+    if not success:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"Unable to determine sat pass data for '{satellite}'",
+            destination_list=output_list,
+        )
+    else:
+        dictlen = len(satellite_response_data)
+        if dictlen == 0:
+            output_list = make_pretty_aprs_messages(f"'{satellite}':", output_list)
+            output_list = make_pretty_aprs_messages(
+                message_to_add="cannot find satpasses for your loc.",
+                destination_list=output_list,
+            )
+        else:
+            output_list = make_pretty_aprs_messages(
+                message_to_add=f"{satellite} {vis_text}passes for {message_callsign} loc. UTC",
+                destination_list=output_list,
+            )
+            for rise_date in satellite_response_data:
+                culmination_date = satellite_response_data[rise_date][
+                    "culmination_date"
+                ]
+                set_date = satellite_response_data[rise_date]["set_date"]
+                is_visible = satellite_response_data[rise_date]["is_visible"]
+                altitude = math.ceil(satellite_response_data[rise_date]["altitude"])
+                azimuth = math.ceil(satellite_response_data[rise_date]["azimuth"])
+                distance = round(satellite_response_data[rise_date]["distance"])
+                distance_uom = "km"
+                if units == "imperial":
+                    distance_uom = "mi"
+                rise_text = "Rise" if list_number == 1 else "R"
+                culm_text = "Culm" if list_number == 1 else "C"
+                set_text = "Set" if list_number == 1 else "S"
+                deg_text = " deg" if list_number == 1 else ""
+                uom_text = distance_uom if list_number == 1 else ""
+                visible_text = "Vis " if list_number == 1 else "V "
+
+                if dictlen != 1:
+                    output_list = make_pretty_aprs_messages(
+                        message_to_add=f"#{list_number}", destination_list=output_list
+                    )
+                    list_number += 1
+                output_list = make_pretty_aprs_messages(
+                    message_to_add=f"{rise_text} {rise_date.strftime('%d-%b %H:%M')}",
+                    destination_list=output_list,
+                )
+                output_list = make_pretty_aprs_messages(
+                    message_to_add=f"{culm_text} {culmination_date.strftime('%H:%M')}",
+                    destination_list=output_list,
+                )
+                output_list = make_pretty_aprs_messages(
+                    message_to_add=f"{set_text} {set_date.strftime('%H:%M')}",
+                    destination_list=output_list,
+                )
+                output_list = make_pretty_aprs_messages(
+                    message_to_add=f"Alt {altitude}{deg_text}",
+                    destination_list=output_list,
+                )
+                output_list = make_pretty_aprs_messages(
+                    message_to_add=f"Az {azimuth}{deg_text}",
+                    destination_list=output_list,
+                )
+                output_list = make_pretty_aprs_messages(
+                    message_to_add=f"Dst {distance}{uom_text}",
+                    destination_list=output_list,
+                )
+                if not visible_passes_only:
+                    visible = "Y" if is_visible else "N"
+                    output_list = make_pretty_aprs_messages(
+                        message_to_add=f"{visible_text}{visible}",
+                        destination_list=output_list,
+                    )
+    success = True  # always True
     return success, output_list
 
 
