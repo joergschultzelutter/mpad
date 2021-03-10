@@ -33,6 +33,9 @@ from geo_conversion_modules import haversine
 import logging
 import operator
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -773,10 +776,6 @@ def read_hearham_raw_data_from_disk(
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
-    )
-
     update_local_repeatermap_file()
 
     logger.info(

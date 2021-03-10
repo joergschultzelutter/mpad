@@ -293,6 +293,11 @@ fortunes_dictionary = {
     "hr": lang_hr_fortunes,
 }
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+)
+logger = logging.getLogger(__name__)
+
 
 def get_fortuneteller_message(language: str = "en"):
     """
@@ -322,8 +327,4 @@ def get_fortuneteller_message(language: str = "en"):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
-    )
-    logger = logging.getLogger(__name__)
-    print(get_fortuneteller_message())
+    print(get_fortuneteller_message(language="pl"))

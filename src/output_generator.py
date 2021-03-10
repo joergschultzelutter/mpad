@@ -60,7 +60,13 @@ help_text_array = [
     "city,state;country OR city,state OR city;country OR zip;country OR",
     "zip with/wo country OR grid|mh+4..6 char OR lat/lon OR callsign",
     "time: mon..sun(day),today,tomorrow.Extra: mtr|metric imp|imperial",
+    "see https://github.com/joergschultzelutter/mpad for command syntax",
 ]
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 
 def create_cwop_content(cwop_dict: dict):
@@ -262,7 +268,6 @@ def generate_output_message(response_parameters: dict):
         output_list = [
             "Output parser has encountered an unknown action command",
         ]
-        logger = logging.getLogger(__name__)
         logger.info(
             f"Unable to generate output message; unknown 'what' command '{what}': {response_parameters}"
         )
@@ -454,7 +459,7 @@ def generate_output_message_satpass(response_parameters: dict):
 
     visible_passes_only = True if what == "vispass" else False
 
-    vis_text = "visible " if visible_passes_only else ""
+    vis_text = "vis " if visible_passes_only else ""
 
     # Determine the correct timestamp:
     # First, we will get the current UTC time
@@ -528,7 +533,7 @@ def generate_output_message_satpass(response_parameters: dict):
             )
         else:
             output_list = make_pretty_aprs_messages(
-                message_to_add=f"{satellite} {vis_text}passes for {message_callsign} loc. UTC",
+                message_to_add=f"{satellite} {vis_text}passes for {message_callsign} UTC",
                 destination_list=output_list,
             )
             for rise_date in satellite_response_data:
@@ -548,7 +553,7 @@ def generate_output_message_satpass(response_parameters: dict):
                 set_text = "Set" if list_number == 1 else "S"
                 deg_text = " deg" if list_number == 1 else ""
                 uom_text = distance_uom if list_number == 1 else ""
-                visible_text = "Vis " if list_number == 1 else "V "
+                visible_text = "Vis " if list_number == 1 else "Vs "
 
                 if dictlen != 1:
                     output_list = make_pretty_aprs_messages(
@@ -1271,11 +1276,6 @@ def generate_output_message_fortuneteller(response_parameters: dict):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
-    )
-    logger = logging.getLogger(__name__)
-
     (
         success,
         aprsdotfi_api_key,

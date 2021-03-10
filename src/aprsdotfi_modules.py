@@ -25,7 +25,10 @@ from utility_modules import read_program_config
 import logging
 import mpad_config
 
-# APRS.fi access key (we get this value from the config file settings)
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 
 def get_position_on_aprsfi(aprsfi_callsign: str, aprsdotfi_api_key: str):
@@ -119,10 +122,6 @@ def get_position_on_aprsfi(aprsfi_callsign: str, aprsdotfi_api_key: str):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
-    )
-    logger = logging.getLogger(__name__)
     (
         success,
         aprsdotfi_api_key,

@@ -25,6 +25,11 @@ from mgrs import MGRStoLL, LLtoMGRS
 from math import radians, cos, sin, asin, sqrt, atan2, degrees
 import logging
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+)
+logger = logging.getLogger(__name__)
+
 
 def convert_latlon_to_utm(latitude: float, longitude: float):
     """
@@ -430,11 +435,6 @@ def haversine(
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
-    )
-    logger = logging.getLogger(__name__)
-
     logger.info(convert_latlon_to_utm(48, -122))
     logger.info(convert_utm_to_latlon(10, "U", 574595, 5316784))
 

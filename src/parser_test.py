@@ -7,6 +7,10 @@ from output_generator import generate_output_message
 import logging
 from pprint import pformat
 
+logging.basicConfig(
+    level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 def testcall(message_text: str, from_callsign: str):
     (
@@ -46,9 +50,4 @@ def testcall(message_text: str, from_callsign: str):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
-    )
-    logger = logging.getLogger(__name__)
-
     testcall(message_text="vispass iss saturday top5", from_callsign="df1jsl-8")

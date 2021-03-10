@@ -62,6 +62,11 @@ beacon_text_array: list = [
     #    ">My tiny little APRS bot (pre-alpha testing)",
 ]
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+)
+logger = logging.getLogger(__name__)
+
 
 def parse_aprs_data(packet_data_dict: dict, item: str):
     """
@@ -106,7 +111,6 @@ def send_beacon_and_status_msg(myaprsis: aprslib.inet.IS, simulate_send: bool = 
     =======
     none
     """
-    logger = logging.getLogger(__name__)
     logger.info("Reached beacon interval; sending beacons")
     for bcn in beacon_text_array:
         stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}:{bcn}"
@@ -135,7 +139,6 @@ def send_bulletin_messages(myaprsis: aprslib.inet.IS, simulate_send: bool = True
     =======
     none
     """
-    logger = logging.getLogger(__name__)
     logger.info("reached bulletin interval; sending bulletins")
     for recipient_id, bln in bulletin_texts.items():
         stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}::{recipient_id:9}:{bln}"
@@ -176,7 +179,6 @@ def send_ack(
     """
 
     if source_msg_no:
-        logger = logging.getLogger(__name__)
         logger.info("Preparing acknowledgment receipt")
         stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}::{users_callsign:9}:ack{source_msg_no}"
         if not simulate_send:
@@ -228,7 +230,6 @@ def send_aprs_message_list(
             number_of_served_packages = number_of_served_packages + 1
             if number_of_served_packages > 99999:  # max 5 digits
                 number_of_served_packages = 1
-        logger = logging.getLogger(__name__)
         if not simulate_send:
             logger.info(f"Sending response message '{stringtosend}'")
             myaprsis.sendall(stringtosend)
@@ -295,8 +296,4 @@ def extract_msgno_from_defective_message(message_text: str):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
-    )
-    logger = logging.getLogger(__name__)
     logger.info(extract_msgno_from_defective_message("Deensen;de tomorrow {ab}cd"))

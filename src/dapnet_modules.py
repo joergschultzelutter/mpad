@@ -26,6 +26,11 @@ import requests
 from requests.auth import HTTPBasicAuth
 import mpad_config
 
+logging.basicConfig(
+    level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+)
+logger = logging.getLogger(__name__)
+
 
 def send_dapnet_message(
     from_callsign: str,
@@ -95,11 +100,6 @@ def send_dapnet_message(
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
-    )
-    logger = logging.getLogger(__name__)
-
     (
         success,
         aprsdotfi_api_key,

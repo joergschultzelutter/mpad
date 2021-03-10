@@ -27,6 +27,11 @@ import logging
 
 # icao https://www.aviationweather.gov/docs/metar/stations.txt
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+)
+logger = logging.getLogger(__name__)
+
 
 def read_local_airport_data_file(
     airport_stations_filename: str = "airport_stations.txt",
@@ -293,7 +298,6 @@ def update_local_airport_stations_file(
     try:
         r = requests.get(file_url)
     except:
-        logger = logging.getLogger(__name__)
         logger.info(f"Cannot download airport data from {file_url}")
         r = None
     if r:
@@ -304,7 +308,6 @@ def update_local_airport_stations_file(
                     f.close()
                     success = True
             except:
-                logger = logging.getLogger(__name__)
                 logger.info(
                     f"Cannot update airport data to local file {airport_stations_filename}"
                 )
@@ -360,10 +363,6 @@ def get_nearest_icao(latitude: float, longitude: float):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
-    )
-    logger = logging.getLogger(__name__)
     logger.info(get_metar_data("EDDF"))
     logger.info(validate_iata("KLV"))
     logger.info(validate_icao("EDDF"))

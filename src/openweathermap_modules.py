@@ -27,6 +27,11 @@ import logging
 from pprint import pformat
 import math
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+)
+logger = logging.getLogger(__name__)
+
 
 def get_daily_weather_from_openweathermapdotorg(
     latitude: float,
@@ -141,7 +146,6 @@ def get_daily_weather_from_openweathermapdotorg(
             timezone_offset = x["timezone_offset"]
         if "timezone" in x:
             timezone = x["timezone"]
-        logger = logging.getLogger(__name__)
         logger.info(pformat(weather_tuple))
     return success, weather_tuple, timezone_offset, timezone
 
@@ -382,11 +386,6 @@ def parse_daily_weather_from_openweathermapdotorg(
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
-    )
-    logger = logging.getLogger(__name__)
-
     (
         success,
         aprsdotfi_api_key,

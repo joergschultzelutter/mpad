@@ -20,7 +20,7 @@
 #
 # Program version
 #
-mpad_version: str = "0.08"
+mpad_version: str = "0.09"
 #
 ###########################
 # Constants, do not change#

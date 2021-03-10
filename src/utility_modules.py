@@ -29,6 +29,11 @@ import hashlib
 import time
 import mpad_config
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+)
+logger = logging.getLogger(__name__)
+
 
 def make_pretty_aprs_messages(
     message_to_add: str,
@@ -345,7 +350,6 @@ def read_number_of_served_packages(file_name: str = "mpad_served_packages.txt"):
                 served_packages = int(contents)
     except:
         served_packages = 1
-        logger = logging.getLogger(__name__)
         logger.info(f"Cannot read content from {file_name}")
     return served_packages
 
@@ -372,7 +376,6 @@ def write_number_of_served_packages(
             f.write("%d" % served_packages)
             f.close()
     except:
-        logger = logging.getLogger(__name__)
         logger.info(f"Cannot write number of served packages to {file_name}")
 
 
@@ -503,11 +506,6 @@ def convert_text_to_plain_ascii(message_string: str):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
-    )
-    logger = logging.getLogger(__name__)
-
     my_array = make_pretty_aprs_messages("Hello World")
     my_array = make_pretty_aprs_messages("Wie geht es Dir", my_array)
     my_array = make_pretty_aprs_messages(

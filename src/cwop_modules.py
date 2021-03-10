@@ -23,6 +23,11 @@ from bs4 import BeautifulSoup
 import datetime
 import logging
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+)
+logger = logging.getLogger(__name__)
+
 
 def get_cwop_findu(cwop_id: str, units: str = "metric"):
     """Convert latitude / longitude coordinates to UTM (Universal Transverse Mercator) coordinates
@@ -255,9 +260,5 @@ def get_nearest_cwop_findu(latitude: float, longitude: float, units: str = "metr
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
-    )
-    logger = logging.getLogger(__name__)
     logger.info(get_nearest_cwop_findu(51.838720, 08.326819, "imperial"))
     logger.info(get_cwop_findu("AT166", "metric"))

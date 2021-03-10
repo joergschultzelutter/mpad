@@ -29,6 +29,11 @@ import requests
 import random
 import time
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+)
+logger = logging.getLogger(__name__)
+
 
 def get_geocode_geopy_data(query_data: dict, language: str = "en"):
     """
@@ -313,10 +318,6 @@ def get_osm_special_phrase_data(
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
-    )
-    logger = logging.getLogger(__name__)
 
     #    logger.info(get_reverse_geopy_data(latitude=37.7790262, longitude=-122.4199061))
     #    city = "Mountain View"
