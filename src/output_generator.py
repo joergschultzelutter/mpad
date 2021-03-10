@@ -460,6 +460,7 @@ def generate_output_message_satpass(response_parameters: dict):
     visible_passes_only = True if what == "vispass" else False
 
     vis_text = "vis " if visible_passes_only else ""
+    passes_text = "pass"    # we'll change this to plural if there is more than 1 result
 
     # Determine the correct timestamp:
     # First, we will get the current UTC time
@@ -532,8 +533,10 @@ def generate_output_message_satpass(response_parameters: dict):
                 destination_list=output_list,
             )
         else:
+            if dictlen > 1:
+                passes_text = "passes"
             output_list = make_pretty_aprs_messages(
-                message_to_add=f"{satellite} {vis_text}passes for {message_callsign} UTC",
+                message_to_add=f"{satellite} {vis_text}{passes_text} for {message_callsign} UTC",
                 destination_list=output_list,
             )
             for rise_date in satellite_response_data:

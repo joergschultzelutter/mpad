@@ -50,4 +50,4 @@ def testcall(message_text: str, from_callsign: str):
 
 
 if __name__ == "__main__":
-    testcall(message_text="vispass iss saturday top5", from_callsign="df1jsl-8")
+    testcall(message_text="satpass iss", from_callsign="df1jsl-8")
