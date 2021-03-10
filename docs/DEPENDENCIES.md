@@ -11,10 +11,10 @@ The following Python packages need to be installed:
 - [geopy](https://github.com/geopy/geopy)
 - [iso3166](https://github.com/deactivated/python-iso3166)
 - [maidenhead](https://github.com/space-physics/maidenhead)
-- [pymgrs](https://github.com/aydink/pymgrs) Note: this is not a pip package; download the .py file and add it to the source's directory
+- [pymgrs](https://github.com/aydink/pymgrs) Note: this is not a pip package; download the mgrs.py file and save it in the src directory
 - [requests](https://github.com/psf/requests)
 - [skyfield](https://github.com/skyfielders/python-skyfield)
-- [timezonefinder](https://github.com/MrMinimal64/timezonefinder) (currently not in use)
+- [timezonefinder](https://github.com/MrMinimal64/timezonefinder)
 - [unidecode](https://github.com/avian2/unidecode)
 - [us](https://github.com/unitedstates/python-us)
   
@@ -33,6 +33,7 @@ Both aprs.fi and openweathermap.org require an API access key which needs to be 
 - [celestrak.com](https://www.celestrak.com)
 - [openstreetmap.org](https://www.openstreetmap.org)
 - [repeatermap.de](https://www.repeatermap.de)
+- [hearham.com](https://www.hearham.com)
 
 ## Programming & knowledge resources
 
