@@ -26,7 +26,7 @@ from skyfield import api, almanac
 from skyfield.api import EarthSatellite
 import logging
 from math import floor, ceil
-from pprint import pformat, pprint
+from pprint import pformat
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -232,23 +232,15 @@ def get_next_satellite_pass_for_latlon(
 
     Returns
     =======
-    rise_time: 'Datetime'
-        Rise time
-    rise_azimuth: 'float'
-        Rise azimuth
-    maximum_time: 'Datetime'
-        maximum time
-    maximum_altitude: 'float'
-        Maximum altitude
-    set_time: 'Datetime'
-        Set time
-    set_azimuth: 'float'
-        Set azimuth
+    success: bool
+        False in case an error has occurred
 
     """
 
     assert 1 <= number_of_results <= 5
     assert units in ["metric", "imperial"]
+
+    satellite_response_data = {}
 
     rise_time = (
         rise_azimuth
@@ -351,7 +343,8 @@ def get_next_satellite_pass_for_latlon(
                 found_rise = True
 
         # We now have a dictionary that is a) in the correct order and b) starts with a '0' event
-        # Try to process the data
+        # Try to process the data and build the dictionary that will contain
+        # the blended data
 
         is_visible = False
         rise_date = culmination_date = set_date = datetime.datetime.min
@@ -381,18 +374,19 @@ def get_next_satellite_pass_for_latlon(
                 set_date = event_datetime
                 if is_sunlit:
                     is_visible = True
-                if visible_passes_only:
-                    if is_visible:
-                        print(
-                            f"{rise_date} {culmination_date} {set_date} {alt} {az} {dst} {is_visible}"
-                        )
-                else:
-                    print(
-                        f"{rise_date} {culmination_date} {set_date} {alt} {az} {dst} {is_visible}"
-                    )
+                if is_visible or not visible_passes_only:
+                    satellite_response_data[rise_date] = {
+                        "culmination_date": culmination_date,
+                        "set_date": set_date,
+                        "altitude_deg": alt,
+                        "azimuth_deg": az,
+                        "distance": dst,
+                        "is_visible": is_visible,
+                    }
                 is_visible = False
                 rise_date = culmination_date = set_date = datetime.datetime.min
                 alt = az = dst = 0.0
+    return success, satellite_response_data
 
 
 def get_sun_moon_rise_set_for_latlon(
@@ -495,7 +489,7 @@ if __name__ == "__main__":
                 tle_satellite_name="ISS",
                 elevation=74.0,
                 number_of_results=5,
-                visible_passes_only=True,
+                visible_passes_only=False,
             )
         )
     )
