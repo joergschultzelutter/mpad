@@ -42,7 +42,7 @@ External service dependencies:
 External service dependencies:
 
 - [aprs.fi](www.aprs.fi) for APRS call sign coordinates
-- [repeatermap.de](www.repeatermap.de) for the repeater database
+- [repeatermap.de](www.repeatermap.de) and [hearham.com](www.hearham.com) for the repeater databases
 
 | What do we want | Command string User > MPAD | Response example MPAD > User |
 | --------------- | -------------------------- | ---------------------------- |
@@ -168,3 +168,31 @@ External service dependencies:
 | Our fortune in Russian language| ```fortune lang ru``` | ```Знаки говорят — да``` |
 
 Note that outgoing UTF-8 content will be converted to plain ASCII content unless specified otherwise in the program's config file (see [installation instructions](INSTALLATION.md))
+
+## Satellite data
+
+External service dependencies:
+
+- [Celestrak](https://www.celestrak.com/)
+
+| What do we want | Command string User > MPAD | Response example MPAD > User |
+| --------------- | -------------------------- | ---------------------------- |
+| Get next ISS pass | ```satpass iss``` | ```ISS pass for DF1JSL-8 UTC Rise 10-Mar 23:09 Culm 23:12 Set 23:15``` |
+| | | ```Alt 10 deg Az 154 deg Dst 677km Vis N``` |
+| Get next visible ISS pass | ```vispass iss``` | ```ISS vis pass for DF1JSL-8 UTC Rise 11-Mar 03:59 Culm 04:02``` |
+| | | ```Set 04:05 Alt 10 deg Az 213 deg Dst 876km``` |
+| Get top2 of next visible ISS pass | ```vispass iss top2``` | ```ISS vis passes for DF1JSL-8 UTC #1 Rise 11-Mar 03:59 Culm 04:02``` |
+| | | ```Set 04:05 Alt 10 deg Az 213 deg Dst 876km #2 R 12-Mar 03:11 C 03:14``` |
+| | | ```S 03:17 Alt 10 Az 208 Dst 701``` |
+
+If you request more than one result (via the ```top2```...```top5``` commands), MPAD will abbreviate the descriptive text for results 2..5 in order to save a few bytes per message. The format for messages 2..5 is the same as for the first message which comes with a full descriptive text.
+
+Description:
+
+- ```Rise``` / ```R```: Rise time, event start time
+- ```Culm``` / ```C```: Culmination time, mid-time of the event
+- ```Set``` / ```S```: Set time, event end time
+- ```Alt```: Altitude in degrees at culmination time
+- ```Az```: Azimuth in degrees at culmination time
+- ```Dst```: Distance in km or miles at culmination time
+- ```Vis```: Visibility Y/N. Only included if your query is based on ```satpass```.

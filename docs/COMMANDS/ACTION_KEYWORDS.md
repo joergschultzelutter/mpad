@@ -195,7 +195,7 @@ Returns the geocoordinates/address info of the sender's position or a specific c
 - Position' age (when was this position transmitted for the last time). Note: this information is only provided for the ```whereis``` command but not for the ```whereami``` command
 - Altitude information whereas present
 
-If address data is available for the requested coordinates, MPAD tries to honor the respective countries' native street / street number format. If the domestic format for your country is unknown, the address format for the street/street number data will always be ```street street_number```, e.g. ```Yellow Brick Road 12```.
+If address data is available for the requested coordinates, MPAD tries to honor the respective countries' native street / street number format. If the domestic format for your country is unknown, the address format for the street/street number data will always be ```street street_number```, e.g. ```Yellow Brick Road 12```. Open a ticket if I have accidentally messed up your country's street/ street number format.
 
 Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __NO__
 
@@ -292,29 +292,54 @@ Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME
 
 Retrieves the next pass of the given satellite ID for the user's position. Satellites can be specified by their satellite names as defined in the respective [amateur radio satellite tle file](http://www.celestrak.com/NORAD/elements/amateur.txt). The following rules apply:
 
-- If a satellite name contains spaces, then these spaces will be replaced by dashes. As an example, "SAUDISAT 1C" will internally be identified by "SAUDISAT-1C"
+- If a satellite name contains spaces, then these spaces will be replaced by dashes. As an example, __SAUDISAT 1C__ will internally be identified by __SAUDISAT-1C__
 
 - For convenience reasons, the ISS can be selected by requesting the satellite pass data for either __ISS__ or __ZARYA__.
 
-- It is assumed that satellite visibility is not important to you. Therefore, potential results contain values where the respective satellite may or may not be visible from the user's position.
+- You can use the ```top``` command for telling MPAD to return more than one result (if available)
 
-- if a date / daytime setting is specified, the program will try to honor that setting.
-
-- Only the data for the next statellite pass is returned.
-
-EXPERIMENTAL - STILL IN DEVELOPMENT
+- if a ```date``` / ```daytime``` setting is specified, the program will try to honor that setting and use it as the __starting__ datetime for its calculations. 
 
 Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __YES__
 
 #### Formats
 
-- ```satpass <satellite_name>```
+- ```satpass <satellite_name>``` returns the next satellite pass of the requested satellite back to you.
+- ```vispass <satellite_name>``` same as satpass, but ensures that the result that is returned to you relates to a __visible__ satellite pass.
+
+Program assumptions for returning a result to you:
+
+- Elevation / Horizon is > 10 degrees
+
+- A __visible__ satellite pass requires that between the satellite's rise time and its set time, it needs to be at least briefly in sunlight.
+
+The following rules apply wrt to the __starting__ point in time that is used for calculating the next passes:
+
+- If you have specified an hour-based offset for ```date``` (e.g. ```37h```), MPAD uses the current UTC time, adds the hourly offset to it and starts the calculation
+
+- If you have specified a day-based offset for ```date``` that is at least one day in the future (e.g. ```tomorrow```), MPAD calculates that date and sets the time H/M/S to zero. If you've also specified a ```daytime``` setting, then this ```daytime setting``` will be added on top as follows:
+
+- ```morning``` - 03:00 UTC
+
+- ```daytime``` - 12:00 UTC
+
+- ```evening``` - 17:00 UTC
+
+- ```night``` - 22:00 UTC
+
+- if you don't specify any ```date``` or ```daytime``` settings, the current UTC date is the calculation's starting point.
+
+If there is no satellite pass for the day you've specified, the __next available__  one will be presented to you. There is no error message if there is no satellite pass on the day that you've specified.
 
 #### Example requests
 
 - ```satpass iss```
-- ```satpass zarya```
+
+- ```vispass zarya ```
+
 - ```satpass saudisat-1c```
+
+- ```vispass iss top5 friday noon```
 
 ### Repeater data
 

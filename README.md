@@ -6,12 +6,12 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/CWOP prediction, 
 
 ## Supported features
 
-- Worldwide daily/hourly weather forecast for address / zip code / lat,lon / maidenhead / ... 
-- METAR data for IATA/ICAO codes or the nearest airport to the user's position.
+- Worldwide daily/hourly weather forecast for address / zip code / lat,lon / maidenhead / ...
+- METAR data for IATA/ICAO codes or the nearest airport to the user's position
 - CWOP data for a given CWOP station (or the nearest one)
 - Sunrise/sunset and moonrise/sunset for a given callsign (or the station's callsign)
 - Position data for a given callsign/transmitter callsign (human readable address, MGRS, Maidenhead, UTM, DMS, distance between the two users, altitude)
-- BETA:satellite transit data (provides e.g. the next transit of the ISS, based on the callsign position of the transmitter)
+- Satellite transit data (provides e.g. the next transit of the ISS, based on the callsign position of the transmitter). Can distinguish between visible and non-visible passes.
 - Finds the nearest repeater to your position with optional query parameters on band and query (c4fm, dstar, fm, ...)
 - Find a place of interest nearby (e.g. fuel station, supermarket, ...)
 - Send a message to a DAPNET user
@@ -45,7 +45,7 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/CWOP prediction, 
 
 [see DEPENDENCIES](docs/DEPENDENCIES.md)
 
-## Installation
+## Install your own MPAD instance
 
 [see INSTALLATION](docs/INSTALLATION.md)
 
@@ -53,12 +53,12 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/CWOP prediction, 
 
 [see EXTENSIONS](docs/EXTENSIONS.md)
 
-## Technical Details and Known Issues
+## Technical Details and known issues
 
 [see TECHNICAL_DETAILS](docs/TECHNICAL_DETAILS.md)
 
 ## The fine print
 
-- If you intend to host an instance of this program, you must be a licensed radio amateur. BYOP: Bring your own (APRS-IS) passcode.
+- If you intend to host an instance of this program, you must be a licensed radio amateur. BYOP: Bring your own (APRS-IS) passcode. If you don't know what this is, then this program is not for you.
 - Some program routines borrow logic from KI6WJP's WxBot, whose source code was immensely helpful in getting a better understanding of how to process an APRS message. If the code works, give Martin kudos. If it doesn't work, I'm the one who screwed up.
 - APRS is a registered trademark of APRS Software and Bob Bruninga, WB4APR.
