@@ -71,54 +71,11 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
 
     Returns
     =======
-    latitude: 'float'
-        If the user has requested info related to a specific position, then
-        this field contains the respective latitude.
-    longitude: 'float'
-        If the user has requested info related to a specific position, then
-        this field contains the respective longitude.
-    when: 'str'
-        If the user has requested info related to a specific point in time,
-        then this field contains the respective day (e.g. Monday). Related
-        day references ("Today", "Tomorrow") are also possible.
-    when_daytime: 'str'
-        If the user has requested info related to a specific point in time,
-        then this field contains the respective time of the day (e.g. "night",
-        "morning"). If no specific daytime is requested, the default setting
-        is "full" (returning all values for the requested day)
-    what: 'str'
-        Contains the actual action command that the user has requested.
-        Possible content: wx, help, metar, ....
-    units: 'str'
-        Unit of measure. Can either be "metric" or "imperial"
-        Default value is always "metric"
-    message_callsign: 'str'
-        Call sign if some content was requested in relation to
-        a call sign (either the user's call sign or a foreign one)
-        Can also be set implicitly
-    users_callsign: 'str'
-        Call sign of the user that has sent the message to us
-        Same value as the input value
-    language: 'str'
-        ISO 639-2 country code (currently unused and set to "en")
-    icao: 'str'
-        ICAO code (mainly used in combination with METAR reports)
-    human_readable_message: 'str'
-        This is the human-readable message string that the
-        APRS response message will start with. Can be a reference
-        to a position, an error message, ...
-    date_offset: 'int'
-        This is the numeric offset to sysdate to the 'when' day.
-        Examples:
-        Today = Tuesday, 'when' requested = 'Thursday' -->
-        'date_offset' is '2'.
-        Today = Tuesday, 'when' requested = 'Tuesday' -->
-        'date_offset' is '7' (we assume that the user wants the
-        data for Tuesday next week)
-    err: 'bool'
-        True if an error has occurred and the message's content
-        needs to be discarded. The user will receive an error
-        message
+    success: Bool
+        False in case an error has occurred
+    response_parameters: dict
+        Dictionary, containing a lot of keyword-specific content for the
+        keyword-specific output processing
     """
     # default settings for units of measure and language
     units = "metric"
@@ -138,9 +95,11 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     number_of_results = 1
 
     lasttime = datetime.min  # Placeholder in case lasttime is not present on aprs.fi
+
     when = when_daytime = what = city = state = country = zipcode = cwop_id = None
     icao = human_readable_message = satellite = repeater_band = repeater_mode = None
     street = street_number = county = osm_special_phrase = dapnet_message = None
+    aprs_mail_recipient = None
 
     # Call sign reference (either the user's call sign or someone
     # else's call sign
@@ -208,25 +167,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # 2) If we find some data in this context, then it will
     # be removed from the original message in order to avoid
     # any additional occurrences at a later point in time.
-
-    # Check if the user has requested information wrt METAR data
-    # potential inputs: ICAO/IATA qualifiers with/without keyword
-    # and METAR keyword
-    if not found_my_duty_roster and not err:
-        (found_my_keyword, kw_err, parser_rd_metar,) = parse_what_keyword_metar(
-            aprs_message=aprs_message,
-            users_callsign=users_callsign,
-            aprsdotfi_api_key=aprsdotfi_api_key,
-        )
-        # did we find something? Then overwrite the existing variables with the retrieved content
-        if found_my_keyword or kw_err:
-            found_my_duty_roster = found_my_keyword
-            err = kw_err
-            what = parser_rd_metar["what"]
-            message_callsign = parser_rd_metar["message_callsign"]
-            icao = parser_rd_metar["icao"]
-            human_readable_message = parser_rd_metar["human_readable_message"]
-            aprs_message = parser_rd_metar["aprs_message"]
 
     # Check if the user wants one of the following info
     # for a specific call sign WITH or withOUT SSID:
@@ -394,6 +334,38 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             err = kw_err
             what = parser_rd_fortuneteller["what"]
             aprs_message = parser_rd_fortuneteller["aprs_message"]
+
+    # Check if the user wants to send an email via APRS
+    if not found_my_duty_roster and not err:
+        found_my_keyword, kw_err, parser_rd_aprs_email = parse_what_keyword_aprs_email(
+            aprs_message=aprs_message
+        )
+        if found_my_keyword or kw_err:
+            found_my_duty_roster = found_my_keyword
+            err = kw_err
+            what = parser_rd_aprs_email["what"]
+            aprs_message = parser_rd_aprs_email["aprs_message"]
+            message_callsign = parser_rd_aprs_email["message_callsign"]
+            aprs_mail_recipient = parser_rd_aprs_email["aprs_mail_recipient"]
+
+    # Check if the user has requested information wrt METAR data
+    # potential inputs: ICAO/IATA qualifiers with/without keyword
+    # and METAR keyword
+    if not found_my_duty_roster and not err:
+        (found_my_keyword, kw_err, parser_rd_metar,) = parse_what_keyword_metar(
+            aprs_message=aprs_message,
+            users_callsign=users_callsign,
+            aprsdotfi_api_key=aprsdotfi_api_key,
+        )
+        # did we find something? Then overwrite the existing variables with the retrieved content
+        if found_my_keyword or kw_err:
+            found_my_duty_roster = found_my_keyword
+            err = kw_err
+            what = parser_rd_metar["what"]
+            message_callsign = parser_rd_metar["message_callsign"]
+            icao = parser_rd_metar["icao"]
+            human_readable_message = parser_rd_metar["human_readable_message"]
+            aprs_message = parser_rd_metar["aprs_message"]
 
     # The parser process ends with wx-related keyword data, meaning
     # that the user has either specified a keyword-less address, a zip code
@@ -634,6 +606,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         "number_of_results": number_of_results,  # for keywords which may return more than 1 result
         "osm_special_phrase": osm_special_phrase,  # openstreetmap special phrases https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases/EN
         "dapnet_message": dapnet_message,
+        "aprs_mail_recipient": aprs_mail_recipient,  # can either be an email address or an APRS mail shortcut, http://www.aprs-is.net/Email.aspx
     }
 
     # Finally, set the return code. Unless there was an error, we return a True status
@@ -2569,6 +2542,76 @@ def parse_what_keyword_fortuneteller(aprs_message: str):
     return found_my_keyword, kw_err, parser_rd_fortuneteller
 
 
+def parse_what_keyword_aprs_email(aprs_message: str):
+    """
+    Keyword parser email messaging via EMAIL-2 APRS
+    This is the parser for the OUTgoing message to EMAIL-2
+    The code for handling the ack'ed response from EMAIL-2 is
+    not handled here.
+
+    This keyword can handle both regular email addresses as well as
+    email shortcuts (http://www.aprs-is.net/Email.aspx)
+
+    Parameters
+    ==========
+    aprs_message : 'str'
+        the original aprs message
+
+    Returns
+    =======
+    found_my_keyword: 'bool'
+        True if the keyword and associated parameters have been found
+    kw_err: 'bool'
+        True if an error has occurred. If found_my_keyword is also true,
+        then the error marker overrides the 'found' keyword
+    parser_rd_email: 'dict'
+        response data dictionary, containing the keyword-relevant data
+    """
+
+    found_my_keyword = kw_err = False
+    human_readable_message = aprs_mail_recipient = None
+    what = message_callsign = None
+
+    # check for a keyword - email pattern
+    regex_string = r"\bemail\s*([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)\b"
+    matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+    if matches:
+        aprs_mail_recipient = matches[1].strip()
+        aprs_message = re.sub(
+            pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
+        ).strip()
+        found_my_keyword = True
+    if not found_my_keyword:
+        # check for an aprs-is shortchut that the user has specified
+        # see http://www.aprs-is.net/Email.aspx for further details
+        regex_string = r"\bemail\s*(\w*)\b"
+        matches = re.search(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            aprs_mail_recipient = matches[1].strip()
+            found_my_keyword = True
+            aprs_message = re.sub(
+                pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
+            ).strip()
+    # This is where it gets a little bit tricky. The OUTgoing APRS message
+    # is going to be sent to APRS call ID EMAIL-2. Thanks to having already
+    # acknowledged the incoming APRS message (if it did require an acknowledgment),
+    # we can now simply change the target callsign to EMAIL-2 and net MPAD do the rest
+    if found_my_keyword:
+        what = "email"
+        message_callsign = "EMAIL-2"
+
+    parser_rd_aprs_email = {
+        "what": what,
+        "message_callsign": message_callsign,
+        "human_readable_message": human_readable_message,
+        "aprs_message": aprs_message,
+        "aprs_mail_recipient": aprs_mail_recipient,
+    }
+    return found_my_keyword, kw_err, parser_rd_aprs_email
+
+
 if __name__ == "__main__":
     (
         success,
@@ -2580,5 +2623,5 @@ if __name__ == "__main__":
         dapnet_passcode,
     ) = read_program_config()
     logger.info(
-        pformat(parse_input_message("satpass iss", "df1jsl-1", aprsdotfi_api_key))
+        pformat(parse_input_message("email jsl", "df1jsl-1", aprsdotfi_api_key))
     )
