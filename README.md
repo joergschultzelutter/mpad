@@ -15,14 +15,15 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/CWOP prediction, 
 - Finds the nearest repeater to your position with optional query parameters on band and query (c4fm, dstar, fm, ...)
 - Find a place of interest nearby (e.g. fuel station, supermarket, ...)
 - Send a message to a DAPNET user
+- Magic 8 Ball predictions :-)
 - Can be easily extended with additional functions and keywords
 
 ## Program specifics
 
-- Very low cpu/traffic footprint thanks to APRS filters and local data caches.
-- Pretty printing of APRS messages. Rather than splitting up the content after a max message len of 67 bytes, the program tries to split the text in a readable way.
-- Human-friendly parser that supports both keyword and non-keyword commands
-- Auto-detection of the user's system of units. Callsigns from the USA, Liberia and Myanmar will receive their data in imperial format, while for the rest of the world the metric system is preset. This auto-setting can be overriden with a separate keyword.
+- Very low cpu/traffic footprint thanks to APRS filters and local data caches. Can even be run on a Raspberry Pi Zero (if you are a bit patient)
+- Pretty printing of APRS messages. Rather than splitting up the content after a max message len of 67 bytes, the program tries to split the text in a readable way which will keep the logical context of the message intact.
+- Human-friendly parser that supports both keyword and also non-keyword commands
+- Auto-detection of the user's system of units. Callsigns from the USA, Liberia and Myanmar will receive their data in imperial format (Miles, Fahrenheit, Feet etc), while for the rest of the world the metric system is preset. This auto-setting can be overriden with a separate keyword.
 - Supports APRS msg acknowledgments, beacons, etc. Also tries to extract APRS msg IDs from APRS messages that do not conform to APRS standards
 - Automatic detection of incoming duplicate / delayed APRS message requests
 - Full UTF-8 support for incoming messages. For outgoing messages, the configuration can be set to either 'plain ASCII' (default) or UTF-8.
