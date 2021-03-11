@@ -3,7 +3,7 @@
 - Clone the repository
 - Install Python packages - see [external dependencies](DEPENDENCIES.md)
 - Populate the API access keys and amend the program configuration (see next paragraphs). You can keep the default settings for ```aprsis_login_callsign``` and ```aprsis_login_passcode``` if you just want to listen to the traffic that __my local MPAD instance__ processes. However, if you intend to __send__ data to APRS-IS, you must change these settings as well as the values for the primary/secondary filter and the program's alias.
-- Once you have finished the setup of the config data, you can run the ```parser_test.py``` program. Running this test cose is literally equivalent to processing an APRS message - the only thing that's missing is the connection and data exchange between MPAD and APRS-IS. Populate the message text and run the ```parser_test.py``` module. If an output message is generated then you can assume that all program modules have been successfully installed.
+- Once you have finished the setup of the config data, you can run the ```parser_test.py``` program. Running this test code is literally equivalent to processing a full APRS message - the only thing that's missing is the connection and data exchange between MPAD and APRS-IS. Populate the message text and run the ```parser_test.py``` module. If an output message is generated then you can assume that all program modules have been successfully installed and configured.
 
 ```python
 if __name__ == "__main__":
