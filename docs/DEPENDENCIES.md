@@ -17,6 +17,7 @@ The following Python packages need to be installed:
 - [timezonefinder](https://github.com/MrMinimal64/timezonefinder)
 - [unidecode](https://github.com/avian2/unidecode)
 - [us](https://github.com/unitedstates/python-us)
+- [utm](https://github.com/Turbo87/utm)
   
 ## API Dependencies
 
