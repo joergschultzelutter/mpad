@@ -1823,7 +1823,7 @@ def parse_what_keyword_satpass(
 
     what = message_callsign = None
 
-    regex_string = r"\b(vispass|satpass)\s*(\w*)\b"
+    regex_string = r"\b(vispass|satpass)\s*(\w*(\S*))\b"
     matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
         # we deliberately accept ZERO..n characters for the satellite as the
