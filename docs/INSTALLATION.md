@@ -3,6 +3,12 @@
 - Clone the repository
 - Install Python packages - see [external dependencies](DEPENDENCIES.md)
 - Populate the API access keys and amend the program configuration (see next paragraphs). You can keep the default settings for ```aprsis_login_callsign``` and ```aprsis_login_passcode``` if you just want to listen to the traffic that __my local MPAD instance__ processes. However, if you intend to __send__ data to APRS-IS, you must change these settings as well as the values for the primary/secondary filter and the program's alias.
+- Once you have finished the setup of the config data, you can run the ```parser_test.py``` program. Running this test cose is literally equivalent to processing an APRS message - the only thing that's missing is the connection and data exchange between MPAD and APRS-IS. Populate the message text and run the ```parser_test.py``` module. If an output message is generated then you can assume that all program modules have been successfully installed.
+
+```python
+if __name__ == "__main__":
+    testcall(message_text="deensen;de tomorrow", from_callsign="df1jsl-8")
+```
 
 ## Configuration
 
@@ -18,7 +24,7 @@ If you want to host your own MPAD instance, you need to acquire your personal AP
 
 Additionally, you also need to set your APRS-IS login credentials (callsign and passcode). By default, the login callsign is set to ```N0CALL``` which does permit the program to connect to APRS_IS in read-only mode. You can still receive and process messages (based on your filter settings' call signs). However, any outgoing message will not be sent to the user (via APRS-IS) but ends up in the program's log file. Setting the user's call sign to ```N0CALL``` will automatically enforce the program to enter read-only mode. ```aprsis_login_passcode``` is automatically set to ```-1``` and no data will be sent to APRS-IS.
 
-```bash
+```python
 [mpad_config]
 
 # API key for www.openweathermap.org
@@ -149,7 +155,7 @@ mpad_callsigns_to_parse = ["MPAD"]  # (additional) call sign filter
 # The 2nd value represents the max. number of entries that the decaying cache
 # is going to accept
 #
-mpad_msg_cache_time_to_live = 60 * 60  # ttl = 10 minutes
+mpad_msg_cache_time_to_live = 60 * 60  # ttl = 60 minutes
 mpad_msg_cache_max_entries = 2160  # 2160 possible entries (max. of 36 per min is possible)
 #
 ############################################
