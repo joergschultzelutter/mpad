@@ -83,10 +83,14 @@ aprs_symbol: str = "?"  # APRS symbol: Server
 #
 # Delay settings: These sleep settings are applied for each SINGLE message that is sent out
 # to APRS-IS. If the program has to send two bulletin messages, then the total run time of\
-# sending out those bulletins is 2 * 3 secs
+# sending out those bulletins is 2 * x secs
 #
-packet_delay_long: float = 5.0  # packet delay in seconds after sending data to aprs-is
-packet_delay_short: float = 3.0  # packet delay after sending an acknowledgment, bulletin or beacon
+packet_delay_message: float = (
+    6.0  # packet delay in seconds after sending data to aprs-is
+)
+packet_delay_other: float = (
+    6.0  # packet delay after sending an acknowledgment, bulletin or beacon
+)
 #
 ##########################
 # Configuration settings #
@@ -175,7 +179,7 @@ mpad_msg_cache_max_entries = 2160  # 2160 possible entries (max. of 36 per min i
 # (http://www.aprs.org/aprs11/tocalls.txt). MPAD could then decide whether a
 # device is unicode capable or not - and activate unicode whenever it is supported.
 #
-mpad_enforce_unicode_messages = True
+mpad_enforce_unicode_messages = False
 #
 # Openstreetmap 'special phrases'
 # The values in this list need to match the ones in the OSM
@@ -236,7 +240,7 @@ osm_supported_keyword_categories = [
 # Default user agent for accessing aprs.fi, openstreetmap et al
 # Change this if you run your own MPAD instance
 mpad_default_user_agent = (
-    "multi-purpose-aprs-daemon/0.0.1 (+https://github.com/joergschultzelutter/mpad/)"
+    f"multi-purpose-aprs-daemon/{mpad_version} (+https://github.com/joergschultzelutter/mpad/)"
 )
 #
 # DAPNET API server and transmitter group

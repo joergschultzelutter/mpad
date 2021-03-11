@@ -33,7 +33,7 @@ aprs_table: str = "/"  # APRS symbol table (/=primary \=secondary, or overlay)
 aprs_symbol: str = "?"  # APRS symbol: Server
 #
 # Delay settings: These sleep settings are applied for each SINGLE message that is sent out
-# to APRS-IS. If the program has to send two bulletin messages, then the total run time of\
+# to APRS-IS. If the program has to send two bulletin messages, then the total run time of
 # sending out those bulletins is 2 * x secs
 #
 packet_delay_message: float = (
