@@ -189,6 +189,8 @@ def get_tle_data(satellite_name: str):
             tle_data_line1 = tle_data[satellite_name]["tle_line1"]
             tle_data_line2 = tle_data[satellite_name]["tle_line2"]
             success = True
+        else:
+            success = False
     return success, tle_satellite, tle_data_line1, tle_data_line2
 
 
