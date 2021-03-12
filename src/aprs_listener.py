@@ -155,10 +155,10 @@ def mycallback(raw_aprs_packet):
                 )
                 if aprs_message_key:
                     logger.info(
-                        msg="DUPLICATE PACKET - key for this packet is still in our decaying message cache"
+                        msg="DUPLICATE APRS PACKET - this message is still in our decaying message cache"
                     )
                     logger.info(
-                        msg=f"Ignoring duplicate packet raw_aprs_packet: {raw_aprs_packet}"
+                        msg=f"Ignoring duplicate APRS packet raw_aprs_packet: {raw_aprs_packet}"
                     )
                 else:
                     logger.info(msg=f"Received raw_aprs_packet: {raw_aprs_packet}")
@@ -195,38 +195,68 @@ def mycallback(raw_aprs_packet):
                     # The result to this post-processor will be a general success
                     # status code and a list item, containing the messages that are
                     # ready to be sent to the user.
-                    if success:
+                    #
+                    # Check if we have been asked to suppress ANY outgoing message content.
+                    # Usually, this is the case when we have sent something to e.g. EMAIL-2 as
+                    # part of a previous request and have now received the APRS confirmation
+                    # from EMAIL-2 for that message. We are likely unable to match the confirmation
+                    # with its previous request and therefore simply ignore the content which
+                    # -in case of MPAD- is potentially the confirmation that the email to the
+                    # user via EMAIL-2 has been sent.
+                    # If the "suppress" flag is set, then the message was already flagged
+                    # as erroneous (success=False) in order to avoid further processing. This means
+                    # that we only suppress sending out the error message. what/when etc are undefined.
+                    suppress_outgoing_message = response_parameters[
+                        "suppress_outgoing_message"
+                    ]
 
+                    # parsing successful?
+                    if success:
                         # enrich our response parameters with all API keys that we need for
-                        # the completion of the remaining tasks
+                        # the completion of the remaining tasks. Also add the APRS details
+                        # in case we have to send out a message to APRS-IS from one of our
+                        # keywords (e.g. APRS position report)
                         response_parameters.update(
                             {
                                 "aprsdotfi_api_key": aprsdotfi_api_key,
                                 "openweathermapdotorg_api_key": openweathermapdotorg_api_key,
                                 "dapnet_login_callsign": dapnet_login_callsign,
                                 "dapnet_login_passcode": dapnet_login_passcode,
+                                "aprs_is": AIS,
+                                "simulate_send": aprsis_simulate_send,
+                                "send_with_msg_no": msg_no_supported,
+                                "number_of_served_packages": number_of_served_packages,
                             }
                         )
 
+                        # Generate the output message for the requested keyword
+                        # The 'success' status is ALWAYS positive even if the
+                        # message could not get processed - the inline'd error
+                        # message counts as positive message content
                         success, output_message = generate_output_message(
                             response_parameters=response_parameters,
                         )
-                        # Regardless of a success status, fire the messages to the user
-                        # in case of a failure, the list item already does contain
-                        # the error message to the user.
-                        number_of_served_packages = send_aprs_message_list(
-                            myaprsis=AIS,
-                            simulate_send=aprsis_simulate_send,
-                            message_text_array=output_message,
-                            src_call_sign=from_callsign,
-                            send_with_msg_no=msg_no_supported,
-                            number_of_served_packages=number_of_served_packages,
-                        )
+
+                        # Re-get the number of served packages from the dictionary
+                        # This number may have changed if one of our keywords has
+                        # sent out a message to APRS-IS by its own
+                        number_of_served_packages = response_parameters[
+                            "number_of_served_packages"
+                        ]
+
                     # darn - we failed to hail the Tripods
                     else:
                         output_message = [
                             "Did not understand your request. Pls. check my command syntax",
                         ]
+                        logger.info(
+                            msg=f"Unable to parse APRS packet {raw_aprs_packet}"
+                        )
+
+                    # Finally, check if we can sent out the content to the user.
+                    # Suppression only happens wrt EMAIL-2 APRS messages - see previous comments
+                    if not suppress_outgoing_message:
+                        # Send out the data to APRS-IS
                         number_of_served_packages = send_aprs_message_list(
                             myaprsis=AIS,
                             simulate_send=aprsis_simulate_send,
@@ -235,10 +265,9 @@ def mycallback(raw_aprs_packet):
                             send_with_msg_no=msg_no_supported,
                             number_of_served_packages=number_of_served_packages,
                         )
-                        logger.info(msg=f"Unable to grok packet {raw_aprs_packet}")
 
                     # We've finished processing this message. Update the decaying
-                    # cache.
+                    # cache with our message.
                     # Store the core message data in our decaying APRS message cache
                     # Dupe detection is applied regardless of the message's
                     # processing status
@@ -352,9 +381,12 @@ caching_scheduler.start()
 # Create the decaying APRS message cache. Any APRS message that is present in
 # this cache will be considered as a duplicate / delayed and will not be processed
 # by MPAD and is going to be ignored.
-logger.info(f"APRS message dupe cache set to {mpad_config.mpad_msg_cache_max_entries} max possible entries and a TTL of {int(mpad_config.mpad_msg_cache_time_to_live/60)} mins")
+logger.info(
+    f"APRS message dupe cache set to {mpad_config.mpad_msg_cache_max_entries} max possible entries and a TTL of {int(mpad_config.mpad_msg_cache_time_to_live/60)} mins"
+)
 aprs_message_cache = ExpiringDict(
-    max_len=mpad_config.mpad_msg_cache_max_entries, max_age_seconds=mpad_config.mpad_msg_cache_time_to_live
+    max_len=mpad_config.mpad_msg_cache_max_entries,
+    max_age_seconds=mpad_config.mpad_msg_cache_time_to_live,
 )
 
 #

@@ -48,6 +48,8 @@ from dapnet_modules import send_dapnet_message
 
 from repeater_modules import get_nearest_repeater
 from funstuff_modules import get_fortuneteller_message
+from aprs_communication import send_aprs_message_single
+from email_modules import prepare_aprs_email_position_report
 
 import datetime
 import logging
@@ -67,120 +69,6 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
 )
 logger = logging.getLogger(__name__)
-
-
-def create_cwop_content(cwop_dict: dict):
-    """
-    Function for generating the content from CWOP data
-    (we need to do this for the two avalilable use cases,
-    cwop_by_lat_lon and cwop_by_id. However, the data that we will
-    send to the user is the same.
-
-    Parameters
-    ==========
-    cwop_dict: 'dict'
-        Response dictionary from MPAD's CWOP functions.
-
-    Returns
-    =======
-    output_list: 'list'
-        List which contains the formatted output of the data that we are going
-        to send back to the user
-    """
-
-    # Get the values from the dictionary. All
-    # values with the exception of 'time' are strings
-    # and are processed as is for simplicity reasons
-    cwop_id = cwop_dict["cwop_id"]
-    time = cwop_dict["time"]
-    temp = cwop_dict["temp"]
-    temp_uom = cwop_dict["temp_uom"]
-    wind_direction = cwop_dict["wind_direction"]
-    wind_speed = cwop_dict["wind_speed"]
-    wind_gust = cwop_dict["wind_gust"]
-    speedgust_uom = cwop_dict["speedgust_uom"]
-    rain_1h = cwop_dict["rain_1h"]
-    rain_24h = cwop_dict["rain_24h"]
-    rain_mn = cwop_dict["rain_mn"]
-    rain_uom = cwop_dict["rain_uom"]
-    humidity = cwop_dict["humidity"]
-    humidity_uom = cwop_dict["humidity_uom"]
-    air_pressure = cwop_dict["air_pressure"]
-    air_pressure_uom = cwop_dict["air_pressure_uom"]
-
-    # shorten the output date if there is none
-    # reminder: these are strings
-    if rain_1h == "0.00":
-        rain_1h = "0.0"
-    if rain_24h == "0.00":
-        rain_24h = "0.0"
-    if rain_mn == "0.00":
-        rain_mn = "0.0"
-
-    # Prepare the output content. Special use case:
-    # We need to declare a dummy list here as some -or all-
-    # of these elements are missing (and we don't know which ones will that be)
-    # Therefore, we cannot rely on make_pretty_aprs_messages returning a list to
-    # us at all times.
-    output_list = []
-    # we ignore the 'human_readable_message' variable at this point
-    # as it did not yet contain the respective CWOP ID
-    if cwop_id:
-        output_list = make_pretty_aprs_messages(
-            message_to_add=f"CWOP {cwop_id}", destination_list=output_list
-        )
-    if time:
-        output_list = make_pretty_aprs_messages(
-            message_to_add=datetime.datetime.strftime(time, "%d-%b-%y"),
-            destination_list=output_list,
-        )
-    if temp:
-        output_list = make_pretty_aprs_messages(
-            message_to_add=f"{temp}{temp_uom}", destination_list=output_list
-        )
-    if wind_direction:
-        output_list = make_pretty_aprs_messages(
-            message_to_add=f"{wind_direction}deg", destination_list=output_list
-        )
-    if wind_speed:
-        output_list = make_pretty_aprs_messages(
-            message_to_add=f"Spd {wind_speed}{speedgust_uom}",
-            destination_list=output_list,
-        )
-    if wind_gust:
-        output_list = make_pretty_aprs_messages(
-            message_to_add=f"Gust {wind_gust}{speedgust_uom}",
-            destination_list=output_list,
-        )
-    if humidity:
-        output_list = make_pretty_aprs_messages(
-            message_to_add=f"Hum {humidity}{humidity_uom}",
-            destination_list=output_list,
-        )
-    if air_pressure:
-        output_list = make_pretty_aprs_messages(
-            message_to_add=f"Pres {air_pressure}{air_pressure_uom}",
-            destination_list=output_list,
-        )
-    if rain_1h:
-        output_list = make_pretty_aprs_messages(
-            message_to_add=f"Rain({rain_uom}) 1h={rain_1h}",
-            destination_list=output_list,
-        )
-    if rain_24h:
-        output_list = make_pretty_aprs_messages(
-            message_to_add=f", 24h={rain_24h}",
-            destination_list=output_list,
-            add_sep=False,
-        )
-    if rain_mn:
-        output_list = make_pretty_aprs_messages(
-            message_to_add=f", mn={rain_mn}",
-            destination_list=output_list,
-            add_sep=False,
-        )
-
-    return output_list
 
 
 def generate_output_message(response_parameters: dict):
@@ -263,6 +151,10 @@ def generate_output_message(response_parameters: dict):
         success, output_list = generate_output_message_fortuneteller(
             response_parameters=response_parameters
         )
+#    elif what == "aprs_email_position_report":
+#        success, output_list = generate_output_message_aprs_email_position_report(
+#            response_parameters=response_parameters
+#        )
     else:
         success = False
         output_list = [
@@ -460,7 +352,7 @@ def generate_output_message_satpass(response_parameters: dict):
     visible_passes_only = True if what == "vispass" else False
 
     vis_text = "vis " if visible_passes_only else ""
-    passes_text = "pass"    # we'll change this to plural if there is more than 1 result
+    passes_text = "pass"  # we'll change this to plural if there is more than 1 result
 
     # Determine the correct timestamp:
     # First, we will get the current UTC time
@@ -1276,6 +1168,179 @@ def generate_output_message_fortuneteller(response_parameters: dict):
     )
     success = True
     return success, output_list
+
+
+def generate_output_message_aprs_email_position_report(response_parameters: dict):
+    """
+    Send a message to APRS callsign EMAIL-2, containing a link to aprs.fi
+    with the user's call sign (APRS position report)
+
+    Parameters
+    ==========
+    response_parameters: 'dict'
+        Dictionary of the data from the input processor's analysis on the user's data
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful. Will only be false in case of a
+        fatal error as we need to send something back to the user (even
+        if that message is a mere error text)
+    output_message: 'list'
+        List, containing the message text that we will send to EMAIL-2
+        Format is <email address|email shortcut> email_text
+    """
+    users_callsign = response_parameters["users_callsign"]
+    aprs_mail_recipient = response_parameters["aprs_mail_recipient"]
+    aprs_is = response_parameters["aprs_is"]
+    simulate_send = response_parameters["simulate_send"]
+    send_with_msg_no = True  # Always true for better dupe detection
+    number_of_served_packages = response_parameters["number_of_served_packages"]
+
+    # Prepare the email message report. It always refers to the user's own call sign
+    # so let's use this for preparing this simple message
+    message_text = prepare_aprs_email_position_report(
+        call_sign=users_callsign, email_address=aprs_mail_recipient
+    )
+
+    # send the message to APRS-IS / call sign EMAIL-2
+    # we always send the outgoing message WITH message number because this will
+    # trigger the response message from APRS-IS to send one as well - and we can
+    # then use that message number in combination with the other data (user, message
+    # content) for a better dupe detection
+    number_of_served_packages = send_aprs_message_single(
+        myaprsis=aprs_is,
+        single_message=message_text,
+        src_call_sign="EMAIL-2",
+        send_with_msg_no=False,
+        number_of_served_packages=number_of_served_packages,
+        simulate_send=simulate_send,
+    )
+
+    # Update number of served packages in the dictionary
+    response_parameters["number_of_served_packages"] = number_of_served_packages
+
+    # Prepare the confirmation msg to the user that has requested the pos report
+    output_list = make_pretty_aprs_messages(
+        message_to_add=f"APRS pos msg sent to '{aprs_mail_recipient}'"
+    )
+
+    success = True  # Always 'True' as we also return error messages to the user
+    return success, output_list
+
+
+def create_cwop_content(cwop_dict: dict):
+    """
+    Function for generating the content from CWOP data
+    (we need to do this for the two avalilable use cases,
+    cwop_by_lat_lon and cwop_by_id. However, the data that we will
+    send to the user is the same.
+
+    Parameters
+    ==========
+    cwop_dict: 'dict'
+        Response dictionary from MPAD's CWOP functions.
+
+    Returns
+    =======
+    output_list: 'list'
+        List which contains the formatted output of the data that we are going
+        to send back to the user
+    """
+
+    # Get the values from the dictionary. All
+    # values with the exception of 'time' are strings
+    # and are processed as is for simplicity reasons
+    cwop_id = cwop_dict["cwop_id"]
+    time = cwop_dict["time"]
+    temp = cwop_dict["temp"]
+    temp_uom = cwop_dict["temp_uom"]
+    wind_direction = cwop_dict["wind_direction"]
+    wind_speed = cwop_dict["wind_speed"]
+    wind_gust = cwop_dict["wind_gust"]
+    speedgust_uom = cwop_dict["speedgust_uom"]
+    rain_1h = cwop_dict["rain_1h"]
+    rain_24h = cwop_dict["rain_24h"]
+    rain_mn = cwop_dict["rain_mn"]
+    rain_uom = cwop_dict["rain_uom"]
+    humidity = cwop_dict["humidity"]
+    humidity_uom = cwop_dict["humidity_uom"]
+    air_pressure = cwop_dict["air_pressure"]
+    air_pressure_uom = cwop_dict["air_pressure_uom"]
+
+    # shorten the output date if there is none
+    # reminder: these are strings
+    if rain_1h == "0.00":
+        rain_1h = "0.0"
+    if rain_24h == "0.00":
+        rain_24h = "0.0"
+    if rain_mn == "0.00":
+        rain_mn = "0.0"
+
+    # Prepare the output content. Special use case:
+    # We need to declare a dummy list here as some -or all-
+    # of these elements are missing (and we don't know which ones will that be)
+    # Therefore, we cannot rely on make_pretty_aprs_messages returning a list to
+    # us at all times.
+    output_list = []
+    # we ignore the 'human_readable_message' variable at this point
+    # as it did not yet contain the respective CWOP ID
+    if cwop_id:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"CWOP {cwop_id}", destination_list=output_list
+        )
+    if time:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=datetime.datetime.strftime(time, "%d-%b-%y"),
+            destination_list=output_list,
+        )
+    if temp:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"{temp}{temp_uom}", destination_list=output_list
+        )
+    if wind_direction:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"{wind_direction}deg", destination_list=output_list
+        )
+    if wind_speed:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"Spd {wind_speed}{speedgust_uom}",
+            destination_list=output_list,
+        )
+    if wind_gust:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"Gust {wind_gust}{speedgust_uom}",
+            destination_list=output_list,
+        )
+    if humidity:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"Hum {humidity}{humidity_uom}",
+            destination_list=output_list,
+        )
+    if air_pressure:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"Pres {air_pressure}{air_pressure_uom}",
+            destination_list=output_list,
+        )
+    if rain_1h:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"Rain({rain_uom}) 1h={rain_1h}",
+            destination_list=output_list,
+        )
+    if rain_24h:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f", 24h={rain_24h}",
+            destination_list=output_list,
+            add_sep=False,
+        )
+    if rain_mn:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f", mn={rain_mn}",
+            destination_list=output_list,
+            add_sep=False,
+        )
+
+    return output_list
 
 
 if __name__ == "__main__":

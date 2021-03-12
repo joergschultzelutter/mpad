@@ -200,7 +200,7 @@ def send_aprs_message_list(
     """
     Send a pre-prepared message list to to APRS_IS
     All packages have a max len of 67 characters
-    If 'simulate_send'= True, we still prepare the message but only send it to our  log file
+    If 'simulate_send'= True, we still prepare the message but only send it to our log file
 
     Parameters
     ==========
@@ -209,7 +209,8 @@ def send_aprs_message_list(
     message_text_array: 'list'
         Contains 1..n entries of the content that we want to send to the user
     src_call_sign: 'str'
-        Call sign of the user that has sent us the message
+        Target user call sign that is going to receive the message (usually, this
+        is the user's call sign who has sent us the initial message)
     send_with_msg_no: 'bool'
         If True, each outgoing message will have its own message ID attached to the outgoing content
         If False, no message ID is added
@@ -236,6 +237,57 @@ def send_aprs_message_list(
         else:
             logger.info(f"Simulating response message '{stringtosend}'")
         time.sleep(mpad_config.packet_delay_message)
+    return number_of_served_packages
+
+
+def send_aprs_message_single(
+    myaprsis: aprslib.inet.IS,
+    single_message: str,
+    src_call_sign: str,
+    send_with_msg_no: bool,
+    number_of_served_packages: int,
+    simulate_send: bool = True,
+):
+    """
+    Send a single message to to APRS_IS
+    No length check is performed
+    If 'simulate_send'= True, we still prepare the message but only send it to our log file
+
+    Parameters
+    ==========
+    myaprsis: 'aprslib.inet.IS'
+        Our aprslib object that we will use for the communication part
+    single_message: 'str'
+        Single line of text that is to be sent out to APRS-IS. A length check
+        of the outgoing message is not performed.
+    src_call_sign: 'str'
+        Target user call sign that is going to receive the message (usually, this
+        is the user's call sign who has sent us the initial message)
+    send_with_msg_no: 'bool'
+        If True, each outgoing message will have its own message ID attached to the outgoing content
+        If False, no message ID is added
+    number_of_served_packages: int
+        number of packages sent to aprs_is
+    simulate_send: 'bool'
+        If True: Prepare string but only send it to logger
+
+    Returns
+    =======
+    number_of_served_packages: 'int'
+        number of packages sent to aprs_is
+    """
+    stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}::{src_call_sign:9}:{single_message}"
+    if send_with_msg_no:
+        stringtosend = stringtosend + "{" + f"{number_of_served_packages:05}"
+        number_of_served_packages = number_of_served_packages + 1
+        if number_of_served_packages > 99999:  # max 5 digits
+            number_of_served_packages = 1
+    if not simulate_send:
+        logger.info(f"Sending response message '{stringtosend}'")
+        myaprsis.sendall(stringtosend)
+    else:
+        logger.info(f"Simulating response message '{stringtosend}'")
+    time.sleep(mpad_config.packet_delay_message)
     return number_of_served_packages
 
 

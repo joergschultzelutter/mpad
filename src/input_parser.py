@@ -113,43 +113,65 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # Booleans for 'what information were we able to retrieve from the msg'
     found_when = found_when_daytime = False
 
+    # If this marker is set, we're likely responding to an APRS response
+    # from EMAIL-2. We need to avoid processing that message as it would
+    # be interpreted as (invalid) command sequence. The mail message from
+    # EMAIL-2 would be something like "Email sent to jsl24469@gmail.com".
+    # We simply ignore any message that is sent from us by EMAIL-2,
+    # flag the message content as erroneous at the beginning AND set this
+    # additional flag which will prevent MPAD from sending out our default
+    # error message to APRS-IS. In short terms - we just stay quiet.
+    # The incoming APRS message has already been ack'ed at this point.
+    suppress_outgoing_message = False
+
     #
     # Start the parsing process
     #
     # Convert user's call sign to uppercase
     users_callsign = users_callsign.upper()
 
+    # If message was sent to us by EMAIL-2 then disable further processing
+    if users_callsign == "EMAIL-2":
+        err = True
+        suppress_outgoing_message = True
+
     # Check if we need to switch to the imperial system ...
-    units = get_units_based_on_users_callsign(users_callsign=users_callsign)
+    if not err:
+        units = get_units_based_on_users_callsign(users_callsign=users_callsign)
     #
     # ... and then check if the user wants to override this default setting
     # because he said so in his command to us
     # Note: this is not an action keyword so we don't set the duty roster flag
-    found_my_keyword, parser_rd_units = parse_keyword_units(aprs_message=aprs_message)
-    if found_my_keyword:
-        aprs_message = parser_rd_units["aprs_message"]
-        units = parser_rd_units["units"]
+    if not err:
+        found_my_keyword, parser_rd_units = parse_keyword_units(
+            aprs_message=aprs_message
+        )
+        if found_my_keyword:
+            aprs_message = parser_rd_units["aprs_message"]
+            units = parser_rd_units["units"]
 
     # check if the user wants to change the language
     # for openweathermap.com (currently fix for 'en' but
     # might change in the future
     # Note: this is not an action keyword so we don't set the duty roster flag
-    found_my_keyword, parser_rd_language = parse_keyword_language(
-        aprs_message=aprs_message
-    )
-    if found_my_keyword:
-        aprs_message = parser_rd_language["aprs_message"]
-        language = parser_rd_language["language"]
+    if not err:
+        found_my_keyword, parser_rd_language = parse_keyword_language(
+            aprs_message=aprs_message
+        )
+        if found_my_keyword:
+            aprs_message = parser_rd_language["aprs_message"]
+            language = parser_rd_language["language"]
 
     # check if the user wants more than one result (if supported by respective keyword)
     # hint: setting is not tied to the program's duty roster
     # Note: this is not an action keyword so we don't set the duty roster flag
-    found_my_keyword, parser_rd_number_of_results = parse_keyword_number_of_results(
-        aprs_message=aprs_message
-    )
-    if found_my_keyword:
-        aprs_message = parser_rd_number_of_results["aprs_message"]
-        number_of_results = parser_rd_number_of_results["number_of_results"]
+    if not err:
+        found_my_keyword, parser_rd_number_of_results = parse_keyword_number_of_results(
+            aprs_message=aprs_message
+        )
+        if found_my_keyword:
+            aprs_message = parser_rd_number_of_results["aprs_message"]
+            number_of_results = parser_rd_number_of_results["number_of_results"]
 
     # check if the user wants to receive the MPAD help pages
     if not found_my_duty_roster and not err:
@@ -337,20 +359,28 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
 
     # Check if the user wants to send an email via APRS
     if not found_my_duty_roster and not err:
-        found_my_keyword, kw_err, parser_rd_aprs_email = parse_what_keyword_aprs_email(
-            aprs_message=aprs_message
-        )
+        (
+            found_my_keyword,
+            kw_err,
+            parser_rd_aprs_email_posrpt,
+        ) = parse_what_keyword_aprs_email_position_report(aprs_message=aprs_message)
         if found_my_keyword or kw_err:
             found_my_duty_roster = found_my_keyword
             err = kw_err
-            what = parser_rd_aprs_email["what"]
-            aprs_message = parser_rd_aprs_email["aprs_message"]
-            message_callsign = parser_rd_aprs_email["message_callsign"]
-            aprs_mail_recipient = parser_rd_aprs_email["aprs_mail_recipient"]
+            what = parser_rd_aprs_email_posrpt["what"]
+            aprs_message = parser_rd_aprs_email_posrpt["aprs_message"]
+            human_readable_message = parser_rd_aprs_email_posrpt[
+                "human_readable_message"
+            ]
+            aprs_mail_recipient = parser_rd_aprs_email_posrpt["aprs_mail_recipient"]
 
     # Check if the user has requested information wrt METAR data
     # potential inputs: ICAO/IATA qualifiers with/without keyword
     # and METAR keyword
+    #
+    # Similar to the Wx branch, this section also operates with keyword-less
+    # parsing and needs to be placed relatively to the end of the input parser
+    # in order to avoid misinterpretations wrt the message content.
     if not found_my_duty_roster and not err:
         (found_my_keyword, kw_err, parser_rd_metar,) = parse_what_keyword_metar(
             aprs_message=aprs_message,
@@ -607,6 +637,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         "osm_special_phrase": osm_special_phrase,  # openstreetmap special phrases https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases/EN
         "dapnet_message": dapnet_message,
         "aprs_mail_recipient": aprs_mail_recipient,  # can either be an email address or an APRS mail shortcut, http://www.aprs-is.net/Email.aspx
+        "suppress_outgoing_message": suppress_outgoing_message,  # If true then we will not send anything to APRS-IS
     }
 
     # Finally, set the return code. Unless there was an error, we return a True status
@@ -2542,15 +2573,12 @@ def parse_what_keyword_fortuneteller(aprs_message: str):
     return found_my_keyword, kw_err, parser_rd_fortuneteller
 
 
-def parse_what_keyword_aprs_email(aprs_message: str):
+def parse_what_keyword_aprs_email_position_report(aprs_message: str):
     """
     Keyword parser email messaging via EMAIL-2 APRS
     This is the parser for the OUTgoing message to EMAIL-2
     The code for handling the ack'ed response from EMAIL-2 is
     not handled here.
-
-    This keyword can handle both regular email addresses as well as
-    email shortcuts (http://www.aprs-is.net/Email.aspx)
 
     Parameters
     ==========
@@ -2573,43 +2601,31 @@ def parse_what_keyword_aprs_email(aprs_message: str):
     what = message_callsign = None
 
     # check for a keyword - email pattern
-    regex_string = r"\bemail\s*([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)\b"
+    regex_string = r"\bposmsg\s*([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)\b"
     matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
         aprs_mail_recipient = matches[1].strip()
-        aprs_message = re.sub(
-            pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
-        ).strip()
-        found_my_keyword = True
-    if not found_my_keyword:
-        # check for an aprs-is shortchut that the user has specified
-        # see http://www.aprs-is.net/Email.aspx for further details
-        regex_string = r"\bemail\s*(\w*)\b"
-        matches = re.search(
-            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-        )
-        if matches:
-            aprs_mail_recipient = matches[1].strip()
-            found_my_keyword = True
+        # max. len for email address is 67 - len(message content) - len(call sign + ssid) = 41
+        if len(aprs_mail_recipient) > 41:
+            human_readable_message = (
+                "Sorry, that email address is too long (max. 41 chars)"
+            )
+            kw_err = True
+        else:
             aprs_message = re.sub(
                 pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
             ).strip()
-    # This is where it gets a little bit tricky. The OUTgoing APRS message
-    # is going to be sent to APRS call ID EMAIL-2. Thanks to having already
-    # acknowledged the incoming APRS message (if it did require an acknowledgment),
-    # we can now simply change the target callsign to EMAIL-2 and net MPAD do the rest
-    if found_my_keyword:
-        what = "email"
-        message_callsign = "EMAIL-2"
+            found_my_keyword = True
+            what = "aprs_email_position_report"
 
-    parser_rd_aprs_email = {
+    parser_rd_aprs_email_posrpt = {
         "what": what,
         "message_callsign": message_callsign,
         "human_readable_message": human_readable_message,
         "aprs_message": aprs_message,
         "aprs_mail_recipient": aprs_mail_recipient,
     }
-    return found_my_keyword, kw_err, parser_rd_aprs_email
+    return found_my_keyword, kw_err, parser_rd_aprs_email_posrpt
 
 
 if __name__ == "__main__":
@@ -2623,5 +2639,7 @@ if __name__ == "__main__":
         dapnet_passcode,
     ) = read_program_config()
     logger.info(
-        pformat(parse_input_message("email jsl", "df1jsl-1", aprsdotfi_api_key))
+        pformat(
+            parse_input_message("posmsg blah@blub.de", "df1jsl-1", aprsdotfi_api_key)
+        )
     )

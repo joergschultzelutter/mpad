@@ -27,5 +27,29 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def prepare_aprs_email_position_report(call_sign: str, email_address:str):
+    """
+    Prepare an APRS-IS email message with an aprs.fi position_report
+
+    Parameters
+    ==========
+    call_sign : 'str'
+        Call sign that we will use for the aprs.fi position reporting
+    email_address: 'str'
+        email_address that the report is sent to
+
+    Returns
+    =======
+    mail_content: 'str'
+        outgoing message text
+    """
+
+    mail_content = f"{email_address} https://aprs.fi/{call_sign}"
+
+    # Should never be the case :-)
+    assert len(mail_content) <= 67
+
+    return mail_content
+
 if __name__ == "__main__":
     pass
