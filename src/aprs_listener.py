@@ -196,36 +196,18 @@ def mycallback(raw_aprs_packet):
                     # status code and a list item, containing the messages that are
                     # ready to be sent to the user.
                     #
-                    # Check if we have been asked to suppress ANY outgoing message content.
-                    # Usually, this is the case when we have sent something to e.g. EMAIL-2 as
-                    # part of a previous request and have now received the APRS confirmation
-                    # from EMAIL-2 for that message. We are likely unable to match the confirmation
-                    # with its previous request and therefore simply ignore the content which
-                    # -in case of MPAD- is potentially the confirmation that the email to the
-                    # user via EMAIL-2 has been sent.
-                    # If the "suppress" flag is set, then the message was already flagged
-                    # as erroneous (success=False) in order to avoid further processing. This means
-                    # that we only suppress sending out the error message. what/when etc are undefined.
-                    suppress_outgoing_message = response_parameters[
-                        "suppress_outgoing_message"
-                    ]
-
                     # parsing successful?
                     if success:
                         # enrich our response parameters with all API keys that we need for
-                        # the completion of the remaining tasks. Also add the APRS details
-                        # in case we have to send out a message to APRS-IS from one of our
-                        # keywords (e.g. APRS position report)
+                        # the completion of the remaining tasks.
                         response_parameters.update(
                             {
                                 "aprsdotfi_api_key": aprsdotfi_api_key,
                                 "openweathermapdotorg_api_key": openweathermapdotorg_api_key,
                                 "dapnet_login_callsign": dapnet_login_callsign,
                                 "dapnet_login_passcode": dapnet_login_passcode,
-                                "aprs_is": AIS,
-                                "simulate_send": aprsis_simulate_send,
-                                "send_with_msg_no": msg_no_supported,
-                                "number_of_served_packages": number_of_served_packages,
+                                "smtp_email_address": smtp_email_address,
+                                "smtp_email_password": smtp_email_password,
                             }
                         )
 
@@ -236,15 +218,11 @@ def mycallback(raw_aprs_packet):
                         success, output_message = generate_output_message(
                             response_parameters=response_parameters,
                         )
-
-                        # Re-get the number of served packages from the dictionary
-                        # This number may have changed if one of our keywords has
-                        # sent out a message to APRS-IS by its own
-                        number_of_served_packages = response_parameters[
-                            "number_of_served_packages"
-                        ]
-
                     # darn - we failed to hail the Tripods
+                    # this is the branch where the INPUT parser failed to understand
+                    # the message. As we only parse but never process data in that input
+                    # parser, we sinply don't know what to do with the user's message
+                    # and get back to him with a generic response.
                     else:
                         output_message = [
                             "Did not understand your request. Pls. check my command syntax",
@@ -253,18 +231,15 @@ def mycallback(raw_aprs_packet):
                             msg=f"Unable to parse APRS packet {raw_aprs_packet}"
                         )
 
-                    # Finally, check if we can sent out the content to the user.
-                    # Suppression only happens wrt EMAIL-2 APRS messages - see previous comments
-                    if not suppress_outgoing_message:
-                        # Send out the data to APRS-IS
-                        number_of_served_packages = send_aprs_message_list(
-                            myaprsis=AIS,
-                            simulate_send=aprsis_simulate_send,
-                            message_text_array=output_message,
-                            src_call_sign=from_callsign,
-                            send_with_msg_no=msg_no_supported,
-                            number_of_served_packages=number_of_served_packages,
-                        )
+                    # Send our message(s) to APRS-IS
+                    number_of_served_packages = send_aprs_message_list(
+                        myaprsis=AIS,
+                        simulate_send=aprsis_simulate_send,
+                        message_text_array=output_message,
+                        src_call_sign=from_callsign,
+                        send_with_msg_no=msg_no_supported,
+                        number_of_served_packages=number_of_served_packages,
+                    )
 
                     # We've finished processing this message. Update the decaying
                     # cache with our message.
@@ -300,6 +275,8 @@ logger.info("Program startup ...")
     aprsis_login_passcode,
     dapnet_login_callsign,
     dapnet_login_passcode,
+    smtp_email_address,
+    smtp_email_password,
 ) = read_program_config()
 if not success:
     logging.error(msg="Error while reading the program config file; aborting")
