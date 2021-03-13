@@ -482,7 +482,7 @@ Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME
 
 #### Formats
 
-- ```dapnet [user] [text]```
+- ```dapnet <user> <text>```
 
 ```user``` can be specified with or without SSID (if specified with SSID, the SSID will be removed).
 
@@ -497,6 +497,30 @@ In case of success, MPAD will return the message
 ```Successfully sent DAPNET message to [user]```
 
 IF MPAD had not been configured for DAPNET access or there was an error during sending the message, an error message will be sent to the user.
+
+### Send a position report via email
+
+Sends an email to a user on the Internet, containing retailed position information on your call sign's current APRS position.
+
+Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __NO__
+
+#### Formats
+
+- ```posmsg <mail_address>``` or ```posrpt <mail_address>``` (both keywords do the same thing)
+
+This keyword can be combined with the ```lang``` keyword (default value: ```en```), thus allowing you to get e.g. Russian address data in cyrillic characters.
+
+#### Example requests
+
+- ```posmsg test@gmail.com``` Sends your call sign's position report to email recipient ```test@gmail.com```
+
+#### Example response
+
+In case of success, MPAD will return the message
+
+```The requested position report was emailed to its recipient```
+
+IF MPAD has not been configured for DAPNET access or there was an error during sending the message, an error message will be sent to the user.
 
 ### Fortuneteller
 

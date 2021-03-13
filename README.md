@@ -10,12 +10,13 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/CWOP prediction, 
 - METAR data for IATA/ICAO codes or the nearest airport to the user's position
 - CWOP data for a given CWOP station (or the nearest one)
 - Sunrise/sunset and moonrise/sunset for a given callsign (or the station's callsign)
-- Position data for a given callsign/transmitter callsign (human readable address, MGRS, Maidenhead, UTM, DMS, distance between the two users, altitude)
+- Extensive position data for your own callsign or a different callsign (human readable address, MGRS, Maidenhead, UTM, DMS, distance between the two users, altitude)
 - Satellite transit data (provides e.g. the next transit of the ISS, based on the callsign position of the transmitter). Can distinguish between visible and non-visible passes.
 - Finds the nearest repeater to your position with optional query parameters on band and query (c4fm, dstar, fm, ...)
 - Find a place of interest nearby (e.g. fuel station, supermarket, ...)
 - Send a message to a DAPNET user
 - Magic 8 Ball predictions :-)
+- Send an extensive APRS position report for your call sign's location to an email address via SMTP 
 - Can be easily extended with additional functions and keywords
 
 ## Program specifics
@@ -26,7 +27,7 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/CWOP prediction, 
 - Auto-detection of the user's system of units. Callsigns from the USA, Liberia and Myanmar will receive their data in imperial format (Miles, Fahrenheit, Feet etc), while for the rest of the world the metric system is preset. This auto-setting can be overriden with a separate keyword.
 - Supports APRS msg acknowledgments, beacons, etc. Also tries to extract APRS msg IDs from APRS messages that do not conform to APRS standards
 - Automatic detection of incoming duplicate / delayed APRS message requests
-- Full UTF-8 support for incoming messages. For outgoing messages, the configuration can be set to either 'plain ASCII' (default) or UTF-8.
+- Full UTF-8 support for incoming messages. For outgoing APRS messages, the configuration can be set to either 'plain ASCII' (default) or UTF-8. Email messages are not affected by this restriction
 
 ## Usage and command syntax
 

@@ -196,3 +196,20 @@ Description:
 - ```Az```: Azimuth in degrees at culmination time
 - ```Dst```: Distance in km or miles at culmination time
 - ```Vis```: Visibility Y/N. Only included if your query is based on ```satpass```.
+
+
+## Email position reports
+
+External service dependencies:
+
+- [aprs.fi](www.aprs.fi) for APRS call sign coordinates
+- [Openstreetmap](www.openstreetmap.org) for coordinate transformation (e.g. lat/lon to City/country or zipcode)
+
+Have MPAD send an email with your APRS position data to any user on the Internet.
+
+| What do we want | Command string User > MPAD | Response example MPAD > User |
+| --------------- | -------------------------- | ---------------------------- |
+| Send a position report to user test123@gmail.com | ```posmsg test123@gmail.com``` | ```The requested position report was emailed to its recipient``` |
+| Send a position report to user test123@gmail.com and enforce language 'Russian' | ```posmsg test123@gmail.com lang ru``` | ```The requested position report was emailed to its recipient``` |
+
+Default language is English - you can specify a different language via ```language``` keyword. MPAD always sends this parameter to OpenStreetmap, thus allowing you to receive e.g. Russian addresses in cyrillic characters.
