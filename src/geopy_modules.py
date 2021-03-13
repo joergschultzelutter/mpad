@@ -76,6 +76,7 @@ def get_reverse_geopy_data(
     latitude: float,
     longitude: float,
     language: str = "en",
+    disable_state_abbreviation: bool = False,
 ):
     """
     Get human-readable address data for a lat/lon combination
@@ -86,6 +87,9 @@ def get_reverse_geopy_data(
         Longitude
     language: 'str'
         iso3166-2 language code
+    disable_state_abbreviation: 'bool'
+        If True then the state information will be returned 'as is'
+        for US addresses.
 
     Returns
     =======
@@ -95,7 +99,8 @@ def get_reverse_geopy_data(
         Response dict with city, country, ...
     """
 
-    city = country = zipcode = state = street = street_number = county = None
+    address = city = country = country_code = county = None
+    zipcode = state = street = street_number = district = None
 
     # Geopy Nominatim user agent
     geolocator = Nominatim(user_agent=mpad_config.mpad_default_user_agent)
@@ -104,11 +109,16 @@ def get_reverse_geopy_data(
     try:
         # Lookup with zoom level 18 (building)
         location = geolocator.reverse(
-            f"{latitude} {longitude}", language=language, zoom=18
+            query=f"{latitude} {longitude}",
+            language=language,
+            zoom=18,
+            addressdetails=True,
+            exactly_one=True,
         )
     except TypeError:
         location = None
     if location:
+        address = location.address
         if "address" in location.raw:
             success = True
             if "city" in location.raw["address"]:
@@ -122,8 +132,12 @@ def get_reverse_geopy_data(
             if "county" in location.raw["address"]:
                 county = location.raw["address"]["county"]
             if "country_code" in location.raw["address"]:
-                country = location.raw["address"]["country_code"]
-                country = country.upper()
+                country_code = location.raw["address"]["country_code"]
+                country_code = country_code.upper()
+            if "country" in location.raw["address"]:
+                country = location.raw["address"]["country"]
+            if "district" in location.raw["address"]:
+                district = location.raw["address"]["district"]
             if "postcode" in location.raw["address"]:
                 zipcode = location.raw["address"]["postcode"]
             if "road" in location.raw["address"]:
@@ -132,7 +146,9 @@ def get_reverse_geopy_data(
                 street_number = location.raw["address"]["house_number"]
             if "state" in location.raw["address"]:
                 state = location.raw["address"]["state"]
-                if country == "US":  # State is returned in full; shorten it
+                if (
+                    country == "US" and not disable_state_abbreviation
+                ):  # State is returned in full; shorten it
                     try:
                         x = us.states.lookup(state)
                         state = x.abbr
@@ -141,15 +157,21 @@ def get_reverse_geopy_data(
             if not city:
                 if "man_made" in location.raw["address"]:
                     city = location.raw["address"]["man_made"]
+            if not city:
+                if "neighborhood" in location.raw["address"]:
+                    city = location.raw["address"]["neighborhood"]
 
     response_data = {
         "city": city,
         "state": state,
         "county": county,
         "country": country,
+        "district": district,
+        "country_code": country_code,
         "zipcode": zipcode,
         "street": street,
         "street_number": street_number,
+        "address": address,
     }
 
     return success, response_data

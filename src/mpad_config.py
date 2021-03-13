@@ -244,7 +244,15 @@ mpad_dapnet_api_server = "http://www.hampager.de:8080/calls"
 mpad_dapnet_api_transmitter_group = "all"
 
 #
-# SMTP mail server and port
+# SMTP server and port
 #
 mpad_smtp_server_address = "smtp.gmail.com"
 mpad_smtp_server_port = 465
+
+#
+# IMAP server and port
+#
+mpad_imap_server_address = "imap.gmail.com"
+mpad_imap_server_port = 993
+mpad_imap_mail_retention_max_days = 1   # Delete mails after x days (0 = disable)
+mpad_imap_mailbox_name = "Sent"
