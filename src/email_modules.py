@@ -21,6 +21,7 @@
 
 import logging
 import smtplib
+import imaplib
 from email.message import EmailMessage
 import re
 import datetime
@@ -59,8 +60,7 @@ MGRS Military Grid Reference System / USNG:     REPLACE_MGRS
 Latitude and Longitude / Decimal Degrees:       REPLACE_LATLON
 Altitude                                        REPLACE_ALTITUDE
 Last heard on APRS-IS                           REPLACE_LASTHEARD
-Address data:                                   REPLACE_ADDRESS_DATA_LINE1
-                                                REPLACE_ADDRESS_DATA_LINE2
+Address data:                                   REPLACE_ADDRESS_DATA
 
 This position report was requested by REPLACE_USERSCALLSIGN via APRS and was processed by MPAD (Multi-Purpose APRS Daemon). Generated at REPLACE_DATETIME_CREATED UTC
 More info on MPAD can be found here: https://www.github.com/joergschultzelutter/mpad
@@ -70,10 +70,10 @@ Proudly made in the district of Holzminden, Lower Saxony, Germany. 73 de DF1JSL
 
 html_template = """\
 <h2>Automated email - please do not respond</h2>
-<p>APRS position data for REPLACE_MESSAGECALLSIGN on the Internet:</p>
+<p>APRS position data for <strong>REPLACE_MESSAGECALLSIGN</strong> on the Internet:</p>
 <ul>
-<li>aprs.fi: <a href="REPLACE_APRSDOTFI" target="_blank" rel="noopener">REPLACE_APRSDOTFI</a></li>
-<li>Google Maps: <a href="REPLACE_GOOGLEMAPS" target="_blank" rel="noopener">REPLACE_GOOGLEMAPS</a>&nbsp;</li>
+<li><a href="REPLACE_APRSDOTFI" target="_blank" rel="noopener">aprs.fi</a></li>
+<li><a href="REPLACE_GOOGLEMAPS" target="_blank" rel="noopener">Google Maps</a>&nbsp;</li>
 </ul>
 <table border="1">
 <thead>
@@ -97,13 +97,14 @@ html_template = """\
 </tr>
 <tr>
 <td>
-<p><strong>MGRS</strong> Military Grid Reference System /&nbsp;<strong>USNG</strong> United States National Grid</p>
+<p><strong>MGRS</strong> Military Grid Reference System</p>
+<p><strong>USNG</strong> United States National Grid</p>
 </td>
 <td>REPLACE_MGRS</td>
 </tr>
 <tr>
 <td>
-<p><strong>Latitude and Longitude</strong> Decimal Degrees</p>
+<p><strong>Latitude and Longitude</strong></p>
 </td>
 <td>REPLACE_LATLON</td>
 </tr>
@@ -124,21 +125,18 @@ html_template = """\
 <p><strong>Address data</strong></p>
 </td>
 <td>
-<p>REPLACE_ADDRESS_DATA_LINE1</p>
-<p>REPLACE_ADDRESS_DATA_LINE2</p>
+<p>REPLACE_ADDRESS_DATA</p>
 </td>
 </tr>
 </tbody>
 </table>
-<p>This position report was requested by REPLACE_USERSCALLSIGN via APRS and was processed by <a href="https://aprs.fi/#!call=a%2FMPAD&amp;timerange=3600&amp;tail=3600" target="_blank" rel="noopener">MPAD (Multi-Purpose APRS Daemon)</a>. Generated at REPLACE_DATETIME_CREATED UTC</p>
+<p>This position report was requested by <strong>REPLACE_USERSCALLSIGN</strong> via APRS and was processed by <a href="https://aprs.fi/#!call=a%2FMPAD&amp;timerange=3600&amp;tail=3600" target="_blank" rel="noopener">MPAD (Multi-Purpose APRS Daemon)</a>. Generated at <strong>REPLACE_DATETIME_CREATED UTC</strong></p>
 <p>More info on MPAD can be found here: <a href="https://www.github.com/joergschultzelutter/mpad" target="_blank" rel="noopener">https://www.github.com/joergschultzelutter/mpad</a></p>
 <hr />
 <p>Proudly made in the district of Holzminden, Lower Saxony, Germany. 73 de DF1JSL</p>
 """
 
-mail_subject_template = (
-    "APRS Position Report for REPLACE_MESSAGECALLSIGN"
-)
+mail_subject_template = "APRS Position Report for REPLACE_MESSAGECALLSIGN"
 
 
 def send_email_position_report(response_parameters: dict):
@@ -192,14 +190,9 @@ def send_email_position_report(response_parameters: dict):
         if not isinstance(lasttime, datetime.datetime):
             lasttime = datetime.datetime.min
 
-        # all of the following data was reverse-lookup'ed and can be 'None'
-        city = response_parameters["city"]
-        state = response_parameters["state"]
-        zipcode = response_parameters["zipcode"]
-        country = response_parameters["country"]
-        county = response_parameters["county"]
-        street = response_parameters["street"]
-        street_number = response_parameters["street_number"]
+        # Get the reverse-lookup'ed address from OpenStreetMap
+        # Note: field can be of type None
+        address = response_parameters["address"]
 
         # Replace data on whose position is this for
         plaintext_message = plaintext_message.replace(
@@ -279,35 +272,14 @@ def send_email_position_report(response_parameters: dict):
         html_message = html_message.replace("REPLACE_MGRS", msg_string)
 
         # Determine the human readable address line 1 if available
-        msg_string = ""
-        if city:
-            msg_string = city
-        if zipcode:
-            msg_string += f", {zipcode}"
-        if state:
-            msg_string += f", {state}"
-        if county:
-            msg_string += f", {county}"
+        if address:
+            msg_string = address
+        else:
+            msg_string = "not available"
         plaintext_message = plaintext_message.replace(
-            "REPLACE_ADDRESS_DATA_LINE1", msg_string
+            "REPLACE_ADDRESS_DATA", msg_string
         )
-        html_message = html_message.replace("REPLACE_ADDRESS_DATA_LINE1", msg_string)
-
-        # Determine the human readable address line 2 if available
-        msg_string = ""
-        if street:
-            msg_string = street
-            if street_number:
-                # per https://en.wikipedia.org/wiki/Address, we try to honor the native format
-                # for those countries who list the street number before the street name
-                if country in mpad_config.street_number_precedes_street:
-                    msg_string = f"{street_number} " + msg_string
-                else:
-                    msg_string = msg_string + f" {street_number}"
-        plaintext_message = plaintext_message.replace(
-            "REPLACE_ADDRESS_DATA_LINE2", msg_string
-        )
-        html_message = html_message.replace("REPLACE_ADDRESS_DATA_LINE2", msg_string)
+        html_message = html_message.replace("REPLACE_ADDRESS_DATA", msg_string)
 
         # Check if a "last time heard on aprs.fi" timestamp is available and add it if present
         if lasttime is not datetime.datetime.min:
@@ -346,10 +318,11 @@ def send_email_position_report(response_parameters: dict):
 
         try:
             with smtplib.SMTP_SSL(
-                mpad_config.mpad_smtp_server_address, mpad_config.mpad_smtp_server_port
+                host=mpad_config.mpad_smtp_server_address,
+                port=mpad_config.mpad_smtp_server_port,
             ) as smtp:
-                smtp.login(smtp_email_address, smtp_email_password)
-                smtp.send_message(msg)
+                smtp.login(user=smtp_email_address, password=smtp_email_password)
+                smtp.send_message(msg=msg)
                 smtp.quit()
         except smtplib.SMTPAuthenticationError:
             output_message = (
@@ -366,6 +339,44 @@ def send_email_position_report(response_parameters: dict):
 
     output_list = [output_message]
     return output_list
+
+
+def imap_garbage_collector(smtp_email_address: str, smtp_email_password: str):
+
+    # Check if the garbage collector has been disabled and
+    # abort the process if necessary
+    if mpad_config.mpad_imap_mail_retention_max_days == 0:
+        return
+
+    regex_string = r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
+    matches = re.search(
+        pattern=regex_string, string=smtp_email_address, flags=re.IGNORECASE
+    )
+    if (
+        matches
+        and mpad_config.mpad_imap_server_port != 0
+        and mpad_config.mpad_imap_server_address
+    ):
+        cutoff = (
+            datetime.date.today()
+            - datetime.timedelta(days=mpad_config.mpad_imap_mail_retention_max_days)
+        ).strftime("%d-%b-%Y")
+        query_parms = f'(BEFORE "{cutoff}")'
+        with imaplib.IMAP4_SSL(
+            host=mpad_config.mpad_imap_server_address,
+            port=mpad_config.mpad_imap_server_port,
+        ) as imap:
+            imap.login(user=smtp_email_address, password=smtp_email_password)
+            imap.select(mailbox=mpad_config.mpad_imap_mailbox_name)
+
+            typ, msgnums = imap.search(None, "ALL", query_parms)
+            for num in msgnums[0].split():
+                imap.store(num, "+FLAGS", "\\Deleted")
+
+            imap.expunge()
+
+            imap.close()
+            imap.logout()
 
 
 if __name__ == "__main__":
