@@ -43,6 +43,47 @@ packet_delay_other: float = (
     6.0  # packet delay after sending an acknowledgment, bulletin or beacon
 )
 #
+# https://en.wikipedia.org/wiki/Address.
+# https://wiki.openstreetmap.org/wiki/Name_finder/Address_format
+# This is a list of countries where the
+# street number has to be listed before the street name.
+# example:
+# US: 555 Test Way
+# DE: Test Way 555 (default format)
+#
+street_number_precedes_street = [
+    "AU",
+    "CA",
+    "FR",
+    "HK",
+    "IE",
+    "IN",
+    "IL",
+    "JP",
+    "LU",
+    "MY",
+    "NZ",
+    "OM",
+    "PH",
+    "SA",
+    "SG",
+    "LK",
+    "TW",
+    "TH",
+    "US",
+    "GB",
+    "UK",
+]
+
+# Help text that the user receives as APRS messages in case he has requested help
+help_text_array = [
+    "(default=wx for pos of sending callsign). Position commands:",
+    "city,state;country OR city,state OR city;country OR zip;country OR",
+    "zip with/wo country OR grid|mh+4..6 char OR lat/lon OR callsign",
+    "time: mon..sun(day),today,tomorrow.Extra: mtr|metric imp|imperial",
+    "see https://github.com/joergschultzelutter/mpad for command syntax",
+]
+#
 ##########################
 # Configuration settings #
 ##########################
@@ -201,3 +242,9 @@ mpad_default_user_agent = (
 #
 mpad_dapnet_api_server = "http://www.hampager.de:8080/calls"
 mpad_dapnet_api_transmitter_group = "all"
+
+#
+# SMTP mail server and port
+#
+mpad_smtp_server_address = "smtp.gmail.com"
+mpad_smtp_server_port = 465

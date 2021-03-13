@@ -29,6 +29,7 @@ from cwop_modules import (
     get_nearest_cwop_findu,
 )
 
+import mpad_config
 from geopy_modules import get_osm_special_phrase_data
 
 from utility_modules import make_pretty_aprs_messages, read_program_config
@@ -48,22 +49,11 @@ from dapnet_modules import send_dapnet_message
 
 from repeater_modules import get_nearest_repeater
 from funstuff_modules import get_fortuneteller_message
-from aprs_communication import send_aprs_message_single
-from email_modules import prepare_aprs_email_position_report
+from email_modules import send_email_position_report
 
 import datetime
 import logging
 import math
-
-###
-# Help text that the user receives in case he has requested help
-help_text_array = [
-    "(default=wx for pos of sending callsign). Position commands:",
-    "city,state;country OR city,state OR city;country OR zip;country OR",
-    "zip with/wo country OR grid|mh+4..6 char OR lat/lon OR callsign",
-    "time: mon..sun(day),today,tomorrow.Extra: mtr|metric imp|imperial",
-    "see https://github.com/joergschultzelutter/mpad for command syntax",
-]
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -151,10 +141,10 @@ def generate_output_message(response_parameters: dict):
         success, output_list = generate_output_message_fortuneteller(
             response_parameters=response_parameters
         )
-#    elif what == "aprs_email_position_report":
-#        success, output_list = generate_output_message_aprs_email_position_report(
-#            response_parameters=response_parameters
-#        )
+    elif what == "email_position_report":
+        success, output_list = generate_output_message_email_position_report(
+            response_parameters=response_parameters
+        )
     else:
         success = False
         output_list = [
@@ -313,7 +303,7 @@ def generate_output_message_help():
         This is plain text list without APRS message ID's
     """
     success = True
-    output_list = help_text_array
+    output_list = mpad_config.help_text_array
     return success, output_list
 
 
@@ -701,38 +691,6 @@ def generate_output_message_whereis(response_parameters: dict):
     # True = we run the 'whereis' mode
     _whereis_mode = False
 
-    # https://en.wikipedia.org/wiki/Address.
-    # https://wiki.openstreetmap.org/wiki/Name_finder/Address_format
-    # This is a list of countries where the
-    # street number has to be listed before the street name.
-    # example:
-    # US: 555 Test Way
-    # DE: Test Way 555 (default format)
-    #
-    street_number_precedes_street = [
-        "AU",
-        "CA",
-        "FR",
-        "HK",
-        "IE",
-        "IN",
-        "IL",
-        "JP",
-        "LU",
-        "MY",
-        "NZ",
-        "OM",
-        "PH",
-        "SA",
-        "SG",
-        "LK",
-        "TW",
-        "TH",
-        "US",
-        "GB",
-        "UK",
-    ]
-
     latitude = response_parameters["latitude"]
     longitude = response_parameters["longitude"]
     altitude = response_parameters["altitude"]
@@ -879,7 +837,7 @@ def generate_output_message_whereis(response_parameters: dict):
         if street_number:
             # per https://en.wikipedia.org/wiki/Address, we try to honor the native format
             # for those countries who list the street number before the street name
-            if country in street_number_precedes_street:
+            if country in mpad_config.street_number_precedes_street:
                 human_readable_address = f"{street_number} " + human_readable_address
             else:
                 human_readable_address = human_readable_address + f" {street_number}"
@@ -1170,10 +1128,9 @@ def generate_output_message_fortuneteller(response_parameters: dict):
     return success, output_list
 
 
-def generate_output_message_aprs_email_position_report(response_parameters: dict):
+def generate_output_message_email_position_report(response_parameters: dict):
     """
-    Send a message to APRS callsign EMAIL-2, containing a link to aprs.fi
-    with the user's call sign (APRS position report)
+    Send an email position report based on the user's current location
 
     Parameters
     ==========
@@ -1187,43 +1144,11 @@ def generate_output_message_aprs_email_position_report(response_parameters: dict
         fatal error as we need to send something back to the user (even
         if that message is a mere error text)
     output_message: 'list'
-        List, containing the message text that we will send to EMAIL-2
-        Format is <email address|email shortcut> email_text
+        List, containing the message text(s) that we will send to the user
+        This is plain text list without APRS message ID's
     """
-    users_callsign = response_parameters["users_callsign"]
-    aprs_mail_recipient = response_parameters["aprs_mail_recipient"]
-    aprs_is = response_parameters["aprs_is"]
-    simulate_send = response_parameters["simulate_send"]
-    send_with_msg_no = True  # Always true for better dupe detection
-    number_of_served_packages = response_parameters["number_of_served_packages"]
 
-    # Prepare the email message report. It always refers to the user's own call sign
-    # so let's use this for preparing this simple message
-    message_text = prepare_aprs_email_position_report(
-        call_sign=users_callsign, email_address=aprs_mail_recipient
-    )
-
-    # send the message to APRS-IS / call sign EMAIL-2
-    # we always send the outgoing message WITH message number because this will
-    # trigger the response message from APRS-IS to send one as well - and we can
-    # then use that message number in combination with the other data (user, message
-    # content) for a better dupe detection
-    number_of_served_packages = send_aprs_message_single(
-        myaprsis=aprs_is,
-        single_message=message_text,
-        src_call_sign="EMAIL-2",
-        send_with_msg_no=False,
-        number_of_served_packages=number_of_served_packages,
-        simulate_send=simulate_send,
-    )
-
-    # Update number of served packages in the dictionary
-    response_parameters["number_of_served_packages"] = number_of_served_packages
-
-    # Prepare the confirmation msg to the user that has requested the pos report
-    output_list = make_pretty_aprs_messages(
-        message_to_add=f"APRS pos msg sent to '{aprs_mail_recipient}'"
-    )
+    output_list = send_email_position_report(response_parameters=response_parameters)
 
     success = True  # Always 'True' as we also return error messages to the user
     return success, output_list

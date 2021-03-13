@@ -22,6 +22,8 @@ def testcall(message_text: str, from_callsign: str):
         aprsis_passcode,
         dapnet_login_callsign,
         dapnet_login_passcode,
+        smtp_email_address,
+        smtp_email_password,
     ) = read_program_config()
     assert success
 
@@ -42,10 +44,8 @@ def testcall(message_text: str, from_callsign: str):
                 "openweathermapdotorg_api_key": openweathermapdotorg_api_key,
                 "dapnet_login_callsign": dapnet_login_callsign,
                 "dapnet_login_passcode": dapnet_login_passcode,
-                "aprs_is": None,
-                "simulate_send": True,
-                "send_with_msg_no": True,
-                "number_of_served_packages": 1,
+                "smtp_email_address": smtp_email_address,
+                "smtp_email_password": smtp_email_password,
             }
         )
         logger.info("Response:")
@@ -55,4 +55,6 @@ def testcall(message_text: str, from_callsign: str):
 
 
 if __name__ == "__main__":
-    testcall(message_text="posmsg jsl24469@gmail.com", from_callsign="df1jsl-8")
+    testcall(
+        message_text="posmsg jsl24469@gmail.com imperial", from_callsign="df1jsl-1"
+    )

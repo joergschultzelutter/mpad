@@ -99,7 +99,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     when = when_daytime = what = city = state = country = zipcode = cwop_id = None
     icao = human_readable_message = satellite = repeater_band = repeater_mode = None
     street = street_number = county = osm_special_phrase = dapnet_message = None
-    aprs_mail_recipient = None
+    mail_recipient = None
 
     # Call sign reference (either the user's call sign or someone
     # else's call sign
@@ -113,70 +113,49 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # Booleans for 'what information were we able to retrieve from the msg'
     found_when = found_when_daytime = False
 
-    # If this marker is set, we're likely responding to an APRS response
-    # from EMAIL-2. We need to avoid processing that message as it would
-    # be interpreted as (invalid) command sequence. The mail message from
-    # EMAIL-2 would be something like "Email sent to jsl24469@gmail.com".
-    # We simply ignore any message that is sent from us by EMAIL-2,
-    # flag the message content as erroneous at the beginning AND set this
-    # additional flag which will prevent MPAD from sending out our default
-    # error message to APRS-IS. In short terms - we just stay quiet.
-    # The incoming APRS message has already been ack'ed at this point.
-    suppress_outgoing_message = False
-
     #
     # Start the parsing process
     #
     # Convert user's call sign to uppercase
     users_callsign = users_callsign.upper()
 
-    # If message was sent to us by EMAIL-2 then disable further processing
-    if users_callsign == "EMAIL-2":
-        err = True
-        suppress_outgoing_message = True
-
     # Check if we need to switch to the imperial system ...
-    if not err:
-        units = get_units_based_on_users_callsign(users_callsign=users_callsign)
+    # Note: this is not an action keyword so we don't set the duty roster flag
+    units = get_units_based_on_users_callsign(users_callsign=users_callsign)
     #
     # ... and then check if the user wants to override this default setting
     # because he said so in his command to us
     # Note: this is not an action keyword so we don't set the duty roster flag
-    if not err:
-        found_my_keyword, parser_rd_units = parse_keyword_units(
-            aprs_message=aprs_message
-        )
-        if found_my_keyword:
-            aprs_message = parser_rd_units["aprs_message"]
-            units = parser_rd_units["units"]
+    found_my_keyword, parser_rd_units = parse_keyword_units(aprs_message=aprs_message)
+    if found_my_keyword:
+        aprs_message = parser_rd_units["aprs_message"]
+        units = parser_rd_units["units"]
 
     # check if the user wants to change the language
-    # for openweathermap.com (currently fix for 'en' but
-    # might change in the future
     # Note: this is not an action keyword so we don't set the duty roster flag
-    if not err:
-        found_my_keyword, parser_rd_language = parse_keyword_language(
-            aprs_message=aprs_message
-        )
-        if found_my_keyword:
-            aprs_message = parser_rd_language["aprs_message"]
-            language = parser_rd_language["language"]
+    found_my_keyword, parser_rd_language = parse_keyword_language(
+        aprs_message=aprs_message
+    )
+    if found_my_keyword:
+        aprs_message = parser_rd_language["aprs_message"]
+        language = parser_rd_language["language"]
 
     # check if the user wants more than one result (if supported by respective keyword)
     # hint: setting is not tied to the program's duty roster
     # Note: this is not an action keyword so we don't set the duty roster flag
-    if not err:
-        found_my_keyword, parser_rd_number_of_results = parse_keyword_number_of_results(
-            aprs_message=aprs_message
-        )
-        if found_my_keyword:
-            aprs_message = parser_rd_number_of_results["aprs_message"]
-            number_of_results = parser_rd_number_of_results["number_of_results"]
+    found_my_keyword, parser_rd_number_of_results = parse_keyword_number_of_results(
+        aprs_message=aprs_message
+    )
+    if found_my_keyword:
+        aprs_message = parser_rd_number_of_results["aprs_message"]
+        number_of_results = parser_rd_number_of_results["number_of_results"]
 
     # check if the user wants to receive the MPAD help pages
+    # in order to avoid any mishaps, we will detect this keyword
+    # only if it is the ONLY content in the user's message
     if not found_my_duty_roster and not err:
         matches = re.search(
-            pattern=r"\b(info|help)\b", string=aprs_message, flags=re.IGNORECASE
+            pattern=r"^(info|help)$", string=aprs_message, flags=re.IGNORECASE
         )
         if matches and not what:
             what = "help"
@@ -357,22 +336,39 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             what = parser_rd_fortuneteller["what"]
             aprs_message = parser_rd_fortuneteller["aprs_message"]
 
-    # Check if the user wants to send an email via APRS
+    # Check if the user wants to send his position data to
+    # an email address as a position report
     if not found_my_duty_roster and not err:
         (
             found_my_keyword,
             kw_err,
-            parser_rd_aprs_email_posrpt,
-        ) = parse_what_keyword_aprs_email_position_report(aprs_message=aprs_message)
+            parser_rd_email_posrpt,
+        ) = parse_what_keyword_email_position_report(
+            aprs_message=aprs_message,
+            users_callsign=users_callsign,
+            aprsdotfi_api_key=aprsdotfi_api_key,
+        )
         if found_my_keyword or kw_err:
             found_my_duty_roster = found_my_keyword
             err = kw_err
-            what = parser_rd_aprs_email_posrpt["what"]
-            aprs_message = parser_rd_aprs_email_posrpt["aprs_message"]
-            human_readable_message = parser_rd_aprs_email_posrpt[
-                "human_readable_message"
-            ]
-            aprs_mail_recipient = parser_rd_aprs_email_posrpt["aprs_mail_recipient"]
+            latitude = parser_rd_email_posrpt["latitude"]
+            longitude = parser_rd_email_posrpt["longitude"]
+            users_latitude = parser_rd_email_posrpt["users_latitude"]
+            users_longitude = parser_rd_email_posrpt["users_longitude"]
+            lasttime = parser_rd_email_posrpt["lasttime"]
+            altitude = parser_rd_email_posrpt["altitude"]
+            what = parser_rd_email_posrpt["what"]
+            human_readable_message = parser_rd_email_posrpt["human_readable_message"]
+            aprs_message = parser_rd_email_posrpt["aprs_message"]
+            message_callsign = parser_rd_email_posrpt["message_callsign"]
+            city = parser_rd_email_posrpt["city"]
+            state = parser_rd_email_posrpt["state"]
+            county = parser_rd_email_posrpt["county"]
+            country = parser_rd_email_posrpt["country"]
+            zipcode = parser_rd_email_posrpt["zipcode"]
+            street = parser_rd_email_posrpt["street"]
+            street_number = parser_rd_email_posrpt["street_number"]
+            mail_recipient = parser_rd_email_posrpt["mail_recipient"]
 
     # Check if the user has requested information wrt METAR data
     # potential inputs: ICAO/IATA qualifiers with/without keyword
@@ -636,8 +632,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         "number_of_results": number_of_results,  # for keywords which may return more than 1 result
         "osm_special_phrase": osm_special_phrase,  # openstreetmap special phrases https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases/EN
         "dapnet_message": dapnet_message,
-        "aprs_mail_recipient": aprs_mail_recipient,  # can either be an email address or an APRS mail shortcut, http://www.aprs-is.net/Email.aspx
-        "suppress_outgoing_message": suppress_outgoing_message,  # If true then we will not send anything to APRS-IS
+        "mail_recipient": mail_recipient,  # APRS position reports that are sent to an email address
     }
 
     # Finally, set the return code. Unless there was an error, we return a True status
@@ -2573,17 +2568,24 @@ def parse_what_keyword_fortuneteller(aprs_message: str):
     return found_my_keyword, kw_err, parser_rd_fortuneteller
 
 
-def parse_what_keyword_aprs_email_position_report(aprs_message: str):
+def parse_what_keyword_email_position_report(
+    aprs_message: str, users_callsign: str, aprsdotfi_api_key: str
+):
     """
-    Keyword parser email messaging via EMAIL-2 APRS
-    This is the parser for the OUTgoing message to EMAIL-2
-    The code for handling the ack'ed response from EMAIL-2 is
-    not handled here.
+    Keyword parser email position report
+    This is literally a carbon copy of the WHEREAMI keyword.
+    The slight difference is that this keyword here will
+    generate an email with the user's position data whereas
+    WHEREAM will generate APRS messages
 
     Parameters
     ==========
     aprs_message : 'str'
         the original aprs message
+    users_callsign : 'str'
+        Call sign of the user that has sent us the message
+    aprsdotfi_api_key : 'str'
+        aprs.fi access key
 
     Returns
     =======
@@ -2592,40 +2594,94 @@ def parse_what_keyword_aprs_email_position_report(aprs_message: str):
     kw_err: 'bool'
         True if an error has occurred. If found_my_keyword is also true,
         then the error marker overrides the 'found' keyword
-    parser_rd_email: 'dict'
+    parser_rd_email_posrpt: 'dict'
         response data dictionary, containing the keyword-relevant data
     """
 
-    found_my_keyword = kw_err = False
-    human_readable_message = aprs_mail_recipient = None
-    what = message_callsign = None
+    found_my_keyword = kw_err = success = False
+    human_readable_message = what = mail_recipient = None
+    latitude = longitude = users_latitude = users_longitude = 0.0
+    altitude = 0
+    lasttime = datetime.min
+    what = message_callsign = city = state = county = None
+    zipcode = country = street = street_number = None
 
     # check for a keyword - email pattern
     regex_string = r"\bposmsg\s*([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)\b"
     matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
-        aprs_mail_recipient = matches[1].strip()
-        # max. len for email address is 67 - len(message content) - len(call sign + ssid) = 41
-        if len(aprs_mail_recipient) > 41:
-            human_readable_message = (
-                "Sorry, that email address is too long (max. 41 chars)"
-            )
-            kw_err = True
-        else:
-            aprs_message = re.sub(
-                pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
-            ).strip()
-            found_my_keyword = True
-            what = "aprs_email_position_report"
+        mail_recipient = matches[1].strip()
+        aprs_message = re.sub(
+            pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
+        ).strip()
+        found_my_keyword = True
+        what = "email_position_report"
+        message_callsign = users_callsign
+        human_readable_message = f"Email position for {message_callsign}"
 
-    parser_rd_aprs_email_posrpt = {
+        # Try to get the user's position on aprs.fi
+        (
+            success,
+            latitude,
+            longitude,
+            altitude,
+            lasttime,
+            message_callsign,
+        ) = get_position_on_aprsfi(
+            aprsfi_callsign=users_callsign,
+            aprsdotfi_api_key=aprsdotfi_api_key,
+        )
+        if not success:
+            kw_err = True
+            human_readable_message = (
+                f"{errmsg_cannot_find_coords_for_user} {message_callsign}"
+            )
+        else:
+            # Finally, try to get the user's human readable address
+            # we ignore any errors as all output fields will be properly initialized with default values
+            success, response_data = get_reverse_geopy_data(
+                latitude=latitude, longitude=longitude
+            )
+            # extract response fields; one/all can be 'None'
+            city = response_data["city"]
+            state = response_data["state"]
+            country = response_data["country"]
+            zipcode = response_data["zipcode"]
+            county = response_data["county"]
+            street = response_data["street"]
+            street_number = response_data["street_number"]
+
+            # Finally, set the user's latitude / longitude
+            # which -as we request our own position- is the
+            # same latitude/longitude. Our target output
+            # function will recognise these values and know that
+            # the user's distance between these coordinates is
+            # zero and then refrain from trying to calculate
+            # any distance values
+            users_latitude = latitude
+            users_longitude = longitude
+
+    parser_rd_email_posrpt = {
         "what": what,
-        "message_callsign": message_callsign,
         "human_readable_message": human_readable_message,
         "aprs_message": aprs_message,
-        "aprs_mail_recipient": aprs_mail_recipient,
+        "mail_recipient": mail_recipient,
+        "latitude": latitude,
+        "longitude": longitude,
+        "users_latitude": users_latitude,
+        "users_longitude": users_longitude,
+        "lasttime": lasttime,
+        "altitude": altitude,
+        "message_callsign": message_callsign,
+        "city": city,
+        "state": state,
+        "county": county,
+        "country": country,
+        "zipcode": zipcode,
+        "street": street,
+        "street_number": street_number,
     }
-    return found_my_keyword, kw_err, parser_rd_aprs_email_posrpt
+    return found_my_keyword, kw_err, parser_rd_email_posrpt
 
 
 if __name__ == "__main__":
