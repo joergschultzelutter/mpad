@@ -99,7 +99,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     when = when_daytime = what = city = state = country = zipcode = cwop_id = None
     icao = human_readable_message = satellite = repeater_band = repeater_mode = None
     street = street_number = county = osm_special_phrase = dapnet_message = None
-    mail_recipient = None
+    mail_recipient = country_code = district = address = None
 
     # Call sign reference (either the user's call sign or someone
     # else's call sign
@@ -201,6 +201,9 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             state = parser_rd_csm["state"]
             county = parser_rd_csm["county"]
             country = parser_rd_csm["country"]
+            country_code = parser_rd_csm["country_code"]
+            district = parser_rd_csm["district"]
+            address = parser_rd_csm["address"]
             zipcode = parser_rd_csm["zipcode"]
             street = parser_rd_csm["street"]
             street_number = parser_rd_csm["street_number"]
@@ -231,6 +234,9 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             state = parser_rd_whereami["state"]
             county = parser_rd_whereami["county"]
             country = parser_rd_whereami["country"]
+            country_code = parser_rd_whereami["country_code"]
+            district = parser_rd_whereami["district"]
+            address = parser_rd_whereami["address"]
             zipcode = parser_rd_whereami["zipcode"]
             street = parser_rd_whereami["street"]
             street_number = parser_rd_whereami["street_number"]
@@ -368,6 +374,9 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             state = parser_rd_email_posrpt["state"]
             county = parser_rd_email_posrpt["county"]
             country = parser_rd_email_posrpt["country"]
+            country_code = parser_rd_email_posrpt["country_code"]
+            district = parser_rd_email_posrpt["district"]
+            address = parser_rd_email_posrpt["address"]
             zipcode = parser_rd_email_posrpt["zipcode"]
             street = parser_rd_email_posrpt["street"]
             street_number = parser_rd_email_posrpt["street_number"]
@@ -426,6 +435,9 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             city = parser_rd_wx["city"]
             state = parser_rd_wx["state"]
             country = parser_rd_wx["country"]
+            country_code = parser_rd_wx["country_code"]
+            district = parser_rd_wx["district"]
+            address = parser_rd_wx["address"]
             zipcode = parser_rd_wx["zipcode"]
             county = parser_rd_wx["county"]
             street = parser_rd_wx["street"]
@@ -546,6 +558,9 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                     city = response_data["city"]
                     state = response_data["state"]
                     country = response_data["country"]
+                    country_code = response_data["country_code"]
+                    district = response_data["district"]
+                    address = response_data["address"]
                     zipcode = response_data["zipcode"]
                     county = response_data["county"]
                     street = response_data["street"]
@@ -586,6 +601,9 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                             city = response_data["city"]
                             state = response_data["state"]
                             country = response_data["country"]
+                            country_code = response_data["country_code"]
+                            district = response_data["district"]
+                            address = response_data["address"]
                             zipcode = response_data["zipcode"]
                             county = response_data["county"]
                             street = response_data["street"]
@@ -625,7 +643,10 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         "city": city,  # address information
         "state": state,
         "country": country,
+        "country_code": country_code,
         "county": county,
+        "district": district,
+        "address": address,
         "zipcode": zipcode,
         "cwop_id": cwop_id,
         "street": street,
@@ -1295,7 +1316,7 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
     human_readable_message = what = None
     latitude = longitude = 0.0
 
-    what = city = state = country = zipcode = None
+    what = city = state = country = country_code = district = address = zipcode = None
     street = street_number = county = None
 
     # By default, we assume that the callsign that is in relevance to
@@ -1312,20 +1333,20 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
     # be removed from the original message in order to avoid
     # any additional occurrences at a later point in time.
 
-    # Check if we have been given a specific address (city, state, country)
+    # Check if we have been given a specific address (city, state, country code)
     geopy_query = None
     # City / State / Country?
     regex_string = r"\b([\D\s]+),\s*?(\w+);\s*([a-zA-Z]{2})\b"
     matches = re.findall(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
-        (city, state, country) = matches[0]
+        (city, state, country_code) = matches[0]
         city = string.capwords(city).strip()
-        country = country.upper().strip
+        country_code = country_code.upper().strip
         state = state.upper().strip  # in theory, this could also be a non-US state
         aprs_message = re.sub(
             pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
         ).strip()
-        geopy_query = {"city": city, "state": state, "country": country}
+        geopy_query = {"city": city, "state": state, "country": country_code}
         found_my_keyword = True
     # City / State
     if not found_my_keyword and not kw_err:
@@ -1335,26 +1356,27 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
         )
         if matches:
             (city, state) = matches[0]
-            country = "US"
+            country_code = "US"
+            country = "United States"
             city = string.capwords(city).strip()
             state = state.upper().strip()
             aprs_message = re.sub(
                 pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
             ).strip()
-            geopy_query = {"city": city, "state": state, "country": country}
+            geopy_query = {"city": city, "state": state, "country": country_code}
             found_my_keyword = True
-    # City / Country
+    # City / Country Code
     if not found_my_keyword and not kw_err:
         regex_string = r"\b([\D\s]+);\s*([a-zA-Z]{2})\b"
         matches = re.findall(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
         if matches:
-            (city, country) = matches[0]
+            (city, country_code) = matches[0]
             city = string.capwords(city).strip()
-            country = country.upper().strip()
+            country_code = country_code.upper().strip()
             state = None
-            geopy_query = {"city": city, "country": country}
+            geopy_query = {"city": city, "country": country_code}
             aprs_message = re.sub(
                 pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
             ).strip()
@@ -1363,8 +1385,8 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
     # Yes; send the query to GeoPy and get lat/lon for the address
     if found_my_keyword and not kw_err:
         # Let's validate the given iso3166 country code
-        if not validate_country(country):
-            human_readable_message = f"{errmsg_invalid_country}: '{country}'"
+        if not validate_country(country_code):
+            human_readable_message = f"{errmsg_invalid_country}: '{country_code}'"
             kw_err = True
         # Everything seems to be ok. Try to retrieve
         # lat/lon for the given data
@@ -1375,18 +1397,18 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
             if success:
                 what = "wx"  # We know now that we want a wx report
                 human_readable_message = city
-                if state and country == "US":
+                if state and country_code == "US":
                     human_readable_message += f",{state}"
-                if country and country != "US":
-                    human_readable_message += f";{country}"
+                if country_code and country_code != "US":
+                    human_readable_message += f";{country_code}"
             else:
                 kw_err = True
                 human_readable_message = errmsg_cannot_find_coords_for_address
 
     # Look for postal/zip code information
     # First, let's look for an international zip code
-    # Format: zip[zipcode];[country]
-    # Country = iso3166-2
+    # Format: zip[zipcode];[country code]
+    # Country Code = iso3166-2
     if not found_my_keyword and not kw_err:
         geopy_query = None
         regex_string = r"\b(zip)\s*([a-zA-Z0-9-( )]{3,10});\s*([a-zA-Z]{2})\b"
@@ -1394,16 +1416,16 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
         if matches:
-            (_, zipcode, country) = matches[0]
+            (_, zipcode, country_code) = matches[0]
             zipcode = zipcode.strip()
             state = None
-            country = country.upper().strip()
+            country_code = country_code.upper().strip()
             aprs_message = re.sub(
                 pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
             ).strip()
             found_my_keyword = True
             # prepare the geopy reverse lookup string
-            geopy_query = {"postalcode": zipcode, "country": country}
+            geopy_query = {"postalcode": zipcode, "country": country_code}
         if not found_my_keyword:
             # check for a 5-digit zip code with keyword
             # If match: assume that the user wants a US zip code
@@ -1414,7 +1436,8 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
             if matches:
                 (_, zipcode) = matches[0]
                 state = None
-                country = "US"
+                country_code = "US"
+                country = "United States"
                 zipcode = zipcode.strip()
                 aprs_message = re.sub(
                     pattern=regex_string,
@@ -1424,7 +1447,7 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
                 ).strip()
                 found_my_keyword = True
                 # prepare the geopy reverse lookup string
-                geopy_query = {"postalcode": zipcode, "country": country}
+                geopy_query = {"postalcode": zipcode, "country": country_code}
         if not found_my_keyword:
             # check if the user has submitted a 3-10 digit zipcode WITH
             # country code but WITHOUT keyword
@@ -1434,10 +1457,10 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
                 pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
             )
             if matches:
-                (zipcode, country) = matches[0]
+                (zipcode, country_code) = matches[0]
                 zipcode = zipcode.strip()
                 state = None
-                country = country.upper().strip()
+                country_code = country_code.upper().strip()
                 aprs_message = re.sub(
                     pattern=regex_string,
                     repl="",
@@ -1446,13 +1469,13 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
                 ).strip()
                 found_my_keyword = True
                 # prepare the geopy reverse lookup string
-                geopy_query = {"postalcode": zipcode, "country": country}
+                geopy_query = {"postalcode": zipcode, "country": country_code}
         # Did I find something at all?
         # Yes; send the query to GeoPy and get lat/lon for the address
         if found_my_keyword:
             # First, let's validate the given iso3166 country code
-            if not validate_country(country):
-                human_readable_message = f"{errmsg_invalid_country}: '{country}'"
+            if not validate_country(country_code):
+                human_readable_message = f"{errmsg_invalid_country}: '{country_code}'"
                 kw_err = True
                 what = None
             else:
@@ -1465,7 +1488,7 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
                     # Therefore, we can already set the 'what' command keyword'
                     what = "wx"
                     # Pre-build the output message
-                    human_readable_message = f"Zip {zipcode};{country}"
+                    human_readable_message = f"Zip {zipcode};{country_code}"
                     # but try to get a real city name
                     success, response_data = get_reverse_geopy_data(
                         latitude=latitude, longitude=longitude, language=language
@@ -1475,6 +1498,7 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
                         # outgoing data dictionary
                         city = response_data["city"]
                         state = response_data["state"]
+                        country_code = response_data["country_code"]
                         country = response_data["country"]
                         # zipcode = response_data["zipcode"]
                         county = response_data["county"]
@@ -1488,9 +1512,12 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
                     kw_err = True
                     human_readable_message = errmsg_cannot_find_coords_for_address
 
-    # Look for a single 5-digit code
+    # Look for a single 5-digit code WITHOUT any additional qualifying information
     # if found then assume that it is a zip code from the US
     # and set all other variables accordingly
+    # This approach honors wxbot's way of accessing zip codes. Other countries
+    # such as DE also use zip codes of the same length but let's assume that
+    # 5 digit zip codes are US only.
     if not found_my_keyword and not kw_err:
         regex_string = r"\b([0-9]{5})\b"
         matches = re.findall(
@@ -1499,15 +1526,16 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
         if matches:
             zipcode = matches[0]
             state = None
-            country = "US"
+            country_code = "US"
+            country = "United States"
             aprs_message = re.sub(
                 pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
             ).strip()
             found_my_keyword = True
             what = "wx"
-            human_readable_message = f"Zip {zipcode};{country}"
+            human_readable_message = f"Zip {zipcode};{country_code}"
             success, latitude, longitude = get_geocode_geopy_data(
-                query_data={"postalcode": zipcode, "country": country},
+                query_data={"postalcode": zipcode, "country": country_code},
                 language=language,
             )
             if not success:
@@ -1523,7 +1551,10 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
                     # outgoing data dictionary
                     city = response_data["city"]
                     state = response_data["state"]
+                    country_code = response_data["country_code"]
                     country = response_data["country"]
+                    district = response_data["district"]
+                    address = response_data["address"]
                     zipcode = response_data["zipcode"]
                     county = response_data["county"]
                     street = response_data["street"]
@@ -1592,7 +1623,10 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
                     # outgoing data dictionary
                     city = response_data["city"]
                     state = response_data["state"]
+                    country_code = response_data["country_code"]
                     country = response_data["country"]
+                    district = response_data["district"]
+                    address = response_data["address"]
                     zipcode = response_data["zipcode"]
                     county = response_data["county"]
                     street = response_data["street"]
@@ -1675,7 +1709,10 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
                     # outgoing data dictionary
                     city = response_data["city"]
                     state = response_data["state"]
+                    country_code = response_data["country_code"]
                     country = response_data["country"]
+                    district = response_data["district"]
+                    address = response_data["address"]
                     zipcode = response_data["zipcode"]
                     county = response_data["county"]
                     street = response_data["street"]
@@ -1695,6 +1732,9 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
         "city": city,
         "state": state,
         "country": country,
+        "country_code": country_code,
+        "district": district,
+        "address": address,
         "zipcode": zipcode,
         "county": county,
         "street": street,
@@ -2043,7 +2083,9 @@ def parse_what_keyword_callsign_multi(
     altitude = 0
     lasttime = datetime.min
     what = message_callsign = city = state = county = None
-    zipcode = country = street = street_number = None
+    zipcode = (
+        country
+    ) = country_code = district = address = street = street_number = None
 
     # First check the APRS message and see if the user has submitted
     # a call sign with the message (we will first check for a call
@@ -2129,7 +2171,10 @@ def parse_what_keyword_callsign_multi(
                 # outgoing data dictionary
                 city = response_data["city"]
                 state = response_data["state"]
+                country_code = response_data["country_code"]
                 country = response_data["country"]
+                district = response_data["district"]
+                address = response_data["address"]
                 zipcode = response_data["zipcode"]
                 county = response_data["county"]
                 street = response_data["street"]
@@ -2196,6 +2241,9 @@ def parse_what_keyword_callsign_multi(
         "state": state,
         "county": county,
         "country": country,
+        "country_code": country_code,
+        "district": district,
+        "address": address,
         "zipcode": zipcode,
         "street": street,
         "street_number": street_number,
@@ -2239,7 +2287,9 @@ def parse_what_keyword_whereami(
     altitude = 0
     lasttime = datetime.min
     what = message_callsign = city = state = county = None
-    zipcode = country = street = street_number = None
+    zipcode = (
+        country
+    ) = country_code = district = address = street = street_number = None
 
     regex_string = r"\b(whereami)\b"
     matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
@@ -2278,7 +2328,10 @@ def parse_what_keyword_whereami(
             # extract response fields; one/all can be 'None'
             city = response_data["city"]
             state = response_data["state"]
+            country_code = response_data["country_code"]
             country = response_data["country"]
+            district = response_data["district"]
+            address = response_data["address"]
             zipcode = response_data["zipcode"]
             county = response_data["county"]
             street = response_data["street"]
@@ -2309,6 +2362,9 @@ def parse_what_keyword_whereami(
         "state": state,
         "county": county,
         "country": country,
+        "country_code": country_code,
+        "district": district,
+        "address": address,
         "zipcode": zipcode,
         "street": street,
         "street_number": street_number,
@@ -2321,7 +2377,7 @@ def build_human_readable_address_message(response_data: dict):
     Build the 'human readable message' based on the reverse-lookup
     from OpenStreetMap
 
-    Note: State information is ignored unless country=US. OSM does not
+    Note: State information is ignored unless country_code=US. OSM does not
     provide 'state' information in an abbreviated format and we need
     to keep the message as brief as possible
 
@@ -2339,13 +2395,16 @@ def build_human_readable_address_message(response_data: dict):
     human_readable_message = ""
     city = response_data["city"]
     state = response_data["state"]
+    country_code = response_data["country_code"]
     country = response_data["country"]
+    district = response_data["district"]
+    address = response_data["address"]
     zipcode = response_data["zipcode"]
     county = response_data["county"]
     if city:
         human_readable_message = city
-        if country:
-            if country == "US":
+        if country_code:
+            if country_code == "US":
                 if state:
                     human_readable_message += f",{state}"
         if zipcode:
@@ -2353,8 +2412,8 @@ def build_human_readable_address_message(response_data: dict):
     if not city:
         if county:
             human_readable_message = county
-    if country:
-        human_readable_message += f";{country}"
+    if country_code:
+        human_readable_message += f";{country_code}"
 
     return human_readable_message
 
@@ -2618,10 +2677,14 @@ def parse_what_keyword_email_position_report(
     altitude = 0
     lasttime = datetime.min
     what = message_callsign = city = state = county = None
-    zipcode = country = street = street_number = None
+    zipcode = (
+        country
+    ) = country_code = district = address = street = street_number = None
 
     # check for a keyword - email pattern
-    regex_string = r"\b(posmsg|posrpt)\s*([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)\b"
+    regex_string = (
+        r"\b(posmsg|posrpt)\s*([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)\b"
+    )
     matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
         mail_recipient = matches[2].strip()
@@ -2654,12 +2717,18 @@ def parse_what_keyword_email_position_report(
             # Finally, try to get the user's human readable address
             # we ignore any errors as all output fields will be properly initialized with default values
             success, response_data = get_reverse_geopy_data(
-                latitude=latitude, longitude=longitude, language=language
+                latitude=latitude,
+                longitude=longitude,
+                language=language,
+                disable_state_abbreviation=True,
             )
             # extract response fields; one/all can be 'None'
             city = response_data["city"]
             state = response_data["state"]
             country = response_data["country"]
+            country_code = response_data["country_code"]
+            district = response_data["district"]
+            address = response_data["address"]
             zipcode = response_data["zipcode"]
             county = response_data["county"]
             street = response_data["street"]
@@ -2691,6 +2760,9 @@ def parse_what_keyword_email_position_report(
         "state": state,
         "county": county,
         "country": country,
+        "country_code": country_code,
+        "district": district,
+        "address": address,
         "zipcode": zipcode,
         "street": street,
         "street_number": street_number,
@@ -2708,7 +2780,7 @@ if __name__ == "__main__":
         dapnet_callsign,
         dapnet_passcode,
         smtp_email_address,
-        smtp_email_password
+        smtp_email_password,
     ) = read_program_config()
     logger.info(
         pformat(
