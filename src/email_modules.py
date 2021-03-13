@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 plaintext_template = """\
 AUTOMATED EMAIL - PLEASE DO NOT RESPOND
 
-Position reports for REPLACE_MESSAGECALLSIGN on the internet:
+APRS position data for REPLACE_MESSAGECALLSIGN on the Internet:
 
 aprs.fi:                                        REPLACE_APRSDOTFI
 Google Maps:                                    REPLACE_GOOGLEMAPS
@@ -58,7 +58,7 @@ UTM Universal Transverse Mercator:              REPLACE_UTM
 MGRS Military Grid Reference System / USNG:     REPLACE_MGRS
 Latitude and Longitude / Decimal Degrees:       REPLACE_LATLON
 Altitude                                        REPLACE_ALTITUDE
-Last heard on aprs.fi                           REPLACE_LASTHEARD
+Last heard on APRS-IS                           REPLACE_LASTHEARD
 Address data:                                   REPLACE_ADDRESS_DATA_LINE1
                                                 REPLACE_ADDRESS_DATA_LINE2
 
@@ -70,7 +70,7 @@ Proudly made in the district of Holzminden, Lower Saxony, Germany. 73 de DF1JSL
 
 html_template = """\
 <h2>Automated email - please do not respond</h2>
-<p>Position data for REPLACE_MESSAGECALLSIGN on the Internet:</p>
+<p>APRS position data for REPLACE_MESSAGECALLSIGN on the Internet:</p>
 <ul>
 <li>aprs.fi: <a href="REPLACE_APRSDOTFI" target="_blank" rel="noopener">REPLACE_APRSDOTFI</a></li>
 <li>Google Maps: <a href="REPLACE_GOOGLEMAPS" target="_blank" rel="noopener">REPLACE_GOOGLEMAPS</a>&nbsp;</li>
@@ -115,7 +115,7 @@ html_template = """\
 </tr>
 <tr>
 <td>
-<p><strong>Last heard on aprs.fi</strong></p>
+<p><strong>Last heard on APRS-IS</strong></p>
 </td>
 <td>REPLACE_LASTHEARD</td>
 </tr>
@@ -137,7 +137,7 @@ html_template = """\
 """
 
 mail_subject_template = (
-    "Multi-Purpose APRS Daemon: Position Report for REPLACE_MESSAGECALLSIGN"
+    "APRS Position Report for REPLACE_MESSAGECALLSIGN"
 )
 
 
@@ -337,7 +337,7 @@ def send_email_position_report(response_parameters: dict):
         # Finally, generate the message
         msg = EmailMessage()
         msg["Subject"] = subject_message
-        msg["From"] = smtp_email_address
+        msg["From"] = f"MPAD Multi-Purpose APRS Daemon <{smtp_email_address}>"
         msg["To"] = mail_recipient
         msg.set_content(plaintext_message)
         msg.add_alternative(html_message, subtype="html")

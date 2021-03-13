@@ -56,5 +56,5 @@ def testcall(message_text: str, from_callsign: str):
 
 if __name__ == "__main__":
     testcall(
-        message_text="posmsg jsl24469@gmail.com imperial", from_callsign="df1jsl-1"
+        message_text="posmsg jsl24469@gmail.com", from_callsign="df1jsl-1"
     )
