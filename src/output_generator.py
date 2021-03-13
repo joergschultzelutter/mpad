@@ -707,6 +707,9 @@ def generate_output_message_whereis(response_parameters: dict):
     state = response_parameters["state"]
     zipcode = response_parameters["zipcode"]
     country = response_parameters["country"]
+    district = response_parameters["district"]
+    address = response_parameters["address"]
+    country_code = response_parameters["country_code"]
     county = response_parameters["county"]
     street = response_parameters["street"]
     street_number = response_parameters["street_number"]
@@ -811,22 +814,42 @@ def generate_output_message_whereis(response_parameters: dict):
         destination_list=output_list,
     )
 
-    human_readable_address = None
+    # Note: variable 'address' contains the full-blown address details from
+    # OpenStreetMap. As we deal with APRS data which is restricted in length,
+    # MPAD tries to be as conservative as possible and avoids using the
+    # full address - but rather tries to construct a reasonable address string by
+    # itself. This works for most of the cases but if you're off grid, you
+    # may end up with incomplete human readable address details.
+    #
+    # If this is deemed undesired behavior, simply add the 'address' content via
+    # function 'make_pretty_aprs_messages'. Even if that string exceeds 67 chars,
+    # that function will attempt to split up the text in the most legible way
+    # possible.
+
+    human_readable_address = ""
     if city:
         human_readable_address = city
         if zipcode:
             human_readable_address += f", {zipcode}"
-        if country:
-            human_readable_address += f", {country}"
+        if country_code:
+            human_readable_address += f", {country_code}"
     else:
+        if district:
+            human_readable_address = district
         if county:
-            human_readable_address = county
+            if len(human_readable_address) != 0:
+                human_readable_address += ", "
+            human_readable_address += county
         if zipcode:
-            human_readable_address += f", {zipcode}"
-        if country:
-            human_readable_address += f", {country}"
+            if len(human_readable_address) != 0:
+                human_readable_address += ", "
+            human_readable_address += zipcode
+        if country_code:
+            if len(human_readable_address) != 0:
+                human_readable_address += ", "
+            human_readable_address += country_code
 
-    if human_readable_address:
+    if human_readable_address != "":
         output_list = make_pretty_aprs_messages(
             message_to_add=human_readable_address, destination_list=output_list
         )
@@ -837,7 +860,7 @@ def generate_output_message_whereis(response_parameters: dict):
         if street_number:
             # per https://en.wikipedia.org/wiki/Address, we try to honor the native format
             # for those countries who list the street number before the street name
-            if country in mpad_config.street_number_precedes_street:
+            if country_code in mpad_config.street_number_precedes_street:
                 human_readable_address = f"{street_number} " + human_readable_address
             else:
                 human_readable_address = human_readable_address + f" {street_number}"
