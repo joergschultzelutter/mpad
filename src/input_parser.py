@@ -182,6 +182,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             aprs_message=aprs_message,
             users_callsign=users_callsign,
             aprsdotfi_api_key=aprsdotfi_api_key,
+            language=language,
         )
         if found_my_keyword or kw_err:
             found_my_duty_roster = found_my_keyword
@@ -211,6 +212,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             aprs_message=aprs_message,
             users_callsign=users_callsign,
             aprsdotfi_api_key=aprsdotfi_api_key,
+            language=language,
         )
         if found_my_keyword or kw_err:
             found_my_duty_roster = found_my_keyword
@@ -347,6 +349,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             aprs_message=aprs_message,
             users_callsign=users_callsign,
             aprsdotfi_api_key=aprsdotfi_api_key,
+            language=language,
         )
         if found_my_keyword or kw_err:
             found_my_duty_roster = found_my_keyword
@@ -535,7 +538,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
 
                 # (try) to translate into human readable information
                 success, response_data = get_reverse_geopy_data(
-                    latitude=latitude, longitude=longitude
+                    latitude=latitude, longitude=longitude, language=language
                 )
                 if success:
                     # extract all fields as they will be used for the creation of the
@@ -575,7 +578,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                         found_my_duty_roster = True
                         human_readable_message = f"{message_callsign}"
                         success, response_data = get_reverse_geopy_data(
-                            latitude=latitude, longitude=longitude
+                            latitude=latitude, longitude=longitude, language=language
                         )
                         if success:
                             # extract all fields as they will be used for the creation of the
@@ -1366,7 +1369,9 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
         # Everything seems to be ok. Try to retrieve
         # lat/lon for the given data
         if not kw_err:
-            success, latitude, longitude = get_geocode_geopy_data(geopy_query)
+            success, latitude, longitude = get_geocode_geopy_data(
+                query_data=geopy_query, language=language
+            )
             if success:
                 what = "wx"  # We know now that we want a wx report
                 human_readable_message = city
@@ -1452,7 +1457,9 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
                 what = None
             else:
                 # Perform a reverse lookup. Query string was already pre-prepared.
-                success, latitude, longitude = get_geocode_geopy_data(geopy_query)
+                success, latitude, longitude = get_geocode_geopy_data(
+                    query_data=geopy_query, language=language
+                )
                 if success:
                     # We only need latitude/longitude in order to get the wx report
                     # Therefore, we can already set the 'what' command keyword'
@@ -1461,7 +1468,7 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
                     human_readable_message = f"Zip {zipcode};{country}"
                     # but try to get a real city name
                     success, response_data = get_reverse_geopy_data(
-                        latitude=latitude, longitude=longitude
+                        latitude=latitude, longitude=longitude, language=language
                     )
                     if success:
                         # extract all fields as they will be used for the creation of the
@@ -1500,7 +1507,8 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
             what = "wx"
             human_readable_message = f"Zip {zipcode};{country}"
             success, latitude, longitude = get_geocode_geopy_data(
-                {"postalcode": zipcode, "country": country}
+                query_data={"postalcode": zipcode, "country": country},
+                language=language,
             )
             if not success:
                 kw_err = True
@@ -1508,7 +1516,7 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
             else:
                 # Finally, try to get a real city name
                 success, response_data = get_reverse_geopy_data(
-                    latitude=latitude, longitude=longitude
+                    latitude=latitude, longitude=longitude, language=language
                 )
                 if success:
                     # extract all fields as they will be used for the creation of the
@@ -1660,7 +1668,7 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
                 what = "wx"
                 # now try to build a human readable message
                 success, response_data = get_reverse_geopy_data(
-                    latitude=latitude, longitude=longitude
+                    latitude=latitude, longitude=longitude, language=language
                 )
                 if success:
                     # extract all fields as they will be used for the creation of the
@@ -1992,7 +2000,7 @@ def parse_what_keyword_cwop_id(aprs_message: str, users_callsign: str):
 
 
 def parse_what_keyword_callsign_multi(
-    aprs_message: str, users_callsign: str, aprsdotfi_api_key: str
+    aprs_message: str, users_callsign: str, aprsdotfi_api_key: str, language: str = "en"
 ):
     """
     Multi-keyword parser in reference to a call sign
@@ -2015,6 +2023,8 @@ def parse_what_keyword_callsign_multi(
         Call sign of the user that has sent us the message
     aprsdotfi_api_key : 'str'
         aprs.fi access key
+    language : 'str'
+        ISO639-a2 language
 
     Returns
     =======
@@ -2113,7 +2123,7 @@ def parse_what_keyword_callsign_multi(
                 # Try to get the msg call sign's human readable address based on lat/lon
                 # we ignore any errors as all output fields will be properly initialized with default values
                 success, response_data = get_reverse_geopy_data(
-                    latitude=latitude, longitude=longitude
+                    latitude=latitude, longitude=longitude, language=language
                 )
                 # extract all fields as they will be used for the creation of the
                 # outgoing data dictionary
@@ -2195,7 +2205,7 @@ def parse_what_keyword_callsign_multi(
 
 
 def parse_what_keyword_whereami(
-    aprs_message: str, users_callsign: str, aprsdotfi_api_key: str
+    aprs_message: str, users_callsign: str, aprsdotfi_api_key: str, language: str = "en"
 ):
     """
 
@@ -2209,6 +2219,8 @@ def parse_what_keyword_whereami(
         Call sign of the user that has sent us the message
     aprsdotfi_api_key : 'str'
         aprs.fi access key
+    language: 'str'
+        ISO639-a2 language code
 
     Returns
     =======
@@ -2261,7 +2273,7 @@ def parse_what_keyword_whereami(
             # Finally, try to get the user's human readable address
             # we ignore any errors as all output fields will be properly initialized with default values
             success, response_data = get_reverse_geopy_data(
-                latitude=latitude, longitude=longitude
+                latitude=latitude, longitude=longitude, language=language
             )
             # extract response fields; one/all can be 'None'
             city = response_data["city"]
@@ -2569,7 +2581,7 @@ def parse_what_keyword_fortuneteller(aprs_message: str):
 
 
 def parse_what_keyword_email_position_report(
-    aprs_message: str, users_callsign: str, aprsdotfi_api_key: str
+    aprs_message: str, users_callsign: str, aprsdotfi_api_key: str, language: str = "en"
 ):
     """
     Keyword parser email position report
@@ -2586,6 +2598,8 @@ def parse_what_keyword_email_position_report(
         Call sign of the user that has sent us the message
     aprsdotfi_api_key : 'str'
         aprs.fi access key
+    language: 'str'
+        ISO639-a2 language code
 
     Returns
     =======
@@ -2640,7 +2654,7 @@ def parse_what_keyword_email_position_report(
             # Finally, try to get the user's human readable address
             # we ignore any errors as all output fields will be properly initialized with default values
             success, response_data = get_reverse_geopy_data(
-                latitude=latitude, longitude=longitude
+                latitude=latitude, longitude=longitude, language=language
             )
             # extract response fields; one/all can be 'None'
             city = response_data["city"]
