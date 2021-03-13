@@ -2621,10 +2621,10 @@ def parse_what_keyword_email_position_report(
     zipcode = country = street = street_number = None
 
     # check for a keyword - email pattern
-    regex_string = r"\bposmsg\s*([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)\b"
+    regex_string = r"\b(posmsg|posrpt)\s*([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)\b"
     matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
-        mail_recipient = matches[1].strip()
+        mail_recipient = matches[2].strip()
         aprs_message = re.sub(
             pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
         ).strip()
@@ -2707,9 +2707,11 @@ if __name__ == "__main__":
         aprsis_passcode,
         dapnet_callsign,
         dapnet_passcode,
+        smtp_email_address,
+        smtp_email_password
     ) = read_program_config()
     logger.info(
         pformat(
-            parse_input_message("posmsg blah@blub.de", "df1jsl-1", aprsdotfi_api_key)
+            parse_input_message("posrpt blah@blub.de", "df1jsl-1", aprsdotfi_api_key)
         )
     )
