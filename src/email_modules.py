@@ -72,7 +72,7 @@ html_template = """\
 <h2>Automated email - please do not respond</h2>
 <p>Position data for REPLACE_MESSAGECALLSIGN on the Internet:</p>
 <ul>
-<li>aprs.fi<a href="REPLACE_APRSDOTFI" target="_blank" rel="noopener">REPLACE_APRSDOTFI</a></li>
+<li>aprs.fi: <a href="REPLACE_APRSDOTFI" target="_blank" rel="noopener">REPLACE_APRSDOTFI</a></li>
 <li>Google Maps: <a href="REPLACE_GOOGLEMAPS" target="_blank" rel="noopener">REPLACE_GOOGLEMAPS</a>&nbsp;</li>
 </ul>
 <table border="1">
