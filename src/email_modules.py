@@ -84,48 +84,48 @@ html_template = """\
 </thead>
 <tbody>
 <tr>
-<td><strong>Maidenhead</strong> Grid Locator</td>
-<td>REPLACE_MAIDENHEAD</td>
+<td><strong>&nbsp;Maidenhead</strong> Grid Locator</td>
+<td>&nbsp;REPLACE_MAIDENHEAD</td>
 </tr>
 <tr>
-<td><strong>DMS</strong> Degrees and Decimal Minutes&nbsp;</td>
-<td>REPLACE_DMS</td>
+<td><strong>&nbsp;DMS</strong> Degrees and Decimal Minutes&nbsp;</td>
+<td>&nbsp;REPLACE_DMS</td>
 </tr>
 <tr>
-<td><strong>UTM</strong> Universal Transverse Mercator</td>
-<td>REPLACE_UTM</td>
+<td><strong>&nbsp;UTM</strong> Universal Transverse Mercator</td>
+<td>&nbsp;REPLACE_UTM</td>
 </tr>
 <tr>
 <td>
-<p><strong>MGRS</strong> Military Grid Reference System</p>
-<p><strong>USNG</strong> United States National Grid</p>
+<p><strong>&nbsp;MGRS</strong> Military Grid Reference System</p>
+<p><strong>&nbsp;USNG</strong> United States National Grid</p>
 </td>
-<td>REPLACE_MGRS</td>
+<td>&nbsp;REPLACE_MGRS</td>
 </tr>
 <tr>
 <td>
-<p><strong>Latitude and Longitude</strong></p>
+<p><strong>&nbsp;Latitude and Longitude</strong></p>
 </td>
-<td>REPLACE_LATLON</td>
+<td>&nbsp;REPLACE_LATLON</td>
 </tr>
 <tr>
 <td>
-<p><strong>Altitude</strong></p>
+<p><strong>&nbsp;Altitude</strong></p>
 </td>
-<td>REPLACE_ALTITUDE</td>
+<td>&nbsp;REPLACE_ALTITUDE</td>
 </tr>
 <tr>
 <td>
-<p><strong>Last heard on APRS-IS</strong></p>
+<p><strong>&nbsp;Last heard on APRS-IS</strong></p>
 </td>
-<td>REPLACE_LASTHEARD</td>
+<td>&nbsp;REPLACE_LASTHEARD</td>
 </tr>
 <tr>
 <td>
-<p><strong>Address data</strong></p>
+<p><strong>&nbsp;Address data</strong></p>
 </td>
 <td>
-<p>REPLACE_ADDRESS_DATA</p>
+<p>&nbsp;REPLACE_ADDRESS_DATA</p>
 </td>
 </tr>
 </tbody>
