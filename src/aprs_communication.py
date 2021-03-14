@@ -246,6 +246,9 @@ def extract_msgno_from_defective_message(message_text: str):
     contains a message no which does not follow the APRS
     standard (see aprs101.pdf chapter 14)
 
+    http://www.aprs.org/aprs11/replyacks.txt
+
+
     Explanation:
 
     Per specification, any APRS message that HAS a message ID
