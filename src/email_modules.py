@@ -49,6 +49,7 @@ AUTOMATED EMAIL - PLEASE DO NOT RESPOND
 APRS position data for REPLACE_MESSAGECALLSIGN on the Internet:
 
 aprs.fi:                                        REPLACE_APRSDOTFI
+FindU.com                                       REPLACE_FINDUDOTCOM
 Google Maps:                                    REPLACE_GOOGLEMAPS
 
 Position details:
@@ -73,6 +74,7 @@ html_template = """\
 <p>APRS position data for <strong>REPLACE_MESSAGECALLSIGN</strong> on the Internet:</p>
 <ul>
 <li><a href="REPLACE_APRSDOTFI" target="_blank" rel="noopener">aprs.fi</a></li>
+<li><a href="REPLACE_FINDUDOTCOM" target="_blank" rel="noopener">FindU.com</a></li>
 <li><a href="REPLACE_GOOGLEMAPS" target="_blank" rel="noopener">Google Maps</a>&nbsp;</li>
 </ul>
 <table border="1">
@@ -299,6 +301,12 @@ def send_email_position_report(response_parameters: dict):
         plaintext_message = plaintext_message.replace("REPLACE_GOOGLEMAPS", msg_string)
         html_message = html_message.replace("REPLACE_GOOGLEMAPS", msg_string)
 
+        # Add the FindU.com link
+        msg_string = f"http://www.findu.com/cgi-bin//find.cgi?call={message_callsign}"
+        plaintext_message = plaintext_message.replace("REPLACE_FINDUDOTCOM", msg_string)
+        html_message = html_message.replace("REPLACE_FINDUDOTCOM", msg_string)
+
+        # add the Time Created information
         utc_create_time = datetime.datetime.utcnow()
         msg_string = f"{utc_create_time.strftime('%d-%b-%Y %H:%M:%S')} UTC"
         plaintext_message = plaintext_message.replace(
