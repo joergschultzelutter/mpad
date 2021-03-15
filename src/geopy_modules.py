@@ -115,7 +115,7 @@ def get_reverse_geopy_data(
             addressdetails=True,
             exactly_one=True,
         )
-    except TypeError:
+    except:
         location = None
     if location:
         address = location.address
