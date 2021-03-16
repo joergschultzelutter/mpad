@@ -236,12 +236,13 @@ def read_program_config(config_file_name: str = "mpad_api_access_keys.cfg"):
         Call sign for DAPNET login
     dapnet_login_passcode: 'str'
         Passcode for DAPNET login
-    gmail_email_address: 'str'
+    smtpimap_email_address: 'str'
         The email address that MPAD is going to use for sending
         e.g. position reports to a mail address
-    gmail_email_application_password: 'str'
-        associated password. Note that this is an app-specific
-        password, see https://myaccount.google.com/apppasswords
+    smtpimap_email_application_password: 'str'
+        associated account password.
+        If you use GMail, use an app-specific password;
+        see https://myaccount.google.com/apppasswords
     """
 
     config = configparser.ConfigParser()
@@ -249,7 +250,7 @@ def read_program_config(config_file_name: str = "mpad_api_access_keys.cfg"):
     aprsdotfi_cfg_key = openweathermapdotorg_api_key = None
     aprsis_login_callsign = aprsis_login_passcode = None
     dapnet_login_callsign = dapnet_login_passcode = None
-    smtp_email_address = smtp_email_password = None
+    smtpimap_email_address = smtpimap_email_password = None
     if check_if_file_exists(config_file_name):
         try:
             config.read(config_file_name)
@@ -261,8 +262,10 @@ def read_program_config(config_file_name: str = "mpad_api_access_keys.cfg"):
             aprsis_login_passcode = config.get("mpad_config", "aprsis_login_passcode")
             dapnet_login_callsign = config.get("mpad_config", "dapnet_login_callsign")
             dapnet_login_passcode = config.get("mpad_config", "dapnet_login_passcode")
-            smtp_email_address = config.get("mpad_config", "smtp_email_address")
-            smtp_email_password = config.get("mpad_config", "smtp_email_password")
+            smtpimap_email_address = config.get("mpad_config", "smtpimap_email_address")
+            smtpimap_email_password = config.get(
+                "mpad_config", "smtpimap_email_password"
+            )
             success = True
         except:
             success = False
@@ -274,8 +277,8 @@ def read_program_config(config_file_name: str = "mpad_api_access_keys.cfg"):
         aprsis_login_passcode,
         dapnet_login_callsign,
         dapnet_login_passcode,
-        smtp_email_address,
-        smtp_email_password,
+        smtpimap_email_address,
+        smtpimap_email_password,
     )
 
 

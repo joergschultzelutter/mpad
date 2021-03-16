@@ -22,8 +22,8 @@ def testcall(message_text: str, from_callsign: str):
         aprsis_passcode,
         dapnet_login_callsign,
         dapnet_login_passcode,
-        smtp_email_address,
-        smtp_email_password,
+        smtpimap_email_address,
+        smtpimap_email_password,
     ) = read_program_config()
     assert success
 
@@ -44,8 +44,8 @@ def testcall(message_text: str, from_callsign: str):
                 "openweathermapdotorg_api_key": openweathermapdotorg_api_key,
                 "dapnet_login_callsign": dapnet_login_callsign,
                 "dapnet_login_passcode": dapnet_login_passcode,
-                "smtp_email_address": smtp_email_address,
-                "smtp_email_password": smtp_email_password,
+                "smtpimap_email_address": smtpimap_email_address,
+                "smtpimap_email_password": smtpimap_email_password,
             }
         )
         logger.info("Response:")

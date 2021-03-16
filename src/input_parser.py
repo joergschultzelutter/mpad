@@ -2779,8 +2779,8 @@ if __name__ == "__main__":
         aprsis_passcode,
         dapnet_callsign,
         dapnet_passcode,
-        smtp_email_address,
-        smtp_email_password,
+        smtpimap_email_address,
+        smtpimap_email_password,
     ) = read_program_config()
     logger.info(
         pformat(

@@ -32,6 +32,7 @@ from geo_conversion_modules import (
     convert_latlon_to_utm,
     convert_latlon_to_mgrs,
 )
+from utility_modules import read_program_config
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -159,197 +160,171 @@ def send_email_position_report(response_parameters: dict):
         back to the APRS user (does not contain any email content)
     """
 
-    smtp_email_address = response_parameters["smtp_email_address"]
-    smtp_email_password = response_parameters["smtp_email_password"]
+    smtpimap_email_address = response_parameters["smtpimap_email_address"]
+    smtpimap_email_password = response_parameters["smtpimap_email_password"]
 
-    # Check if the email address has been configured. By default, this value
-    # is set to NOT_CONFIGURED in the program's template on github
-    # if the mail address looks ok, then we assume that the user has
-    # done his homework and had completed his local setup
-    regex_string = r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
-    matches = re.search(
-        pattern=regex_string, string=smtp_email_address, flags=re.IGNORECASE
+    # copy the templates
+    plaintext_message = plaintext_template
+    html_message = html_template
+    subject_message = mail_subject_template
+
+    latitude = response_parameters["latitude"]
+    longitude = response_parameters["longitude"]
+    altitude = response_parameters["altitude"]
+    units = response_parameters["units"]
+    message_callsign = response_parameters["message_callsign"]
+    users_callsign = response_parameters["users_callsign"]
+    mail_recipient = response_parameters["mail_recipient"]
+
+    lasttime = response_parameters["lasttime"]
+    if not isinstance(lasttime, datetime.datetime):
+        lasttime = datetime.datetime.min
+
+    # Get the reverse-lookup'ed address from OpenStreetMap
+    # Note: field can be of type None
+    address = response_parameters["address"]
+
+    # Replace data on whose position is this for
+    plaintext_message = plaintext_message.replace(
+        "REPLACE_MESSAGECALLSIGN", message_callsign
     )
-    if (
-        matches
-        and mpad_config.mpad_smtp_server_port != 0
-        and mpad_config.mpad_smtp_server_address
-    ):
-        # copy the templates
-        plaintext_message = plaintext_template
-        html_message = html_template
-        subject_message = mail_subject_template
+    html_message = html_message.replace("REPLACE_MESSAGECALLSIGN", message_callsign)
+    subject_message = subject_message.replace(
+        "REPLACE_MESSAGECALLSIGN", message_callsign
+    )
 
-        latitude = response_parameters["latitude"]
-        longitude = response_parameters["longitude"]
-        altitude = response_parameters["altitude"]
-        units = response_parameters["units"]
-        message_callsign = response_parameters["message_callsign"]
-        users_callsign = response_parameters["users_callsign"]
-        mail_recipient = response_parameters["mail_recipient"]
+    # Replace data on who requested this report
+    plaintext_message = plaintext_message.replace(
+        "REPLACE_USERSCALLSIGN", users_callsign
+    )
+    html_message = html_message.replace("REPLACE_USERSCALLSIGN", users_callsign)
 
-        lasttime = response_parameters["lasttime"]
-        if not isinstance(lasttime, datetime.datetime):
-            lasttime = datetime.datetime.min
+    # calculate maidenhead coordinates and remove the placeholders in the template
+    maidenhead_grid = convert_latlon_to_maidenhead(
+        latitude=latitude, longitude=longitude
+    )
+    plaintext_message = plaintext_message.replace("REPLACE_MAIDENHEAD", maidenhead_grid)
+    html_message = html_message.replace("REPLACE_MAIDENHEAD", maidenhead_grid)
 
-        # Get the reverse-lookup'ed address from OpenStreetMap
-        # Note: field can be of type None
-        address = response_parameters["address"]
+    # Calculate DMS coordinates and remove the placeholders in the template
+    (
+        lat_deg,
+        lat_min,
+        lat_sec,
+        lat_hdg,
+        lon_deg,
+        lon_min,
+        lon_sec,
+        lon_hdg,
+    ) = convert_latlon_to_dms(latitude=latitude, longitude=longitude)
+    msg_string = f"{lat_deg:02d}° {lat_min:02d}'{round(lat_sec, 1):02.1f}\" {lat_hdg}, "
+    msg_string += f"{lon_deg:02d}° {lon_min:02d}'{round(lon_sec, 1):02.1f}\" {lon_hdg}"
+    plaintext_message = plaintext_message.replace("REPLACE_DMS", msg_string)
+    html_message = html_message.replace("REPLACE_DMS", msg_string)
 
-        # Replace data on whose position is this for
-        plaintext_message = plaintext_message.replace(
-            "REPLACE_MESSAGECALLSIGN", message_callsign
-        )
-        html_message = html_message.replace("REPLACE_MESSAGECALLSIGN", message_callsign)
-        subject_message = subject_message.replace(
-            "REPLACE_MESSAGECALLSIGN", message_callsign
-        )
+    # Get latitude/longitude and remove the placeholders in the template
+    msg_string = f"{latitude}, {longitude}"
+    plaintext_message = plaintext_message.replace("REPLACE_LATLON", msg_string)
+    html_message = html_message.replace("REPLACE_LATLON", msg_string)
 
-        # Replace data on who requested this report
-        plaintext_message = plaintext_message.replace(
-            "REPLACE_USERSCALLSIGN", users_callsign
-        )
-        html_message = html_message.replace("REPLACE_USERSCALLSIGN", users_callsign)
+    # If altitude is available, calculate value and remove the placeholders in the template
+    if altitude:
+        altitude_uom = "m"
+        altitude_value = round(altitude)
 
-        # calculate maidenhead coordinates and remove the placeholders in the template
-        maidenhead_grid = convert_latlon_to_maidenhead(
-            latitude=latitude, longitude=longitude
-        )
-        plaintext_message = plaintext_message.replace(
-            "REPLACE_MAIDENHEAD", maidenhead_grid
-        )
-        html_message = html_message.replace("REPLACE_MAIDENHEAD", maidenhead_grid)
+        if units == "imperial":
+            altitude_uom = "ft"
+            altitude_value = round(altitude * 3.28084)  # convert m to feet
 
-        # Calculate DMS coordinates and remove the placeholders in the template
-        (
-            lat_deg,
-            lat_min,
-            lat_sec,
-            lat_hdg,
-            lon_deg,
-            lon_min,
-            lon_sec,
-            lon_hdg,
-        ) = convert_latlon_to_dms(latitude=latitude, longitude=longitude)
-        msg_string = (
-            f"{lat_deg:02d}° {lat_min:02d}'{round(lat_sec, 1):02.1f}\" {lat_hdg}, "
-        )
-        msg_string += (
-            f"{lon_deg:02d}° {lon_min:02d}'{round(lon_sec, 1):02.1f}\" {lon_hdg}"
-        )
-        plaintext_message = plaintext_message.replace("REPLACE_DMS", msg_string)
-        html_message = html_message.replace("REPLACE_DMS", msg_string)
-
-        # Get latitude/longitude and remove the placeholders in the template
-        msg_string = f"{latitude}, {longitude}"
-        plaintext_message = plaintext_message.replace("REPLACE_LATLON", msg_string)
-        html_message = html_message.replace("REPLACE_LATLON", msg_string)
-
-        # If altitude is available, calculate value and remove the placeholders in the template
-        if altitude:
-            altitude_uom = "m"
-            altitude_value = round(altitude)
-
-            if units == "imperial":
-                altitude_uom = "ft"
-                altitude_value = round(altitude * 3.28084)  # convert m to feet
-
-            msg_string = f"{altitude_value}{altitude_uom}"
-        else:
-            msg_string = "not available"
-        plaintext_message = plaintext_message.replace("REPLACE_ALTITUDE", msg_string)
-        html_message = html_message.replace("REPLACE_ALTITUDE", msg_string)
-
-        # Calculate UTM coordinates and remove the placeholders in the template
-        zone_number, zone_letter, easting, northing = convert_latlon_to_utm(
-            latitude=latitude, longitude=longitude
-        )
-        msg_string = f"Zone {zone_number}{zone_letter} E:{easting} N:{northing}"
-        plaintext_message = plaintext_message.replace("REPLACE_UTM", msg_string)
-        html_message = html_message.replace("REPLACE_UTM", msg_string)
-
-        # Calculate MGRS coordinates and remove the placeholders in the template
-        msg_string = convert_latlon_to_mgrs(latitude=latitude, longitude=longitude)
-        plaintext_message = plaintext_message.replace("REPLACE_MGRS", msg_string)
-        html_message = html_message.replace("REPLACE_MGRS", msg_string)
-
-        # Determine the human readable address line 1 if available
-        if address:
-            msg_string = address
-        else:
-            msg_string = "not available"
-        plaintext_message = plaintext_message.replace(
-            "REPLACE_ADDRESS_DATA", msg_string
-        )
-        html_message = html_message.replace("REPLACE_ADDRESS_DATA", msg_string)
-
-        # Check if a "last time heard on aprs.fi" timestamp is available and add it if present
-        if lasttime is not datetime.datetime.min:
-            msg_string = f"{lasttime.strftime('%d-%b-%Y %H:%M:%S')} UTC"
-        else:
-            msg_string = "not available"
-        plaintext_message = plaintext_message.replace("REPLACE_LASTHEARD", msg_string)
-        html_message = html_message.replace("REPLACE_LASTHEARD", msg_string)
-
-        # Add the aprs.fi call sign link
-        msg_string = f"https://aprs.fi/#!call=a%2F{message_callsign}"
-        plaintext_message = plaintext_message.replace("REPLACE_APRSDOTFI", msg_string)
-        html_message = html_message.replace("REPLACE_APRSDOTFI", msg_string)
-
-        # Add the Google Maps call sign link
-        msg_string = f"https://maps.google.com/?q={latitude},{longitude}"
-        plaintext_message = plaintext_message.replace("REPLACE_GOOGLEMAPS", msg_string)
-        html_message = html_message.replace("REPLACE_GOOGLEMAPS", msg_string)
-
-        # Add the FindU.com link
-        msg_string = f"http://www.findu.com/cgi-bin//find.cgi?call={message_callsign}"
-        plaintext_message = plaintext_message.replace("REPLACE_FINDUDOTCOM", msg_string)
-        html_message = html_message.replace("REPLACE_FINDUDOTCOM", msg_string)
-
-        # add the Time Created information
-        utc_create_time = datetime.datetime.utcnow()
-        msg_string = f"{utc_create_time.strftime('%d-%b-%Y %H:%M:%S')} UTC"
-        plaintext_message = plaintext_message.replace(
-            "REPLACE_DATETIME_CREATED", msg_string
-        )
-        html_message = html_message.replace("REPLACE_DATETIME_CREATED", msg_string)
-
-        # Finally, generate the message
-        msg = EmailMessage()
-        msg["Subject"] = subject_message
-        msg["From"] = f"MPAD Multi-Purpose APRS Daemon <{smtp_email_address}>"
-        msg["To"] = mail_recipient
-        msg.set_content(plaintext_message)
-        msg.add_alternative(html_message, subtype="html")
-
-        output_message = "The requested position report was emailed to its recipient"
-
-        try:
-            with smtplib.SMTP_SSL(
-                host=mpad_config.mpad_smtp_server_address,
-                port=mpad_config.mpad_smtp_server_port,
-            ) as smtp:
-                smtp.login(user=smtp_email_address, password=smtp_email_password)
-                smtp.send_message(msg=msg)
-                smtp.quit()
-        except smtplib.SMTPAuthenticationError:
-            output_message = (
-                "MPAD instance has invalid SMTP access credentials; cannot send mail"
-            )
-            logger.info(output_message)
-        except:
-            output_message = "Cannot connect to server / other issue; cannot send mail"
-            logger.info(output_message)
+        msg_string = f"{altitude_value}{altitude_uom}"
     else:
-        output_message = (
-            "This MPAD instance is not configured for email position messages"
-        )
+        msg_string = "not available"
+    plaintext_message = plaintext_message.replace("REPLACE_ALTITUDE", msg_string)
+    html_message = html_message.replace("REPLACE_ALTITUDE", msg_string)
 
+    # Calculate UTM coordinates and remove the placeholders in the template
+    zone_number, zone_letter, easting, northing = convert_latlon_to_utm(
+        latitude=latitude, longitude=longitude
+    )
+    msg_string = f"Zone {zone_number}{zone_letter} E:{easting} N:{northing}"
+    plaintext_message = plaintext_message.replace("REPLACE_UTM", msg_string)
+    html_message = html_message.replace("REPLACE_UTM", msg_string)
+
+    # Calculate MGRS coordinates and remove the placeholders in the template
+    msg_string = convert_latlon_to_mgrs(latitude=latitude, longitude=longitude)
+    plaintext_message = plaintext_message.replace("REPLACE_MGRS", msg_string)
+    html_message = html_message.replace("REPLACE_MGRS", msg_string)
+
+    # Determine the human readable address line 1 if available
+    if address:
+        msg_string = address
+    else:
+        msg_string = "not available"
+    plaintext_message = plaintext_message.replace("REPLACE_ADDRESS_DATA", msg_string)
+    html_message = html_message.replace("REPLACE_ADDRESS_DATA", msg_string)
+
+    # Check if a "last time heard on aprs.fi" timestamp is available and add it if present
+    if lasttime is not datetime.datetime.min:
+        msg_string = f"{lasttime.strftime('%d-%b-%Y %H:%M:%S')} UTC"
+    else:
+        msg_string = "not available"
+    plaintext_message = plaintext_message.replace("REPLACE_LASTHEARD", msg_string)
+    html_message = html_message.replace("REPLACE_LASTHEARD", msg_string)
+
+    # Add the aprs.fi call sign link
+    msg_string = f"https://aprs.fi/#!call=a%2F{message_callsign}"
+    plaintext_message = plaintext_message.replace("REPLACE_APRSDOTFI", msg_string)
+    html_message = html_message.replace("REPLACE_APRSDOTFI", msg_string)
+
+    # Add the Google Maps call sign link
+    msg_string = f"https://maps.google.com/?q={latitude},{longitude}"
+    plaintext_message = plaintext_message.replace("REPLACE_GOOGLEMAPS", msg_string)
+    html_message = html_message.replace("REPLACE_GOOGLEMAPS", msg_string)
+
+    # Add the FindU.com link
+    msg_string = f"http://www.findu.com/cgi-bin//find.cgi?call={message_callsign}"
+    plaintext_message = plaintext_message.replace("REPLACE_FINDUDOTCOM", msg_string)
+    html_message = html_message.replace("REPLACE_FINDUDOTCOM", msg_string)
+
+    # add the Time Created information
+    utc_create_time = datetime.datetime.utcnow()
+    msg_string = f"{utc_create_time.strftime('%d-%b-%Y %H:%M:%S')} UTC"
+    plaintext_message = plaintext_message.replace(
+        "REPLACE_DATETIME_CREATED", msg_string
+    )
+    html_message = html_message.replace("REPLACE_DATETIME_CREATED", msg_string)
+
+    # Finally, generate the message
+    msg = EmailMessage()
+    msg["Subject"] = subject_message
+    msg["From"] = f"MPAD Multi-Purpose APRS Daemon <{smtpimap_email_address}>"
+    msg["To"] = mail_recipient
+    msg.set_content(plaintext_message)
+    msg.add_alternative(html_message, subtype="html")
+
+    success, output_message = send_message_via_snmp(
+        smtpimap_email_address=smtpimap_email_address,
+        smtpimap_email_password=smtpimap_email_password,
+        message_to_send=msg,
+    )
     output_list = [output_message]
     return output_list
 
 
-def imap_garbage_collector(smtp_email_address: str, smtp_email_password: str):
+def imap_garbage_collector(smtpimap_email_address: str, smtpimap_email_password: str):
+    """
+    Delete all messages in the MPAD user's iMAP account that are older than x days
+
+    Parameters
+    ==========
+    smtpimap_email_address : 'str'
+        email address for login
+    smtpimap_email_password: 'str'
+        password for login
+
+    Returns
+    =======
+    """
 
     # Check if the garbage collector has been disabled and
     # abort the process if necessary
@@ -358,7 +333,7 @@ def imap_garbage_collector(smtp_email_address: str, smtp_email_password: str):
 
     regex_string = r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
     matches = re.search(
-        pattern=regex_string, string=smtp_email_address, flags=re.IGNORECASE
+        pattern=regex_string, string=smtpimap_email_address, flags=re.IGNORECASE
     )
     if (
         matches
@@ -374,18 +349,121 @@ def imap_garbage_collector(smtp_email_address: str, smtp_email_password: str):
             host=mpad_config.mpad_imap_server_address,
             port=mpad_config.mpad_imap_server_port,
         ) as imap:
-            imap.login(user=smtp_email_address, password=smtp_email_password)
-            imap.select(mailbox=mpad_config.mpad_imap_mailbox_name)
+            logger.info("Starting IMAP garbage collector process")
+            typ, dat = imap.login(
+                user=smtpimap_email_address, password=smtpimap_email_password
+            )
+            if typ == "OK":
+                logger.debug("IMAP login successful")
+                # typ, dat = imap.list()     # get list of mailboxes
+                typ, dat = imap.select(mailbox=mpad_config.mpad_imap_mailbox_name)
+                if typ == "OK":
+                    logger.debug("IPAP folder SELECT successful")
+                    typ, msgnums = imap.search(None, "ALL", query_parms)
+                    if typ == "OK":
+                        for num in msgnums[0].split():
+                            imap.store(num, "+FLAGS", "\\Deleted")
+                        imap.expunge()
+                        logger.info(
+                            f"Have executed IMAP cleanup with params '{query_parms}'"
+                        )
+                    imap.close()
+                else:
+                    logger.info(
+                        f"IMAP mailbox {mpad_config.mpad_imap_mailbox_name} does not exist"
+                    )
+                imap.logout()
+            else:
+                logger.info(
+                    f"Cannot perform IMAP login; user={smtpimap_email_address}, server={mpad_config.mpad_imap_server_address}, port={mpad_config.mpad_imap_server_port}"
+                )
 
-            typ, msgnums = imap.search(None, "ALL", query_parms)
-            for num in msgnums[0].split():
-                imap.store(num, "+FLAGS", "\\Deleted")
 
-            imap.expunge()
+def send_message_via_snmp(
+    smtpimap_email_address: str,
+    smtpimap_email_password: str,
+    message_to_send: EmailMessage,
+):
+    """
+    Send an email via SMTP
 
-            imap.close()
-            imap.logout()
+    Parameters
+    ==========
+    smtpimap_email_address : 'str'
+        email address for login
+    smtpimap_email_password: 'str'
+        password for login
+    message_to_send: 'str'
+        The message that has already been prepared for
+        the end user
+
+    Returns
+    =======
+    success: 'bool'
+        True if successful
+    output_messagee: 'str'
+        status that corresponds to the SMTP delivery process
+    """
+
+    success = False
+    output_message = ""
+    # Check if the email address has been configured. By default, this value
+    # is set to NOT_CONFIGURED in the program's template on github
+    # if the mail address looks ok, then we assume that the user has
+    # done his homework and had completed his local setup
+    regex_string = r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
+    matches = re.search(
+        pattern=regex_string, string=smtpimap_email_address, flags=re.IGNORECASE
+    )
+    if (
+        matches
+        and mpad_config.mpad_smtp_server_port != 0
+        and mpad_config.mpad_smtp_server_address
+    ):
+        with smtplib.SMTP_SSL(
+            host=mpad_config.mpad_smtp_server_address,
+            port=mpad_config.mpad_smtp_server_port,
+        ) as smtp:
+            try:
+                code, resp = smtp.login(
+                    user=smtpimap_email_address, password=smtpimap_email_password
+                )
+            except (smtplib.SMTPException, smtplib.SMTPAuthenticationError) as e:
+                output_message = (
+                    "Cannot connect to SMTP server or other issue; cannot send mail"
+                )
+                logger.info(output_message)
+                return False, output_message
+            if code in [235, 503]:
+                try:
+                    smtp.send_message(msg=message_to_send)
+                except:
+                    output_message = "Connected to SMTP but Cannot send email"
+                    logger.info(output_message)
+                    return False, output_message
+
+            success = True
+            output_message = (
+                "The requested position report was emailed to its recipient"
+            )
+            smtp.quit()
+    else:
+        output_message = (
+            "This MPAD instance is not configured for email position messages"
+        )
+    return success, output_message
 
 
 if __name__ == "__main__":
-    pass
+    (
+        success,
+        aprsdotfi_api_key,
+        openweathermap_api_key,
+        aprsis_callsign,
+        aprsis_passcode,
+        dapnet_callsign,
+        dapnet_passcode,
+        smtpimap_email_address,
+        smtpimap_email_password,
+    ) = read_program_config()
+    imap_garbage_collector(smtpimap_email_address, smtpimap_email_password)

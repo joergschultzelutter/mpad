@@ -255,4 +255,4 @@ mpad_smtp_server_port = 465
 mpad_imap_server_address = "imap.gmail.com"
 mpad_imap_server_port = 993
 mpad_imap_mail_retention_max_days = 1   # Delete mails after x days (0 = disable)
-mpad_imap_mailbox_name = "Sent"
+mpad_imap_mailbox_name = "\"[Gmail]/Sent Mail\""

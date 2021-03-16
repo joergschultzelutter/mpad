@@ -41,6 +41,7 @@ from aprs_communication import (
     extract_msgno_from_defective_message,
     send_aprs_message_list,
 )
+from email_modules import imap_garbage_collector
 import apscheduler.schedulers.base
 import sys
 import logging
@@ -206,8 +207,8 @@ def mycallback(raw_aprs_packet):
                                 "openweathermapdotorg_api_key": openweathermapdotorg_api_key,
                                 "dapnet_login_callsign": dapnet_login_callsign,
                                 "dapnet_login_passcode": dapnet_login_passcode,
-                                "smtp_email_address": smtp_email_address,
-                                "smtp_email_password": smtp_email_password,
+                                "smtpimap_email_address": smtpimap_email_address,
+                                "smtpimap_email_password": smtpimap_email_password,
                             }
                         )
 
@@ -275,8 +276,8 @@ logger.info("Program startup ...")
     aprsis_login_passcode,
     dapnet_login_callsign,
     dapnet_login_passcode,
-    smtp_email_address,
-    smtp_email_password,
+    smtpimap_email_address,
+    smtpimap_email_password,
 ) = read_program_config()
 if not success:
     logging.error(msg="Error while reading the program config file; aborting")
@@ -350,6 +351,16 @@ caching_scheduler.add_job(
     id="tle_satellite_data",
     days=1,
     args=[],
+)
+
+# Set up task for the IMAP garbage collector - which will delete
+# all email messages sent by MPAD after >x days of life span
+caching_scheduler.add_job(
+    imap_garbage_collector(),
+    "interval",
+    id="tle_satellite_data",
+    days=mpad_config.mpad_imap_mail_retention_max_days,
+    args=[smtpimap_email_address, smtpimap_email_password],
 )
 
 # start the caching scheduler
