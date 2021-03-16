@@ -356,9 +356,9 @@ caching_scheduler.add_job(
 # Set up task for the IMAP garbage collector - which will delete
 # all email messages sent by MPAD after >x days of life span
 caching_scheduler.add_job(
-    imap_garbage_collector(),
+    imap_garbage_collector,
     "interval",
-    id="tle_satellite_data",
+    id="imap_garbage_collector",
     days=mpad_config.mpad_imap_mail_retention_max_days,
     args=[smtpimap_email_address, smtpimap_email_password],
 )
