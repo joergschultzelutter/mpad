@@ -75,7 +75,7 @@ External service dependencies:
 | | | ```LatLon 51.81667/9.56583 Merxhausen, 37627, DE Neuhaeuser Strasse```|
 | | |```Last heard 2021-01-23 17:32:42``` |
 
-## METAR data
+## METAR / TAR data
 
 External service dependencies:
 
@@ -84,7 +84,7 @@ External service dependencies:
 
 | What do we want | Command string User > MPAD | Response example MPAD > User |
 | --------------- | -------------------------- | ---------------------------- |
-| METAR data of a METAR-enabled airport, related to the user's position | ```metar``` | ```EDDF 171150Z 02008KT 340V050 5000 -SHSNRA FEW004 SCT011CB BKN019``` |
+| METAR / TAR data of a METAR-enabled airport, related to the user's position | ```metar``` | ```EDDF 171150Z 02008KT 340V050 5000 -SHSNRA FEW004 SCT011CB BKN019``` |
 | | | ```03/01 Q1023 NOSIG ### TAF EDDF 171100Z 1712/1818 02008KT 9999``` |
 | | | ```BKN030 TEMPO 1712/1716 SHRAGS BKN020TCU BECMG 1717/1720 FEW030``` |
 | | | ```BECMG 1800/1802 02002KT BECMG 1806/1809 30005KT TEMPO 1811/1818``` |
@@ -93,7 +93,9 @@ External service dependencies:
 | METAR data for ICAO code EDDF | ```icao eddf``` or ```eddf``` | similar output to 1st example |
 | METAR data for IATA code FRA | ```iata fra``` or ```fra``` | similar output to 1st example |
 
-IATA codes are taken from [https://www.aviationweather.gov/docs/metar/stations.txt](https://www.aviationweather.gov/docs/metar/stations.txt). This file does not contain several int'l IATA codes. When in doubt, use the ICAO code.
+IATA codes are taken from [https://www.aviationweather.gov/docs/metar/stations.txt](https://www.aviationweather.gov/docs/metar/stations.txt). This file does not contain several international IATA codes. If your IATA code does not work, use an ICAO code.
+
+For better legibility, METAR and TAR data are separated by a ### sequence - see example.
 
 ## CWOP data
 
@@ -102,7 +104,7 @@ External service dependencies:
 - [aprs.fi](www.aprs.fi) for APRS call sign coordinates
 - [findu.com](www.findu.com) for the CWOP data
 
-METAR reports always return the latest wx data to the user. So METAR data cannot be requested for a specific day (corresponding keywords are ignored).
+CWOP reports always return the latest wx data to the user. Any date / time specifications specified by the user will be ignored.
 
 | What do we want | Command string User > MPAD | Response example MPAD > User |
 | --------------- | -------------------------- | ---------------------------- |
@@ -143,6 +145,8 @@ External service dependencies:
 | Nearest police to my location (non-keyword search) | ```police``` | ```Polizei Stadtoldendorf Amtsstraße 4 Stadtoldendorf Dst 8 km``` |
 | | | ```Brg 29 deg NNE``` |
 
+Keyword-less variants may or may work, so ```osm supermarket``` and ```supermarket``` should return the same values. However, ambiguous (shorter) search terms might get misinterpreted as earlier parser processes might mistake them for something else. Example: ```osm pub``` will give you the direction to the nearest pub whereas ```pub``` will return METAR data for an airport location in Pueblo, CO (whose IATA code is -as you might have guessed- PUB). 
+
 ## Send message to DAPNET user
 
 External service dependencies:
@@ -167,7 +171,10 @@ External service dependencies:
 | Our fortune in English language| ```fortune``` | ```Outlook good``` |
 | Our fortune in Russian language| ```fortune lang ru``` | ```Знаки говорят — да``` |
 
-Note that outgoing UTF-8 content will be converted to plain ASCII content unless specified otherwise in the program's config file (see [installation instructions](INSTALLATION.md))
+In case you ever wonder about whether you should buy that new transceiver: the answer is always ```Without a doubt```. ALWAYS.
+
+The main purpose of this keyword is testing both UTF-8 and ```lang``` keyword tests. Apart from that, it's fun :-)
+Note that outgoing UTF-8 content will be converted to plain ASCII content unless specified otherwise in the program's config file (see [installation instructions](INSTALLATION.md)).
 
 ## Satellite data
 
@@ -213,3 +220,5 @@ Have MPAD send an email with your APRS position data to any user on the Internet
 | Send a position report to user test123@gmail.com and enforce language 'Russian' | ```posmsg test123@gmail.com lang ru``` | ```The requested position report was emailed to its recipient``` |
 
 Default language is English - you can specify a different language via ```language``` keyword. MPAD always sends this parameter to OpenStreetmap, thus allowing you to receive e.g. Russian addresses in cyrillic characters.
+
+Note that specifying your own message content (as part of the outgoing mail) is not implemented - I sacrificed this option in favor of longer email addresses.
