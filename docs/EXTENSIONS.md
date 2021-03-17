@@ -52,12 +52,12 @@ Based on keyword-specific regex commands, the existing message text will be pars
 - The regex'ed string will be removed from the originating APRS message. As we need to continue our parser process (so far, we've only figured out 'what' the user wants us to do; the 'when' question is still unresolved), keeping that data might cause some unwanted effects.
 - Finally, a general marker called ```found_my_duty_roster``` will be set. If that marker is set to ```True```, the parser knows that it has found a 'what' command that it is required to execute at a later point in time.
 
-The parser starts with a query for WX information, followed by CWOP/Position/Celestial keywords. The first successful regex 'wins', meaning that if you e.g. create a message where you query for wx data and celestial data, the wx data keyword wins as this is one of the first regex keyword queries in the program.
+The parser starts with a query for multiple keywords such as ```whereis```, followed by CWOP/Position/Celestial keywords. The first successful regex 'wins', meaning that if you e.g. create a message where you query for METAR data and satellite data, the METAR data keyword wins as this is one of the first regex keyword queries in the program.
 
 At the end of the parsing process where we have taken a look at the complete message, the following things happen: 
 
 - The remaining APRS message text will be split up (separator = blank). For each of these string words, another parser round will be issued. This is also the time where the ```when``` and ```when_daytime``` values are determined. If no 'real' ```when``` keyword has been found, the program will try to provide you a wx report for the current user's position. This is the prgram's default fallback
-- All internal values will be added to that output ```dictionary```. It will then be the output generator's responsibility to turn these requests into something useful.
+- All internal values will be added to that output dictionary ```response_parameters```. It will then be the output generator's responsibility to turn these requests into something useful.
 
 ## Part 3 - Generating the output string
 
@@ -85,6 +85,6 @@ The output generator has only two parameters:
 
 Entering the output parser ONLY happens if the input parser has found a valid ```what``` command. Otherwise, a generic error message is presented to the user.
 
-## Testing
+## Test your new keyword
 
-For a non-live test of the input parser and output generator, you can use the ```parser_test.py``` Python file which is part of this repo. Simply specify your own call sign (the one that you would send the message from) and the APRS message. Both ```input_parser.py``` and ```output_generator.py``` will be triggered and you can test if your new keyword works as designed.
+For a non-live test of the input parser and output generator, you can use the ```parser_test.py``` Python file which is part of this repo. Simply specify your own call sign (the one that you would send the message from) and the APRS message. Both ```input_parser.py``` and ```output_generator.py``` will be triggered and you can test if your new keyword works as designed. This is also good for testing if all Python packages have been installed and everything has been configured in a proper way.

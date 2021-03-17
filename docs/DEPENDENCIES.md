@@ -18,7 +18,9 @@ The following Python packages need to be installed:
 - [unidecode](https://github.com/avian2/unidecode)
 - [us](https://github.com/unitedstates/python-us)
 - [utm](https://github.com/Turbo87/utm)
-  
+
+If you install MAPD and its components on a Raspberry Pi, the skyfield package may require you to install ```apt-get install libatlas-base-dev``` as a separate package.
+
 ## API Dependencies
 
 - [aprs.fi](https://aprs.fi/page/api)
