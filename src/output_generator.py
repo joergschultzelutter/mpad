@@ -816,7 +816,7 @@ def generate_output_message_whereis(response_parameters: dict):
 
     # add OSM location information (e.g. street, city, state)
     output_list = make_pretty_aprs_messages(
-        message_to_add=f"Loc. {address}", destination_list=output_list
+        message_to_add=f"Addr: {address}", destination_list=output_list
     )
 
     """
