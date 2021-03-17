@@ -2,7 +2,8 @@
 # Multi-Purpose APRS Daemon: Airport Data Modules
 # Author: Joerg Schultze-Lutter, 2020
 #
-# Purpose: Find nearest airport (or based on the given airport code)
+# Purpose: Find nearest airport (or based on the given airport code) and
+# return METAR / TAF data to the user
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -129,7 +130,6 @@ def read_local_airport_data_file(
 def get_metar_data(icao_code: str):
     """
     Get METAR and TAF data for a given ICAO code.
-    TAF data is already downloaded but currently ignored.
     May need to be switched to https://api.met.no/weatherapi/ at
     a later point in time
 
@@ -144,7 +144,7 @@ def get_metar_data(icao_code: str):
     success: 'bool'
         True if operation was successful
     response: 'str'
-        METAR string for the given airport
+        METAR / TAF string for the given airport
         (or "NOTFOUND" if no data was found)
     """
 
@@ -175,9 +175,10 @@ def get_metar_data(icao_code: str):
                 # Everything else before that line is our METAR report which may consist of 1..n lines
                 for metar_result_item in metar_result_array:
                     if metar_result_item.startswith("TAF"):
-                        break
+                        response = response + " ### "
                     response = response + metar_result_item
                 success = True
+                response = response.strip()
     return success, response
 
 
@@ -212,7 +213,7 @@ def validate_iata(iata_code: str):
     longitude: float = 0.0
     metar_capable: bool = False
     success: bool = False
-    icao_code: str = None
+    icao_code = None
 
     iata_dict, icao_dict = read_local_airport_data_file()
 
@@ -333,7 +334,7 @@ def get_nearest_icao(latitude: float, longitude: float):
         (or 'None' if nothing was found)
     """
 
-    nearesticao: str = None
+    nearesticao = None
     nearest = 12000
 
     # Import dictionaries from disc
