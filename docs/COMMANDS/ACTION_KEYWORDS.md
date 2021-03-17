@@ -107,13 +107,13 @@ Whereas possible, the program will try to turn these coordinates into a human re
 
 Note: When a maidenhead locator is specified, the program will _not_ try to translate this information to a human readable address, meaning that WX information will reference to the given grid data and not to a human-readable address (city, street and so on)
 
-## METAR Data for airport locations
+## METAR/TAF Data for airport locations
 
 You have three options:
 
 - specify a specific ICAO code
 - specify a specific IATA code
-- specify the METAR keyword, which instructs the program to look for the nearest airport. That 'nearest' airport position can either be based on the user's own call sign or alternatively on a different user's call sign.
+- specify the METAR keyword, which instructs the program to look for the airport that is close to your position. That 'nearest' airport position can either be based on the user's own call sign or alternatively on a different user's call sign.
 
 If the given airport or the nearest one has been found but does __not__ support METAR data, the program will try to provide you with a standard WX report for the airport's coordinates instead. If the airport is capable of providing METAR data but the METAR report cannot be retrieved, an error message is returned to the user.
 
@@ -121,7 +121,7 @@ Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME
 
 ### ICAO METAR / wx inquiries
 
-Get a METAR report for a specific ICAO code. If the ICAO code is valid but the airport does not provide METAR data, a default wx report is returned instead.
+Get a METAR/TAF report for a specific ICAO code. If the ICAO code is valid but the airport does not provide METAR data, a default wx report is returned instead.
 
 #### Formats
 
@@ -138,15 +138,21 @@ Get a METAR report for a specific ICAO code. If the ICAO code is valid but the a
 
 (applicable to all METAR options)
 
-```EDDF 090120Z 36005KT 9999 FEW040 00/M01 Q1019 R25L/29//95```
+```EDDF 171150Z 02008KT 340V050 5000 -SHSNRA FEW004 SCT011CB BKN019```
 
-```R25C/29//95 R25R/////// R18/29//95 NOSIG```
+```03/01 Q1023 NOSIG ### TAF EDDF 171100Z 1712/1818 02008KT 9999```
 
-Specifying an ICAO code without keyword may or may not be successful as it is processed at the end of the parser's process chain.
+```BKN030 TEMPO 1712/1716 SHRAGS BKN020TCU BECMG 1717/1720 FEW030```
+
+```BECMG 1800/1802 02002KT BECMG 1806/1809 30005KT TEMPO 1811/1818```
+
+```SHRAGS BKN020TCU SCT030```
+
+Specifying an ICAO code without keyword may or may not be successful as there is a log of ambiguity.
 
 ### IATA METAR / wx inquiries
 
-Get a METAR report for a specific IATA code by retrieving its associated ICAO code (and then performing an ICAO metar inquiry). If the IATA code is valid but the airport does not provide METAR data, a default wx report is returned instead. If the airport is capable of providing METAR data but the METAR report cannot be retrieved, an error message is returned to the user.
+Get a METAR/TAF report for a specific IATA code by retrieving its associated ICAO code (and then performing an ICAO metar inquiry). If the IATA code is valid but the airport does not provide METAR data, a default wx report is returned instead. If the airport is capable of providing METAR data but the METAR report cannot be retrieved, an error message is returned to the user.
 
 #### Formats
 
@@ -159,16 +165,16 @@ Get a METAR report for a specific IATA code by retrieving its associated ICAO co
 
 ```sea```
 
-Specifying an IATA code without keyword may or may not be successful as it is processed at the end of the parser's process chain.
+Specifying an IATA code without keyword may or may not be successful as as there is a log of ambiguity.
 
 ### METAR keyword
 
-Get a METAR report for the nearest airport in relation to the user's own call sign or a different call sign
+Get a METAR/TAF report for the nearest airport in relation to the user's own call sign or a different call sign
 
 #### Formats
 
-- ```metar <callsign>[-ssid]```
-- ```metar```
+- ```metar <callsign>[-ssid]``` - metar report that is closest to the call sign's position
+- ```metar``` - metar/taf report that is closest to the user's own position
 
 If no call sign is specified, then the user's own call sign (the one that he has send us the message with) is used
 

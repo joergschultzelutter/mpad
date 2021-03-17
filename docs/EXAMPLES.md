@@ -79,21 +79,21 @@ External service dependencies:
 
 External service dependencies:
 
-- [Aviation Weather](www.aviationweather.gov) for coordinate transformation (e.g. City/country or zipcode to lat/lon) and  METAR report data
+- [Aviation Weather](www.aviationweather.gov) for coordinate transformation (airport code to lat/lon) and  METAR/TAF data
 - [aprs.fi](www.aprs.fi) for APRS call sign coordinates
-
-METAR reports always return the latest wx data to the user. So METAR data cannot be requested for a specific day (corresponding keywords are ignored).
-
 
 | What do we want | Command string User > MPAD | Response example MPAD > User |
 | --------------- | -------------------------- | ---------------------------- |
-| METAR data of a METAR-enabled airport, related to the user's position | ```metar``` | |
-| METAR data of a METAR-enabled airport, related to another user's position | ```metar wa1gov-10``` | ```KTAN 171752Z AUTO 25013G27KT 10SM BKN055 07/M05 A2945 RMK AO2 PK``` |
-| | | ```WND 22027/1747 SLP971 T00721050 10083 20022 56007``` |
-| METAR data for ICAO code EDDF | ```icao eddf``` or ```eddf``` | ```EDDF 171750Z 22004KT 5000 BR BKN004 OVC011 00/M01 Q1022 R25C/290095``` |
-| | | ```R25L/290095 R18/290095 TEMPO SCT004``` |
-| METAR data for IATA code FRA | ```iata fra``` or ```fra``` | ```EDDF 171750Z 22004KT 5000 BR BKN004 OVC011 00/M01 Q1022 R25C/290095``` |
-| | | ```R25L/290095 R18/290095 TEMPO SCT004``` |
+| METAR data of a METAR-enabled airport, related to the user's position | ```metar``` | ```EDDF 171150Z 02008KT 340V050 5000 -SHSNRA FEW004 SCT011CB BKN019``` |
+| | | ```03/01 Q1023 NOSIG ### TAF EDDF 171100Z 1712/1818 02008KT 9999``` |
+| | | ```BKN030 TEMPO 1712/1716 SHRAGS BKN020TCU BECMG 1717/1720 FEW030``` |
+| | | ```BECMG 1800/1802 02002KT BECMG 1806/1809 30005KT TEMPO 1811/1818``` |
+| | | ```SHRAGS BKN020TCU SCT030``` |
+| METAR data of a METAR-enabled airport, related to another user's position | ```metar wa1gov-10``` | similar output to 1st example |
+| METAR data for ICAO code EDDF | ```icao eddf``` or ```eddf``` | similar output to 1st example |
+| METAR data for IATA code FRA | ```iata fra``` or ```fra``` | similar output to 1st example |
+
+IATA codes are taken from [https://www.aviationweather.gov/docs/metar/stations.txt](https://www.aviationweather.gov/docs/metar/stations.txt). This file does not contain several int'l IATA codes. When in doubt, use the ICAO code.
 
 ## CWOP data
 
