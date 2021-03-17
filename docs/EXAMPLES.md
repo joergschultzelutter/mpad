@@ -75,7 +75,7 @@ External service dependencies:
 | | | ```LatLon 51.81667/9.56583 Merxhausen, 37627, DE Neuhaeuser Strasse```|
 | | |```Last heard 2021-01-23 17:32:42``` |
 
-## METAR / TAR data
+## METAR / TAF data
 
 External service dependencies:
 
@@ -95,7 +95,7 @@ External service dependencies:
 
 IATA codes are taken from [https://www.aviationweather.gov/docs/metar/stations.txt](https://www.aviationweather.gov/docs/metar/stations.txt). This file does not contain several international IATA codes. If your IATA code does not work, use an ICAO code.
 
-For better legibility, METAR and TAR data are separated by a ### sequence - see example.
+For better legibility, METAR and TAF data are separated by a ### sequence - see example.
 
 ## CWOP data
 
