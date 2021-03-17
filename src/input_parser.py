@@ -822,6 +822,22 @@ def parse_when(aprs_message: str):
             date_offset = 0
             regex_match = regex_string
 
+    if not found_when:
+        regex_string = r"\b([1-7])d\b"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            try:
+                date_offset = int(matches[0])
+                regex_match = regex_string
+                when = f"{date_offset}d"
+                found_when = True
+            except ValueError:
+                when = None
+                found_when = False
+                date_offset = -1
+
     # OWM supports hourly wx forecasts for up to 47h, let's get that value
     if not found_when:
         regex_string = r"\b(4[0-7]|3[0-9]|2[0-9]|1[0-9]|[1-9])h\b"
@@ -837,7 +853,7 @@ def parse_when(aprs_message: str):
             except ValueError:
                 when = None
                 found_when = False
-                hour_offset = 0
+                hour_offset = -1
 
     # If we have found an entry AND have a matching regex,
     # then remove that string from the APRS message
@@ -2782,8 +2798,4 @@ if __name__ == "__main__":
         smtpimap_email_address,
         smtpimap_email_password,
     ) = read_program_config()
-    logger.info(
-        pformat(
-            parse_input_message("posrpt blah@blub.de", "df1jsl-1", aprsdotfi_api_key)
-        )
-    )
+    logger.info(pformat(parse_input_message("1d", "df1jsl-1", aprsdotfi_api_key)))
