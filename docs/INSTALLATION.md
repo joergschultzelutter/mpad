@@ -14,15 +14,18 @@ if __name__ == "__main__":
 
 ### API Access
 
-Currently, MPAD uses three APIs for its purposes:
+Currently, MPAD uses various APIs and access keys for its purposes:
 
 - aprs.fi
 - openweathermap.org
 - DAPNET API
+- SMTP/IMAP username and password
 
 If you want to host your own MPAD instance, you need to acquire your personal API access keys for aprs.fi and openweathermap.org APIs and add these to MPAD's API config file (```mpad_api_access_keys.cfg```). An empty config template file is part of the repository. If you are not a registered DAPNET user, set the DAPNET callsign in the config file to N0CALL. When MPAD encounters this DAPNET user, it will refrain from sending content to DAPNET.
 
 Additionally, you also need to set your APRS-IS login credentials (callsign and passcode). By default, the login callsign is set to ```N0CALL``` which does permit the program to connect to APRS_IS in read-only mode. You can still receive and process messages (based on your filter settings' call signs). However, any outgoing message will not be sent to the user (via APRS-IS) but ends up in the program's log file. Setting the user's call sign to ```N0CALL``` will automatically enforce the program to enter read-only mode. ```aprsis_login_passcode``` is automatically set to ```-1``` and no data will be sent to APRS-IS.
+
+if the email address is not configured to a valid address (checked via regex), all email functionality is disabled.
 
 ```python
 [mpad_config]
@@ -65,6 +68,7 @@ You also need to set the APRS-IS access and server credentials:
 - By default, MPAD will send out ASCII messages. If you prefer to send unicode messages to the user, set the ```mpad_enforce_unicode_messages``` flag to ```True```. Note that this flag only applies to outgoing messages; incoming messages in unicode format are always honored.
 - By default, MPAD already supports a couple of OpenStreetMap object categories. If you want to add more categories, change the ```osm_supported_keyword_categories``` list. Note that you are required to use the OSM native category wording - see comment below.
 - Change the ```mpad_default_user_agent``` of you run your own MPAD instance and/or fork the repo.
+- Configure the SMTP / IMAP settings in you want to enable email positioning support. Set server ports to 0 if you want to disable email. If ```mpad_imap_mail_retention_max_days``` is NOT set to zero, all sent emails from that account will be permanently deleted (moved to trash) after x days (configurable). Use this option with caution and use a separate email. 
 
 Excerpt from ```mpad_config.py```:
 ```python
@@ -247,4 +251,18 @@ mpad_default_user_agent = (
 #
 mpad_dapnet_api_server = "http://www.hampager.de:8080/calls"
 mpad_dapnet_api_transmitter_group = "dl-all"
+
+#
+# SMTP server and port
+#
+mpad_smtp_server_address = "smtp.gmail.com"
+mpad_smtp_server_port = 465
+
+#
+# IMAP server and port
+#
+mpad_imap_server_address = "imap.gmail.com"
+mpad_imap_server_port = 993
+mpad_imap_mail_retention_max_days = 1   # Delete mails after x days (0 = disable)
+mpad_imap_mailbox_name = "\"[Gmail]/Sent Mail\""
 ```
