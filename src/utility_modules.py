@@ -519,6 +519,80 @@ def convert_text_to_plain_ascii(message_string: str):
     return message_string
 
 
+def read_aprs_message_counter(file_name: str = "mpad_message_counter.txt"):
+    """
+    Reads the latest message counter from a file
+
+    If file is not present, we will start with '1'
+
+    Parameters
+    ==========
+    file_name: 'str'
+        Name of the file we are going to read the data from
+
+    Returns
+    =======
+    message_counter: 'int'
+        last message counter (or '1')
+    """
+    served_packages = 1
+    try:
+        with open(f"{file_name}", "r") as f:
+            if f.mode == "r":
+                contents = f.read()
+                f.close()
+                served_packages = int(contents)
+    except:
+        served_packages = 1
+        logger.info(f"Cannot read content from message counter file {file_name}")
+    return served_packages
+
+
+def write_aprs_message_counter(
+    aprs_message_counter: int, file_name: str = "mpad_message_counter.txt"
+):
+    """
+    Writes the latest message counter to a file
+
+    Parameters
+    ==========
+    aprs_message_counter: 'int'
+        latest message counter # from file
+    file_name: 'str'
+        Name of the file we are going to read the data from
+
+    Returns
+    =======
+    Nothing
+    """
+    try:
+        with open(f"{file_name}", "w") as f:
+            f.write("%d" % aprs_message_counter)
+            f.close()
+    except:
+        logger.info(f"Cannot write message counter to {file_name}")
+
+
+def get_alphanumeric_counter_value(numeric_counter: int):
+    """
+    Calculate an alphanumeric
+
+    Parameters
+    ==========
+    numeric_counter: 'int'
+        numeric counter that is used for calculating the start value
+
+    Returns
+    =======
+    alphanumeric_counter: 'str'
+        alphanumeric counter that is based on the numeric counter
+    """
+    first_char = int(numeric_counter / 26)
+    second_char = int(numeric_counter % 26)
+    alphanumeric_counter = chr(first_char + 65) + chr(second_char + 65)
+    return alphanumeric_counter
+
+
 if __name__ == "__main__":
     my_array = make_pretty_aprs_messages("Hello World")
     my_array = make_pretty_aprs_messages("Wie geht es Dir", my_array)

@@ -50,3 +50,9 @@ In order to limit the access to data from external web sites to a minimum, MPAD 
 - Airport data from aviationweather.gov is refreshed every 30 days
 
 Additionally, all of these data files will also be refreshed whenever the program starts. Any in-between changes to sat/repeater/airport data will not be recognised, meaning that if e.g. new repeater data was added in between, MPAD might see this data only after a few days. All of these intervals can be configured, though.
+
+MPAD can also generate email position reports for the user. All associated emails will get deleted from MPAD's associated email account after 48 hrs.
+
+## 'New' ack/rej processing
+
+MPAD provides support for the 'old' ack/rej process (as described in aprs101.pdf) as well as for the 'new' process [http://www.aprs.org/aprs11/replyacks.txt](http://www.aprs.org/aprs11/replyacks.txt). The program does not implement the retry/backoff algorithm for retransmission of un-acknowleged messages.  It relies on the origination station to retransmit the original message that prompted the reply.
