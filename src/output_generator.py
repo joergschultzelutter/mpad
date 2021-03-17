@@ -814,6 +814,12 @@ def generate_output_message_whereis(response_parameters: dict):
         destination_list=output_list,
     )
 
+    # add OSM location information (e.g. street, city, state)
+    output_list = make_pretty_aprs_messages(
+        message_to_add=f"Loc. {address}", destination_list=output_list
+    )
+
+    """
     # Note: variable 'address' contains the full-blown address details from
     # OpenStreetMap. As we deal with APRS data which is restricted in length,
     # MPAD tries to be as conservative as possible and avoids using the
@@ -826,48 +832,50 @@ def generate_output_message_whereis(response_parameters: dict):
     # that function will attempt to split up the text in the most legible way
     # possible.
 
-    human_readable_address = ""
-    if city:
-        human_readable_address = city
-        if zipcode:
-            human_readable_address += f", {zipcode}"
-        if country_code:
-            human_readable_address += f", {country_code}"
-    else:
-        if district:
-            human_readable_address = district
-        if county:
-            if len(human_readable_address) != 0:
-                human_readable_address += ", "
-            human_readable_address += county
-        if zipcode:
-            if len(human_readable_address) != 0:
-                human_readable_address += ", "
-            human_readable_address += zipcode
-        if country_code:
-            if len(human_readable_address) != 0:
-                human_readable_address += ", "
-            human_readable_address += country_code
-
-    if human_readable_address != "":
-        output_list = make_pretty_aprs_messages(
-            message_to_add=human_readable_address, destination_list=output_list
-        )
-
-    human_readable_address = None
-    if street:
-        human_readable_address = street
-        if street_number:
-            # per https://en.wikipedia.org/wiki/Address, we try to honor the native format
-            # for those countries who list the street number before the street name
-            if country_code in mpad_config.street_number_precedes_street:
-                human_readable_address = f"{street_number} " + human_readable_address
-            else:
-                human_readable_address = human_readable_address + f" {street_number}"
-    if human_readable_address:
-        output_list = make_pretty_aprs_messages(
-            message_to_add=human_readable_address, destination_list=output_list
-        )
+    
+        human_readable_address = ""
+        if city:
+            human_readable_address = city
+            if zipcode:
+                human_readable_address += f", {zipcode}"
+            if country_code:
+                human_readable_address += f", {country_code}"
+        else:
+            if district:
+                human_readable_address = district
+            if county:
+                if len(human_readable_address) != 0:
+                    human_readable_address += ", "
+                human_readable_address += county
+            if zipcode:
+                if len(human_readable_address) != 0:
+                    human_readable_address += ", "
+                human_readable_address += zipcode
+            if country_code:
+                if len(human_readable_address) != 0:
+                    human_readable_address += ", "
+                human_readable_address += country_code
+    
+        if human_readable_address != "":
+            output_list = make_pretty_aprs_messages(
+                message_to_add=human_readable_address, destination_list=output_list
+            )
+    
+        human_readable_address = None
+        if street:
+            human_readable_address = street
+            if street_number:
+                # per https://en.wikipedia.org/wiki/Address, we try to honor the native format
+                # for those countries who list the street number before the street name
+                if country_code in mpad_config.street_number_precedes_street:
+                    human_readable_address = f"{street_number} " + human_readable_address
+                else:
+                    human_readable_address = human_readable_address + f" {street_number}"
+        if human_readable_address:
+            output_list = make_pretty_aprs_messages(
+                message_to_add=human_readable_address, destination_list=output_list
+            )
+    """
 
     if _whereis_mode:
         human_readable_address = None
