@@ -59,7 +59,7 @@ bulletin_texts: dict = {
 #
 beacon_text_array: list = [
     f"={mpad_config.mpad_latitude}{mpad_config.aprs_table}{mpad_config.mpad_longitude}{mpad_config.aprs_symbol}{mpad_config.mpad_alias} {mpad_config.mpad_version} /A={mpad_config.mpad_beacon_altitude_ft:06}",
-    #    ">My tiny little APRS bot (pre-alpha testing)",
+    #    ">Multi-Purpose APRS Daemon",
 ]
 
 logging.basicConfig(
@@ -77,8 +77,6 @@ def parse_aprs_data(packet_data_dict: dict, item: str):
     ==========
     packet_data_dict: 'dict'
         Contains pre-parsed
-
-
 
     Returns
     =======
@@ -192,10 +190,12 @@ def send_ack(
 def send_aprs_message_list(
     myaprsis: aprslib.inet.IS,
     message_text_array: list,
-    src_call_sign: str,
+    destination_call_sign: str,
     send_with_msg_no: bool,
-    number_of_served_packages: int,
+    aprs_message_counter: int,
+    external_message_number: str,
     simulate_send: bool = True,
+    new_ackrej_format: bool = False,
 ):
     """
     Send a pre-prepared message list to to APRS_IS
@@ -208,39 +208,56 @@ def send_aprs_message_list(
         Our aprslib object that we will use for the communication part
     message_text_array: 'list'
         Contains 1..n entries of the content that we want to send to the user
-    src_call_sign: 'str'
+    destination_call_sign: 'str'
         Target user call sign that is going to receive the message (usually, this
         is the user's call sign who has sent us the initial message)
     send_with_msg_no: 'bool'
         If True, each outgoing message will have its own message ID attached to the outgoing content
         If False, no message ID is added
-    number_of_served_packages: int
-        number of packages sent to aprs_is
+    aprs_message_counter: int
+        message_counter for messages that require to be ack'ed
     simulate_send: 'bool'
         If True: Prepare string but only send it to logger
+    external_message_number: 'str'
+        only used if we deal with the new ackrej format
+    new_ackrej_format: 'bool'
+        false: apply the old ack/rej logic as described in aprs101.pdf.
+               MPAD generates its own message id. The user's message ID
+               (from the original request) will NOT be added to the
+               outgoing message
+        True: apply the new ack/rej logic as described
+        in http://www.aprs.org/aprs11/replyacks.txt
+               MPAD generates its own message id. The user's message ID
+               (from the original request) WILL be added to the
+               outgoing message
 
     Returns
     =======
-    number_of_served_packages: 'int'
-        number of packages sent to aprs_is
+    aprs_message_counter: 'int'
+        new value for message_counter for messages that require to be ack'ed
     """
     for single_message in message_text_array:
-        stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}::{src_call_sign:9}:{single_message}"
+        stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}::{destination_call_sign:9}:{single_message}"
         if send_with_msg_no:
-            stringtosend = stringtosend + "{" + f"{number_of_served_packages:05}"
-            number_of_served_packages = number_of_served_packages + 1
-            if number_of_served_packages > 99999:  # max 5 digits
-                number_of_served_packages = 1
+            alpha_counter = get_alphanumeric_counter_value(aprs_message_counter)
+            stringtosend = stringtosend + "{" + alpha_counter
+            if new_ackrej_format:
+                stringtosend = stringtosend + "}" + external_message_number[:2]
+            aprs_message_counter = aprs_message_counter + 1
+            if (
+                aprs_message_counter > 676 or alpha_counter == "ZZ"
+            ):  # for the alphanumeric counter AA..ZZ, this is equal to "ZZ"
+                aprs_message_counter = 0
         if not simulate_send:
             logger.info(f"Sending response message '{stringtosend}'")
             myaprsis.sendall(stringtosend)
         else:
             logger.info(f"Simulating response message '{stringtosend}'")
         time.sleep(mpad_config.packet_delay_message)
-    return number_of_served_packages
+    return aprs_message_counter
 
 
-def extract_msgno_from_defective_message(message_text: str):
+def check_for_new_ackrej_format(message_text: str):
     """
     Have a look at the incoming APRS message and check if it
     contains a message no which does not follow the APRS
@@ -248,24 +265,9 @@ def extract_msgno_from_defective_message(message_text: str):
 
     http://www.aprs.org/aprs11/replyacks.txt
 
+    but rather follow the new format
 
-    Explanation:
-
-    Per specification, any APRS message that HAS a message ID
-    contains this data in as trailing information in the following format:
-
-    message_text_1_to_67_chars{message_no_1_to_5_chars
-    e.g.
-    Hello World{12345
-
-    MPAD has encountered a few messages where the message does seem
-    to contain message IDs that are transmitted in an invalid format:
-
-    Hello World{12345}ab
-
-    aprslib does not recognise this format because it deviates from the
-    APRS standard. This tweak recognises such messages, extracts the message
-    number and ignores the trailing content.
+    http://www.aprs.org/aprs11/replyacks.txt
 
     Parameters
     ==========
@@ -279,25 +281,188 @@ def extract_msgno_from_defective_message(message_text: str):
         data
     msg_no: 'str'
         Null if no message_no was present
+    new_ackrej_format: 'bool'
+        True if the ackrej_format has to follow the new ack-rej handling
+        process as described in http://www.aprs.org/aprs11/replyacks.txt
+    """
+
+    """
+    The following assumptions apply when handling APRS messages in general:
+    
+    Option 1: no message ID present:
+        send no ACK
+        outgoing messages have no msg number attachment
+
+            Example data exchange 1:
+            DF1JSL-4>APRS,TCPIP*,qAC,T2PRT::WXBOT    :94043
+            WXBOT>APRS,qAS,KI6WJP::DF1JSL-4 :Mountain View CA. Today,Sunny High 60
+            
+            Example data exchange 2:
+            DF1JSL-4>APRS,TCPIP*,qAC,T2SPAIN::EMAIL-2  :jsl24469@gmail.com Hallo
+            EMAIL-2>APJIE4,TCPIP*,qAC,AE5PL-JF::DF1JSL-4 :Email sent to jsl24469@gmail.com
+
+    
+    Option 2: old message number format is present: (example: msg{12345)
+        Send ack with message number from original message (ack12345)
+        All outgoing messages have trailing msg number ( {abcde ); can be numeric or
+        slphanumeric counter. See aprs101.pdf chapter 14
+
+            Example data exchange 1:
+            DF1JSL-4>APRS,TCPIP*,qAC,T2SP::EMAIL-2  :jsl24469@gmail.com Hallo{12345
+            EMAIL-2>APJIE4,TCPIP*,qAC,AE5PL-JF::DF1JSL-4 :ack12345
+            EMAIL-2>APJIE4,TCPIP*,qAC,AE5PL-JF::DF1JSL-4 :Email sent to jsl24469@gmail.com{891
+            DF1JSL-4>APOSB,TCPIP*,qAS,DF1JSL::EMAIL-2  :ack891
+            
+            Example data exchange 2:
+            DF1JSL-4>APRS,TCPIP*,qAC,T2CSNGRAD::EMAIL-2  :jsl24469@gmail.com{ABCDE
+            EMAIL-2>APJIE4,TCPIP*,qAC,AE5PL-JF::DF1JSL-4 :ackABCDE
+            EMAIL-2>APJIE4,TCPIP*,qAC,AE5PL-JF::DF1JSL-4 :Email sent to jsl24469@gmail.com{893
+            DF1JSL-4>APOSB,TCPIP*,qAS,DF1JSL::EMAIL-2  :ack893
+
+    
+    Option 3: new messages with message ID but without trailing retry msg ids: msg{AB}
+        Do NOT send extra ack
+        All outgoing messages have 2-character msg id, followed by message ID from original message
+        Example: 
+        User sends message "Hello{AB}" to MPAD
+        MPAD responds "Message content line 1{DE}AB" to user
+        MPAD responds "Message content line 2{DF}AB" to user
+        
+        AB -> original message
+        DE, DF -> message IDs generated by MPAD
+        
+            Example data exchange 1:
+            DF1JSL-4>APRS,TCPIP*,qAC,T2NUERNBG::WXBOT    :99801{AB}
+            WXBOT>APRS,qAS,KI6WJP::DF1JSL-4 :Lemon Creek AK. Today,Scattered Rain/Snow and Patchy Fog 50% High 4{QL}AB
+            DF1JSL-4>APOSB,TCPIP*,qAS,DF1JSL::WXBOT    :ackQL}AB
+            WXBOT>APRS,qAS,KI6WJP::DF1JSL-4 :0{QM}AB
+            DF1JSL-4>APOSB,TCPIP*,qAS,DF1JSL::WXBOT    :ackQM}AB
+            
+            Example data exchange 2:
+            DF1JSL-4>APRS,TCPIP*,qAC,T2SPAIN::EMAIL-2  :jsl24469@gmail.com Hallo{AB}
+            EMAIL-2>APJIE4,TCPIP*,qAC,AE5PL-JF::DF1JSL-4 :Email sent to jsl24469@gmail.com{OQ}AB
+            DF1JSL-4>APOSB,TCPIP*,qAS,DF1JSL::EMAIL-2  :ackOQ}AB
+
+    
+    Option 4: new messages with message ID and with trailing retry msg ids: msg{AB}CD
+        We don't handle retries - therefore, apply option #3 for processing these
+        the "CD" part gets omitted and is not used 
+        
+            Example data exchange 1:
+            DF1JSL-4>APRS,TCPIP*,qAC,T2CZECH::WXBOT    :99801{LM}AA
+            WXBOT>APRS,qAS,KI6WJP::DF1JSL-4 :Lemon Creek AK. Today,Scattered Rain/Snow and Patchy Fog 50% High 4{QP}LM
+            DF1JSL-4>APOSB,TCPIP*,qAS,DF1JSL::WXBOT    :ackQP}LM
+            WXBOT>APRS,qAS,KI6WJP::DF1JSL-4 :0{QQ}LM
+            DF1JSL-4>APOSB,TCPIP*,qAS,DF1JSL::WXBOT    :ackQQ}LM
+
+            Example data exchange 2:
+            DF1JSL-4>APRS,TCPIP*,qAC,T2SP::EMAIL-2  :jsl24469@gmail.com Welt{DE}FG
+            EMAIL-2>APJIE4,TCPIP*,qAC,AE5PL-JF::DF1JSL-4 :Email sent to jsl24469@gmail.com{OS}DE
+            DF1JSL-4>APOSB,TCPIP*,qAS,DF1JSL::EMAIL-2  :ackOS}DE
+
     """
 
     msg = msgno = None
+    new_ackrej_format = False
 
+    # if message text is present, split up between aaaaaa{bb}cc
+    # where aaaaaa = message text
+    # bb = message number
+    # cc = message retry (may or may not be present)
     if message_text:
-        matches = re.search(r"(.*){([a-zA-Z0-9]{1,5})}", message_text, re.IGNORECASE)
+        matches = re.search(
+            r"^(.*){([a-zA-Z0-9]{2})}(\w*)$", message_text, re.IGNORECASE
+        )
         if matches:
             try:
                 msg = matches[1].rstrip()
                 msgno = matches[2]
+                new_ackrej_format = True
             except:
                 msg = message_text
                 msgno = None
+                new_ackrej_format = False
         else:
             msg = message_text
     else:
         msg = message_text
-    return msg, msgno
+    return msg, msgno, new_ackrej_format
+
+
+def detect_and_map_new_ackrej_requests(message_text: str):
+    """
+    Workaround for aprslib as it can't process the 'new' response code format
+    in a proper way.
+
+    Parameters
+    ==========
+    message_text: 'str'
+        APRS message text that needs to be examined. If this text contains
+        the new ack/rej message as _sole_ data, then the response_text field
+        will be populated with the ack/rej, the message numbers will be assigned
+        and the message_text itself will be None'd. Otherwise, the original
+        message text will be returned
+
+    Returns
+    =======
+    message_text: 'str'
+        original message text or 'None' if ack/rej in new format was detected
+    response_string: 'str'
+        None or "ack"/"rej"
+    foreign_message_id: 'str'
+        None or the request's message ID (the one that the sender has assigned)
+    old_mpad_message_id: 'str'
+        None or one of our older message ID's
+    """
+
+    matches = re.search(r"^(ack|rej)(..)}(..)$", message_text, re.IGNORECASE)
+    response_string = foreign_message_id = old_mpad_message_id = None
+    if matches:
+        response_string = matches[1]
+        foreign_message_id = matches[2]
+        old_mpad_message_id = matches[3]
+        message_text = None
+    return message_text, response_string, foreign_message_id, old_mpad_message_id
+
+
+def get_alphanumeric_counter_value(numeric_counter: int):
+    """
+    Calculate an alphanumeric
+
+    Parameters
+    ==========
+    numeric_counter: 'int'
+        numeric counter that is used for calculating the start value
+
+    Returns
+    =======
+    alphanumeric_counter: 'str'
+        alphanumeric counter that is based on the numeric counter
+    """
+    first_char = int(numeric_counter / 26)
+    second_char = int(numeric_counter % 26)
+    alphanumeric_counter = chr(first_char + 65) + chr(second_char + 65)
+    return alphanumeric_counter
 
 
 if __name__ == "__main__":
-    logger.info(extract_msgno_from_defective_message("Deensen;de tomorrow {ab}cd"))
+    logger.info(detect_and_map_new_ackrej_requests("ackAB}CD"))
+    logger.info(check_for_new_ackrej_format("Deensen{AB}CD"))
+
+    msg_list = [
+        "1234567890123456789012345678901234567890123456789012345678901234567",
+        "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeffffffffffggggggg",
+    ]
+
+    logger.info(
+        send_aprs_message_list(
+            myaprsis=None,
+            message_text_array=msg_list,
+            destination_call_sign="DF1JSL-SX",
+            send_with_msg_no=True,
+            aprs_message_counter=0,
+            external_message_number="LMAA",
+            simulate_send=True,
+            new_ackrej_format=False,
+        )
+    )

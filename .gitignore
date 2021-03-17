@@ -13,3 +13,4 @@ tle_amateur_satellites.txt
 mgrs.py
 hearham_raw_data.json
 mpad_repeater_data.json
+mpad_message_counter.txt

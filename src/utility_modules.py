@@ -26,7 +26,6 @@ from unidecode import unidecode
 import logging
 from expiringdict import ExpiringDict
 import hashlib
-import time
 import mpad_config
 
 logging.basicConfig(
@@ -364,7 +363,9 @@ def read_number_of_served_packages(file_name: str = "mpad_served_packages.txt"):
                 served_packages = int(contents)
     except:
         served_packages = 1
-        logger.info(f"Cannot read content from {file_name}")
+        logger.info(
+            f"Cannot read number of served packages from {file_name}; will create a new file"
+        )
     return served_packages
 
 
@@ -523,7 +524,7 @@ def read_aprs_message_counter(file_name: str = "mpad_message_counter.txt"):
     """
     Reads the latest message counter from a file
 
-    If file is not present, we will start with '1'
+    If file is not present, we will start with '0'
 
     Parameters
     ==========
@@ -533,9 +534,9 @@ def read_aprs_message_counter(file_name: str = "mpad_message_counter.txt"):
     Returns
     =======
     message_counter: 'int'
-        last message counter (or '1')
+        last message counter (or '0')
     """
-    served_packages = 1
+    served_packages = 0
     try:
         with open(f"{file_name}", "r") as f:
             if f.mode == "r":
@@ -543,8 +544,10 @@ def read_aprs_message_counter(file_name: str = "mpad_message_counter.txt"):
                 f.close()
                 served_packages = int(contents)
     except:
-        served_packages = 1
-        logger.info(f"Cannot read content from message counter file {file_name}")
+        served_packages = 0
+        logger.info(
+            f"Cannot read content from message counter file {file_name}; will create a new file"
+        )
     return served_packages
 
 
@@ -573,26 +576,6 @@ def write_aprs_message_counter(
         logger.info(f"Cannot write message counter to {file_name}")
 
 
-def get_alphanumeric_counter_value(numeric_counter: int):
-    """
-    Calculate an alphanumeric
-
-    Parameters
-    ==========
-    numeric_counter: 'int'
-        numeric counter that is used for calculating the start value
-
-    Returns
-    =======
-    alphanumeric_counter: 'str'
-        alphanumeric counter that is based on the numeric counter
-    """
-    first_char = int(numeric_counter / 26)
-    second_char = int(numeric_counter % 26)
-    alphanumeric_counter = chr(first_char + 65) + chr(second_char + 65)
-    return alphanumeric_counter
-
-
 if __name__ == "__main__":
     my_array = make_pretty_aprs_messages("Hello World")
     my_array = make_pretty_aprs_messages("Wie geht es Dir", my_array)
@@ -613,26 +596,3 @@ if __name__ == "__main__":
 
     logger.info("Logtext erfolgreich")
     logger.info(read_program_config())
-
-    cache = ExpiringDict(max_len=180, max_age_seconds=10)
-
-    cache = add_aprs_message_to_cache("Hallo Welt", None, "DF1JSL", cache)
-
-    for x in cache:
-        print(x)
-        print(cache[x])
-
-    key = get_aprs_message_from_cache("Hallo Welt", None, "DF1JSL", cache)
-    if key:
-        print(key)
-        print(cache[key])
-    else:
-        print("Not found")
-
-    time.sleep(11)
-    key = get_aprs_message_from_cache("Hallo Welt", None, "DF1JSL", cache)
-    if key:
-        print(key)
-        print(cache[key])
-    else:
-        print("Not found")

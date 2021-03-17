@@ -32,14 +32,17 @@ from utility_modules import (
     write_number_of_served_packages,
     get_aprs_message_from_cache,
     add_aprs_message_to_cache,
+    read_aprs_message_counter,
+    write_aprs_message_counter,
 )
 from aprs_communication import (
     parse_aprs_data,
     send_bulletin_messages,
     send_beacon_and_status_msg,
     send_ack,
-    extract_msgno_from_defective_message,
+    check_for_new_ackrej_format,
     send_aprs_message_list,
+    detect_and_map_new_ackrej_requests,
 )
 from email_modules import imap_garbage_collector
 import apscheduler.schedulers.base
@@ -58,6 +61,7 @@ from expiringdict import ExpiringDict
 # execute the command and send the command output back to the user
 def mycallback(raw_aprs_packet):
     global number_of_served_packages
+    global aprs_message_counter
     global aprs_message_cache
 
     logger = logging.getLogger(__name__)
@@ -78,8 +82,17 @@ def mycallback(raw_aprs_packet):
     # The is the actual message that we are going to parse
     message_text_string = raw_aprs_packet.get("message_text")
     #
+    # message response, indicating a potential ack/rej
+    response_string = raw_aprs_packet.get("response")
+    if response_string:
+        response_string = response_string.lower()
+    #
     # messagenumber, if present in the original msg (note: this is optional)
     msgno_string = raw_aprs_packet.get("msgNo")
+
+    # By default, assume that we deal with the old ack/rej format
+    new_ackrej_format = False
+
     #
     # User's call sign. read: who has sent us this message?
     from_callsign = raw_aprs_packet.get("from")
@@ -89,26 +102,55 @@ def mycallback(raw_aprs_packet):
     # Finally, get the format of the message that we have received
     # For content that we need to process, this value has to be 'message'
     # and not 'response'.
+    #
+    # Note that APRSlib DOES return ack/rej messages as format type "message".
+    # however, the message text is empty for such cases
+
     format_string = parse_aprs_data(raw_aprs_packet, "format")
 
+    # Now check if we have received something in the new ack-rej format
+    # arpslib cannot handle these messages properly so we have to apply a workaround
+    # Both 'foreign_message_id' and 'old_mpad_message_id' are not needed
+    # as we don't resubmit data in case it hasn't been received
+    if format_string == "message" and message_text_string:
+        (
+            message_text_string,
+            response_string,
+            foreign_message_id,
+            old_mpad_message_id,
+        ) = detect_and_map_new_ackrej_requests(message_text_string)
+
     #
-    # This calls a convenience handler / parser. In some rare cases, APRS
-    # messages do not seem to follow the APRS messaging standard as described
-    # in chapter 14 of the aprs101.pdf guide (pg. 71). Rather than sending the
-    # msg no in the standard format (12345=msg_no)
-    # message_text{12345
-    # these senders add a closing bracket to the end of the message. Example:
-    # message_text{12345}abcd
-    # aprslib does not recognise this flawed package and returns the content as
-    # is. Our convenience handler takes care of the issue and returns a 'clean'
-    # message text and a separated message_no whereas present.
-    # The trailing information (abcd) is ignored and removed.
+    # This is a special handler for the new(er) APRS ack/rej/format
+    #
+    # By default (and described in aprs101.pdf pg. 71), APRS supports two
+    # messages:
+    # - messages withOUT message ID, e.g. Hello World
+    # - message WITH 5-character message ID, e.g. Hello World{12345
+    # The latter require the program to send a seperate ACK to the original
+    # recipient
+    #
+    # Introduced through an addendum (http://www.aprs.org/aprs11/replyacks.txt),
+    # a third option came into place. This message also has a message ID but
+    # instead of sending a separate ACK, the original message ID is returned to
+    # the user for all messages that relate to the original one. aprslib does
+    # currently not recognise these new message IDs - therefore, we need to
+    # extract them from the message text and switch the program logic if we
+    # discover that new ID.
     if not msgno_string:
         if message_text_string:
-            message_text_string, msgno_string = extract_msgno_from_defective_message(
-                message_text_string
-            )
+            (
+                message_text_string,
+                msgno_string,
+                new_ackrej_format,
+            ) = check_for_new_ackrej_format(message_text_string)
 
+    # At this point in time, we have successfully removed any potential trailing
+    # information from the message string and have assigned it to e.g. message ID
+    # etc. This means that both message and message ID (whereas present) do now
+    # qualify for dupe checks - which will happen at a later point in time
+    # Any potential (additional) message retry information is no longer present
+    #
     # Based on whether we have received a message number, we now set a session
     # parameter which tells MPAD for _this_ message whether an ACK is required
     # and whether we are supposed to send outgoing messages with or without
@@ -135,10 +177,16 @@ def mycallback(raw_aprs_packet):
     if addresse_string:
         if addresse_string in mpad_config.mpad_callsigns_to_parse:
             # Lets examine what we've got:
-            # 1. Message format should always be 'message' and not 'response'
-            # 2. Actual message should be populated with some content
+            # 1. Message format should always be 'message'.
+            #    This is even valid for ack/rej responses
+            # 2. Message text should contain content
+            # 3. response text should NOT be ack/rej
             # Continue if both assumptions are correct
-            if format_string == "message" and message_text_string:
+            if (
+                format_string == "message"
+                and message_text_string
+                and response_string not in ["ack", "rej"]
+            ):
                 # This is a message that belongs to us
 
                 # logger.info(dump_string_to_hex(message_text_string))
@@ -164,9 +212,11 @@ def mycallback(raw_aprs_packet):
                 else:
                     logger.info(msg=f"Received raw_aprs_packet: {raw_aprs_packet}")
 
-                    # Send an ack if we did receive a message number
+                    # Send an ack if we DID receive a message number
+                    # and we DID NOT have received a request in the
+                    # new ack/rej format
                     # see aprs101.pdf pg. 71ff.
-                    if msg_no_supported:
+                    if msg_no_supported and not new_ackrej_format:
                         send_ack(
                             myaprsis=AIS,
                             simulate_send=aprsis_simulate_send,
@@ -233,14 +283,19 @@ def mycallback(raw_aprs_packet):
                         )
 
                     # Send our message(s) to APRS-IS
-                    number_of_served_packages = send_aprs_message_list(
+                    aprs_message_counter = send_aprs_message_list(
                         myaprsis=AIS,
                         simulate_send=aprsis_simulate_send,
                         message_text_array=output_message,
-                        src_call_sign=from_callsign,
+                        destination_call_sign=from_callsign,
                         send_with_msg_no=msg_no_supported,
-                        number_of_served_packages=number_of_served_packages,
+                        aprs_message_counter=aprs_message_counter,
+                        external_message_number=msgno_string,
+                        new_ackrej_format=new_ackrej_format,
                     )
+
+                    # increase the number of served packages
+                    number_of_served_packages = number_of_served_packages + 1
 
                     # We've finished processing this message. Update the decaying
                     # cache with our message.
@@ -300,6 +355,10 @@ if aprsis_callsign == "N0CALL":
 #
 # Now let's read the number of served packages that we have dealt with so far
 number_of_served_packages = read_number_of_served_packages()
+
+# This is the message counter that we will use for any APRS messages which
+# require a message counter to be added as outgoing content
+aprs_message_counter = read_aprs_message_counter()
 
 # Define dummy values for both APRS task schedules and AIS object
 aprs_scheduler = AIS = None
@@ -465,6 +524,7 @@ try:
             logger.info(msg="Cannot re-establish connection to APRS_IS")
         # Write the number of served packages to disc
         write_number_of_served_packages(served_packages=number_of_served_packages)
+        write_aprs_message_counter(aprs_message_counter=aprs_message_counter)
         logger.info(msg=f"Sleeping {mpad_config.packet_delay_message} secs")
         time.sleep(mpad_config.packet_delay_message)
 #        AIS.close()
@@ -473,6 +533,9 @@ except (KeyboardInterrupt, SystemExit):
 
     # write number of processed packages to disc
     write_number_of_served_packages(served_packages=number_of_served_packages)
+
+    # write most recent APRS message counter to disc
+    write_aprs_message_counter(aprs_message_counter=aprs_message_counter)
 
     if aprs_scheduler:
         aprs_scheduler.pause()
