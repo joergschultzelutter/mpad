@@ -203,7 +203,7 @@ def send_email_position_report(response_parameters: dict):
 
     # calculate maidenhead coordinates and remove the placeholders in the template
     maidenhead_grid = convert_latlon_to_maidenhead(
-        latitude=latitude, longitude=longitude
+        latitude=latitude, longitude=longitude, output_precision=5
     )
     plaintext_message = plaintext_message.replace("REPLACE_MAIDENHEAD", maidenhead_grid)
     html_message = html_message.replace("REPLACE_MAIDENHEAD", maidenhead_grid)
