@@ -52,6 +52,7 @@ APRS position data for REPLACE_MESSAGECALLSIGN on the Internet:
 aprs.fi:                                        REPLACE_APRSDOTFI
 FindU.com                                       REPLACE_FINDUDOTCOM
 Google Maps:                                    REPLACE_GOOGLEMAPS
+QRZ.COM:                                        REPLACE_QRZDOTCOM
 
 Position details:
 =================
@@ -77,6 +78,7 @@ html_template = """\
 <li><a href="REPLACE_APRSDOTFI" target="_blank" rel="noopener">aprs.fi</a></li>
 <li><a href="REPLACE_FINDUDOTCOM" target="_blank" rel="noopener">FindU.com</a></li>
 <li><a href="REPLACE_GOOGLEMAPS" target="_blank" rel="noopener">Google Maps</a>&nbsp;</li>
+<li><a href="REPLACE_QRZDOTCOM" target="_blank" rel="noopener">QRZ.com</a>&nbsp;</li>
 </ul>
 <table border="1">
 <thead>
@@ -293,6 +295,15 @@ def send_email_position_report(response_parameters: dict):
         "REPLACE_DATETIME_CREATED", msg_string
     )
     html_message = html_message.replace("REPLACE_DATETIME_CREATED", msg_string)
+
+    # split callsign and SSID whereas present
+    callsign_list = message_callsign.split("-")
+    if len(callsign_list) > 0:
+        msg_string = f"https://www.qrz.com/db/{callsign_list[0]}"
+    else:
+        msg_string = "not available"
+    plaintext_message = plaintext_message.replace("REPLACE_QRZDOTCOM", msg_string)
+    html_message = html_message.replace("REPLACE_QRZDOTCOM", msg_string)
 
     # Finally, generate the message
     msg = EmailMessage()
