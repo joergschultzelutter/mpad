@@ -65,7 +65,7 @@ Altitude                                        REPLACE_ALTITUDE
 Last heard on APRS-IS                           REPLACE_LASTHEARD
 Address data:                                   REPLACE_ADDRESS_DATA
 
-This position report was requested by REPLACE_USERSCALLSIGN via APRS and was processed by MPAD (Multi-Purpose APRS Daemon). Generated at REPLACE_DATETIME_CREATED UTC
+This position report was requested by REPLACE_USERSCALLSIGN via APRS and was processed by MPAD (Multi-Purpose APRS Daemon). Generated at REPLACE_DATETIME_CREATED
 More info on MPAD can be found here: https://www.github.com/joergschultzelutter/mpad
 ---
 Proudly made in the district of Holzminden, Lower Saxony, Germany. 73 de DF1JSL
@@ -135,7 +135,7 @@ html_template = """\
 </tr>
 </tbody>
 </table>
-<p>This position report was requested by <strong>REPLACE_USERSCALLSIGN</strong> via APRS and was processed by <a href="https://aprs.fi/#!call=a%2FMPAD&amp;timerange=3600&amp;tail=3600" target="_blank" rel="noopener">MPAD (Multi-Purpose APRS Daemon)</a>. Generated at <strong>REPLACE_DATETIME_CREATED UTC</strong></p>
+<p>This position report was requested by <strong>REPLACE_USERSCALLSIGN</strong> via APRS and was processed by <a href="https://aprs.fi/#!call=a%2FMPAD&amp;timerange=3600&amp;tail=3600" target="_blank" rel="noopener">MPAD (Multi-Purpose APRS Daemon)</a>. Generated at <strong>REPLACE_DATETIME_CREATED</strong></p>
 <p>More info on MPAD can be found here: <a href="https://www.github.com/joergschultzelutter/mpad" target="_blank" rel="noopener">https://www.github.com/joergschultzelutter/mpad</a></p>
 <hr />
 <p>Proudly made in the district of Holzminden, Lower Saxony, Germany. 73 de DF1JSL</p>
