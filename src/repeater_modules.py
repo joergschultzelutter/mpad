@@ -521,7 +521,7 @@ def update_local_repeatermap_file():
     download_hearham_raw_data_to_local_file()
     success, local_repeatermap_json = create_native_mpad_repeater_data()
     if success:
-        success = write_mpad_repeater_data_to_disc(local_repeatermap_json)
+        success = write_mpad_repeater_data_to_disc(mpad_repeatermap_json=local_repeatermap_json)
     return success
 
 
