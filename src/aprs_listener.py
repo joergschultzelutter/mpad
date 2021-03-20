@@ -34,6 +34,7 @@ from utility_modules import (
     add_aprs_message_to_cache,
     read_aprs_message_counter,
     write_aprs_message_counter,
+    check_and_create_data_directory,
 )
 from aprs_communication import (
     parse_aprs_data,
@@ -51,6 +52,7 @@ import logging
 import aprslib
 import time
 import mpad_config
+import os
 from expiringdict import ExpiringDict
 
 ########################################
@@ -323,6 +325,14 @@ logger = logging.getLogger(__name__)
 # then there is no point in continuing
 #
 logger.info("Program startup ...")
+
+# Check whether the data directory exists
+success = check_and_create_data_directory()
+if not success:
+    exit(0)
+
+# Read the config file
+logger.info("Read program config file ...")
 (
     success,
     aprsdotfi_api_key,
@@ -338,7 +348,7 @@ if not success:
     logging.error(msg="Error while reading the program config file; aborting")
     sys.exit(0)
 
-# Next: check our user credentials. If our call sign is "N0CALL", we ensure:
+# Next: check our APRS-IS user credentials. If our call sign is "N0CALL", we ensure:
 #
 # - that the passcode will be invalidated
 # - that the program will only simulate data transfers to APRS-IS

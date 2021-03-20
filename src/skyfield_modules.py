@@ -27,6 +27,7 @@ from skyfield.api import EarthSatellite
 import logging
 from math import floor, ceil
 from pprint import pformat
+from utility_modules import build_full_pathname
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -54,6 +55,7 @@ def update_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
 
     # This is the fixed name of the file that we are going to download
     tle_data_file_url = "http://www.celestrak.com/NORAD/elements/amateur.txt"
+    absolute_path_filename = build_full_pathname(file_name=tle_filename)
     success: bool = False
 
     # try to get the file
@@ -65,12 +67,12 @@ def update_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
     if r:
         if r.status_code == 200:
             try:
-                with open(tle_filename, "wb") as f:
+                with open(absolute_path_filename, "wb") as f:
                     f.write(r.content)
                     f.close()
                     success = True
             except:
-                logger.info(f"Cannot update TLE data to file {tle_filename}")
+                logger.info(f"Cannot update TLE data to file {absolute_path_filename}")
     return success
 
 
@@ -110,10 +112,11 @@ def read_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
 
     success: bool = False
     tle_data = {}
+    absolute_path_filename = build_full_pathname(file_name=tle_filename)
 
     # Open the local file and read it
     try:
-        with open(f"{tle_filename}", "r") as f:
+        with open(f"{absolute_path_filename}", "r") as f:
             if f.mode == "r":
                 lines = f.readlines()
                 f.close()

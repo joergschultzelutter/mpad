@@ -28,7 +28,7 @@ from geo_conversion_modules import (
     convert_maidenhead_to_latlon,
     convert_latlon_to_maidenhead,
 )
-from utility_modules import check_if_file_exists
+from utility_modules import check_if_file_exists, build_full_pathname
 from geo_conversion_modules import haversine
 import logging
 import operator
@@ -60,16 +60,17 @@ def download_repeatermap_raw_data_to_local_file(
         True if operation was successful
     """
     success = False
+    absolute_path_filename = build_full_pathname(file_name=repeatermap_raw_data_file)
     resp = requests.get(url)
     if resp.status_code == 200:
         try:
-            with open(f"{repeatermap_raw_data_file}", "w") as f:
+            with open(f"{absolute_path_filename}", "w") as f:
                 f.write(resp.text)
                 f.close()
             success = True
         except:
             logger.info(
-                f"Cannot write repeatermap.de data to local disc file '{repeatermap_raw_data_file}'"
+                f"Cannot write repeatermap.de data to local disc file '{absolute_path_filename}'"
             )
     return success
 
@@ -95,14 +96,15 @@ def read_repeatermap_raw_data_from_disk(
     """
     success = False
     repeatermap_raw_json_content = None
+    absolute_path_filename = build_full_pathname(file_name=repeatermap_raw_data_file)
     try:
-        with open(f"{repeatermap_raw_data_file}", "r") as f:
+        with open(f"{absolute_path_filename}", "r") as f:
             if f.mode == "r":
                 repeatermap_raw_json_content = f.read()
                 f.close()
                 success = True
     except:
-        logger.info(f"Cannot read '{repeatermap_raw_data_file}' from disc")
+        logger.info(f"Cannot read '{absolute_path_filename}' from disc")
     return success, repeatermap_raw_json_content
 
 
@@ -451,14 +453,15 @@ def write_mpad_repeater_data_to_disc(
         True if operation was successful
     """
     success = False
+    absolute_path_filename = build_full_pathname(file_name=mpad_repeatermap_filename)
     try:
-        with open(f"{mpad_repeatermap_filename}", "w") as f:
+        with open(f"{absolute_path_filename}", "w") as f:
             f.write(mpad_repeatermap_json)
             f.close()
         success = True
     except:
         logger.info(
-            f"Cannot write native repeatermap data to local disc file '{mpad_repeatermap_filename}'"
+            f"Cannot write native repeatermap data to local disc file '{absolute_path_filename}'"
         )
     return success
 
@@ -484,17 +487,18 @@ def read_mpad_repeatermap_data_from_disc(
         (or empty dictionary if nothing was found)
     """
     success = False
+    absolute_path_filename = build_full_pathname(file_name=mpad_repeatermap_filename)
     mpad_repeatermap = {}  # create empty dict
-    if check_if_file_exists(mpad_repeatermap_filename):
+    if check_if_file_exists(absolute_path_filename):
         try:
-            with open(f"{mpad_repeatermap_filename}", "r") as f:
+            with open(f"{absolute_path_filename}", "r") as f:
                 if f.mode == "r":
                     mpad_repeatermap_json = f.read()
                     f.close()
                     success = True
                     mpad_repeatermap = json.loads(mpad_repeatermap_json)
         except:
-            logger.info(f"Cannot read '{mpad_repeatermap_filename}' from disc")
+            logger.info(f"Cannot read '{absolute_path_filename}' from disc")
     return success, mpad_repeatermap
 
 
@@ -729,16 +733,17 @@ def download_hearham_raw_data_to_local_file(
         True if operation was successful
     """
     success = False
+    absolute_path_filename = build_full_pathname(file_name=hearham_raw_data_file)
     resp = requests.get(url)
     if resp.status_code == 200:
         try:
-            with open(f"{hearham_raw_data_file}", "w") as f:
+            with open(f"{absolute_path_filename}", "w") as f:
                 f.write(resp.text)
                 f.close()
             success = True
         except:
             logger.info(
-                f"Cannot write hearham.com data to local disc file '{hearham_raw_data_file}'"
+                f"Cannot write hearham.com data to local disc file '{absolute_path_filename}'"
             )
     return success
 
@@ -764,14 +769,15 @@ def read_hearham_raw_data_from_disk(
     """
     success = False
     hearham_raw_json_content = None
+    absolute_path_filename = build_full_pathname(file_name=hearham_raw_data_file)
     try:
-        with open(f"{hearham_raw_data_file}", "r") as f:
+        with open(f"{absolute_path_filename}", "r") as f:
             if f.mode == "r":
                 hearham_raw_json_content = f.read()
                 f.close()
                 success = True
     except:
-        logger.info(f"Cannot read '{hearham_raw_data_file}' from disc")
+        logger.info(f"Cannot read '{absolute_path_filename}' from disc")
     return success, hearham_raw_json_content
 
 

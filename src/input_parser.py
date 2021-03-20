@@ -833,7 +833,7 @@ def parse_when(aprs_message: str):
                 regex_match = regex_string
                 when = f"{date_offset}d"
                 found_when = True
-            except ValueError:
+            except (ValueError, IndexError) as e:
                 when = None
                 found_when = False
                 date_offset = -1
@@ -848,9 +848,9 @@ def parse_when(aprs_message: str):
             when = "hour"
             found_when = True
             try:
-                hour_offset = int(matches[1])
+                hour_offset = int(matches[0])
                 regex_match = regex_string
-            except ValueError:
+            except (ValueError, IndexError) as e:
                 when = None
                 found_when = False
                 hour_offset = -1
@@ -1626,7 +1626,7 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
             try:
                 latitude = float(matches[1])
                 longitude = float(matches[2])
-            except ValueError:
+            except (ValueError, IndexError) as e:
                 latitude = longitude = 0
                 success = False
             if success:
@@ -2603,7 +2603,7 @@ def parse_keyword_number_of_results(aprs_message: str):
     if matches:
         try:
             number_of_results = int(matches[1])
-        except ValueError:
+        except (ValueError, IndexError) as e:
             number_of_results = 1
         aprs_message = re.sub(
             pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE

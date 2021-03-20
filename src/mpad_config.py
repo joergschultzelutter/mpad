@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+import os
 #
 # Program version
 #
@@ -256,3 +257,9 @@ mpad_imap_server_address = "imap.gmail.com"
 mpad_imap_server_port = 993
 mpad_imap_mail_retention_max_days = 1   # Delete mails after x days (0 = disable)
 mpad_imap_mailbox_name = "\"[Gmail]/Sent Mail\""
+
+#
+# Directory for MPAD data files (e.g. TLE data, repeater data files et al)
+#
+mpad_data_directory = "data_files"
+mpad_root_directory = os.path.abspath(os.getcwd())

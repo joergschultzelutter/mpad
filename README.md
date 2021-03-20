@@ -2,7 +2,7 @@
 
 Multi-Purpose APRS Daemon (Gollum might call also it _My Precious_ APRS Daemon)
 
-Python implementation of a multi-purpose APRS daemon (WX/METAR/CWOP prediction, satellite & other sky data, find the nearest repeater to my position, user coordinates & distance etc. ...)
+Python implementation of a multi-purpose APRS daemon (WX/METAR/TAF/CWOP reports, satellite & other celestial data, find the nearest repeater to my position, user coordinates & distance etc. ...)
 
 ## Supported features
 

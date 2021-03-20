@@ -355,8 +355,9 @@ def read_number_of_served_packages(file_name: str = "mpad_served_packages.txt"):
         number of previously served packages (or '1')
     """
     served_packages = 1
+    absolute_path_filename = build_full_pathname(file_name=file_name)
     try:
-        with open(f"{file_name}", "r") as f:
+        with open(f"{absolute_path_filename}", "r") as f:
             if f.mode == "r":
                 contents = f.read()
                 f.close()
@@ -364,7 +365,7 @@ def read_number_of_served_packages(file_name: str = "mpad_served_packages.txt"):
     except:
         served_packages = 1
         logger.info(
-            f"Cannot read number of served packages from {file_name}; will create a new file"
+            f"Cannot read number of served packages from {absolute_path_filename}; will create a new file"
         )
     return served_packages
 
@@ -386,12 +387,15 @@ def write_number_of_served_packages(
     =======
     Nothing
     """
+    absolute_path_filename = build_full_pathname(file_name=file_name)
     try:
-        with open(f"{file_name}", "w") as f:
+        with open(f"{absolute_path_filename}", "w") as f:
             f.write("%d" % served_packages)
             f.close()
     except:
-        logger.info(f"Cannot write number of served packages to {file_name}")
+        logger.info(
+            f"Cannot write number of served packages to {absolute_path_filename}"
+        )
 
 
 def add_aprs_message_to_cache(
@@ -537,8 +541,9 @@ def read_aprs_message_counter(file_name: str = "mpad_message_counter.txt"):
         last message counter (or '0')
     """
     served_packages = 0
+    absolute_path_filename = build_full_pathname(file_name=file_name)
     try:
-        with open(f"{file_name}", "r") as f:
+        with open(f"{absolute_path_filename}", "r") as f:
             if f.mode == "r":
                 contents = f.read()
                 f.close()
@@ -546,7 +551,7 @@ def read_aprs_message_counter(file_name: str = "mpad_message_counter.txt"):
     except:
         served_packages = 0
         logger.info(
-            f"Cannot read content from message counter file {file_name}; will create a new file"
+            f"Cannot read content from message counter file {absolute_path_filename}; will create a new file"
         )
     return served_packages
 
@@ -568,12 +573,73 @@ def write_aprs_message_counter(
     =======
     Nothing
     """
+    absolute_path_filename = build_full_pathname(file_name=file_name)
     try:
-        with open(f"{file_name}", "w") as f:
+        with open(f"{absolute_path_filename}", "w") as f:
             f.write("%d" % aprs_message_counter)
             f.close()
     except:
-        logger.info(f"Cannot write message counter to {file_name}")
+        logger.info(f"Cannot write message counter to {absolute_path_filename}")
+
+
+def build_full_pathname(
+    file_name: str,
+    root_path_name: str = mpad_config.mpad_root_directory,
+    relative_path_name: str = mpad_config.mpad_data_directory,
+):
+    """
+    Build a full-grown path based on $CWD, an optional relative directory name and a file name.
+
+    Parameters
+    ==========
+    file_name: 'str'
+        file name without path
+    root_path_name: 'str'
+        relative path name that we are going to add.
+    relative_path_name: 'str'
+        relative path name that we are going to add.
+
+    Returns
+    =======
+    full_path_name: 'str'
+        full path, consisting of root path name, the relative path name and the file name
+    """
+    return os.path.join(root_path_name, relative_path_name, file_name)
+
+
+def check_and_create_data_directory(
+    root_path_name: str = mpad_config.mpad_root_directory,
+    relative_path_name: str = mpad_config.mpad_data_directory,
+):
+    """
+    Check if the data directory is present and create it, if necessary
+
+    Parameters
+    ==========
+    root_path_name: 'str'
+        relative path name that we are going to add.
+    relative_path_name: 'str'
+        relative path name that we are going to add.
+
+    Returns
+    =======
+    success: bool
+        False in case of error
+    """
+    success = True
+    _data_directory = os.path.join(root_path_name, relative_path_name)
+    if not os.path.exists(_data_directory):
+        logger.info(f"Data directory {_data_directory} does not exist, creating ...")
+        try:
+            os.mkdir(path=_data_directory)
+        except OSError:
+            logger.info(f"Cannot create data directory {_data_directory}, aborting ...")
+            success = False
+    else:
+        if not os.path.isdir(_data_directory):
+            logger.info(f"{_data_directory} is not a directory, aborting ...")
+            success = False
+    return success
 
 
 if __name__ == "__main__":
@@ -596,3 +662,4 @@ if __name__ == "__main__":
 
     logger.info("Logtext erfolgreich")
     logger.info(read_program_config())
+    logger.info(build_full_pathname("hello.txt", ""))

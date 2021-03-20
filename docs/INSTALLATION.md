@@ -33,10 +33,10 @@ if the email address is not configured to a valid address (checked via regex), a
 [mpad_config]
 
 # API key for www.openweathermap.org
-openweathermapdotorg_api_key = abcdef1234567890abcdef
+openweathermapdotorg_api_key = NOT_CONFIGURED
 
 # API key for www.aprs.fi
-aprsdotfi_api_key = 123456.abcdefGHIJKLMN
+aprsdotfi_api_key = NOT_CONFIGURED
 
 # Access credentials for aprs-id
 # Any callsign different from N0CALL will disable the listen-only
@@ -49,6 +49,12 @@ aprsis_login_passcode = -1
 # will be disabled
 dapnet_login_callsign = N0CALL
 dapnet_login_passcode = -1
+
+# SMTP Credentials
+# Providers like GMail require you to set an app-specific password
+# (see https://myaccount.google.com/apppasswords)
+smtpimap_email_address = NOT_CONFIGURED
+smtpimap_email_password = NOT_CONFIGURED
 ```
 
 ### Program configuration
@@ -70,7 +76,7 @@ You also need to set the APRS-IS access and server credentials:
 - By default, MPAD will send out ASCII messages. If you prefer to send unicode messages to the user, set the ```mpad_enforce_unicode_messages``` flag to ```True```. Note that this flag only applies to outgoing messages; incoming messages in unicode format are always honored.
 - By default, MPAD already supports a couple of OpenStreetMap object categories. If you want to add more categories, change the ```osm_supported_keyword_categories``` list. Note that you are required to use the OSM native category wording - see comment below.
 - Change the ```mpad_default_user_agent``` of you run your own MPAD instance and/or fork the repo.
-- Configure the SMTP / IMAP settings in you want to enable email positioning support. Set server ports to 0 if you want to disable email. If ```mpad_imap_mail_retention_max_days``` is NOT set to zero, all sent emails from that account will be permanently deleted (moved to trash) after x days (configurable). Use this option with caution and use a separate email. 
+- Configure the SMTP / IMAP settings in you want to enable email positioning support. Set server ports to 0 if you want to disable email. If ```mpad_imap_mail_retention_max_days``` is NOT set to zero, all sent emails from that account will be permanently deleted (moved to trash) after x days (configurable). Use this option with caution and use a separate email account unless you want to experience an accidental spring cleaning of your email account's "Sent" folder :-). 
 
 Excerpt from ```mpad_config.py```:
 ```python
@@ -267,4 +273,10 @@ mpad_imap_server_address = "imap.gmail.com"
 mpad_imap_server_port = 993
 mpad_imap_mail_retention_max_days = 1   # Delete mails after x days (0 = disable)
 mpad_imap_mailbox_name = "\"[Gmail]/Sent Mail\""
+
+#
+# Directory for MPAD data files (e.g. TLE data, repeater data files et al)
+#
+mpad_data_directory = "data_files"
+mpad_root_directory = os.path.abspath(os.getcwd())
 ```
