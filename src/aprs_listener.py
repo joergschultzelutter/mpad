@@ -25,7 +25,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from output_generator import generate_output_message
 from airport_data_modules import update_local_airport_stations_file
 from repeater_modules import update_local_repeatermap_file
-from skyfield_modules import update_local_tle_file
+from skyfield_modules import update_local_mpad_satellite_data
 from utility_modules import (
     read_program_config,
     read_number_of_served_packages,
@@ -385,8 +385,8 @@ logger.info("Updating repeater database ...")
 update_local_repeatermap_file()
 #
 # Update the satellite TLE file
-logger.info("Updating TLE database ...")
-update_local_tle_file()
+logger.info("Updating satellite TLE and frequency database ...")
+update_local_mpad_satellite_data()
 
 # Now let's set up schedulers for the refresh process
 # These schedulers will download the file(s) every x days
@@ -413,12 +413,13 @@ caching_scheduler.add_job(
     args=[],
 )
 
-# Set up task for satellite TLE data download - daily download
+# Set up task for satellite TLE / frequency data
+# Download interval = every 2 days
 caching_scheduler.add_job(
-    update_local_tle_file,
+    update_local_mpad_satellite_data,
     "interval",
-    id="tle_satellite_data",
-    days=1,
+    id="tle_and_satfreq_data",
+    days=2,
     args=[],
 )
 
