@@ -168,6 +168,36 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # 2) If we find some data in this context, then it will
     # be removed from the original message in order to avoid
     # any additional occurrences at a later point in time.
+    #
+    # First, start with parsing the when/when_daytime content.
+    # As all of this data is keyword-less, we need to process and
+    # -in case the processing was successful- remove it from the
+    # original APRS string as it might otherwise get misinterpreted
+    # for e.g. call sign data
+    #
+    # The parser itself is far from perfect. It may get confused by
+    # remaining content, thus forcing it back to its default mode (wx).
+    # So we need to avoid that (if possible)
+    #
+    # Parse the "when" information if we don't have an error
+    # and if we haven't retrieved the command data in a previous run
+    if not found_when and not err and not found_my_duty_roster:
+        _msg, found_when, when, date_offset, hour_offset = parse_when(aprs_message)
+        # if we've found something, then replace the original APRS message with
+        # what is left of it (minus the parts that were removed by the parse_when
+        # parser code
+        if found_when:
+            aprs_message = _msg
+
+    # Parse the "when_daytime" information if we don't have an error
+    # and if we haven't retrieved the command data in a previous run
+    if not found_when_daytime and not err and not found_my_duty_roster:
+        _msg, found_when_daytime, when_daytime = parse_when_daytime(aprs_message)
+        # if we've found something, then replace the original APRS message with
+        # what is left of it (minus the parts that were removed by the parse_when
+        # parser code
+        if found_when_daytime:
+            aprs_message = _msg
 
     # Check if the user wants one of the following info
     # for a specific call sign WITH or withOUT SSID:
@@ -451,30 +481,30 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # case, the use may send a simple e.g. 'tomorrow' request to us
     # and we set the 'wx' 'what' command implicitly.
     #
-    # For all other cases, 'when' should now be set
+    # For all other cases, 'what' should now be set
     # Now let's try to figure out WHEN certain things are expected
     # for. We only enter the WHEN parser routines in case the
     # previous parser did nor encounter any errors.
     #
     # Parse the "when" information if we don't have an error
     # and if we haven't retrieved the command data in a previous run
-    if not found_when and not err:
-        _msg, found_when, when, date_offset, hour_offset = parse_when(aprs_message)
-        # if we've found something, then replace the original APRS message with
-        # what is left of it (minus the parts that were removed by the parse_when
-        # parser code
-        if found_when:
-            aprs_message = _msg
+    # if not found_when and not err:
+    #    _msg, found_when, when, date_offset, hour_offset = parse_when(aprs_message)
+    #    # if we've found something, then replace the original APRS message with
+    #    # what is left of it (minus the parts that were removed by the parse_when
+    #    # parser code
+    #    if found_when:
+    #        aprs_message = _msg
 
     # Parse the "when_daytime" information if we don't have an error
     # and if we haven't retrieved the command data in a previous run
-    if not found_when_daytime and not err:
-        _msg, found_when_daytime, when_daytime = parse_when_daytime(aprs_message)
-        # if we've found something, then replace the original APRS message with
-        # what is left of it (minus the parts that were removed by the parse_when
-        # parser code
-        if found_when_daytime:
-            aprs_message = _msg
+    # if not found_when_daytime and not err:
+    #    _msg, found_when_daytime, when_daytime = parse_when_daytime(aprs_message)
+    #    # if we've found something, then replace the original APRS message with
+    #    # what is left of it (minus the parts that were removed by the parse_when
+    #    # parser code
+    #    if found_when_daytime:
+    #        aprs_message = _msg
 
     #
     # We have reached the very end of the parser
@@ -2798,4 +2828,4 @@ if __name__ == "__main__":
         smtpimap_email_address,
         smtpimap_email_password,
     ) = read_program_config()
-    logger.info(pformat(parse_input_message("1d", "df1jsl-1", aprsdotfi_api_key)))
+    logger.info(pformat(parse_input_message("12h", "df1jsl-1", aprsdotfi_api_key)))
