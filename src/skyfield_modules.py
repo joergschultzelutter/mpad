@@ -30,6 +30,7 @@ from utility_modules import build_full_pathname
 import csv
 import json
 from pprint import pformat
+from utility_modules import check_if_file_exists
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -37,7 +38,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def update_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
+def download_and_write_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
     """
     Download the amateur radio satellite TLE data
     and save it to a local file.
@@ -78,6 +79,49 @@ def update_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
     return success
 
 
+def download_and_write_local_satfreq_file(
+    satfreq_filename: str = "satellite_frequencies.csv",
+):
+    """
+    Download the amateur radio satellite frequency data
+    and save it to a local file.
+
+    Parameters
+    ==========
+    satfreq_filename : 'str'
+        This local CSV file will hold the content
+        from http://www.ne.jp/asahi/hamradio/je9pel/satslist.csv
+        Default name is "satellite_frequencies.csv"
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful
+    """
+
+    file_url = "http://www.ne.jp/asahi/hamradio/je9pel/satslist.csv"
+    success = False
+    absolute_path_filename = build_full_pathname(file_name=satfreq_filename)
+
+    try:
+        r = requests.get(file_url)
+    except:
+        logger.info(f"Cannot download satellite frequency data from {file_url}")
+        r = None
+    if r:
+        if r.status_code == 200:
+            try:
+                with open(absolute_path_filename, "wb") as f:
+                    f.write(r.content)
+                    f.close()
+                    success = True
+            except:
+                logger.info(
+                    f"Cannot write satellite frequency csv file {absolute_path_filename} to disc"
+                )
+    return success
+
+
 def read_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
     """
     Imports the Celestrak TLE data from a local file.
@@ -115,15 +159,18 @@ def read_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
     success: bool = False
     tle_data = {}
     absolute_path_filename = build_full_pathname(file_name=tle_filename)
+    lines = None
 
     # Open the local file and read it
-    try:
-        with open(f"{absolute_path_filename}", "r") as f:
-            if f.mode == "r":
-                lines = f.readlines()
-                f.close()
-    except:
-        lines = None
+
+    if check_if_file_exists(absolute_path_filename):
+        try:
+            with open(f"{absolute_path_filename}", "r") as f:
+                if f.mode == "r":
+                    lines = f.readlines()
+                    f.close()
+        except:
+            lines = None
 
     if lines:
         if len(lines) % 3 != 0:
@@ -142,9 +189,13 @@ def read_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
                 tle_key = matches[2]
             else:
                 tle_key = tle_satellite.replace(" ", "-")
-            # Convenience mapping
+            # Ensure that the key is always in uppercase
+            tle_key = tle_key.upper()
+
+            # Convenience mapping :-)
             if tle_key == "ZARYA":
                 tle_key = "ISS"
+
             # Get the actual TLE data
             tle_line1 = lines[lc].rstrip()
             tle_line2 = lines[lc + 1].rstrip()
@@ -159,15 +210,279 @@ def read_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
     return success, tle_data
 
 
-def get_tle_data(satellite_name: str):
+def read_local_satfreq_file(satfreq_filename: str = "satellite_frequencies.csv"):
+    """
+    Reads the local amateur radio satellite frequency data
+    from disc, transforms the data and creates a dictionary
+    out of it.
+
+    Parameters
+    ==========
+    satfreq_filename : 'str'
+        This local CSV file holds the content
+        from http://www.ne.jp/asahi/hamradio/je9pel/satslist.csv
+        Default name is "satellite_frequencies.csv"
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful
+    satellite_dictionary: 'dict'
+        satellite dictionary, containing all satellites that
+        we have found data for. Each satellite can have 1..n
+        entries. Each entry can have different data fields.
+        Primary key = satellite ID (not satellite name)
+    """
+    success = False
+    absolute_path_filename = build_full_pathname(file_name=satfreq_filename)
+    satellite_dictionary = {}
+
+    if check_if_file_exists(absolute_path_filename):
+        try:
+            with open(absolute_path_filename) as csvfile:
+                csv_object = csv.reader(csvfile, delimiter=";")
+                for row in csv_object:
+                    # Some rows from the CSV cannot be imported; we skip those
+                    if len(row) > 6:
+                        satellite_name = row[0].strip()
+                        # Find the satellite NAME (contained in the brackets). If
+                        # found, remove it from the string. Remainder is the
+                        # satellit ID. This solution works for the majority
+                        # of the entries in the list
+                        regex_string = r"(\()(.*)(\))$"
+                        matches = re.findall(
+                            pattern=regex_string,
+                            string=satellite_name,
+                            flags=re.IGNORECASE,
+                        )
+                        if matches:
+                            # This solution is far from ideal but the source file has way too many different formats
+                            # so we'll try to get at least some of that data
+                            satellite_key = re.sub(
+                                pattern=regex_string,
+                                repl="",
+                                string=satellite_name,
+                                flags=re.IGNORECASE,
+                            ).strip()
+                        else:
+                            # if brackets are missing, assime satellite ID = satellite name
+                            satellite_key = satellite_name.replace(" ", "-")
+
+                        # Convert to UpperCase. This file may provide some
+                        # sats in upper/lowercase; TLE data however is always in uppercase
+                        satellite_key = satellite_key.upper()
+
+                        # extract uplink/downloing frequencies etc
+                        # do not convert to float but treat them as
+                        # string; some entries contain more than one
+                        # frequency value for e.g. uplink
+                        uplink = row[2].strip()
+                        uplink = uplink if len(uplink) != 0 else None
+                        downlink = row[3].strip()
+                        downlink = downlink if len(downlink) != 0 else None
+                        beacon = row[4].strip()
+                        beacon = beacon if len(beacon) != 0 else None
+                        satellite_mode = row[5].strip()
+                        satellite_mode = (
+                            satellite_mode if len(satellite_mode) != 0 else None
+                        )
+
+                        # Create a dictionary entry for that single uplink/downlink entry
+                        # Each satellite can have 1..n of such entries
+                        satellite_element = {
+                            # "satellite_name": satellite_name,
+                            "uplink": uplink,
+                            "downlink": downlink,
+                            "beacon": beacon,
+                            "satellite_mode": satellite_mode,
+                        }
+                        # We store these entries in a list
+                        # if our satellite already exists in the final
+                        # dictionary, get the existing list so we can
+                        # add the new entry to it. Otherwise, create a
+                        # new empty list.
+                        # Finally, add the new entry
+                        if satellite_key in satellite_dictionary:
+                            satellite_data = satellite_dictionary[satellite_key]
+                        else:
+                            satellite_data = []
+                        satellite_data.append(satellite_element)
+                        satellite_dictionary[satellite_key] = satellite_data
+            success = True
+        except:
+            success = False
+    return success, satellite_dictionary
+
+
+def update_local_mpad_satellite_data():
+    """
+    Wrapper method for importing both TLE and Satellite Frequency data,
+    blending the data records (whereas possible) and write the JSON content
+    to a local file.
+
+    This method is used by MPAD's scheduler process.
+
+    If the satellite frequency file cannot be found or cannot be downloaded, the
+    TLE file is still out main priority. As we read both files in a sequential manner,
+    there shouldn't be any issues, though.
+
+    Parameters
+    ==========
+
+    Returns
+    =======
+    success: 'bool'
+        True if request was successful
+    """
+
+    logger.info("Generating local satellite frequencies database")
+    download_and_write_local_satfreq_file()
+    logger.info("Generating local TLE database")
+    download_and_write_local_tle_file()
+    logger.info("Creating blended satellite database version")
+    success, json_satellite_data = create_native_satellite_data()
+    if success:
+        logger.info("Writing blended satellite database to disc")
+        success = write_mpad_satellite_data_to_disc(
+            mpad_satellite_json=json_satellite_data
+        )
+    return success
+
+
+def create_native_satellite_data():
+    """
+    Based on the satellite ID (not the satellite name), try
+    to enrich the TLE dictionary with the matching satellite
+    frequency data. Ultimately, dump the dict to a JSON string
+
+    Parameters
+    ==========
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful
+    tle_data: 'str'
+        dict content, dumped to a JSON string object
+        data is ready to be written to a file
+    """
+
+    success = False
+    # read the local TLE data and store the content in a dict variable
+    success, tle_data = read_local_tle_file()
+    if success:
+        # read the satellite frequency data and store the content
+        # in a dict variable
+        success, satfreq_data = read_local_satfreq_file()
+        if success:
+            # Iterate through the TLE satellite ID's
+            # These entries are our master
+            for tle_satellite in tle_data:
+                # Does the TLE satellite ID exist in the
+                # satellite frequency database?
+                if tle_satellite in satfreq_data:
+                    # Yes, get the frequency entries from that
+                    # dict and amend the TLE entry
+                    satfreq_json = satfreq_data[tle_satellite]
+                    tle_json = tle_data[tle_satellite]
+                    tle_json["frequencies"] = satfreq_json
+                    tle_data[tle_satellite] = tle_json
+        # TLE data needs to be present - frequency data
+        # is rather optional. As long as we can download
+        # the TLE data, assume a positive status
+        success = True
+    else:
+        tle_data = {}
+
+    # dump the TLE entry to a string so that we
+    # can write the file to disc
+    return success, json.dumps(tle_data)
+
+
+def write_mpad_satellite_data_to_disc(
+    mpad_satellite_json: str,
+    mpad_satellite_filename: str = "mpad_satellite_data.json",
+):
+    """
+    writes the processed satellite data in enriched MPAD format
+    to disc and returns the operation's status
+    Enriched format contains TLE data plus frequencies;
+
+    Parameters
+    ==========
+    mpad_satellite_json: 'str'
+        json string which contains the enriched satellite data
+    mpad_satellite_filename: 'str'
+        file name of the native MPAD satellite data
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful
+    """
+    success = False
+    absolute_path_filename = build_full_pathname(file_name=mpad_satellite_filename)
+    try:
+        with open(f"{absolute_path_filename}", "w") as f:
+            f.write(mpad_satellite_json)
+            f.close()
+        success = True
+    except:
+        logger.info(
+            f"Cannot write native satellite data to local disc file '{absolute_path_filename}'"
+        )
+    return success
+
+
+def read_mpad_satellite_data_from_disc(
+    mpad_satellite_filename: str = "mpad_satellite_data.json",
+):
+    """
+    reads the pre-processed satellite data in enriched MPAD format
+    (JSON) from disc, then returns the operation's status
+    and a dict object which contains the JSON data
+    Enriched format contains TLE data plus frequencies
+
+    Parameters
+    ==========
+    mpad_satellite_filename: 'str'
+        file name of the native MPAD satellite data
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful
+    mpad_satellite_data: 'dict'
+        dictionary, containing the enriched satellite data
+    """
+    success = False
+    absolute_path_filename = build_full_pathname(file_name=mpad_satellite_filename)
+    mpad_satellite_data = {}  # create empty dict
+    if check_if_file_exists(absolute_path_filename):
+        try:
+            with open(f"{absolute_path_filename}", "r") as f:
+                if f.mode == "r":
+                    mpad_satellite_data_json = f.read()
+                    f.close()
+                    mpad_satellite_data = json.loads(mpad_satellite_data_json)
+                    success = True
+        except:
+            logger.info(
+                f"Cannot read MPAD satellite data file '{absolute_path_filename}' from disc"
+            )
+            success = False
+    return success, mpad_satellite_data
+
+
+def get_tle_data(satellite_id: str):
     """
     Try to look up the given (partial) satellite name
     and return its TLE data.
 
     Parameters
     ==========
-    satellite_name: 'str'
-        Name of the satellite that is to be searched.
+    satellite_id: 'str'
+        ID of the satellite that is to be searched.
         ID or (if ID not present) dash-ed name
 
     Returns
@@ -182,21 +497,63 @@ def get_tle_data(satellite_name: str):
     success: bool = False
     tle_data_line1 = tle_data_line2 = tle_satellite = None
 
-    success, tle_data = read_local_tle_file()
+    success, satellite_data = read_mpad_satellite_data_from_disc()
     if success:
-        satellite_name = satellite_name.upper()
+        satellite_id = satellite_id.upper()
         # Convenience mapping :-)
-        if satellite_name == "ZARYA":
-            satellite_name = "ISS"
+        if satellite_id == "ZARYA":
+            satellite_id = "ISS"
 
-        if satellite_name in tle_data:
-            tle_satellite = tle_data[satellite_name]["satellite_name"]
-            tle_data_line1 = tle_data[satellite_name]["tle_line1"]
-            tle_data_line2 = tle_data[satellite_name]["tle_line2"]
+        if satellite_id in satellite_data:
+            tle_satellite = satellite_data[satellite_id]["satellite_name"]
+            tle_data_line1 = satellite_data[satellite_id]["tle_line1"]
+            tle_data_line2 = satellite_data[satellite_id]["tle_line2"]
             success = True
         else:
             success = False
     return success, tle_satellite, tle_data_line1, tle_data_line2
+
+
+def get_satellite_frequency_data(satellite_id: str):
+    """
+    Try to look up the given (partial) satellite name
+    and return its satellite frequency data whereas present
+
+    Parameters
+    ==========
+    satellite_id: 'str'
+        Name of the satellite that is to be searched.
+        ID or (if ID not present) dash-ed name
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful
+    satellite_name: 'str'
+        Name of the satellite (if found)
+    frequency_data: 'list'
+        List item, containing 0..n dict entries of
+        satellite_data
+    """
+    success: bool = False
+    frequency_data = []
+    satellite_name = None
+
+    success, satellite_data = read_mpad_satellite_data_from_disc()
+    if success:
+        satellite_id = satellite_id.upper()
+        # Convenience mapping :-)
+        if satellite_id == "ZARYA":
+            satellite_id = "ISS"
+
+        if satellite_id in satellite_data:
+            satellite_name = satellite_data[satellite_id]["satellite_name"]
+            if "frequencies" in satellite_data[satellite_id]:
+                frequency_data = satellite_data[satellite_id]["frequencies"]
+            success = True
+        else:
+            success = False
+    return success, satellite_name, frequency_data
 
 
 def get_next_satellite_pass_for_latlon(
@@ -256,7 +613,7 @@ def get_next_satellite_pass_for_latlon(
     # Try to get the satellite information from the dictionary
     # Return error settings if not found
     success, tle_satellite, tle_data_line1, tle_data_line2 = get_tle_data(
-        tle_satellite_name
+        satellite_id=tle_satellite_name
     )
     if success:
         ts = api.load.timescale()
@@ -482,267 +839,12 @@ def get_sun_moon_rise_set_for_latlon(
     return sunrise, sunset, moonrise, moonset
 
 
-def write_local_satfreq_file(satfreq_filename: str = "satellite_frequencies.csv"):
-    """
-    Download the amateur radio satellite frequency data
-    and save it to a local file.
-
-    Parameters
-    ==========
-    satfreq_filename : 'str'
-        This local CSV file will hold the content
-        from http://www.ne.jp/asahi/hamradio/je9pel/satslist.csv
-        Default name is "satellite_frequencies.csv"
-
-    Returns
-    =======
-    success: 'bool'
-        True if operation was successful
-    """
-
-    file_url = "http://www.ne.jp/asahi/hamradio/je9pel/satslist.csv"
-    success = False
-    absolute_path_filename = build_full_pathname(file_name=satfreq_filename)
-
-    try:
-        r = requests.get(file_url)
-    except:
-        logger.info(f"Cannot download satellite frequency data from {file_url}")
-        r = None
-    if r:
-        if r.status_code == 200:
-            try:
-                with open(absolute_path_filename, "wb") as f:
-                    f.write(r.content)
-                    f.close()
-                    success = True
-            except:
-                logger.info(
-                    f"Cannot write satellite frequency csv file {absolute_path_filename} to disc"
-                )
-    return success
-
-
-def read_local_satfreq_file(satfreq_filename: str = "satellite_frequencies.csv"):
-    """
-    Reads the local amateur radio satellite frequency data
-    from disc, transforms the data and creates a dictionary
-    out of it.
-
-    Parameters
-    ==========
-    satfreq_filename : 'str'
-        This local CSV file holds the content
-        from http://www.ne.jp/asahi/hamradio/je9pel/satslist.csv
-        Default name is "satellite_frequencies.csv"
-
-    Returns
-    =======
-    success: 'bool'
-        True if operation was successful
-    satellite_dictionary: 'dict'
-        satellite dictionary, containing all satellites that
-        we have found data for. Each satellite can have 1..n
-        entries. Each entry can have different data fields.
-        Primary key = satellite ID (not satellite name)
-    """
-    success = False
-    absolute_path_filename = build_full_pathname(file_name=satfreq_filename)
-    satellite_dictionary = {}
-
-    try:
-        with open(absolute_path_filename) as csvfile:
-            csv_object = csv.reader(csvfile, delimiter=";")
-            for row in csv_object:
-                # Some rows from the CSV cannot be imported; we skip those
-                if len(row) > 6:
-                    satellite_name = row[0].strip()
-                    # Find the satellite NAME (contained in the brackets). If
-                    # found, remove it from the string. Remainder is the
-                    # satellit ID. This solution works for the majority
-                    # of the entries in the list
-                    regex_string = r"(\()(.*)(\))$"
-                    matches = re.findall(
-                        pattern=regex_string, string=satellite_name, flags=re.IGNORECASE
-                    )
-                    if matches:
-                        # This solution is far from ideal but the source file has way too many different formats
-                        # so we'll try to get at least some of that data
-                        satellite_key = re.sub(
-                            pattern=regex_string,
-                            repl="",
-                            string=satellite_name,
-                            flags=re.IGNORECASE,
-                        ).strip()
-                    else:
-                        # if brackets are missing, assime satellite ID = satellite name
-                        satellite_key = satellite_name.replace(" ", "-")
-
-                    # extract uplink/downloing frequencies etc
-                    # do not convert to float but treat them as
-                    # string; some entries contain more than one
-                    # frequency value for e.g. uplink
-                    uplink = row[2].strip()
-                    uplink = uplink if len(uplink) != 0 else None
-                    downlink = row[3].strip()
-                    downlink = downlink if len(downlink) != 0 else None
-                    beacon = row[4].strip()
-                    beacon = beacon if len(beacon) != 0 else None
-                    satellite_mode = row[5].strip()
-                    satellite_mode = (
-                        satellite_mode if len(satellite_mode) != 0 else None
-                    )
-
-                    # Create a dictionary entry for that single uplink/downlink entry
-                    # Each satellite can have 1..n of such entries
-                    satellite_element = {
-                        # "satellite_name": satellite_name,
-                        "uplink": uplink,
-                        "downlink": downlink,
-                        "beacon": beacon,
-                        "satellite_mode": satellite_mode,
-                    }
-                    # We store these entries in a list
-                    # if our satellite already exists in the final
-                    # dictionary, get the existing list so we can
-                    # add the new entry to it. Otherwise, create a
-                    # new empty list.
-                    # Finally, add the new entry
-                    if satellite_key in satellite_dictionary:
-                        satellite_data = satellite_dictionary[satellite_key]
-                    else:
-                        satellite_data = []
-                    satellite_data.append(satellite_element)
-                    satellite_dictionary[satellite_key] = satellite_data
-        success = True
-    except:
-        success = False
-    return success, satellite_dictionary
-
-
-def create_native_satellite_data():
-    """
-    Based on the satellite ID (not the satellite name), try
-    to enrich the TLE dictionary with the matching satellite
-    frequency data. Ultimately, dump the dict to a JSON string
-
-    Parameters
-    ==========
-
-    Returns
-    =======
-    success: 'bool'
-        True if operation was successful
-    tle_data: 'str'
-        dict content, dumped to a JSON string object
-        data is ready to be written to a file
-    """
-
-    success = False
-    logger.info("Updating local satellite database")
-    # read the local TLE data and store the content in a dict variable
-    success, tle_data = read_local_tle_file()
-    if success:
-        # read the satellite frequency data and store the content
-        # in a dict variable
-        success, satfreq_data = read_local_satfreq_file()
-        if success:
-            # Iterate through the TLE satellite ID's
-            # These entries are our master
-            for tle_satellite in tle_data:
-                # Does the TLE satellite ID exist in the
-                # satellite frequency database?
-                if tle_satellite in satfreq_data:
-                    # Yes, get the frequency entries from that
-                    # dict and amend the TLE entry
-                    satfreq_json = satfreq_data[tle_satellite]
-                    tle_json = tle_data[tle_satellite]
-                    tle_json["frequencies"] = satfreq_json
-                    tle_data[tle_satellite] = tle_json
-        # TLE data needs to be present - frequency data
-        # is rather optional. As long as we can download
-        # the TLE data, assume a positive status
-        success = True
-    else:
-        tle_data = {}
-
-    # dump the TLE entry to a string so that we
-    # can write the file to disc
-    return success, json.dumps(tle_data)
-
-
-def update_local_satellite_data_file():
-    """
-    Wrapper method for importing both TLE and Satellite Frequency data,
-    blending the data records (whereas possible) and write the JSON content
-    to a local file.
-
-    The function relies on the scheduler having downloaded the satellite
-    *frequency* file via separate scheduler. Unlike the TLE file, we don't refresh
-    the satellite frequencies on a daily basis
-
-    If the satellite frequency file cannot be found or cannot be downloaded, the
-    TLE file is still out main priority (and present)
-
-    Parameters
-    ==========
-
-    Returns
-    =======
-    success: 'bool'
-        True if request was successful
-    """
-
-    update_local_tle_file()
-    success, json_satellite_data = create_native_satellite_data()
-    if success:
-        success = write_mpad_satellite_data_to_disc(
-            mpad_satellite_json=json_satellite_data
-        )
-    return success
-
-
-def write_mpad_satellite_data_to_disc(
-    mpad_satellite_json: str,
-    mpad_satellite_filename: str = "mpad_satellite_data.json",
-):
-    """
-    writes the processed satellite data in enriched MPAD format
-    to disc and returns the operation's status
-    Enriched format contains TLE data plus frequencies;
-
-    Parameters
-    ==========
-    mpad_satellite_json: 'str'
-        json string which contains the enriched satellite data
-    mpad_satellite_filename: 'str'
-        file name of the native MPAD satellite data
-
-    Returns
-    =======
-    success: 'bool'
-        True if operation was successful
-    """
-    success = False
-    absolute_path_filename = build_full_pathname(file_name=mpad_satellite_filename)
-    try:
-        with open(f"{absolute_path_filename}", "w") as f:
-            f.write(mpad_satellite_json)
-            f.close()
-        success = True
-    except:
-        logger.info(
-            f"Cannot write native satellite data to local disc file '{absolute_path_filename}'"
-        )
-    return success
-
-
 if __name__ == "__main__":
-    update_local_tle_file()
-    logger.info(write_local_satfreq_file())
+    update_local_mpad_satellite_data()
 
     logger.info("Get TLE data for Es'Hail2")
-    logger.info(get_tle_data("ES'HAIL-2"))
+    logger.info(get_tle_data(satellite_id="ES'HAIL-2"))
+    logger.info(get_satellite_frequency_data(satellite_id="ISS"))
     logger.info("Get next ISS pass")
     thedate = datetime.datetime.utcnow()
     logger.info(
@@ -758,6 +860,3 @@ if __name__ == "__main__":
             )
         )
     )
-    logger.info(write_local_satfreq_file())
-
-    logger.info(update_local_satellite_data_file())
