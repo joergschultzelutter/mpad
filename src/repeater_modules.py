@@ -495,10 +495,13 @@ def read_mpad_repeatermap_data_from_disc(
                 if f.mode == "r":
                     mpad_repeatermap_json = f.read()
                     f.close()
-                    success = True
                     mpad_repeatermap = json.loads(mpad_repeatermap_json)
+                    success = True
         except:
-            logger.info(f"Cannot read '{absolute_path_filename}' from disc")
+            logger.info(
+                f"Cannot read MPAD repeatedmap data file '{absolute_path_filename}' from disc"
+            )
+            success = False
     return success, mpad_repeatermap
 
 
@@ -521,7 +524,9 @@ def update_local_repeatermap_file():
     download_hearham_raw_data_to_local_file()
     success, local_repeatermap_json = create_native_mpad_repeater_data()
     if success:
-        success = write_mpad_repeater_data_to_disc(mpad_repeatermap_json=local_repeatermap_json)
+        success = write_mpad_repeater_data_to_disc(
+            mpad_repeatermap_json=local_repeatermap_json
+        )
     return success
 
 
