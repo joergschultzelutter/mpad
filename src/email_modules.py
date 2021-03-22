@@ -365,11 +365,11 @@ def imap_garbage_collector(smtpimap_email_address: str, smtpimap_email_password:
                 user=smtpimap_email_address, password=smtpimap_email_password
             )
             if typ == "OK":
-                logger.debug("IMAP login successful")
+                logger.info(msg="IMAP login successful")
                 # typ, dat = imap.list()     # get list of mailboxes
                 typ, dat = imap.select(mailbox=mpad_config.mpad_imap_mailbox_name)
                 if typ == "OK":
-                    logger.debug("IPAP folder SELECT successful")
+                    logger.info(msg=f"IMAP folder SELECT for {mpad_config.mpad_imap_mailbox_name} successful")
                     typ, msgnums = imap.search(None, "ALL", query_parms)
                     if typ == "OK":
                         for num in msgnums[0].split():

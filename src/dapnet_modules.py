@@ -110,7 +110,7 @@ if __name__ == "__main__":
         dapnet_login_passcode,
     ) = read_program_config()
     if success:
-        logger.debug(
+        logger.info(
             send_dapnet_message(
                 from_callsign="DF1JSL-1",
                 to_callsign="DF1JSL-8",
