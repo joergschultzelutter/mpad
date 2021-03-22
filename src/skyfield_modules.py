@@ -171,6 +171,8 @@ def read_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
                     f.close()
         except:
             lines = None
+    else:
+        logger.info(f"Celestrak TLE file '{absolute_path_filename}' does not exist")
 
     if lines:
         if len(lines) % 3 != 0:
@@ -311,6 +313,10 @@ def read_local_satfreq_file(satfreq_filename: str = "satellite_frequencies.csv")
             success = True
         except:
             success = False
+    else:
+        logger.info(
+            f"Satellite frequency data file '{absolute_path_filename}' does not exist"
+        )
     return success, satellite_dictionary
 
 
@@ -471,6 +477,10 @@ def read_mpad_satellite_data_from_disc(
                 f"Cannot read MPAD satellite data file '{absolute_path_filename}' from disc"
             )
             success = False
+    else:
+        logger.info(
+            f"MPAD satellite data file '{absolute_path_filename}' does not exist"
+        )
     return success, mpad_satellite_data
 
 

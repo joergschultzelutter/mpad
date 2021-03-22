@@ -52,7 +52,6 @@ import logging
 import aprslib
 import time
 import mpad_config
-import os
 from expiringdict import ExpiringDict
 
 ########################################

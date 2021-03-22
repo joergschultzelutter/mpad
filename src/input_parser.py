@@ -2851,6 +2851,6 @@ if __name__ == "__main__":
     ) = read_program_config()
     logger.info(
         pformat(
-            parse_input_message("bad driburg;de 12h", "df1jsl-1", aprsdotfi_api_key)
+            parse_input_message("los angeles", "df1jsl-1", aprsdotfi_api_key)
         )
     )

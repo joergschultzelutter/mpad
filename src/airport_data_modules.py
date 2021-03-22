@@ -25,7 +25,8 @@ from bs4 import BeautifulSoup
 import re
 import math
 import logging
-from utility_modules import build_full_pathname
+from utility_modules import check_if_file_exists, build_full_pathname
+
 
 # icao https://www.aviationweather.gov/docs/metar/stations.txt
 
@@ -63,15 +64,19 @@ def read_local_airport_data_file(
     iata_dict = {}  # create empty dict
 
     absolute_path_filename = build_full_pathname(file_name=airport_stations_filename)
+    lines = None
 
     # Open the local file and read it
-    try:
-        with open(f"{absolute_path_filename}", "r") as f:
-            if f.mode == "r":
-                lines = f.readlines()
-                f.close()
-    except:
-        lines = None
+    if check_if_file_exists(absolute_path_filename):
+        try:
+            with open(f"{absolute_path_filename}", "r") as f:
+                if f.mode == "r":
+                    lines = f.readlines()
+                    f.close()
+        except:
+            lines = None
+    else:
+        logger.info(f"Airport data file '{absolute_path_filename}' does not exist")
 
     # If the file did contain content, then parse it
     if lines:
@@ -304,7 +309,7 @@ def update_local_airport_stations_file(
     try:
         r = requests.get(file_url)
     except:
-        logger.info(f"Cannot download airport data from {file_url}")
+        logger.info(f"Cannot download airport data from '{file_url}'")
         r = None
     if r:
         if r.status_code == 200:
@@ -315,7 +320,7 @@ def update_local_airport_stations_file(
                     success = True
             except:
                 logger.info(
-                    f"Cannot update airport data to local file {absolute_path_filename}"
+                    f"Cannot update airport data to local file '{absolute_path_filename}'"
                 )
     return success
 

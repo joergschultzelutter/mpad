@@ -97,14 +97,19 @@ def read_repeatermap_raw_data_from_disk(
     success = False
     repeatermap_raw_json_content = None
     absolute_path_filename = build_full_pathname(file_name=repeatermap_raw_data_file)
-    try:
-        with open(f"{absolute_path_filename}", "r") as f:
-            if f.mode == "r":
-                repeatermap_raw_json_content = f.read()
-                f.close()
-                success = True
-    except:
-        logger.info(f"Cannot read '{absolute_path_filename}' from disc")
+    if check_if_file_exists(absolute_path_filename):
+        try:
+            with open(f"{absolute_path_filename}", "r") as f:
+                if f.mode == "r":
+                    repeatermap_raw_json_content = f.read()
+                    f.close()
+                    success = True
+        except:
+            logger.info(f"Cannot read '{absolute_path_filename}' from disc")
+    else:
+        logger.info(
+            f"Repeatermap raw data file '{absolute_path_filename}' does not exist!"
+        )
     return success, repeatermap_raw_json_content
 
 
@@ -499,9 +504,13 @@ def read_mpad_repeatermap_data_from_disc(
                     success = True
         except:
             logger.info(
-                f"Cannot read MPAD repeatedmap data file '{absolute_path_filename}' from disc"
+                f"Cannot read MPAD repeatermap data file '{absolute_path_filename}' from disc"
             )
             success = False
+    else:
+        logger.info(
+            f"MPAD repeatermap data file '{absolute_path_filename}' does not exist!"
+        )
     return success, mpad_repeatermap
 
 
@@ -775,14 +784,17 @@ def read_hearham_raw_data_from_disk(
     success = False
     hearham_raw_json_content = None
     absolute_path_filename = build_full_pathname(file_name=hearham_raw_data_file)
-    try:
-        with open(f"{absolute_path_filename}", "r") as f:
-            if f.mode == "r":
-                hearham_raw_json_content = f.read()
-                f.close()
-                success = True
-    except:
-        logger.info(f"Cannot read '{absolute_path_filename}' from disc")
+    if check_if_file_exists(absolute_path_filename):
+        try:
+            with open(f"{absolute_path_filename}", "r") as f:
+                if f.mode == "r":
+                    hearham_raw_json_content = f.read()
+                    f.close()
+                    success = True
+        except:
+            logger.info(f"Cannot read '{absolute_path_filename}' from disc")
+    else:
+        logger.info(f"Hearham.com raw data file '{absolute_path_filename}' does not exist!")
     return success, hearham_raw_json_content
 
 
