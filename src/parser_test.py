@@ -1,5 +1,7 @@
 #
-# Parser Test file
+# Parser Test file - you can use this code for test runs on the input parser and output generator
+# The result is equivalent to what would be sent to aprs-is
+# Populate the main function's 'testcall' parameter with the APRS message that you want to have parsed
 #
 from utility_modules import read_program_config
 from input_parser import parse_input_message
