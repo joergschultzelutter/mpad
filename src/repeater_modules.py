@@ -70,7 +70,7 @@ def download_repeatermap_raw_data_to_local_file(
             success = True
         except:
             logger.info(
-                f"Cannot write repeatermap.de data to local disc file '{absolute_path_filename}'"
+                msg=f"Cannot write repeatermap.de data to local disc file '{absolute_path_filename}'"
             )
     return success
 
@@ -105,10 +105,10 @@ def read_repeatermap_raw_data_from_disk(
                     f.close()
                     success = True
         except:
-            logger.info(f"Cannot read '{absolute_path_filename}' from disc")
+            logger.info(msg=f"Cannot read '{absolute_path_filename}' from disc")
     else:
         logger.info(
-            f"Repeatermap raw data file '{absolute_path_filename}' does not exist!"
+            msg=f"Repeatermap raw data file '{absolute_path_filename}' does not exist!"
         )
     return success, repeatermap_raw_json_content
 
@@ -202,21 +202,23 @@ def create_native_mpad_repeater_data():
     success = False
     mpad_repeater_dict = {}  # Create empty dict
 
-    logger.info("Updating local repeater database")
+    logger.info(msg="Updating local repeater database")
 
     success, mpad_repeater_dict = process_raw_data_from_repeatermap_de(
         mpad_repeater_dict=mpad_repeater_dict
     )
-    logger.info("Have processed data from repeatermap.de")
+    logger.info(msg="Have processed data from repeatermap.de")
 
     success, mpad_repeater_dict = process_raw_data_from_hearham_com(
         mpad_repeater_dict=mpad_repeater_dict
     )
-    logger.info("Have processed data from hearham.com")
+    logger.info(msg="Have processed data from hearham.com")
 
     mpad_repeatermap_json = json.dumps(mpad_repeater_dict)
     success = True
-    logger.info(f"Have retrieved total of {len(mpad_repeater_dict)} repeater entries")
+    logger.info(
+        msg=f"Have retrieved total of {len(mpad_repeater_dict)} repeater entries"
+    )
 
     return success, mpad_repeatermap_json
 
@@ -466,7 +468,7 @@ def write_mpad_repeater_data_to_disc(
         success = True
     except:
         logger.info(
-            f"Cannot write native repeatermap data to local disc file '{absolute_path_filename}'"
+            msg=f"Cannot write native repeatermap data to local disc file '{absolute_path_filename}'"
         )
     return success
 
@@ -504,12 +506,12 @@ def read_mpad_repeatermap_data_from_disc(
                     success = True
         except:
             logger.info(
-                f"Cannot read MPAD repeatermap data file '{absolute_path_filename}' from disc"
+                msg=f"Cannot read MPAD repeatermap data file '{absolute_path_filename}' from disc"
             )
             success = False
     else:
         logger.info(
-            f"MPAD repeatermap data file '{absolute_path_filename}' does not exist!"
+            msg=f"MPAD repeatermap data file '{absolute_path_filename}' does not exist!"
         )
     return success, mpad_repeatermap
 
@@ -757,7 +759,7 @@ def download_hearham_raw_data_to_local_file(
             success = True
         except:
             logger.info(
-                f"Cannot write hearham.com data to local disc file '{absolute_path_filename}'"
+                msg=f"Cannot write hearham.com data to local disc file '{absolute_path_filename}'"
             )
     return success
 
@@ -792,9 +794,11 @@ def read_hearham_raw_data_from_disk(
                     f.close()
                     success = True
         except:
-            logger.info(f"Cannot read '{absolute_path_filename}' from disc")
+            logger.info(msg=f"Cannot read '{absolute_path_filename}' from disc")
     else:
-        logger.info(f"Hearham.com raw data file '{absolute_path_filename}' does not exist!")
+        logger.info(
+            msg=f"Hearham.com raw data file '{absolute_path_filename}' does not exist!"
+        )
     return success, hearham_raw_json_content
 
 

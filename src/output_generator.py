@@ -156,7 +156,7 @@ def generate_output_message(response_parameters: dict):
             "Output parser has encountered an unknown action command",
         ]
         logger.info(
-            f"Unable to generate output message; unknown 'what' command '{what}': {response_parameters}"
+            msg=f"Unable to generate output message; unknown 'what' command '{what}': {response_parameters}"
         )
 
     return success, output_list

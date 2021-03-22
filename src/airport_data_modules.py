@@ -76,7 +76,7 @@ def read_local_airport_data_file(
         except:
             lines = None
     else:
-        logger.info(f"Airport data file '{absolute_path_filename}' does not exist")
+        logger.info(msg=f"Airport data file '{absolute_path_filename}' does not exist")
 
     # If the file did contain content, then parse it
     if lines:
@@ -309,7 +309,7 @@ def update_local_airport_stations_file(
     try:
         r = requests.get(file_url)
     except:
-        logger.info(f"Cannot download airport data from '{file_url}'")
+        logger.info(msg=f"Cannot download airport data from '{file_url}'")
         r = None
     if r:
         if r.status_code == 200:
@@ -320,7 +320,7 @@ def update_local_airport_stations_file(
                     success = True
             except:
                 logger.info(
-                    f"Cannot update airport data to local file '{absolute_path_filename}'"
+                    msg=f"Cannot update airport data to local file '{absolute_path_filename}'"
                 )
     return success
 

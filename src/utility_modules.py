@@ -365,7 +365,7 @@ def read_number_of_served_packages(file_name: str = "mpad_served_packages.txt"):
     except:
         served_packages = 1
         logger.info(
-            f"Cannot read number of served packages from {absolute_path_filename}; will create a new file"
+            msg=f"Cannot read number of served packages from {absolute_path_filename}; will create a new file"
         )
     return served_packages
 
@@ -394,7 +394,7 @@ def write_number_of_served_packages(
             f.close()
     except:
         logger.info(
-            f"Cannot write number of served packages to {absolute_path_filename}"
+            msg=f"Cannot write number of served packages to {absolute_path_filename}"
         )
 
 
@@ -551,7 +551,7 @@ def read_aprs_message_counter(file_name: str = "mpad_message_counter.txt"):
     except:
         served_packages = 0
         logger.info(
-            f"Cannot read content from message counter file {absolute_path_filename}; will create a new file"
+            msg=f"Cannot read content from message counter file {absolute_path_filename}; will create a new file"
         )
     return served_packages
 
@@ -579,7 +579,7 @@ def write_aprs_message_counter(
             f.write("%d" % aprs_message_counter)
             f.close()
     except:
-        logger.info(f"Cannot write message counter to {absolute_path_filename}")
+        logger.info(msg=f"Cannot write message counter to {absolute_path_filename}")
 
 
 def build_full_pathname(
@@ -629,15 +629,19 @@ def check_and_create_data_directory(
     success = True
     _data_directory = os.path.join(root_path_name, relative_path_name)
     if not os.path.exists(_data_directory):
-        logger.info(f"Data directory {_data_directory} does not exist, creating ...")
+        logger.info(
+            msg=f"Data directory {_data_directory} does not exist, creating ..."
+        )
         try:
             os.mkdir(path=_data_directory)
         except OSError:
-            logger.info(f"Cannot create data directory {_data_directory}, aborting ...")
+            logger.info(
+                msg=f"Cannot create data directory {_data_directory}, aborting ..."
+            )
             success = False
     else:
         if not os.path.isdir(_data_directory):
-            logger.info(f"{_data_directory} is not a directory, aborting ...")
+            logger.info(msg=f"{_data_directory} is not a directory, aborting ...")
             success = False
     return success
 

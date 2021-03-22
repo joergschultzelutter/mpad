@@ -109,15 +109,15 @@ def send_beacon_and_status_msg(myaprsis: aprslib.inet.IS, simulate_send: bool = 
     =======
     none
     """
-    logger.info("Reached beacon interval; sending beacons")
+    logger.info(msg="Reached beacon interval; sending beacons")
     for bcn in beacon_text_array:
         stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}:{bcn}"
         if not simulate_send:
-            logger.info(f"Sending beacon: {stringtosend}")
+            logger.info(msg=f"Sending beacon: {stringtosend}")
             myaprsis.sendall(stringtosend)
             time.sleep(mpad_config.packet_delay_other)
         else:
-            logger.info(f"Simulating beacons: {stringtosend}")
+            logger.info(msg=f"Simulating beacons: {stringtosend}")
 
 
 def send_bulletin_messages(myaprsis: aprslib.inet.IS, simulate_send: bool = True):
@@ -137,15 +137,15 @@ def send_bulletin_messages(myaprsis: aprslib.inet.IS, simulate_send: bool = True
     =======
     none
     """
-    logger.info("reached bulletin interval; sending bulletins")
+    logger.info(msg="reached bulletin interval; sending bulletins")
     for recipient_id, bln in bulletin_texts.items():
         stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}::{recipient_id:9}:{bln}"
         if not simulate_send:
-            logger.info(f"Sending bulletin: {stringtosend}")
+            logger.info(msg=f"Sending bulletin: {stringtosend}")
             myaprsis.sendall(stringtosend)
             time.sleep(mpad_config.packet_delay_other)
         else:
-            logger.info(f"simulating bulletins: {stringtosend}")
+            logger.info(msg=f"simulating bulletins: {stringtosend}")
 
 
 def send_ack(
@@ -177,14 +177,14 @@ def send_ack(
     """
 
     if source_msg_no:
-        logger.info("Preparing acknowledgment receipt")
+        logger.info(msg="Preparing acknowledgment receipt")
         stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}::{users_callsign:9}:ack{source_msg_no}"
         if not simulate_send:
-            logger.info(f"Sending acknowledgment receipt: {stringtosend}")
+            logger.info(msg=f"Sending acknowledgment receipt: {stringtosend}")
             myaprsis.sendall(stringtosend)
             time.sleep(mpad_config.packet_delay_other)
         else:
-            logger.info(f"Simulating acknowledgment receipt: {stringtosend}")
+            logger.info(msg=f"Simulating acknowledgment receipt: {stringtosend}")
 
 
 def send_aprs_message_list(
@@ -249,10 +249,10 @@ def send_aprs_message_list(
             ):  # for the alphanumeric counter AA..ZZ, this is equal to "ZZ"
                 aprs_message_counter = 0
         if not simulate_send:
-            logger.info(f"Sending response message '{stringtosend}'")
+            logger.info(msg=f"Sending response message '{stringtosend}'")
             myaprsis.sendall(stringtosend)
         else:
-            logger.info(f"Simulating response message '{stringtosend}'")
+            logger.info(msg=f"Simulating response message '{stringtosend}'")
         time.sleep(mpad_config.packet_delay_message)
     return aprs_message_counter
 

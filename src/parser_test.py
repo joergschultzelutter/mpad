@@ -27,13 +27,13 @@ def testcall(message_text: str, from_callsign: str):
     ) = read_program_config()
     assert success
 
-    logger.info(f"parsing message '{message_text}' for callsign '{from_callsign}'")
+    logger.info(msg=f"parsing message '{message_text}' for callsign '{from_callsign}'")
 
     success, response_parameters = parse_input_message(
         message_text, from_callsign, aprsdotfi_api_key
     )
 
-    logger.info(pformat(response_parameters))
+    logger.info(msg=pformat(response_parameters))
     if success:
         # enrich our response parameters with all API keys that we need for
         # the completion of the remaining tasks. The APRS access details
@@ -48,13 +48,11 @@ def testcall(message_text: str, from_callsign: str):
                 "smtpimap_email_password": smtpimap_email_password,
             }
         )
-        logger.info("Response:")
-        logger.info(pformat(generate_output_message(response_parameters)))
+        logger.info(msg="Response:")
+        logger.info(msg=pformat(generate_output_message(response_parameters)))
     else:
-        logger.info(pformat(response_parameters))
+        logger.info(msg=pformat(response_parameters))
 
 
 if __name__ == "__main__":
-    testcall(
-        message_text="posmsg jsl24469@gmail.com lang ru", from_callsign="ua3mlr-9"
-    )
+    testcall(message_text="posmsg jsl24469@gmail.com lang ru", from_callsign="ua3mlr-9")

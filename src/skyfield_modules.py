@@ -65,7 +65,7 @@ def download_and_write_local_tle_file(tle_filename: str = "tle_amateur_satellite
     try:
         r = requests.get(tle_data_file_url)
     except:
-        logger.info(f"Cannot download TLE data from {tle_data_file_url}")
+        logger.info(msg=f"Cannot download TLE data from {tle_data_file_url}")
         r = None
     if r:
         if r.status_code == 200:
@@ -75,7 +75,9 @@ def download_and_write_local_tle_file(tle_filename: str = "tle_amateur_satellite
                     f.close()
                     success = True
             except:
-                logger.info(f"Cannot update TLE data to file {absolute_path_filename}")
+                logger.info(
+                    msg=f"Cannot update TLE data to file {absolute_path_filename}"
+                )
     return success
 
 
@@ -106,7 +108,7 @@ def download_and_write_local_satfreq_file(
     try:
         r = requests.get(file_url)
     except:
-        logger.info(f"Cannot download satellite frequency data from {file_url}")
+        logger.info(msg=f"Cannot download satellite frequency data from {file_url}")
         r = None
     if r:
         if r.status_code == 200:
@@ -117,7 +119,7 @@ def download_and_write_local_satfreq_file(
                     success = True
             except:
                 logger.info(
-                    f"Cannot write satellite frequency csv file {absolute_path_filename} to disc"
+                    msg=f"Cannot write satellite frequency csv file {absolute_path_filename} to disc"
                 )
     return success
 
@@ -172,11 +174,11 @@ def read_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
         except:
             lines = None
     else:
-        logger.info(f"Celestrak TLE file '{absolute_path_filename}' does not exist")
+        logger.info(msg=f"Celestrak TLE file '{absolute_path_filename}' does not exist")
 
     if lines:
         if len(lines) % 3 != 0:
-            logger.info(f"Invalid TLE file structure for file {tle_filename}")
+            logger.info(msg=f"Invalid TLE file structure for file {tle_filename}")
             success = False
             return success, tle_data
         lc = 1
@@ -315,7 +317,7 @@ def read_local_satfreq_file(satfreq_filename: str = "satellite_frequencies.csv")
             success = False
     else:
         logger.info(
-            f"Satellite frequency data file '{absolute_path_filename}' does not exist"
+            msg=f"Satellite frequency data file '{absolute_path_filename}' does not exist"
         )
     return success, satellite_dictionary
 
@@ -341,14 +343,14 @@ def update_local_mpad_satellite_data():
         True if request was successful
     """
 
-    logger.info("Generating local satellite frequencies database")
+    logger.info(msg="Generating local satellite frequencies database")
     download_and_write_local_satfreq_file()
-    logger.info("Generating local TLE database")
+    logger.info(msg="Generating local TLE database")
     download_and_write_local_tle_file()
-    logger.info("Creating blended satellite database version")
+    logger.info(msg="Creating blended satellite database version")
     success, json_satellite_data = create_native_satellite_data()
     if success:
-        logger.info("Writing blended satellite database to disc")
+        logger.info(msg="Writing blended satellite database to disc")
         success = write_mpad_satellite_data_to_disc(
             mpad_satellite_json=json_satellite_data
         )
@@ -435,7 +437,7 @@ def write_mpad_satellite_data_to_disc(
         success = True
     except:
         logger.info(
-            f"Cannot write native satellite data to local disc file '{absolute_path_filename}'"
+            msg=f"Cannot write native satellite data to local disc file '{absolute_path_filename}'"
         )
     return success
 
@@ -474,12 +476,12 @@ def read_mpad_satellite_data_from_disc(
                     success = True
         except:
             logger.info(
-                f"Cannot read MPAD satellite data file '{absolute_path_filename}' from disc"
+                msg=f"Cannot read MPAD satellite data file '{absolute_path_filename}' from disc"
             )
             success = False
     else:
         logger.info(
-            f"MPAD satellite data file '{absolute_path_filename}' does not exist"
+            msg=f"MPAD satellite data file '{absolute_path_filename}' does not exist"
         )
     return success, mpad_satellite_data
 
@@ -650,7 +652,7 @@ def get_next_satellite_pass_for_latlon(
         #    second=today.second,
         # )
         # days = t - satellite.epoch
-        # logger.info("{:.3f} days away from epoch".format(days))
+        # logger.info(msg="{:.3f} days away from epoch".format(days))
 
         t0 = ts.utc(
             today.year, today.month, today.day, today.hour, today.minute, today.second

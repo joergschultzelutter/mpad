@@ -360,7 +360,7 @@ def imap_garbage_collector(smtpimap_email_address: str, smtpimap_email_password:
             host=mpad_config.mpad_imap_server_address,
             port=mpad_config.mpad_imap_server_port,
         ) as imap:
-            logger.info("Starting IMAP garbage collector process")
+            logger.info(msg="Starting IMAP garbage collector process")
             typ, dat = imap.login(
                 user=smtpimap_email_address, password=smtpimap_email_password
             )
@@ -376,17 +376,17 @@ def imap_garbage_collector(smtpimap_email_address: str, smtpimap_email_password:
                             imap.store(num, "+FLAGS", "\\Deleted")
                         imap.expunge()
                         logger.info(
-                            f"Have executed IMAP cleanup with params '{query_parms}'"
+                            msg=f"Have executed IMAP cleanup with params '{query_parms}'"
                         )
                     imap.close()
                 else:
                     logger.info(
-                        f"IMAP mailbox {mpad_config.mpad_imap_mailbox_name} does not exist"
+                        msg=f"IMAP mailbox {mpad_config.mpad_imap_mailbox_name} does not exist"
                     )
                 imap.logout()
             else:
                 logger.info(
-                    f"Cannot perform IMAP login; user={smtpimap_email_address}, server={mpad_config.mpad_imap_server_address}, port={mpad_config.mpad_imap_server_port}"
+                    msg=f"Cannot perform IMAP login; user={smtpimap_email_address}, server={mpad_config.mpad_imap_server_address}, port={mpad_config.mpad_imap_server_port}"
                 )
 
 
@@ -443,14 +443,14 @@ def send_message_via_snmp(
                 output_message = (
                     "Cannot connect to SMTP server or other issue; cannot send mail"
                 )
-                logger.info(output_message)
+                logger.info(msg=output_message)
                 return False, output_message
             if code in [235, 503]:
                 try:
                     smtp.send_message(msg=message_to_send)
                 except:
                     output_message = "Connected to SMTP but Cannot send email"
-                    logger.info(output_message)
+                    logger.info(msg=output_message)
                     return False, output_message
 
             success = True

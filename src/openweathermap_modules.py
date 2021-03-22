@@ -146,7 +146,7 @@ def get_daily_weather_from_openweathermapdotorg(
             timezone_offset = x["timezone_offset"]
         if "timezone" in x:
             timezone = x["timezone"]
-        logger.info(pformat(weather_tuple))
+        logger.info(msg=pformat(weather_tuple))
     return success, weather_tuple, timezone_offset, timezone
 
 
