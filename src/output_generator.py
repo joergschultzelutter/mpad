@@ -37,6 +37,7 @@ from airport_data_modules import get_metar_data
 from skyfield_modules import (
     get_sun_moon_rise_set_for_latlon,
     get_next_satellite_pass_for_latlon,
+    get_satellite_frequency_data,
 )
 from geo_conversion_modules import (
     convert_latlon_to_maidenhead,
@@ -119,6 +120,10 @@ def generate_output_message(response_parameters: dict):
         )
     elif what == "satpass" or what == "vispass":
         success, output_list = generate_output_message_satpass(
+            response_parameters=response_parameters
+        )
+    elif what == "satfreq":
+        success, output_list = generate_output_message_satfreq(
             response_parameters=response_parameters
         )
     elif what == "repeater":
@@ -473,6 +478,91 @@ def generate_output_message_satpass(response_parameters: dict):
                     visible = "Y" if is_visible else "N"
                     output_list = make_pretty_aprs_messages(
                         message_to_add=f"{visible_text}{visible}",
+                        destination_list=output_list,
+                    )
+    success = True  # always True
+    return success, output_list
+
+
+def generate_output_message_satfreq(response_parameters: dict):
+    """
+    Generate the satellite frequency report
+
+    Parameters
+    ==========
+    response_parameters: 'dict'
+        Dictionary of the data from the input processor's analysis on the user's data
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful. Will only be false in case of a
+        fatal error as we need to send something back to the user (even
+        if that message is a mere error text)
+    output_message: 'list'
+        List, containing the message text(s) that we will send to the user
+        This is plain text list without APRS message ID's
+    """
+    satellite = response_parameters["satellite"]
+    success = False
+
+    output_list = []
+    list_number = 1
+    success, satellite_name, frequency_data = get_satellite_frequency_data(
+        satellite_id=satellite
+    )
+    if not success:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"Cannot find satellite '{satellite}'",
+            destination_list=output_list,
+        )
+    else:
+        dictlen = len(frequency_data)
+        if dictlen == 0:
+            output_list = make_pretty_aprs_messages(f"'{satellite}'", output_list)
+            output_list = make_pretty_aprs_messages(
+                message_to_add="has no frequency data",
+                destination_list=output_list,
+            )
+        else:
+            output_list = make_pretty_aprs_messages(
+                message_to_add=f"'{satellite}' Freq:",
+                destination_list=output_list,
+            )
+            for frequency in frequency_data:
+                uplink = frequency["uplink"]
+                downlink = frequency["downlink"]
+                beacon = frequency["beacon"]
+                satellite_mode = frequency["satellite_mode"]
+
+                uplink_text = "Uplink" if list_number == 1 else "Up"
+                downlink_text = "Downlink" if list_number == 1 else "Dn"
+                beacon_text = "Beacon" if list_number == 1 else "Bcn"
+                mode_text = "Mode" if list_number == 1 else "Md"
+
+                if dictlen != 1:
+                    output_list = make_pretty_aprs_messages(
+                        message_to_add=f"#{list_number}", destination_list=output_list
+                    )
+                    list_number += 1
+                if uplink:
+                    output_list = make_pretty_aprs_messages(
+                        message_to_add=f"{uplink_text} {uplink}",
+                        destination_list=output_list,
+                    )
+                if downlink:
+                    output_list = make_pretty_aprs_messages(
+                        message_to_add=f"{downlink_text} {downlink}",
+                        destination_list=output_list,
+                    )
+                if beacon:
+                    output_list = make_pretty_aprs_messages(
+                        message_to_add=f"{beacon_text} {beacon}",
+                        destination_list=output_list,
+                    )
+                if satellite_mode:
+                    output_list = make_pretty_aprs_messages(
+                        message_to_add=f"{mode_text} {satellite_mode}",
                         destination_list=output_list,
                     )
     success = True  # always True
