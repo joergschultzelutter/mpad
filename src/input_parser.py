@@ -1916,7 +1916,7 @@ def parse_what_keyword_satpass(
 
     what = message_callsign = None
 
-    regex_string = r"\b(vispass|satpass)\s*(\w*(\S*))\b"
+    regex_string = r"\b(vispass|satpass|satfreq)\s*(\w*(\S*))\b"
     matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
         # we deliberately accept ZERO..n characters for the satellite as the
@@ -1924,7 +1924,7 @@ def parse_what_keyword_satpass(
         # name. If that is the case, return an error to the user
         # (this is to prevent the user from receiving a wx report instead -
         # wx would kick in as default)
-        _what_tmp = matches[1]
+        _what_tmp = matches[1].lower()
         satellite = matches[2].strip().upper()
         if len(satellite) == 0:
             human_readable_message = errmsg_no_satellite_specified
@@ -1942,7 +1942,10 @@ def parse_what_keyword_satpass(
             )
             if success:
                 what = _what_tmp
-                human_readable_message = f"SatPass of {satellite}"
+                if what == "satfreq":
+                    human_readable_message = f"SatFreq for {satellite}"
+                else:
+                    human_readable_message = f"SatPass for {satellite}"
                 found_my_keyword = True
                 aprs_message = re.sub(
                     pattern=regex_string,
