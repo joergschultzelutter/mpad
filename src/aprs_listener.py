@@ -48,6 +48,7 @@ from aprs_communication import (
 from email_modules import imap_garbage_collector
 import apscheduler.schedulers.base
 import sys
+import signal
 import logging
 import aprslib
 import time
@@ -57,10 +58,43 @@ from expiringdict import ExpiringDict
 ########################################
 
 
+def signal_term_handler(signal_number, frame):
+    """
+    Signal handler for SIGTERM signals. Ensures that the program
+    gets terminated in a safe way, thus allowing all databases etc
+    to be written to disc.
+
+    Parameters
+    ==========
+    signal_number:
+        The signal number
+    frame:
+        Signal frame
+
+    Returns
+    =======
+    """
+
+    logger.info(msg="Received SIGTERM; forcing clean program exit")
+    sys.exit(0)
+
+
 # APRSlib callback
 # Extract the fields from the APRS message, start the parsing process,
 # execute the command and send the command output back to the user
-def mycallback(raw_aprs_packet):
+def mycallback(raw_aprs_packet: dict):
+    """
+    aprslib callback; this is the core process that takes care of everything
+
+    Parameters
+    ==========
+    raw_aprs_packet: 'dict'
+        dict object, containing the raw APRS data
+
+    Returns
+    =======
+    """
+
     global number_of_served_packages
     global aprs_message_counter
     global aprs_message_cache
@@ -190,7 +224,7 @@ def mycallback(raw_aprs_packet):
             ):
                 # This is a message that belongs to us
 
-                # logger.info(dump_string_to_hex(message_text_string))
+                # logger.info(msg=dump_string_to_hex(message_text_string))
 
                 # Check if the message is present in our decaying message cache
                 # If the message can be located, then we can assume that we have
@@ -237,8 +271,8 @@ def mycallback(raw_aprs_packet):
                         users_callsign=from_callsign,
                         aprsdotfi_api_key=aprsdotfi_api_key,
                     )
-                    logger.info(f"Input parser result: {success}")
-                    logger.info(response_parameters)
+                    logger.info(msg=f"Input parser result: {success}")
+                    logger.info(msg=response_parameters)
                     #
                     # If the 'success' parameter is True, then we should know
                     # by now what the user wants from us. Now, we'll leave it to
@@ -311,262 +345,283 @@ def mycallback(raw_aprs_packet):
                     )
 
 
-#
-# MPAD main
-# Start by setting the logger parameters
-#
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(module)s -%(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
-#
-# Get the API access keys for OpenWeatherMap and APRS.fi. If we don't have those
-# then there is no point in continuing
-#
-logger.info("Program startup ...")
+if __name__ == "__main__":
+    #
+    # MPAD main
+    # Start by setting the logger parameters
+    #
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(module)s -%(levelname)s - %(message)s",
+    )
+    logger = logging.getLogger(__name__)
+    #
+    # Get the API access keys for OpenWeatherMap and APRS.fi. If we don't have those
+    # then there is no point in continuing
+    #
+    logger.info(msg="Program startup ...")
 
-# Check whether the data directory exists
-success = check_and_create_data_directory()
-if not success:
-    exit(0)
+    # Check whether the data directory exists
+    success = check_and_create_data_directory()
+    if not success:
+        exit(0)
 
-# Read the config file
-logger.info("Read program config file ...")
-(
-    success,
-    aprsdotfi_api_key,
-    openweathermapdotorg_api_key,
-    aprsis_login_callsign,
-    aprsis_login_passcode,
-    dapnet_login_callsign,
-    dapnet_login_passcode,
-    smtpimap_email_address,
-    smtpimap_email_password,
-) = read_program_config()
-if not success:
-    logging.error(msg="Error while reading the program config file; aborting")
-    sys.exit(0)
+    # Read the config file
+    logger.info(msg="Read program config file ...")
+    (
+        success,
+        aprsdotfi_api_key,
+        openweathermapdotorg_api_key,
+        aprsis_login_callsign,
+        aprsis_login_passcode,
+        dapnet_login_callsign,
+        dapnet_login_passcode,
+        smtpimap_email_address,
+        smtpimap_email_password,
+    ) = read_program_config()
+    if not success:
+        logging.error(msg="Error while reading the program config file; aborting")
+        sys.exit(0)
 
-# Next: check our APRS-IS user credentials. If our call sign is "N0CALL", we ensure:
-#
-# - that the passcode will be invalidated
-# - that the program will only simulate data transfers to APRS-IS
-#
-# Otherwise, use user/pass as specified in mpad_config.py and enable the
-# program for real transmissions to APRS-IS
-aprsis_callsign = aprsis_login_callsign.upper()
-aprsis_passcode = aprsis_login_passcode
-aprsis_simulate_send = False
-if aprsis_callsign == "N0CALL":
-    aprsis_passcode = "-1"
-    aprsis_simulate_send = True
+    # Next: check our APRS-IS user credentials. If our call sign is "N0CALL", we ensure:
+    #
+    # - that the passcode will be invalidated
+    # - that the program will only simulate data transfers to APRS-IS
+    #
+    # Otherwise, use user/pass as specified in mpad_config.py and enable the
+    # program for real transmissions to APRS-IS
+    aprsis_callsign = aprsis_login_callsign.upper()
+    aprsis_passcode = aprsis_login_passcode
+    aprsis_simulate_send = False
+    if aprsis_callsign == "N0CALL":
+        aprsis_passcode = "-1"
+        aprsis_simulate_send = True
 
-#
-# Now let's read the number of served packages that we have dealt with so far
-number_of_served_packages = read_number_of_served_packages()
+    #
+    # Now let's read the number of served packages that we have dealt with so far
+    logger.info(msg="Reading number of served packages...")
+    number_of_served_packages = read_number_of_served_packages()
 
-# This is the message counter that we will use for any APRS messages which
-# require a message counter to be added as outgoing content
-aprs_message_counter = read_aprs_message_counter()
+    # This is the message counter that we will use for any APRS messages which
+    # require a message counter to be added as outgoing content
+    logger.info(msg="Reading APRS message counter...")
+    aprs_message_counter = read_aprs_message_counter()
 
-# Define dummy values for both APRS task schedules and AIS object
-aprs_scheduler = AIS = None
+    # Register the SIGTERM handler; this will allow a safe shutdown of the program
+    logger.info(msg="Registering SIGTERM handler for safe shutdown...")
+    signal.signal(signal.SIGTERM, signal_term_handler)
 
-logger.info("Updating my local caches; this might take a while....")
-# Initially, refresh our local data caches
-#
-# Refresh the local "airport stations" file
-logger.info("Updating airport database ...")
-update_local_airport_stations_file()
-#
-# Refresh the local "repeatermap" file
-logger.info("Updating repeater database ...")
-update_local_repeatermap_file()
-#
-# Update the satellite TLE file
-logger.info("Updating satellite TLE and frequency database ...")
-update_local_mpad_satellite_data()
+    # Define dummy values for both APRS task schedules and AIS object
+    aprs_scheduler = AIS = None
 
-# Now let's set up schedulers for the refresh process
-# These schedulers will download the file(s) every x days
-# and store the data locally, thus allowing the functions
-# to read and import it whenever necessary
-logger.info("Start file schedulers ...")
-caching_scheduler = BackgroundScheduler()
+    logger.info(msg="Updating my local caches; this might take a while....")
+    # Initially, refresh our local data caches
+    #
+    # Refresh the local "airport stations" file
+    logger.info(msg="Updating airport database ...")
+    update_local_airport_stations_file()
+    #
+    # Refresh the local "repeatermap" file
+    logger.info(msg="Updating repeater database ...")
+    update_local_repeatermap_file()
+    #
+    # Update the satellite TLE file
+    logger.info(msg="Updating satellite TLE and frequency database ...")
+    update_local_mpad_satellite_data()
 
-# Set up task for IATA/ICAO data download every 30 days
-caching_scheduler.add_job(
-    update_local_airport_stations_file,
-    "interval",
-    id="airport_data",
-    days=30,
-    args=[],
-)
+    # Now let's set up schedulers for the refresh process
+    # These schedulers will download the file(s) every x days
+    # and store the data locally, thus allowing the functions
+    # to read and import it whenever necessary
+    logger.info(msg="Start file schedulers ...")
+    caching_scheduler = BackgroundScheduler()
 
-# Set up task for repeater data download every 7 days
-caching_scheduler.add_job(
-    update_local_repeatermap_file,
-    "interval",
-    id="repeatermap_data",
-    days=7,
-    args=[],
-)
+    # Set up task for IATA/ICAO data download every 30 days
+    caching_scheduler.add_job(
+        update_local_airport_stations_file,
+        "interval",
+        id="airport_data",
+        days=30,
+        args=[],
+    )
 
-# Set up task for satellite TLE / frequency data
-# Download interval = every 2 days
-caching_scheduler.add_job(
-    update_local_mpad_satellite_data,
-    "interval",
-    id="tle_and_satfreq_data",
-    days=2,
-    args=[],
-)
+    # Set up task for repeater data download every 7 days
+    caching_scheduler.add_job(
+        update_local_repeatermap_file,
+        "interval",
+        id="repeatermap_data",
+        days=7,
+        args=[],
+    )
 
-# Set up task for the IMAP garbage collector - which will delete
-# all email messages sent by MPAD after >x days of life span
-caching_scheduler.add_job(
-    imap_garbage_collector,
-    "interval",
-    id="imap_garbage_collector",
-    days=mpad_config.mpad_imap_mail_retention_max_days,
-    args=[smtpimap_email_address, smtpimap_email_password],
-)
+    # Set up task for satellite TLE / frequency data
+    # Download interval = every 2 days
+    caching_scheduler.add_job(
+        update_local_mpad_satellite_data,
+        "interval",
+        id="tle_and_satfreq_data",
+        days=2,
+        args=[],
+    )
 
-# start the caching scheduler
-caching_scheduler.start()
+    # Set up task for the IMAP garbage collector - which will delete
+    # all email messages sent by MPAD after >x days of life span
+    caching_scheduler.add_job(
+        imap_garbage_collector,
+        "interval",
+        id="imap_garbage_collector",
+        days=mpad_config.mpad_imap_mail_retention_max_days,
+        args=[smtpimap_email_address, smtpimap_email_password],
+    )
 
-# Create the decaying APRS message cache. Any APRS message that is present in
-# this cache will be considered as a duplicate / delayed and will not be processed
-# by MPAD and is going to be ignored.
-logger.info(
-    f"APRS message dupe cache set to {mpad_config.mpad_msg_cache_max_entries} max possible entries and a TTL of {int(mpad_config.mpad_msg_cache_time_to_live/60)} mins"
-)
-aprs_message_cache = ExpiringDict(
-    max_len=mpad_config.mpad_msg_cache_max_entries,
-    max_age_seconds=mpad_config.mpad_msg_cache_time_to_live,
-)
+    # start the caching scheduler
+    caching_scheduler.start()
 
-#
-# Finally, let's enter the 'eternal loop'
-#
-try:
-    while True:
-        # Set call sign and pass code
-        AIS = aprslib.IS(aprsis_callsign, aprsis_passcode)
+    # Create the decaying APRS message cache. Any APRS message that is present in
+    # this cache will be considered as a duplicate / delayed and will not be processed
+    # by MPAD and is going to be ignored.
+    logger.info(
+        msg=f"APRS message dupe cache set to {mpad_config.mpad_msg_cache_max_entries} max possible entries and a TTL of {int(mpad_config.mpad_msg_cache_time_to_live/60)} mins"
+    )
+    aprs_message_cache = ExpiringDict(
+        max_len=mpad_config.mpad_msg_cache_max_entries,
+        max_age_seconds=mpad_config.mpad_msg_cache_time_to_live,
+    )
 
-        # Set the APRS_IS server name and port
-        AIS.set_server(mpad_config.aprsis_server_name, mpad_config.aprsis_server_port)
+    #
+    # Finally, let's enter the 'eternal loop'
+    #
+    try:
+        while True:
+            # Set call sign and pass code
+            AIS = aprslib.IS(aprsis_callsign, aprsis_passcode)
 
-        # Set the APRS_IS (call sign) filter, based on our config file
-        AIS.set_filter(mpad_config.aprsis_server_filter)
+            # Set the APRS_IS server name and port
+            AIS.set_server(
+                mpad_config.aprsis_server_name, mpad_config.aprsis_server_port
+            )
 
-        # Debug info on what we are trying to do
+            # Set the APRS_IS (call sign) filter, based on our config file
+            AIS.set_filter(mpad_config.aprsis_server_filter)
+
+            # Debug info on what we are trying to do
+            logger.info(
+                msg=f"Establish connection to APRS_IS: server={mpad_config.aprsis_server_name},"
+                f"port={mpad_config.aprsis_server_port}, filter={mpad_config.aprsis_server_filter},"
+                f"APRS-IS User: {aprsis_callsign}, APRS-IS passcode: {aprsis_passcode}"
+            )
+
+            AIS.connect(blocking=True)
+            if AIS._connected == True:
+                logger.info(msg="Established the connection to APRS_IS")
+
+                # Send initial beacon after establishing the connection to APRS_IS
+                logger.info(
+                    msg="Send initial beacon after establishing the connection to APRS_IS"
+                )
+                send_beacon_and_status_msg(AIS, aprsis_simulate_send)
+
+                # Install two schedulers tasks
+                # The first task is responsible for sending out beacon messages
+                # to APRS; it will be triggered every 30 mins
+                # The 2nd task is responsible for sending out bulletin messages
+                # to APRS; it will be triggered every 4 hours
+                #
+                # Install scheduler task 1 - beacons
+                aprs_scheduler = BackgroundScheduler()
+
+                aprs_scheduler.add_job(
+                    send_beacon_and_status_msg,
+                    "interval",
+                    id="aprsbeacon",
+                    minutes=30,
+                    args=[AIS, aprsis_simulate_send],
+                )
+                # Install scheduler task 2 - bulletins
+                aprs_scheduler.add_job(
+                    send_bulletin_messages,
+                    "interval",
+                    id="aprsbulletin",
+                    hours=4,
+                    args=[AIS, aprsis_simulate_send],
+                )
+                # start both tasks
+                aprs_scheduler.start()
+
+                #
+                # We are on the verge of starting the aprslib callback consumer
+                # This section is going to be left only in the case of network
+                # errors or if the user did raise an exception
+                #
+                logger.info(msg="Starting callback consumer")
+                AIS.consumer(mycallback, blocking=True, immortal=True, raw=False)
+
+                #
+                # We have left the callback, let's clean up a few things
+                logger.info(msg="Have left the callback consumer")
+                #
+                # First, stop all schedulers. Then remove the associated jobs
+                # This will prevent the beacon/bulletin processes from sending out
+                # messages to APRS_IS
+                aprs_scheduler.pause()
+                aprs_scheduler.remove_all_jobs()
+                if aprs_scheduler.state != apscheduler.schedulers.base.STATE_STOPPED:
+                    try:
+                        aprs_scheduler.shutdown()
+                    except:
+                        logger.info(
+                            msg="Exception during scheduler shutdown eternal loop"
+                        )
+
+                # Verbindung schließen
+                logger.info(msg="Closing APRS connection to APRS_IS")
+                AIS.close()
+            else:
+                logger.info(msg="Cannot re-establish connection to APRS_IS")
+            # Write the number of served packages to disc
+            write_number_of_served_packages(served_packages=number_of_served_packages)
+            write_aprs_message_counter(aprs_message_counter=aprs_message_counter)
+            logger.info(msg=f"Sleeping {mpad_config.packet_delay_message} secs")
+            time.sleep(mpad_config.packet_delay_message)
+    #        AIS.close()
+    except (KeyboardInterrupt, SystemExit):
         logger.info(
-            msg=f"Establish connection to APRS_IS: server={mpad_config.aprsis_server_name},"
-            f"port={mpad_config.aprsis_server_port}, filter={mpad_config.aprsis_server_filter},"
-            f"APRS-IS User: {aprsis_callsign}, APRS-IS passcode: {aprsis_passcode}"
+            msg="KeyboardInterrupt or SystemExit in progress; shutting down ..."
         )
 
-        AIS.connect(blocking=True)
-        if AIS._connected == True:
-            logger.info(msg="Established the connection to APRS_IS")
+        # write number of processed packages to disc
+        logger.info(msg="Writing number of served packages to disc ...")
+        write_number_of_served_packages(served_packages=number_of_served_packages)
 
-            # Send initial beacon after establishing the connection to APRS_IS
-            logger.info(
-                msg="Send initial beacon after establishing the connection to APRS_IS"
-            )
-            send_beacon_and_status_msg(AIS, aprsis_simulate_send)
+        # write most recent APRS message counter to disc
+        logger.info(msg="Writing APRS message counter to disc ...")
+        write_aprs_message_counter(aprs_message_counter=aprs_message_counter)
 
-            # Install two schedulers tasks
-            # The first task is responsible for sending out beacon messages
-            # to APRS; it will be triggered every 30 mins
-            # The 2nd task is responsible for sending out bulletin messages
-            # to APRS; it will be triggered every 4 hours
-            #
-            # Install scheduler task 1 - beacons
-            aprs_scheduler = BackgroundScheduler()
-
-            aprs_scheduler.add_job(
-                send_beacon_and_status_msg,
-                "interval",
-                id="aprsbeacon",
-                minutes=30,
-                args=[AIS, aprsis_simulate_send],
-            )
-            # Install scheduler task 2 - bulletins
-            aprs_scheduler.add_job(
-                send_bulletin_messages,
-                "interval",
-                id="aprsbulletin",
-                hours=4,
-                args=[AIS, aprsis_simulate_send],
-            )
-            # start both tasks
-            aprs_scheduler.start()
-
-            #
-            # We are on the verge of starting the aprslib callback consumer
-            # This section is going to be left only in the case of network
-            # errors or if the user did raise an exception
-            #
-            logger.info(msg="Starting callback consumer")
-            AIS.consumer(mycallback, blocking=True, immortal=True, raw=False)
-
-            #
-            # We have left the callback, let's clean up a few things
-            logger.info("Have left the callback")
-            #
-            # First, stop all schedulers. Then remove the associated jobs
-            # This will prevent the beacon/bulletin processes from sending out
-            # messages to APRS_IS
+        if aprs_scheduler:
+            logger.info(msg="Pausing aprs_scheduler")
             aprs_scheduler.pause()
             aprs_scheduler.remove_all_jobs()
+            logger.info(msg="shutting down aprs_scheduler")
             if aprs_scheduler.state != apscheduler.schedulers.base.STATE_STOPPED:
                 try:
                     aprs_scheduler.shutdown()
                 except:
-                    logger.info(msg="Exception during scheduler shutdown eternal loop")
+                    logger.info(
+                        msg="Exception during scheduler shutdown SystemExit loop"
+                    )
 
-            # Verbindung schließen
-            logger.info(msg="Closing APRS connection to APRS_IS")
+        if caching_scheduler:
+            logger.info(msg="shutting down caching_scheduler")
+            caching_scheduler.pause()
+            caching_scheduler.remove_all_jobs()
+            if caching_scheduler.state != apscheduler.schedulers.base.STATE_STOPPED:
+                try:
+                    caching_scheduler.shutdown()
+                except:
+                    logger.info(
+                        msg="Exception during scheduler shutdown SystemExit loop"
+                    )
+
+        # Close the socket if it is still open
+        if AIS:
             AIS.close()
-        else:
-            logger.info(msg="Cannot re-establish connection to APRS_IS")
-        # Write the number of served packages to disc
-        write_number_of_served_packages(served_packages=number_of_served_packages)
-        write_aprs_message_counter(aprs_message_counter=aprs_message_counter)
-        logger.info(msg=f"Sleeping {mpad_config.packet_delay_message} secs")
-        time.sleep(mpad_config.packet_delay_message)
-#        AIS.close()
-except (KeyboardInterrupt, SystemExit):
-    logger.info("received exception!")
-
-    # write number of processed packages to disc
-    write_number_of_served_packages(served_packages=number_of_served_packages)
-
-    # write most recent APRS message counter to disc
-    write_aprs_message_counter(aprs_message_counter=aprs_message_counter)
-
-    if aprs_scheduler:
-        aprs_scheduler.pause()
-        aprs_scheduler.remove_all_jobs()
-        logger.info(msg="shutting down aprs_scheduler")
-        if aprs_scheduler.state != apscheduler.schedulers.base.STATE_STOPPED:
-            try:
-                aprs_scheduler.shutdown()
-            except:
-                logger.info(msg="Exception during scheduler shutdown SystemExit loop")
-
-    if caching_scheduler:
-        logger.info(msg="shutting down caching_scheduler")
-        caching_scheduler.pause()
-        caching_scheduler.remove_all_jobs()
-        if caching_scheduler.state != apscheduler.schedulers.base.STATE_STOPPED:
-            try:
-                caching_scheduler.shutdown()
-            except:
-                logger.info(msg="Exception during scheduler shutdown SystemExit loop")
-
-    # Close the socket if it is still open
-    if AIS:
-        AIS.close()
