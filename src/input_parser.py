@@ -1211,62 +1211,80 @@ def parse_what_keyword_metar(
 
     # Check for a keyword-less ICAO code
     if not found_my_keyword and not kw_err:
-        regex_string = r"\b([a-zA-Z0-9]{4})\b"
-        matches = re.findall(
-            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-        )
-        if matches:
-            # Check if what we found is a potential and existing ICAO code
-            # it CAN be something else - so we need to check first
-            success, latitude, longitude, metar_capable, icao = validate_icao(
-                icao_code=matches[0].strip()
+        # This is a (sometimes) futile attempt to distinguish any keyword-less
+        # wx data requests from keyword-less METAR requests. If the APRS
+        # message contains ";" or ",", then we assume that the request is
+        # wx-related and do not process it any further
+        #
+        # Without this fix, a wx request for e.g. "Bad Driburg;de" would not
+        # result in wx data for the German city of Bad Driburg but for a METAR
+        # report for ICAO code KBAD / IATA code BAD
+        if "," not in aprs_message and ";" not in aprs_message:
+            regex_string = r"\b([a-zA-Z0-9]{4})\b"
+            matches = re.findall(
+                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
             )
-            if success:
-                # Yes, we have verified this as a valid ICAO code
-                what = "metar"
-                found_my_keyword = True
-                human_readable_message = f"METAR for '{icao}'"
-                aprs_message = re.sub(
-                    pattern=regex_string,
-                    repl="",
-                    string=aprs_message,
-                    flags=re.IGNORECASE,
-                ).strip()
-                # If we did find the airport but it is not METAR-capable,
-                # then supply a wx report instead
-                if not metar_capable:
-                    what = "wx"
-                    human_readable_message = f"Wx for '{icao}'"
+            if matches:
+                # Check if what we found is a potential and existing ICAO code
+                # it CAN be something else - so we need to check first
+                success, latitude, longitude, metar_capable, icao = validate_icao(
+                    icao_code=matches[0].strip()
+                )
+                if success:
+                    # Yes, we have verified this as a valid ICAO code
+                    what = "metar"
+                    found_my_keyword = True
+                    human_readable_message = f"METAR for '{icao}'"
+                    aprs_message = re.sub(
+                        pattern=regex_string,
+                        repl="",
+                        string=aprs_message,
+                        flags=re.IGNORECASE,
+                    ).strip()
+                    # If we did find the airport but it is not METAR-capable,
+                    # then supply a wx report instead
+                    if not metar_capable:
+                        what = "wx"
+                        human_readable_message = f"Wx for '{icao}'"
 
     # Check for a keyword-less IATA code
     if not found_my_keyword and not kw_err:
-        regex_string = r"\b([a-zA-Z0-9]{3})\b"
-        matches = re.findall(
-            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
-        )
-        if matches:
-            # Check if what we found is a potential and existing IATA code
-            # it CAN be something else - so we need to check first
-            success, latitude, longitude, metar_capable, icao = validate_iata(
-                iata_code=matches[0].strip()
+        # This is a (sometimes) futile attempt to distinguish any keyword-less
+        # wx data requests from keyword-less METAR requests. If the APRS
+        # message contains ";" or ",", then we assume that the request is
+        # wx-related and do not process it any further
+        #
+        # Without this fix, a wx request for e.g. "Bad Driburg;de" would not
+        # result in wx data for the German city of Bad Driburg but for a METAR
+        # report for ICAO code KBAD / IATA code BAD
+        if "," not in aprs_message and ";" not in aprs_message:
+            regex_string = r"\b([a-zA-Z0-9]{3})\b"
+            matches = re.findall(
+                pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
             )
-            if success:
-                # Yes, we have verified this as a valid IATA code and have received the
-                # corresponding ICAO code
-                what = "metar"
-                found_my_keyword = True
-                human_readable_message = f"METAR for '{icao}'"
-                aprs_message = re.sub(
-                    pattern=regex_string,
-                    repl="",
-                    string=aprs_message,
-                    flags=re.IGNORECASE,
-                ).strip()
-                # If we did find the airport but it is not METAR-capable,
-                # then supply a wx report instead
-                if not metar_capable:
-                    what = "wx"
-                    human_readable_message = f"Wx for '{icao}'"
+            if matches:
+                # Check if what we found is a potential and existing IATA code
+                # it CAN be something else - so we need to check first
+                success, latitude, longitude, metar_capable, icao = validate_iata(
+                    iata_code=matches[0].strip()
+                )
+                if success:
+                    # Yes, we have verified this as a valid IATA code and have received the
+                    # corresponding ICAO code
+                    what = "metar"
+                    found_my_keyword = True
+                    human_readable_message = f"METAR for '{icao}'"
+                    aprs_message = re.sub(
+                        pattern=regex_string,
+                        repl="",
+                        string=aprs_message,
+                        flags=re.IGNORECASE,
+                    ).strip()
+                    # If we did find the airport but it is not METAR-capable,
+                    # then supply a wx report instead
+                    if not metar_capable:
+                        what = "wx"
+                        human_readable_message = f"Wx for '{icao}'"
 
     # if the user has specified the 'metar' keyword, then
     # try to determine the nearest airport in relation to
@@ -2831,4 +2849,8 @@ if __name__ == "__main__":
         smtpimap_email_address,
         smtpimap_email_password,
     ) = read_program_config()
-    logger.info(pformat(parse_input_message("12h", "df1jsl-1", aprsdotfi_api_key)))
+    logger.info(
+        pformat(
+            parse_input_message("bad driburg;de 12h", "df1jsl-1", aprsdotfi_api_key)
+        )
+    )
