@@ -19,7 +19,7 @@ The following Python packages need to be installed:
 - [us](https://github.com/unitedstates/python-us)
 - [utm](https://github.com/Turbo87/utm)
 
-If you install MAPD and its components on a Raspberry Pi, the skyfield package may require you to install ```apt-get install libatlas-base-dev``` as a separate dependency.
+If you install MPAD and its components on a Raspberry Pi, the skyfield package requires you to install ```apt-get install libatlas-base-dev``` as a separate dependency.
 
 ## API Dependencies
 
@@ -37,6 +37,7 @@ Both aprs.fi and openweathermap.org require an API access key which needs to be 
 - [openstreetmap.org](https://www.openstreetmap.org)
 - [repeatermap.de](https://www.repeatermap.de)
 - [hearham.com](https://www.hearham.com)
+- [JE9PEL's satellite frequency data](http://www.ne.jp/asahi/hamradio/je9pel/satslist.htm)
 
 ## Programming & knowledge resources
 

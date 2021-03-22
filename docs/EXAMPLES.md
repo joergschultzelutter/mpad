@@ -176,7 +176,7 @@ In case you ever wonder about whether you should buy that new transceiver with t
 The main purpose of this keyword is testing both UTF-8 and ```lang``` keyword tests. Apart from that, it's fun :-)
 Note that outgoing UTF-8 content will be converted to plain ASCII content unless specified otherwise in the program's config file (see [installation instructions](INSTALLATION.md)).
 
-## Satellite data
+## Satellite pass data
 
 External service dependencies:
 
@@ -204,6 +204,29 @@ Description:
 - ```Dst```: Distance in km or miles at culmination time
 - ```Vis```: Visibility Y/N. Only included if your query is based on ```satpass```.
 
+## Satellite frequency data
+
+External service dependencies:
+
+- [JE9PEL's satellite data](http://www.ne.jp/asahi/hamradio/je9pel/satslist.htm)
+- [Celestrak](https://www.celestrak.com/)
+
+| What do we want | Command string User > MPAD | Response example MPAD > User |
+| --------------- | -------------------------- | ---------------------------- |
+| Get Es'Hail-2 satellite frequencies | ```satfreq es'hail-2``` | ```'ES'HAIL-2' Freq: #1 Uplink 2400.050-2400.300``` |
+| | | ```Downlink 10489.550-10489.800 Mode Linear  transponder #2``` |
+| | | ```Up 2401.500-2409.500 Dn 10491.000-10499.000 Md Digital transponder``` |
+
+Note that the requested satellite in question MUST exist in [Celestrak's Amateur Radio Satellite](http://www.celestrak.com/NORAD/elements/amateur.txt) list. Satellites which do not exist in the Celestrak data but not in JE9PEL's data will not be taken into consideration.
+
+If the requested satellite has more than one uplink/downlink frequency tupel, MPAD will abbreviate the descriptive text for results 2..n in order to save a few bytes per message. The format for messages 2..n is the same as for the first message which comes with a full descriptive text.
+
+Description:
+
+- ```Uplink``` / ```Up```: Satellite uplink frequency
+- ```Downlink``` / ```Dn```: Satellite Downlink frequency
+- ```Beacon``` / ```Bcn```: Beacon frequency
+- ```Mode``` / ```Md```: Mode, e.g. SSTV
 
 ## Email position reports
 

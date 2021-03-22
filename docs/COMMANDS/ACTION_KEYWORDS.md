@@ -296,7 +296,7 @@ Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME
 
 ### Satellite passes
 
-Retrieves the next pass of the given satellite ID for the user's position. Satellites can be specified by their satellite names as defined in the respective [amateur radio satellite tle file](http://www.celestrak.com/NORAD/elements/amateur.txt). The following rules apply:
+Retrieves the next pass of the given satellite ID for the user's position. Satellites can be specified by their satellite IDs as defined in the respective [amateur radio satellite tle file](http://www.celestrak.com/NORAD/elements/amateur.txt). The following rules apply:
 
 - If a satellite name contains spaces, then these spaces will be replaced by dashes. As an example, __SAUDISAT 1C__ will internally be identified by __SAUDISAT-1C__
 
@@ -346,6 +346,28 @@ If there is no satellite pass for the day you've specified, the __next available
 - ```satpass saudisat-1c```
 
 - ```vispass iss top5 friday noon```
+
+### Satellite frequencies
+
+Retrieves the satellite frequencies (whereas present) from JE9PEL's database. Satellites can be specified by their satellite IDs as defined in the respective [amateur radio satellite tle file](http://www.celestrak.com/NORAD/elements/amateur.txt). The following rules apply:
+
+- If a satellite name contains spaces, then these spaces will be replaced by dashes. As an example, __SAUDISAT 1C__ will internally be identified by __SAUDISAT-1C__
+
+- For convenience reasons, the ISS can be selected by requesting the satellite pass data for either __ISS__ or __ZARYA__.
+
+- The requested satellite ID name MUST exist in the Celestrak list - this is MPAD's master. Those satellite IDs are matched against JE9PEL's satellite frequency data through an automated process. If a match is found on the satellite ID, the available frequencies are returned to the user (can be 0..n).
+
+Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __NO__
+
+#### Formats
+
+- ```satfreq <satellite_name>``` returns the frequency data for the satellite
+
+#### Example requests
+
+- ```satfreq iss```
+
+- ```satfreq es'hail-2 ```
 
 ### Repeater data
 

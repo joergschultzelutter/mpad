@@ -13,6 +13,7 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/TAF/CWOP reports,
 - Extensive position data for your own callsign or a different callsign (human readable address, MGRS, Maidenhead, UTM, DMS, distance between the two users, altitude)
 - Satellite transit data (provides e.g. the next transit of the ISS, based on the callsign position of the transmitter). Can distinguish between visible and non-visible passes.
 - Finds the nearest repeater to your position with optional query parameters on band and query (c4fm, dstar, fm, ...)
+- Provides uplink/downlink frequencies for a specific satellite
 - Find a place of interest nearby (e.g. fuel station, supermarket, ...)
 - Send a message to a DAPNET user
 - Magic 8 Ball predictions :-)
