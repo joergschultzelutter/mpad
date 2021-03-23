@@ -27,10 +27,12 @@ A decaying cache for __outgoing__ messages to the user is currently not implemen
 - Repeater data:
     - Currently, the repeater data may be very much EU-centric (MPAD borrows its data from repeatermap.de as well as from hearham.com). Additional _free_ repeater data sources can be added to future MPAD versions if such sources are available. If you want to see your repeater added to repeatermap.de, [please submit your data on DK3ML's site](https://www.repeatermap.de/new_repeater.php?lang=en). Alternatively, feel free to recommend free sources for repeater data and I see what I'll can do to add them to the program.
     - Apart from some internal pre-processing, the data from both input sites is taken 'as is'. There are also no dupe checks wrt the given data. When in doubt, request more than one result.
+    - There are plans for migrating to a single repeater data source in one of the upcoming releases. The keyword command structure will likely stay the same.
 - Time zones:
     - Currently, all timestamps returned by the program use UTC as time zone. Implicitly, __this constraint also applies to the time-related program keywords__ (see [USAGE.md](USAGE.md)) which instructs the program to return data for a certain time of the day. Dependent on your geographical location, a 'give me a wx report for today noon' may result in unwanted effects as the 'noon' part __is based on GMT__. When in doubt, do NOT limit your data to a certain time slot of the day ('full' day is the program default). I might implement local time zone data at a later point in time - for now, GMT applies.
 - Satellite frequency data:
-    - The creation of MPAD's local satellite database (which contains bot satellite TLE and satellite frequency data) is an automated process that is based on the satellite ID. As both data sources heavily differ in formats, some satellites may not get recognises within the satellite frequency database and therefore won't show up with available frequencies when queried via the ```satfreq``` keyword. 
+    - The creation of MPAD's local satellite database (which contains both satellite TLE and satellite frequency data) is an automated process; the matching process is based on the satellite ID. As both data sources heavily differ in data formats, some satellites may not get recognised within the satellite frequency database and therefore won't show up with available frequencies when queried via the ```satfreq``` keyword.
+    - The satellite master data file is Celestrak's Amateur Radio Satellite file. Any satellites which are present in JE9PEL's datebase but are not present in the Celestrak data will be ignored.
 - Openstreetmap category data:
     - MPAD honors OSM's [Nominatim usage policy](https://operations.osmfoundation.org/policies/nominatim) by artificially delaying requests to OSM. Whenever you request OSM category data and you have requested more than one result, each follow-up request of that same command experiences an artificial delay between 1.2 and 3.0 seconds (random value). Therefore, requesting 5 results can take between 6 and 15 secs (excluding any additional delays for the outgoing APRS messages)
 - General:
@@ -48,9 +50,9 @@ Both beacon and bulletin data messages will be sent as part of a fixed duty cycl
 
 In order to limit the access to data from external web sites to a minimum, MPAD caches data from the following web sites and refreshes it automatically:
 
-- Amateur satellite data from Celestrak is refreshed every 2 days
+- Amateur satellite data (TLE data from Celestrak and JE9PEL's frequency database) is refreshed every 2 days
 - Repeater data from repeatermap.de is refreshed every 7 days
-- Airport data from aviationweather.gov is refreshed every 30 days
+- Airport data (IATA/ICAO airport list) from aviationweather.gov is refreshed every 30 days
 
 Additionally, all of these data files will also be refreshed whenever the program starts. Any in-between changes to sat/repeater/airport data will not be recognised, meaning that if e.g. new repeater data was added in between, MPAD might see this data only after a few days. All of these intervals can be configured, though.
 

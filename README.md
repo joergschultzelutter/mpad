@@ -22,7 +22,7 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/TAF/CWOP reports,
 
 ## Program specifics
 
-- Very low cpu/traffic footprint thanks to APRS filters and local data caches. Can even be run on a Raspberry Pi Zero (if you are a bit patient)
+- Very low cpu/traffic footprint thanks to APRS filters and local data caches.
 - Pretty printing of APRS messages. Rather than splitting up the content after a max message len of 67 bytes, the program tries to split the text in a readable way which will keep the logical context of the message intact.
 - Human-friendly parser that supports both keyword and also non-keyword commands
 - Auto-detection of the user's system of units. Callsigns from the USA, Liberia and Myanmar will receive their data in imperial format (Miles, Fahrenheit, Feet etc), while for the rest of the world the metric system is preset. This auto-setting can be overriden with a separate keyword.
@@ -59,6 +59,12 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/TAF/CWOP reports,
 ## Technical Details and known issues
 
 [see TECHNICAL_DETAILS](docs/TECHNICAL_DETAILS.md)
+
+## MPAD Live Instance
+
+(also known as 'I just want to use the damn thing')
+
+[My MPAD instance](https://aprs.fi/#!call=a%2FMPAD&timerange=3600&tail=3600) runs on a Raspberry Pi 4 which also hosts my Pi-Hole server. I have tested MPAD on other less-performant Linux-/Mac-based hardware. If you are a tad patient, you can even run MPAD on a Raspberry Pi Zero W.
 
 ## The fine print
 
