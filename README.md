@@ -1,6 +1,6 @@
 # mpad
 
-Multi-Purpose APRS Daemon (Gollum might call also it _My Precious_ APRS Daemon)
+Multi-Purpose APRS Daemon (Gollum might also call it _My Precious_ APRS Daemon)
 
 Python implementation of a multi-purpose APRS daemon (WX/METAR/TAF/CWOP reports, satellite & other celestial data, find the nearest repeater to my position, user coordinates & distance etc. ...)
 
