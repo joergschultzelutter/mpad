@@ -56,7 +56,7 @@ In order to limit the access to data from external web sites to a minimum, MPAD 
 
 Additionally, all of these data files will also be refreshed whenever the program starts. Any in-between changes to sat/repeater/airport data will not be recognised, meaning that if e.g. new repeater data was added in between, MPAD might see this data only after a few days. All of these intervals can be configured, though.
 
-MPAD can also generate email position reports for the user. All associated emails that were sent by the program will get purged from MPAD's associated email account after 48 hrs.
+MPAD can also generate email position reports for the user. All associated emails that were sent by the program will get purged from MPAD's associated email account after 48 hrs (default setting).
 
 ## 'New' ack/rej processing
 
