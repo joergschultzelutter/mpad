@@ -51,7 +51,7 @@ Both beacon and bulletin data messages will be sent as part of a fixed duty cycl
 In order to limit the access to data from external web sites to a minimum, MPAD caches data from the following web sites and refreshes it automatically:
 
 - Amateur satellite data (TLE data from Celestrak and JE9PEL's frequency database) is refreshed every 2 days
-- Repeater data from repeatermap.de is refreshed every 7 days
+- Repeater data from repeatermap.de and hearham.com is refreshed every 7 days
 - Airport data (IATA/ICAO airport list) from aviationweather.gov is refreshed every 30 days
 
 Additionally, all of these data files will also be refreshed whenever the program starts. Any in-between changes to sat/repeater/airport data will not be recognised, meaning that if e.g. new repeater data was added in between, MPAD might see this data only after a few days. All of these intervals can be configured, though.
