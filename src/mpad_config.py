@@ -21,7 +21,7 @@ import os
 #
 # Program version
 #
-mpad_version: str = "0.18"
+mpad_version: str = "0.20"
 #
 ###########################
 # Constants, do not change#
@@ -81,7 +81,6 @@ help_text_array = [
     "(default=wx for pos of sending callsign). Position commands:",
     "city,state;country OR city,state OR city;country OR zip;country OR",
     "zip with/wo country OR grid|mh+4..6 char OR lat/lon OR callsign",
-    "time: mon..sun(day),today,tomorrow.Extra: mtr|metric imp|imperial",
     "see https://github.com/joergschultzelutter/mpad for command syntax",
 ]
 #
