@@ -2,7 +2,7 @@
 # Multi-Purpose APRS Daemon: Funstuff Modules
 # Author: Joerg Schultze-Lutter, 2020
 #
-# Magic-8-ball routine which is mainly used for UTF-8 outpit and
+# Magic-8-ball routine which is mainly used for UTF-8 output and
 # language selection testing. Nevertheless, it still might be able
 # to preduct YOUR future :-) - so I decided to keep it after the test
 # got completed. Localised Magic 8 ball answers have been taken from
