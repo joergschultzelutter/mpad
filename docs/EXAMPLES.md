@@ -168,8 +168,8 @@ External service dependencies:
 
 | What do we want | Command string User > MPAD | Response example MPAD > User |
 | --------------- | -------------------------- | ---------------------------- |
-| Our fortune in English language| ```fortune```, ```magic8ball```,```magic8```, ```m8b``` | ```Outlook good``` |
-| Our fortune in Russian language| ```fortune lang ru``` | ```Знаки говорят — да``` |
+| Our fortune in English language| ```fortuneteller```, ```magic8ball```,```magic8``` or ```m8b``` | ```Outlook good``` |
+| Our fortune in Russian language| ```fortuneteller lang ru``` | ```Знаки говорят — да``` |
 
 In case you ever wonder about whether you should buy that new transceiver with the super expensive price tag: the answer is always ```Without a doubt```. ALWAYS.
 
