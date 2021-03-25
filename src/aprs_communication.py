@@ -31,8 +31,8 @@ import mpad_config
 # MPAD will NOT check the content and send it out 'as is'
 bulletin_texts: dict = {
     "BLN0": f"{mpad_config.mpad_alias} {mpad_config.mpad_version} Multi-Purpose APRS Daemon",
-    "BLN1": f"Command syntax & source files: ",
-    "BLN2": f"https://github.com/joergschultzelutter/mpad",
+    "BLN1": f"See https://github.com/joergschultzelutter/mpad for command syntax",
+    "BLN2": f"and source code. 73 de DF1JSL",
 }
 
 # APRS_IS beacon texts (will be sent every 30 mins)
