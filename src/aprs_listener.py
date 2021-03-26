@@ -311,7 +311,7 @@ def mycallback(raw_aprs_packet: dict):
                     # and get back to him with a generic response.
                     else:
                         output_message = [
-                            "Sorry, did not understand your request. Have a look at my command"
+                            "Sorry, did not understand your request. Have a look at my command",
                             "syntax, see https://github.com/joergschultzelutter/mpad",
                         ]
                         logger.info(
