@@ -147,7 +147,7 @@ def get_reverse_geopy_data(
             if "state" in location.raw["address"]:
                 state = location.raw["address"]["state"]
                 if (
-                    country == "US" and not disable_state_abbreviation
+                    country_code == "US" and not disable_state_abbreviation
                 ):  # State is returned in full; shorten it
                     try:
                         x = us.states.lookup(state)
