@@ -32,7 +32,7 @@ import mpad_config
 bulletin_texts: dict = {
     "BLN0": f"{mpad_config.mpad_alias} {mpad_config.mpad_version} Multi-Purpose APRS Daemon",
     "BLN1": f"See https://github.com/joergschultzelutter/mpad for command syntax",
-    "BLN2": f"and source code. 73 de DF1JSL",
+    "BLN2": f"and program source code. 73 de DF1JSL",
 }
 
 # APRS_IS beacon texts (will be sent every 30 mins)
