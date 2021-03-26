@@ -311,7 +311,8 @@ def mycallback(raw_aprs_packet: dict):
                     # and get back to him with a generic response.
                     else:
                         output_message = [
-                            "Did not understand your request. Pls. check my command syntax",
+                            "Sorry, did not understand your request. Have a look at my command"
+                            "syntax, see https://github.com/joergschultzelutter/mpad",
                         ]
                         logger.info(
                             msg=f"Unable to parse APRS packet {raw_aprs_packet}"
