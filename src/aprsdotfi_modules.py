@@ -116,7 +116,7 @@ def get_position_on_aprsfi(aprsfi_callsign: str, aprsdotfi_api_key: str):
                         altitude = float(json_content["entries"][0]["altitude"])
                     if "lasttime" in json_content["entries"][0]:
                         _mylast = float(json_content["entries"][0]["lasttime"])
-                        lasttime = datetime.fromtimestamp(_mylast)
+                        lasttime = datetime.utcfromtimestamp(_mylast)
 
         return success, latitude, longitude, altitude, lasttime, aprsfi_callsign
 

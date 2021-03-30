@@ -219,7 +219,7 @@ def parse_daily_weather_from_openweathermapdotorg(
         # If we have a time stamp, then let's provide a real date to the user
         if "dt" in weather_tuple:
             w_dt = weather_tuple["dt"]
-            tmp_dt = datetime.fromtimestamp(w_dt)
+            tmp_dt = datetime.utcfromtimestamp(w_dt)
             when_text = datetime.strftime(tmp_dt, "%d-%b-%y")
         if "sunrise" in weather_tuple:
             w_sunrise = weather_tuple["sunrise"]
@@ -321,19 +321,19 @@ def parse_daily_weather_from_openweathermapdotorg(
 
         # Sunrise and Sunset
         if w_sunset and w_sunrise:
-            tmp1 = datetime.fromtimestamp(w_sunrise)
-            tmp2 = datetime.fromtimestamp(w_sunset)
+            tmp1 = datetime.utcfromtimestamp(w_sunrise)
+            tmp2 = datetime.utcfromtimestamp(w_sunset)
             weather_forecast_array = make_pretty_aprs_messages(
                 f"sunrise/set {tmp1.hour:02d}:{tmp1.minute:02d}/{tmp2.hour:02d}:{tmp2.minute:02d}UTC",
                 weather_forecast_array,
             )
         elif w_sunrise and not w_sunset:
-            tmp = datetime.fromtimestamp(w_sunrise)
+            tmp = datetime.utcfromtimestamp(w_sunrise)
             weather_forecast_array = make_pretty_aprs_messages(
                 f"sunrise {tmp.hour}:{tmp.minute}UTC", weather_forecast_array
             )
         elif w_sunset and not w_sunrise:
-            tmp = datetime.fromtimestamp(w_sunset)
+            tmp = datetime.utcfromtimestamp(w_sunset)
             weather_forecast_array = make_pretty_aprs_messages(
                 f"sunset {tmp.hour}:{tmp.minute}UTC", weather_forecast_array
             )
