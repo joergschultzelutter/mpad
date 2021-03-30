@@ -61,17 +61,20 @@ def get_position_on_aprsfi(aprsfi_callsign: str, aprsdotfi_api_key: str):
         the time when the target last reported this (current) position
         If not found, returned default value is of value datetime.min
         (0001-01-01 00:00:00)
+    comment: 'str'
+        aprs.fi comment (or None)
     aprsfi_callsign: 'str'
         Call sign converted to uppercase
     """
-    headers = {
-        "User-Agent": mpad_config.mpad_default_user_agent
-    }
+    headers = {"User-Agent": mpad_config.mpad_default_user_agent}
 
     success = False
     latitude = longitude = altitude = 0.0
+    comment = None
 
-    lasttime = datetime.min  # placeholder value in case we can't determine the aprs.fi 'lasttime' information
+    lasttime = (
+        datetime.min
+    )  # placeholder value in case we can't determine the aprs.fi 'lasttime' information
     result = "fail"
     found = 0  # number of entries found in aprs.fi request (if any)
 
@@ -113,12 +116,25 @@ def get_position_on_aprsfi(aprsfi_callsign: str, aprsdotfi_api_key: str):
                         longitude = float(json_content["entries"][0]["lng"])
                     # Now check for our optional fields
                     if "altitude" in json_content["entries"][0]:
-                        altitude = float(json_content["entries"][0]["altitude"])
+                        try:
+                            altitude = float(json_content["entries"][0]["altitude"])
+                        except ValueError:
+                            altitude = 0.0
                     if "lasttime" in json_content["entries"][0]:
                         _mylast = float(json_content["entries"][0]["lasttime"])
                         lasttime = datetime.utcfromtimestamp(_mylast)
+                    if "comment" in json_content["entries"][0]:
+                        comment = json_content["entries"][0]["comment"]
 
-        return success, latitude, longitude, altitude, lasttime, aprsfi_callsign
+        return (
+            success,
+            latitude,
+            longitude,
+            altitude,
+            lasttime,
+            comment,
+            aprsfi_callsign,
+        )
 
 
 if __name__ == "__main__":
@@ -130,6 +146,8 @@ if __name__ == "__main__":
         aprsis_passcode,
         dapnet_callsign,
         dapnet_passcode,
+        smtpimap_email_address,
+        smtpimap_email_password,
     ) = read_program_config()
     if success:
-        logger.info(get_position_on_aprsfi("DF1JSL-8", aprsdotfi_api_key))
+        logger.info(get_position_on_aprsfi("ME9C22014", aprsdotfi_api_key))

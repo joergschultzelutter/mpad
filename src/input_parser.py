@@ -99,7 +99,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     when = when_daytime = what = city = state = country = zipcode = cwop_id = None
     icao = human_readable_message = satellite = repeater_band = repeater_mode = None
     street = street_number = county = osm_special_phrase = dapnet_message = None
-    mail_recipient = country_code = district = address = None
+    mail_recipient = country_code = district = address = comment = None
 
     # Call sign reference (either the user's call sign or someone
     # else's call sign
@@ -222,6 +222,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             users_latitude = parser_rd_csm["users_latitude"]
             users_longitude = parser_rd_csm["users_longitude"]
             lasttime = parser_rd_csm["lasttime"]
+            comment = parser_rd_csm["comment"]
             altitude = parser_rd_csm["altitude"]
             what = parser_rd_csm["what"]
             human_readable_message = parser_rd_csm["human_readable_message"]
@@ -255,6 +256,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             users_latitude = parser_rd_whereami["users_latitude"]
             users_longitude = parser_rd_whereami["users_longitude"]
             lasttime = parser_rd_whereami["lasttime"]
+            comment = parser_rd_whereami["comment"]
             altitude = parser_rd_whereami["altitude"]
             what = parser_rd_whereami["what"]
             human_readable_message = parser_rd_whereami["human_readable_message"]
@@ -300,6 +302,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             longitude = parser_rd_satpass["longitude"]
             altitude = parser_rd_satpass["altitude"]
             lasttime = parser_rd_satpass["lasttime"]
+            comment = parser_rd_satpass["comment"]
             message_callsign = parser_rd_satpass["message_callsign"]
             satellite = parser_rd_satpass["satellite"]
             human_readable_message = parser_rd_satpass["human_readable_message"]
@@ -321,6 +324,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             longitude = parser_rd_repeater["longitude"]
             altitude = parser_rd_repeater["altitude"]
             lasttime = parser_rd_repeater["lasttime"]
+            comment = parser_rd_repeater["comment"]
             message_callsign = parser_rd_repeater["message_callsign"]
             repeater_band = parser_rd_repeater["repeater_band"]
             repeater_mode = parser_rd_repeater["repeater_mode"]
@@ -341,6 +345,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             latitude = parser_rd_osm["latitude"]
             longitude = parser_rd_osm["longitude"]
             lasttime = parser_rd_osm["lasttime"]
+            comment = parser_rd_osm["comment"]
             altitude = parser_rd_osm["altitude"]
             human_readable_message = parser_rd_osm["human_readable_message"]
             aprs_message = parser_rd_osm["aprs_message"]
@@ -395,6 +400,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
             users_latitude = parser_rd_email_posrpt["users_latitude"]
             users_longitude = parser_rd_email_posrpt["users_longitude"]
             lasttime = parser_rd_email_posrpt["lasttime"]
+            comment = parser_rd_email_posrpt["comment"]
             altitude = parser_rd_email_posrpt["altitude"]
             what = parser_rd_email_posrpt["what"]
             human_readable_message = parser_rd_email_posrpt["human_readable_message"]
@@ -570,6 +576,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                 longitude,
                 altitude,
                 lasttime,
+                comment,
                 message_callsign,
             ) = get_position_on_aprsfi(
                 aprsfi_callsign=users_callsign, aprsdotfi_api_key=aprsdotfi_api_key
@@ -614,6 +621,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
                         longitude,
                         altitude,
                         lasttime,
+                        comment,
                         message_callsign,
                     ) = get_position_on_aprsfi(
                         aprsfi_callsign=matches[2].upper(),
@@ -656,6 +664,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         "longitude": longitude,  # numeric longitude value
         "altitude": altitude,  # altitude; UOM is always 'meters'
         "lasttime": lasttime,  # last time the cs was heard on that given position
+        "comment": comment,  # (potential) position comment from aprs.fi
         "when": when,  # day setting for 'when' command keyword
         "when_daytime": when_daytime,  # daytime setting for 'when' command keyword
         "what": what,  # contains the command that the user wants us to execute
@@ -1004,7 +1013,7 @@ def parse_what_keyword_repeater(
         dictionary, containing the keyword-relevant data
     """
     # Search for repeater-mode-band
-    what = repeater_band = repeater_mode = human_readable_message = None
+    what = repeater_band = repeater_mode = human_readable_message = comment = None
     lasttime = datetime.min
     latitude = longitude = 0.0
     altitude = 0
@@ -1086,6 +1095,7 @@ def parse_what_keyword_repeater(
             longitude,
             altitude,
             lasttime,
+            comment,
             message_callsign,
         ) = get_position_on_aprsfi(
             aprsfi_callsign=users_callsign, aprsdotfi_api_key=aprsdotfi_api_key
@@ -1101,6 +1111,7 @@ def parse_what_keyword_repeater(
         "longitude": longitude,
         "altitude": altitude,
         "lasttime": lasttime,
+        "comment": comment,
         "message_callsign": message_callsign,
         "repeater_band": repeater_band,
         "repeater_mode": repeater_mode,
@@ -1301,6 +1312,7 @@ def parse_what_keyword_metar(
                 longitude,
                 altitude,
                 lasttime,
+                comment,
                 message_callsign,
             ) = get_position_on_aprsfi(
                 aprsfi_callsign=users_callsign, aprsdotfi_api_key=aprsdotfi_api_key
@@ -1750,6 +1762,7 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
                 longitude,
                 altitude,
                 lasttime,
+                comment,
                 message_callsign,
             ) = get_position_on_aprsfi(
                 aprsfi_callsign=message_callsign,
@@ -1835,7 +1848,7 @@ def parse_what_keyword_osm_category(
     """
 
     found_my_keyword = kw_err = success = False
-    human_readable_message = what = osm_special_phrase = None
+    human_readable_message = what = osm_special_phrase = comment = None
     latitude = longitude = 0.0
     altitude = 0
     lasttime = datetime.min
@@ -1874,6 +1887,7 @@ def parse_what_keyword_osm_category(
                 longitude,
                 altitude,
                 lasttime,
+                comment,
                 message_callsign,
             ) = get_position_on_aprsfi(
                 aprsfi_callsign=users_callsign,
@@ -1890,6 +1904,7 @@ def parse_what_keyword_osm_category(
         "latitude": latitude,
         "longitude": longitude,
         "lasttime": lasttime,
+        "comment": comment,
         "altitude": altitude,
         "what": what,
         "human_readable_message": human_readable_message,
@@ -1927,7 +1942,7 @@ def parse_what_keyword_satpass(
     """
 
     found_my_keyword = kw_err = success = False
-    human_readable_message = what = osm_special_phrase = satellite = None
+    human_readable_message = what = comment = satellite = None
     latitude = longitude = 0.0
     altitude = 0
     lasttime = datetime.min
@@ -1954,6 +1969,7 @@ def parse_what_keyword_satpass(
                 longitude,
                 altitude,
                 lasttime,
+                comment,
                 message_callsign,
             ) = get_position_on_aprsfi(
                 aprsfi_callsign=users_callsign, aprsdotfi_api_key=aprsdotfi_api_key
@@ -1982,6 +1998,7 @@ def parse_what_keyword_satpass(
         "longitude": longitude,
         "altitude": altitude,
         "lasttime": lasttime,
+        "comment": comment,
         "message_callsign": message_callsign,
         "satellite": satellite,
         "human_readable_message": human_readable_message,
@@ -2145,7 +2162,7 @@ def parse_what_keyword_callsign_multi(
     """
 
     found_my_keyword = kw_err = success = False
-    human_readable_message = what = icao = None
+    human_readable_message = what = icao = comment = None
     latitude = longitude = users_latitude = users_longitude = 0.0
     altitude = 0
     lasttime = datetime.min
@@ -2216,6 +2233,7 @@ def parse_what_keyword_callsign_multi(
             longitude,
             altitude,
             lasttime,
+            comment,
             message_callsign,
         ) = get_position_on_aprsfi(
             aprsfi_callsign=message_callsign, aprsdotfi_api_key=aprsdotfi_api_key
@@ -2259,6 +2277,7 @@ def parse_what_keyword_callsign_multi(
                     _,
                     _,
                     _,
+                    _,
                 ) = get_position_on_aprsfi(
                     aprsfi_callsign=users_callsign,
                     aprsdotfi_api_key=aprsdotfi_api_key,
@@ -2299,6 +2318,7 @@ def parse_what_keyword_callsign_multi(
         "users_latitude": users_latitude,
         "users_longitude": users_longitude,
         "lasttime": lasttime,
+        "comment": comment,
         "altitude": altitude,
         "what": what,
         "human_readable_message": human_readable_message,
@@ -2349,7 +2369,7 @@ def parse_what_keyword_whereami(
     """
 
     found_my_keyword = kw_err = success = False
-    human_readable_message = what = None
+    human_readable_message = what = comment = None
     latitude = longitude = users_latitude = users_longitude = 0.0
     altitude = 0
     lasttime = datetime.min
@@ -2376,6 +2396,7 @@ def parse_what_keyword_whereami(
             longitude,
             altitude,
             lasttime,
+            comment,
             message_callsign,
         ) = get_position_on_aprsfi(
             aprsfi_callsign=users_callsign,
@@ -2420,6 +2441,7 @@ def parse_what_keyword_whereami(
         "users_latitude": users_latitude,
         "users_longitude": users_longitude,
         "lasttime": lasttime,
+        "comment": comment,
         "altitude": altitude,
         "what": what,
         "human_readable_message": human_readable_message,
@@ -2739,7 +2761,7 @@ def parse_what_keyword_email_position_report(
     """
 
     found_my_keyword = kw_err = success = False
-    human_readable_message = what = mail_recipient = None
+    human_readable_message = what = mail_recipient = comment = None
     latitude = longitude = users_latitude = users_longitude = 0.0
     altitude = 0
     lasttime = datetime.min
@@ -2770,6 +2792,7 @@ def parse_what_keyword_email_position_report(
             longitude,
             altitude,
             lasttime,
+            comment,
             message_callsign,
         ) = get_position_on_aprsfi(
             aprsfi_callsign=users_callsign,
@@ -2821,6 +2844,7 @@ def parse_what_keyword_email_position_report(
         "users_latitude": users_latitude,
         "users_longitude": users_longitude,
         "lasttime": lasttime,
+        "comment": comment,
         "altitude": altitude,
         "message_callsign": message_callsign,
         "city": city,
@@ -2850,7 +2874,5 @@ if __name__ == "__main__":
         smtpimap_email_password,
     ) = read_program_config()
     logger.info(
-        pformat(
-            parse_input_message("los angeles", "df1jsl-1", aprsdotfi_api_key)
-        )
+        pformat(parse_input_message("los angeles", "df1jsl-1", aprsdotfi_api_key))
     )
