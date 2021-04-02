@@ -18,6 +18,7 @@ The following Python packages need to be installed:
 - [unidecode](https://github.com/avian2/unidecode)
 - [us](https://github.com/unitedstates/python-us)
 - [utm](https://github.com/Turbo87/utm)
+- [xmltodict](https://github.com/martinblech/xmltodict)
 
 If you install MPAD and its components on a Raspberry Pi, the skyfield package requires you to install ```apt-get install libatlas-base-dev``` as a separate dependency.
 
