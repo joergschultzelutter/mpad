@@ -3,7 +3,7 @@
 # The result is equivalent to what would be sent to aprs-is
 # Populate the main function's 'testcall' parameter with the APRS message that you want to have parsed
 #
-from utility_modules import read_program_config
+from utility_modules import read_program_config, make_pretty_aprs_messages
 from input_parser import parse_input_message
 from output_generator import generate_output_message
 import logging
@@ -53,8 +53,27 @@ def testcall(message_text: str, from_callsign: str):
         logger.info(msg="Response:")
         logger.info(msg=pformat(generate_output_message(response_parameters)))
     else:
-        logger.info(msg=pformat(response_parameters))
+        human_readable_message = response_parameters[
+            "human_readable_message"
+        ]
+        output_message = []
+        # Dump the HRM to the user if we have one
+        if human_readable_message:
+            output_message = make_pretty_aprs_messages(
+                message_to_add=f"{human_readable_message}",
+                destination_list=output_message,
+            )
+        # If not, just dump the link to the instructions
+        else:
+            output_message.append(
+                "Sorry, did not understand your request. Have a look at my command"
+            )
+            output_message.append(
+                "syntax, see https://github.com/joergschultzelutter/mpad"
+            )
+        logger.info(output_message)
+        #logger.info(msg=pformat(response_parameters))
 
 
 if __name__ == "__main__":
-    testcall(message_text="posmsg jsl24469@gmail.com lang ru", from_callsign="ua3mlr-9")
+    testcall(message_text="whereis vriendschap", from_callsign="ua3mlr-9")

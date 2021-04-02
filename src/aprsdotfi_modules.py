@@ -94,7 +94,7 @@ def get_position_on_aprsfi(
 
     try:
         resp = requests.get(
-            f"https://api.aprs.fi/api/get?name={aprsfi_callsign}&what=loc&apikey={aprsdotfi_api_key}&format=json",
+            url=f"https://api.aprs.fi/api/get?name={aprsfi_callsign}&what=loc&apikey={aprsdotfi_api_key}&format=json",
             headers=headers,
         )
     except:
@@ -176,4 +176,4 @@ if __name__ == "__main__":
         smtpimap_email_password,
     ) = read_program_config()
     if success:
-        logger.info(get_position_on_aprsfi("DH6MP", aprsdotfi_api_key))
+        logger.info(get_position_on_aprsfi("vriendschap", aprsdotfi_api_key))
