@@ -31,7 +31,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def get_position_on_aprsfi(aprsfi_callsign: str, aprsdotfi_api_key: str):
+def get_position_on_aprsfi(aprsfi_callsign: str, aprsdotfi_api_key: str, aprs_target_type: str = ""):
     """
     Get the position of the given call sign on aprs.fi
     Call sign is taken 'as is', e.g. with or without SSID.
@@ -46,6 +46,12 @@ def get_position_on_aprsfi(aprsfi_callsign: str, aprsdotfi_api_key: str):
         Call sign that we want to get the lat/lon coordinates for
     aprsdotfi_api_key: 'str'
         aprs.fi api access key
+    aprs_target_type: 'str'
+        APRS target type (a for AIS, l for APRS station, i for APRS item,
+        o for APRS object, w for weather station). If not set then we
+        don't care about the target type - otherwise, we expect the
+        target type returned by aprs.fi to be of this value and list
+        the entry as 'not found' if these differ
 
     Returns
     =======
@@ -66,6 +72,10 @@ def get_position_on_aprsfi(aprsfi_callsign: str, aprsdotfi_api_key: str):
     aprsfi_callsign: 'str'
         Call sign converted to uppercase
     """
+
+    aprs_target_type = aprs_target_type.lower()
+    assert aprs_target_type in ["","a","l","i","o","w"]
+
     headers = {"User-Agent": mpad_config.mpad_default_user_agent}
 
     success = False
@@ -112,18 +122,32 @@ def get_position_on_aprsfi(aprsfi_callsign: str, aprsdotfi_api_key: str):
                         success = False
                     else:
                         success = True
-                        latitude = float(json_content["entries"][0]["lat"])
-                        longitude = float(json_content["entries"][0]["lng"])
+                        try:
+                            latitude = float(json_content["entries"][0]["lat"])
+                            longitude = float(json_content["entries"][0]["lng"])
+                        except ValueError:
+                            latitude = longitude = 0
+                            success = False
+                    # Check if the user has asked us for a specific target type
+                    if success and aprs_target_type != "":
+                        if "type" in json_content["entries"][0]:
+                            aprsfi_type = json_content["entries"][0]["type"]
+                            if aprs_target_type != aprsfi_type:
+                                latitude = longitude = 0
+                                success = False
                     # Now check for our optional fields
-                    if "altitude" in json_content["entries"][0]:
+                    if success and "altitude" in json_content["entries"][0]:
                         try:
                             altitude = float(json_content["entries"][0]["altitude"])
                         except ValueError:
                             altitude = 0.0
-                    if "lasttime" in json_content["entries"][0]:
-                        _mylast = float(json_content["entries"][0]["lasttime"])
-                        lasttime = datetime.utcfromtimestamp(_mylast)
-                    if "comment" in json_content["entries"][0]:
+                    if success and "lasttime" in json_content["entries"][0]:
+                        try:
+                            _mylast = float(json_content["entries"][0]["lasttime"])
+                            lasttime = datetime.utcfromtimestamp(_mylast)
+                        except ValueError:
+                            lasttime = datetime.min
+                    if success and "comment" in json_content["entries"][0]:
                         comment = json_content["entries"][0]["comment"]
 
         return (
