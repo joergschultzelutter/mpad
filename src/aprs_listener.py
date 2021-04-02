@@ -314,21 +314,18 @@ def mycallback(raw_aprs_packet: dict):
                         human_readable_message = response_parameters[
                             "human_readable_message"
                         ]
-                        output_message = []
                         # Dump the HRM to the user if we have one
                         if human_readable_message:
                             output_message = make_pretty_aprs_messages(
                                 message_to_add=f"{human_readable_message}",
-                                destination_list=output_message,
+                                add_sep=False,
                             )
                         # If not, just dump the link to the instructions
                         else:
-                            output_message.append(
-                                "Sorry, did not understand your request. Have a look at my command"
-                            )
-                            output_message.append(
-                                "syntax, see https://github.com/joergschultzelutter/mpad"
-                            )
+                            output_message = [
+                                "Sorry, did not understand your request. Have a look at my command",
+                                "syntax, see https://github.com/joergschultzelutter/mpad",
+                            ]
                         logger.info(
                             msg=f"Unable to process APRS packet {raw_aprs_packet}"
                         )
