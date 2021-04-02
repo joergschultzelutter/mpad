@@ -45,7 +45,7 @@ errmsg_cannot_find_coords_for_address: str = (
 errmsg_cannot_find_coords_for_user: str = "Cannot find coordinates for callsign"
 errmsg_invalid_country: str = "Invalid country code (need ISO3166-a2)"
 errmsg_invalid_state: str = "Invalid US state"
-errmsg_invalid_command: str = "Cannot grok command"
+errmsg_invalid_command: str = "Unknown command. Syntax:https://github.com/joergschultzelutter/mpad"
 errmsg_no_satellite_specified: str = "No satellite specified"
 errmsg_no_cwop_specified: str = "No cwop id specified"
 
