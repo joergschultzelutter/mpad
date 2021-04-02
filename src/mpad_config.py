@@ -18,10 +18,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 import os
+
 #
 # Program version
 #
-mpad_version: str = "0.23"
+mpad_version: str = "0.24"
 #
 ###########################
 # Constants, do not change#
@@ -37,51 +38,18 @@ aprs_symbol: str = "?"  # APRS symbol: Server
 # to APRS-IS. If the program has to send two bulletin messages, then the total run time of
 # sending out those bulletins is 2 * x secs
 #
-packet_delay_message: float = (
-    6.0  # packet delay in seconds after sending data to aprs-is
-)
-packet_delay_other: float = (
-    6.0  # packet delay after sending an acknowledgment, bulletin or beacon
-)
-#
-# https://en.wikipedia.org/wiki/Address.
-# https://wiki.openstreetmap.org/wiki/Name_finder/Address_format
-# This is a list of countries where the
-# street number has to be listed before the street name.
-# example:
-# US: 555 Test Way
-# DE: Test Way 555 (default format)
-#
-street_number_precedes_street = [
-    "AU",
-    "CA",
-    "FR",
-    "HK",
-    "IE",
-    "IN",
-    "IL",
-    "JP",
-    "LU",
-    "MY",
-    "NZ",
-    "OM",
-    "PH",
-    "SA",
-    "SG",
-    "LK",
-    "TW",
-    "TH",
-    "US",
-    "GB",
-    "UK",
-]
+# packet delay in seconds after sending data to aprs-is
+packet_delay_message: float = 6.0
+# packet delay after sending an acknowledgment, bulletin or beacon
+packet_delay_other: float = 6.0
 
 # Help text that the user receives as APRS messages in case he has requested help
 help_text_array = [
     "See https://github.com/joergschultzelutter/mpad for command syntax",
-    "(default=wx for pos of sending callsign). Position commands:",
-    "city,state;country OR city,state OR city;country OR zip;country OR",
-    "zip with/wo country OR grid|mh+4..6 char OR lat/lon OR callsign",
+    "Supports: Wx forecasts,position reporting,OSM category searches,",
+    "repeater data lookups,CWOP reports,METAR and TAR reports,celestial",
+    "calculations,satellite passes&frequency data,DAPNET messaging,",
+    "radiosonde landing predictions",
 ]
 #
 ##########################
@@ -152,8 +120,10 @@ mpad_callsigns_to_parse = ["MPAD"]  # (additional) call sign filter
 # The 2nd value represents the max. number of entries that the decaying cache
 # is going to accept
 #
-mpad_msg_cache_time_to_live = 60 * 60  # ttl = 60 minutes
-mpad_msg_cache_max_entries = 2160  # 2160 possible entries (max. of 36 per min is possible)
+# ttl = 60 minutes
+mpad_msg_cache_time_to_live = 60 * 60
+# 2160 possible entries (max. of 36 per min is possible)
+mpad_msg_cache_max_entries = 2160
 
 #
 ############################################
@@ -233,9 +203,7 @@ osm_supported_keyword_categories = [
 #
 # Default user agent for accessing aprs.fi, openstreetmap et al
 # Change this if you run your own MPAD instance
-mpad_default_user_agent = (
-    f"multi-purpose-aprs-daemon/{mpad_version} (+https://github.com/joergschultzelutter/mpad/)"
-)
+mpad_default_user_agent = f"multi-purpose-aprs-daemon/{mpad_version} (+https://github.com/joergschultzelutter/mpad/)"
 
 #
 # DAPNET API server and transmitter group
@@ -254,8 +222,8 @@ mpad_smtp_server_port = 465
 #
 mpad_imap_server_address = "imap.gmail.com"
 mpad_imap_server_port = 993
-mpad_imap_mail_retention_max_days = 1   # Delete mails after x days (0 = disable)
-mpad_imap_mailbox_name = "\"[Gmail]/Sent Mail\""
+mpad_imap_mail_retention_max_days = 1  # Delete mails after x days (0 = disable)
+mpad_imap_mailbox_name = '"[Gmail]/Sent Mail"'
 
 #
 # Directory for MPAD data files (e.g. TLE data, repeater data files et al)

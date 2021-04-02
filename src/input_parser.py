@@ -2178,7 +2178,7 @@ def parse_what_keyword_callsign_multi(
     # sequence and -if found- use the user's call sign
     #
     # Check - full call sign with SSID
-    regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[a-zA-Z0-9]{1,2})\b"
+    regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar|sonde)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[a-zA-Z0-9]{1,2})\b"
     matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
         what = matches[1].lower()
@@ -2189,7 +2189,7 @@ def parse_what_keyword_callsign_multi(
         found_my_keyword = True
     if not found_my_keyword:
         # Check - call sign without SSID
-        regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3})\b"
+        regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar|sonde)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3})\b"
         matches = re.search(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
@@ -2202,7 +2202,7 @@ def parse_what_keyword_callsign_multi(
             ).strip()
     if not found_my_keyword:
         # Check - call sign whose pattern deviates from the standard call sign pattern (e.g. bot, CWOP station etc)
-        regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar)\s*(\w+)\b"
+        regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar|sonde)\s*(\w+)\b"
         matches = re.search(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
@@ -2215,7 +2215,11 @@ def parse_what_keyword_callsign_multi(
             ).strip()
     if not found_my_keyword:
         # Check - no call sign at all. In this case, we use the sender's call sign as reference
-        regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar)\b"
+        #
+        # Hint: normally excludes the 'sonde' keyword as it requires a separate ID
+        # But maybe the probe itself is asking for pos data so let's keep it in
+        # Future processing of probe data will fail anyway if it's no radiosonde callsign
+        regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar|sonde)\b"
         matches = re.search(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
@@ -2245,6 +2249,24 @@ def parse_what_keyword_callsign_multi(
                     what = "wx"
             elif what == "riseset":
                 human_readable_message = f"RiseSet {message_callsign}"
+            elif what == "sonde":
+                human_readable_message = f"Landing Pred. '{message_callsign}'"
+                # Fetch the *sender's* lat/lon so that we can
+                # calculate the distance between the sender's position
+                # and the call sign that he has requested. We are only
+                # interested in the user's lat/lon info
+                (
+                    success,
+                    users_latitude,
+                    users_longitude,
+                    _,
+                    _,
+                    _,
+                    _,
+                ) = get_position_on_aprsfi(
+                    aprsfi_callsign=users_callsign,
+                    aprsdotfi_api_key=aprsdotfi_api_key,
+                )
             elif what == "whereis":
                 human_readable_message = f"Pos {message_callsign}"
                 # Try to get the msg call sign's human readable address based on lat/lon

@@ -30,7 +30,7 @@ from cwop_modules import (
 )
 
 import mpad_config
-from geopy_modules import get_osm_special_phrase_data
+from geopy_modules import get_osm_special_phrase_data, get_reverse_geopy_data
 
 from utility_modules import make_pretty_aprs_messages, read_program_config
 from airport_data_modules import get_metar_data
@@ -51,6 +51,7 @@ from dapnet_modules import send_dapnet_message
 from repeater_modules import get_nearest_repeater
 from funstuff_modules import get_fortuneteller_message
 from email_modules import send_email_position_report
+from radiosonde_modules import get_radiosonde_landing_prediction
 
 import datetime
 import logging
@@ -140,6 +141,10 @@ def generate_output_message(response_parameters: dict):
         )
     elif what == "dapnet" or what == "dapnethp":
         success, output_list = generate_output_message_dapnet(
+            response_parameters=response_parameters
+        )
+    elif what == "sonde":
+        success, output_list = generate_output_message_radiosonde(
             response_parameters=response_parameters
         )
     elif what == "fortuneteller":
@@ -754,6 +759,115 @@ def generate_output_message_dapnet(response_parameters: dict):
     return success, output_list
 
 
+def generate_output_message_radiosonde(response_parameters: dict):
+    """
+    Tries to determine a radiosonde landing coordinates based on its aprs.fi data
+
+    Parameters
+    ==========
+    response_parameters: 'dict'
+        Dictionary of the data from the input processor's analysis on the user's data
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful. Will only be false in case of a
+        fatal error as we need to send something back to the user (even
+        if that message is a mere error text)
+    output_message: 'list'
+        List, containing the message text(s) that we will send to the user
+        This is plain text list without APRS message ID's
+    """
+    message_callsign = response_parameters["message_callsign"]
+    aprsdotfi_api_key = response_parameters["aprsdotfi_api_key"]
+    human_readable_message = response_parameters["human_readable_message"]
+    users_latitude = response_parameters["users_latitude"]
+    users_longitude = response_parameters["users_longitude"]
+    units = response_parameters["units"]
+    language = response_parameters["language"]
+
+    output_list = []
+
+    (
+        success,
+        landing_latitude,
+        landing_longitude,
+        landing_timestamp,
+    ) = get_radiosonde_landing_prediction(
+        aprsfi_callsign=message_callsign, aprsdotfi_api_key=aprsdotfi_api_key
+    )
+    if success:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=human_readable_message, destination_list=output_list
+        )
+        output_list = make_pretty_aprs_messages(
+            message_to_add="Lat/Lon", destination_list=output_list
+        )
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"{landing_latitude}/{landing_longitude}",
+            destination_list=output_list,
+        )
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"{landing_timestamp.strftime('%d-%b %H:%M')}UTC",
+            destination_list=output_list,
+        )
+
+        if landing_latitude != users_latitude and landing_longitude != users_longitude:
+
+            # We have different identities and switch from "whereami" mode
+            # to the "whereis" mode where we will also calculate the distance,
+            # heading and direction between these two positions
+            _whereis_mode = True
+
+            # Calculate distance, bearing and heading
+            # latitude1/longitude1 = the user's current position
+            # latitude2/longitude2 = the desired target position
+            distance, bearing, heading = haversine(
+                latitude1=users_latitude,
+                longitude1=users_longitude,
+                latitude2=landing_latitude,
+                longitude2=landing_longitude,
+                units=units,
+            )
+            distance_uom = "km"
+            if units == "imperial":
+                distance_uom = "mi"
+
+            output_list = make_pretty_aprs_messages(
+                message_to_add=f"Dst {math.ceil(distance)} {distance_uom}",
+                destination_list=output_list,
+            )
+
+            output_list = make_pretty_aprs_messages(
+                message_to_add=f"Brg {round(bearing)}deg", destination_list=output_list
+            )
+
+            output_list = make_pretty_aprs_messages(
+                message_to_add=f"{heading}", destination_list=output_list
+            )
+        grid = convert_latlon_to_maidenhead(
+            latitude=landing_latitude, longitude=landing_longitude
+        )
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"Grid {grid}", destination_list=output_list
+        )
+
+        success, response_data = get_reverse_geopy_data(
+            latitude=landing_latitude, longitude=landing_longitude, language=language
+        )
+        if success:
+            address = response_data["address"]
+            output_list = make_pretty_aprs_messages(
+                message_to_add=f"Addr: {address}", destination_list=output_list
+            )
+    else:
+        output_list = make_pretty_aprs_messages(
+            message_to_add=f"Cannot predict landing parameters for '{message_callsign}'"
+        )
+    success = True  # Always 'True' as we also return error messages to the user
+    return success, output_list
+
+
 def generate_output_message_whereis(response_parameters: dict):
     """
     Generate a 'whereis' output (coords, address etc) for a specific lat/lon
@@ -908,64 +1022,6 @@ def generate_output_message_whereis(response_parameters: dict):
     output_list = make_pretty_aprs_messages(
         message_to_add=f"Addr: {address}", destination_list=output_list
     )
-
-    """
-    # Note: variable 'address' contains the full-blown address details from
-    # OpenStreetMap. As we deal with APRS data which is restricted in length,
-    # MPAD tries to be as conservative as possible and avoids using the
-    # full address - but rather tries to construct a reasonable address string by
-    # itself. This works for most of the cases but if you're off grid, you
-    # may end up with incomplete human readable address details.
-    #
-    # If this is deemed undesired behavior, simply add the 'address' content via
-    # function 'make_pretty_aprs_messages'. Even if that string exceeds 67 chars,
-    # that function will attempt to split up the text in the most legible way
-    # possible.
-
-    
-        human_readable_address = ""
-        if city:
-            human_readable_address = city
-            if zipcode:
-                human_readable_address += f", {zipcode}"
-            if country_code:
-                human_readable_address += f", {country_code}"
-        else:
-            if district:
-                human_readable_address = district
-            if county:
-                if len(human_readable_address) != 0:
-                    human_readable_address += ", "
-                human_readable_address += county
-            if zipcode:
-                if len(human_readable_address) != 0:
-                    human_readable_address += ", "
-                human_readable_address += zipcode
-            if country_code:
-                if len(human_readable_address) != 0:
-                    human_readable_address += ", "
-                human_readable_address += country_code
-    
-        if human_readable_address != "":
-            output_list = make_pretty_aprs_messages(
-                message_to_add=human_readable_address, destination_list=output_list
-            )
-    
-        human_readable_address = None
-        if street:
-            human_readable_address = street
-            if street_number:
-                # per https://en.wikipedia.org/wiki/Address, we try to honor the native format
-                # for those countries who list the street number before the street name
-                if country_code in mpad_config.street_number_precedes_street:
-                    human_readable_address = f"{street_number} " + human_readable_address
-                else:
-                    human_readable_address = human_readable_address + f" {street_number}"
-        if human_readable_address:
-            output_list = make_pretty_aprs_messages(
-                message_to_add=human_readable_address, destination_list=output_list
-            )
-    """
 
     if _whereis_mode:
         human_readable_address = None
