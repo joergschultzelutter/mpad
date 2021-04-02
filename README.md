@@ -16,8 +16,9 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/TAF/CWOP reports,
 - Provides uplink/downlink frequencies for a specific satellite
 - Find a place of interest nearby, e.g. fuel station, supermarket
 - Send a message to a DAPNET user
-- Magic 8 Ball predictions :-)
+- Magic 8 Ball predictions
 - Send an extensive APRS position report for your call sign's location to an email address via SMTP
+- Radiosonde landing predictions (BETA)
 - Can be easily extended with additional functions and keywords
 
 ## Program specifics

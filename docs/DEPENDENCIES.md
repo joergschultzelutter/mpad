@@ -39,6 +39,7 @@ Both aprs.fi and openweathermap.org require an API access key which needs to be 
 - [repeatermap.de](https://www.repeatermap.de)
 - [hearham.com](https://www.hearham.com)
 - [JE9PEL's satellite frequency data](http://www.ne.jp/asahi/hamradio/je9pel/satslist.htm)
+- [habhug.org](habhub.org)
 
 ## Programming & knowledge resources
 

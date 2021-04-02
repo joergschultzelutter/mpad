@@ -188,7 +188,7 @@ If no call sign is specified, then the user's own call sign (the one that he has
 
 Based on the user's lat/lon, the program will then try to find the nearest airport for you. If that airport supports METAR data, the program is going to return METAR data to the user. Otherwise, it will try to pull a standard wx report for the airport's coordinates. If the airport is capable of providing METAR data but the METAR report cannot be retrieved, an error message is returned to the user.
 
-### WhereIs
+## WhereIs
 
 Returns the geocoordinates/address info of the sender's position or a specific call sign. Respose data includes:
 
@@ -241,7 +241,7 @@ Glossary:
 - street / zip code / country / city, if available
 - ```alt``` - altitude in meters or feet, if available. 
 
-### Sunrise/Sunset and Moonset/Moonrise
+## Sunrise/Sunset and Moonset/Moonrise
 
 Returns the sunrise/sunset and moonset/moonrise info of the sender's position or a specific call sign. Note: values are calculated for the given day. In case the moonSET value overlaps from the previous date, then this is not taken into consideration.
 
@@ -268,7 +268,7 @@ Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME
 - ```mn_sr``` - time settings for moonset and moonrise in GMT
 
 
-### CWOP (Customer Weather's Observer Program)
+## CWOP (Customer Weather's Observer Program)
 
 Returns the latest CWOP Wx report of the nearest CWOP station (related to the sender's call sign or a different call sign) OR a specific CWOP station ID.
 
@@ -294,7 +294,7 @@ Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME
 
 ```Pres 1021.6mb Rain(cm) 1h=0.0, 24h=0.05, mn=0.05```
 
-### Satellite passes
+## Satellite passes
 
 Retrieves the next pass of the given satellite ID for the user's position. Satellites can be specified by their satellite IDs as defined in the respective [amateur radio satellite tle file](http://www.celestrak.com/NORAD/elements/amateur.txt). The following rules apply:
 
@@ -347,7 +347,7 @@ If there is no satellite pass for the day you've specified, the __next available
 
 - ```vispass iss top5 friday noon```
 
-### Satellite frequencies
+## Satellite frequencies
 
 Retrieves the satellite frequencies (whereas present) from JE9PEL's database. Satellites can be specified by their satellite IDs as defined in the respective [amateur radio satellite tle file](http://www.celestrak.com/NORAD/elements/amateur.txt). The following rules apply:
 
@@ -369,7 +369,7 @@ Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME
 
 - ```satfreq es'hail-2 ```
 
-### Repeater data
+## Repeater data
 
 Retrieves the nearest repeater, based on the user's position. In addition, 'band' and 'mode' filters can be specified.
 
@@ -414,7 +414,7 @@ Message enumerations are only included if more than one result is available.
 
 If you've specified ```band``` or ```mode``` as a query parameter, that data will not be part of the outging message (I'm trying to save some bytes here). So if you've e.g. issued a ```repeater c4fm 70cm``` command, both ```c4fm``` and ```70cm``` references will not be part of the outgoing message - I simply assume that you remember what you've requested. However, if you did not request ```band``` and/or ```mode```, the data will be added to the outgoing message.
 
-### OpenStreetMap Nearby Category Searches
+## OpenStreetMap Nearby Category Searches
 
 MPAD allows you to find e.g. a supermarket or abank that the nearest one to your location. OSM offers a couple of classification categories :[https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases/EN](https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases/EN). Some - but not all - of these categories are currently supported by MPAD. These categories are:
 
@@ -502,7 +502,7 @@ Message enumerations are only included if more than one result is available.
 
 ```Brg 313 deg NW```
 
-### Send a message to DAPNET
+## Send a message to DAPNET
 
 Sends a message text to a DAPNET user
 
@@ -526,7 +526,7 @@ In case of success, MPAD will return the message
 
 IF MPAD had not been configured for DAPNET access or there was an error during sending the message, an error message will be sent to the user.
 
-### Send a position report via email
+## Send a position report via email
 
 Sends an email to a user on the Internet, containing retailed position information on your call sign's current APRS position.
 
@@ -550,7 +550,7 @@ In case of success, MPAD will return the message
 
 IF MPAD has not been configured for DAPNET access or there was an error during sending the message, an error message will be sent to the user.
 
-### Fortuneteller
+## Fortuneteller
 
 MPAD has the power to predict your future - all you have to do is ask a question (and send an APRS message of course).
 
@@ -575,7 +575,32 @@ The purpose for this keyword is mainly for UTF-8 / localised content testing.
 
 Well .... ```Better not tell you now``` :-)
 
-### General help
+## Radiosonde landing predictions (BETA)
+
+Based on the coordinates and altitude settings from aprs.fi, MPAD determines the probe's landing coordinates predictions and returns them to the user. Similar to the ```whereis``` keyword, this keyword also provides additional direction information (address, bearing etc) to the user.
+
+Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __NO__
+
+#### Formats
+
+- ```sonde <callsign>```
+
+```callsign``` can be specified with or without SSID (if specified with SSID, the SSID will be removed). Additionally, radiosonde callsigns which do not follow the standard APRS call sign pattern are also recognised.
+```sonde``` can be combined with the ```lang``` keyword.
+
+Note: this keyword expects that the specified call sign is qualified as APRS "Object" ([see type information](https://aprs.fi/page/api) on aprs.fi). If you specify a regular APRS call sign, MPAD will reject your query and returns a "Callsign not found" message to the user.
+
+#### Example requests
+
+- ```sonde S3421116``` will request a radiosonde landing prediction for the given probe
+
+#### Example response
+
+```Landing Pred. 'S3421116' Lat/Lon 47.7853/10.6331 02-Apr 15:45UTC```
+```Dst 481 km Brg 159deg SSE Grid JN57hs58 Addr: Baerenleitenweg,```
+```Marktoberdorf, Landkreis Ostallgaeu, Bavaria, 87616, Germany```
+
+## General help
 
 Returns general program help to the user.
 
@@ -591,7 +616,7 @@ Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME
 - ```info```
 - ```help```
 
-### Switching between the metric and imperial system
+## Switching between the metric and imperial system
 
 By default, the program will automatically switch from the metric system (default) to the imperial system if the __sender's__ call sign is from Liberia, Myanmar or the United States (per Wikipedia, these are the only three countries which still use the imperial system over the metric system).
 
@@ -631,7 +656,7 @@ Now let's request the same wx report - but this time, we want it to be delivered
 
 MPAD does not perform an imperial-to-metric calculation (or vice versa) but requests the desired format as part of its REST requests to e.g. Openweathermap and other services. Apart from rounding these values in order to limit the message length, all data is displayed 'as is'.
 
-### Language
+## Language
 
 Allows you to specify a language in a (somewhat) ISO639-1 format. Default language is 'en'. 
 
@@ -697,7 +722,7 @@ Currently, this keyword is __only__ used for WX reports from Openweathermap. In 
 - ```tw``` Chinese Traditional
 - ```zu``` Zulu
 
-### Allow to receive more than one result
+## Allow to receive more than one result
 
 Certain keywords such as the ```osm``` or the ```repeater``` keyword allow more than one result. For example, an OSM query for the nearest ```supermarket``` along with the ```top5``` command will return up to 5 results to you which are even ordered by distance between your current location and the target location. For the ```repeater``` keyword, you can run a query such as ```repeater c4fm 70cm top3``` which will return the nearest 3 repeater results to you.
 

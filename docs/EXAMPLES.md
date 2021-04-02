@@ -245,3 +245,18 @@ Have MPAD send an email with your APRS position data to any user on the Internet
 Default language is English - you can specify a different language via ```language``` keyword. MPAD always sends this parameter to OpenStreetmap, thus allowing you to receive e.g. Russian addresses in cyrillic characters.
 
 Note that specifying your own message content (as part of the outgoing mail) is not implemented - I sacrificed this option in favor of longer email addresses.
+
+## Radiosonde landing predictions (BETA)
+
+External service dependencies:
+
+- [aprs.fi](www.aprs.fi) for APRS call sign coordinates
+- [Habhub](habhub.org) for the radiosonde landing prediction
+
+Based on the probe's coordinates on APRS.fi, calculate the probe's landing coordinates and return them to the user
+
+| What do we want | Command string User > MPAD | Response example MPAD > User |
+| --------------- | -------------------------- | ---------------------------- |
+| Get the radiosonde's predicted landing coordinates | ```sonde s3421116``` | ```Landing Pred. 'S3421116' Lat/Lon 47.7853/10.6331 02-Apr 15:45UTC``` |
+| | | ```Dst 481 km Brg 159deg SSE Grid JN57hs58 Addr: Baerenleitenweg,``` |
+| | | ```Marktoberdorf, Landkreis Ostallgaeu, Bavaria, 87616, Germany``` |
