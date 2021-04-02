@@ -42,7 +42,7 @@ aprsdotfi_api_key = openweathermap_api_key = None
 errmsg_cannot_find_coords_for_address: str = (
     "Cannot find coordinates for requested address"
 )
-errmsg_cannot_find_coords_for_user: str = "Cannot find coordinates for user"
+errmsg_cannot_find_coords_for_user: str = "Cannot find coordinates for callsign"
 errmsg_invalid_country: str = "Invalid country code (need ISO3166-a2)"
 errmsg_invalid_state: str = "Invalid US state"
 errmsg_invalid_command: str = "Cannot grok command"

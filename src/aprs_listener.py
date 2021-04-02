@@ -35,6 +35,7 @@ from utility_modules import (
     read_aprs_message_counter,
     write_aprs_message_counter,
     check_and_create_data_directory,
+    make_pretty_aprs_messages,
 )
 from aprs_communication import (
     parse_aprs_data,
@@ -310,12 +311,26 @@ def mycallback(raw_aprs_packet: dict):
                     # parser, we sinply don't know what to do with the user's message
                     # and get back to him with a generic response.
                     else:
-                        output_message = [
-                            "Sorry, did not understand your request. Have a look at my command",
-                            "syntax, see https://github.com/joergschultzelutter/mpad",
+                        human_readable_message = response_parameters[
+                            "human_readable_message"
                         ]
+                        output_message = []
+                        # Dump the HRM to the user if we have one
+                        if human_readable_message:
+                            output_message = make_pretty_aprs_messages(
+                                message_to_add=f"{human_readable_message}",
+                                destination_list=output_message,
+                            )
+                        # If not, just dump the link to the instructions
+                        else:
+                            output_message.append(
+                                "Sorry, did not understand your request. Have a look at my command"
+                            )
+                            output_message.append(
+                                "syntax, see https://github.com/joergschultzelutter/mpad"
+                            )
                         logger.info(
-                            msg=f"Unable to parse APRS packet {raw_aprs_packet}"
+                            msg=f"Unable to process APRS packet {raw_aprs_packet}"
                         )
 
                     # Send our message(s) to APRS-IS

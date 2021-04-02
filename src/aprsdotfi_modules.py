@@ -31,7 +31,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def get_position_on_aprsfi(aprsfi_callsign: str, aprsdotfi_api_key: str, aprs_target_type: str = ""):
+def get_position_on_aprsfi(
+    aprsfi_callsign: str, aprsdotfi_api_key: str, aprs_target_type: str = ""
+):
     """
     Get the position of the given call sign on aprs.fi
     Call sign is taken 'as is', e.g. with or without SSID.
@@ -74,7 +76,7 @@ def get_position_on_aprsfi(aprsfi_callsign: str, aprsdotfi_api_key: str, aprs_ta
     """
 
     aprs_target_type = aprs_target_type.lower()
-    assert aprs_target_type in ["","a","l","i","o","w"]
+    assert aprs_target_type in ["", "a", "l", "i", "o", "w"]
 
     headers = {"User-Agent": mpad_config.mpad_default_user_agent}
 
@@ -174,4 +176,4 @@ if __name__ == "__main__":
         smtpimap_email_password,
     ) = read_program_config()
     if success:
-        logger.info(get_position_on_aprsfi("ME9C22014", aprsdotfi_api_key))
+        logger.info(get_position_on_aprsfi("DH6MP", aprsdotfi_api_key))
