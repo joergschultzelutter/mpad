@@ -579,6 +579,8 @@ Well .... ```Better not tell you now``` :-)
 
 Based on the coordinates and altitude settings from aprs.fi, MPAD determines the probe's landing coordinates predictions and returns them to the user. Similar to the ```whereis``` keyword, this keyword also provides additional direction information (address, bearing etc) to the user.
 
+__CURRENT LANDING PREDICTION IS KNOWN TO BE INCORRECT__ so don't rely on it yet.
+
 Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __NO__
 
 #### Formats
