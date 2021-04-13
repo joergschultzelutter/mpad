@@ -1,5 +1,5 @@
 #
-# Multi-Purpose APRS Daemon: Airport Data Modules
+# Multi-Purpose APRS Daemon: radiosonde landing prediction
 # Author: Joerg Schultze-Lutter, 2020
 #
 # Radiosonde landing prediction
@@ -67,7 +67,7 @@ def get_ascent_descent_burst(clmb: float, altitude: float):
             burst_altitude = 38000
     else:
         burst_altitude = altitude + 1
-        ascent_rate = 5
+        ascent_rate = 0.0
         descent_rate = abs(clmb)
     return ascent_rate, descent_rate, burst_altitude
 
@@ -145,13 +145,6 @@ def get_kml_data_from_habhub(
     # minute in the future. So let's use the current UTC time and add
     # one minute to it
     timestamp = datetime.utcnow() + timedelta(minutes=1)
-
-    # remove this
-    altitude = 0
-    ascent_rate = 5
-    burst_altitude = 25000
-    descent_rate = 5
-    # remove this
 
     # Create the payload item for the POST operation
     hubhab_payload = {
@@ -341,6 +334,6 @@ if __name__ == "__main__":
     if success:
         logger.info(
             get_radiosonde_landing_prediction(
-                aprsfi_callsign="S3421116", aprsdotfi_api_key=aprsdotfi_api_key
+                aprsfi_callsign="r3320169", aprsdotfi_api_key=aprsdotfi_api_key
             )
         )
