@@ -19,6 +19,7 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/TAF/CWOP reports,
 - Magic 8 Ball predictions
 - Send an extensive APRS position report for your call sign's location to an email address via SMTP
 - Radiosonde landing predictions
+- Deutscher Wetterdienst WX warning broadcasts (for German users)
 - Can be easily extended with additional functions and keywords
 
 ## Program specifics
