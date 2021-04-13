@@ -113,7 +113,9 @@ def send_dwd_bulletins(myaprsis: aprslib.inet.IS, simulate_send: bool = True):
                                     dwd_end = datetime.min
                             if dwd_end != datetime.min and dwd_event:
                                 # This time stamp uses LOCAL time settings and NOT UTC time settings
-                                bln_message = f"DWD Warnung vor {dwd_event} bis {dwd_end.strftime('%d-%b %H:%M')}"
+                                # hour format string will now work on windows, see
+                                # https://stackoverflow.com/questions/904928/python-strftime-date-without-leading-0
+                                bln_message = f"DWD Warnung vor {dwd_event} in {warncell_abbrev} bis {dwd_end.strftime('%d-%b %-Hh')}"
                                 if len(bln_message) > 67:
                                     bln_message = bln_message[:67]
                                 for i in range(0, 10):

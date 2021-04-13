@@ -22,7 +22,7 @@ import os
 #
 # Program version
 #
-mpad_version: str = "0.27"
+mpad_version: str = "0.28"
 #
 ###########################
 # Constants, do not change#
@@ -249,10 +249,6 @@ mpad_root_directory = os.path.abspath(os.getcwd())
 mpad_dwd_warncells = {
     "103255000": "HOL",
     "105762000": "HX",
-    "805762020": "HX",
-    "803255023": "HOL",
-    "105754000": "GT",
-    "805754028": "GT",
 }
 
 #
