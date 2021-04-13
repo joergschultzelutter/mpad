@@ -24,10 +24,10 @@ If you install MPAD and its components on a Raspberry Pi, the skyfield package r
 
 ## API Dependencies
 
-- [aprs.fi](https://aprs.fi/page/api)
-- [findu.com](https://www.findu.com)
+- [aprs.fi](https://aprs.fi/page/api) - thank you Hessu!
+- [findu.com](https://www.findu.com) - thank you Steve Dimse!
 - [openweathermap.org](https://www.openweathermap.org)
-- [aprs-is](http://www.aprs-is.net/Default.aspx)
+- [aprs-is](http://www.aprs-is.net/Default.aspx) - thank you Steve Loveall!
 
 Both aprs.fi and openweathermap.org require an API access key which needs to be added to the program's configuration file - see [installation instructions](INSTALLATION.md)
 
@@ -39,7 +39,7 @@ Both aprs.fi and openweathermap.org require an API access key which needs to be 
 - [repeatermap.de](https://www.repeatermap.de)
 - [hearham.com](https://www.hearham.com)
 - [JE9PEL's satellite frequency data](http://www.ne.jp/asahi/hamradio/je9pel/satslist.htm)
-- [habhug.org](habhub.org)
+- [habhub.org](habhub.org)
 
 ## Programming & knowledge resources
 
