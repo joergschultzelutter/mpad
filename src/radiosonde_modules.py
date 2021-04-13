@@ -56,7 +56,7 @@ def get_ascent_descent_burst(clmb: float, altitude: float):
 
     if clmb >= 0:
         ascent_rate = clmb
-        descent_rate = 5
+        descent_rate = 6
         if altitude < 25000:
             burst_altitude = 25000
         elif 25000 < altitude < 30000:
