@@ -246,7 +246,7 @@ Default language is English - you can specify a different language via ```langua
 
 Note that specifying your own message content (as part of the outgoing mail) is not implemented - I sacrificed this option in favor of longer email addresses.
 
-## Radiosonde landing predictions (BETA)
+## Radiosonde landing predictions
 
 External service dependencies:
 

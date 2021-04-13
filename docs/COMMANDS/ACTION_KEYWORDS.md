@@ -575,13 +575,22 @@ The purpose for this keyword is mainly for UTF-8 / localised content testing.
 
 Well .... ```Better not tell you now``` :-)
 
-## Radiosonde landing predictions (BETA)
+## Radiosonde landing prediction
 
 Based on the coordinates and altitude settings from aprs.fi, MPAD determines the probe's landing coordinates predictions and returns them to the user. Similar to the ```whereis``` keyword, this keyword also provides additional direction information (address, bearing etc) to the user.
 
-__CURRENT LANDING PREDICTION IS KNOWN TO BE INCORRECT__ so don't rely on it yet.
-
 Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __NO__
+
+This keyword uses ```predict.habhub.org``` for the whole prediction landing prediction process. Here's an illustration of the input parameters and how they are used on the ```habhub.org``` web site:
+
+- ```latitude``` - ```latitude``` value from aprs.fi
+- ```longitude``` - ```longitude``` value from aprs.fi
+- ```altitude``` - ```altitude``` value from aprs.fi
+- ```launch time``` and ```launch date``` - time stamp from aprs.fi
+- ```ascent rate```: equal to aprs.fi ```clmb``` value if that value is > 0. If ```clmb``` has a negative value, then ```ascent rate``` is set to zero.
+- ```descent rate```: set to value ```5``` if ```clmb``` value is > 0. If ```clmb``` has a negative value, then ```descent rate``` is set to the absolute (sign-less) value of ```clmb```
+- ```burst altitude```: set to ```25000``` if aprs.fi ```altitude``` is < 25000. Set to ```30000``` if aprs.fi ```altitude``` is > 25000 and < 30000. Set to ```35000``` if aprs.fi ```altitude``` is > 30000 and < 35000. Set to ```38000``` if aprs.fi ```altitude``` is > 35000.
+
 
 #### Formats
 
