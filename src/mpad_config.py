@@ -22,7 +22,7 @@ import os
 #
 # Program version
 #
-mpad_version: str = "0.25"
+mpad_version: str = "0.27"
 #
 ###########################
 # Constants, do not change#
@@ -51,7 +51,7 @@ help_text_array = [
     "calculations,satellite passes&frequency data,DAPNET messaging,",
     "radiosonde landing predictions",
 ]
-#
+
 ##########################
 # Configuration settings #
 ##########################
@@ -230,3 +230,67 @@ mpad_imap_mailbox_name = '"[Gmail]/Sent Mail"'
 #
 mpad_data_directory = "data_files"
 mpad_root_directory = os.path.abspath(os.getcwd())
+
+#
+# Deutscher Wetterdienst (DWD) Warncell-IDs
+# This is for German users only. If you populate this dictionary, then
+# MPAD will be instructed to broadcast severe wx warnings for
+# specific municipal areas in Germany.
+#
+# Leave this dictionary empty if you do not want MPAD to issue DWD bulletins
+#
+# Dictionary key: warncell id
+# Dictionary value: max 3-character city identifier
+#
+# List of valid Warncell IDs can be found on this page:
+# https://www.dwd.de/DE/leistungen/opendata/hilfe.html
+# Direct file link:
+# https://www.dwd.de/DE/leistungen/opendata/help/warnungen/cap_warncellids_csv.csv?__blob=publicationFile&v=3
+mpad_dwd_warncells = {
+    "103255000": "HOL",
+    "105762000": "HX",
+    "805762020": "HX",
+    "803255023": "HOL",
+    "105754000": "GT",
+    "805754028": "GT",
+}
+
+#
+# The program's bulletin and beacon messages
+#
+# APRS_IS bulletin messages (will be sent every 4 hrs)
+# Note: these HAVE to have 67 characters (or less) per entry
+# MPAD will NOT check the content and send it out 'as is'
+aprs_bulletin_messages: dict = {
+    "BLN0": f"{mpad_alias} {mpad_version} Multi-Purpose APRS Daemon",
+    "BLN1": f"See https://github.com/joergschultzelutter/mpad for command syntax",
+    "BLN2": f"and program source code. 73 de DF1JSL",
+}
+#
+# APRS_IS beacon messages (will be sent every 30 mins)
+# - APRS Position (first line) needs to have 63 characters or less
+# - APRS Status can have 67 chars (as usual)
+# Details: see aprs101.pdf chapter 8
+#
+# MPAD will NOT check the content and send it out 'as is'
+#
+# This message is a position report; format description can be found on pg. 23ff and pg. 94ff.
+# of aprs101.pdf. Message symbols: see http://www.aprs.org/symbols/symbolsX.txt and aprs101.pdf
+# on page 104ff.
+# Format is as follows: =Lat primary-symbol-table-identifier lon symbol-identifier test-message
+# Lat/lon from the configuration have to be valid or the message will not be accepted by aprs-is
+#
+# Example nessage: MPAD>APRS:=5150.34N/00819.60E?MPAD 0.01
+# results in
+# lat = 5150.34N
+# primary symbol identifier = /
+# lon = 00819.60E
+# symbol identifier = ?
+# plus some text.
+# The overall total symbol code /? refers to a server icon - see list of symbols
+#
+aprs_beacon_messages: list = [
+    f"={mpad_latitude}{aprs_table}{mpad_longitude}{aprs_symbol}{mpad_alias} {mpad_version} /A={mpad_beacon_altitude_ft:06}",
+    #    ">Multi-Purpose APRS Daemon",
+]
+#

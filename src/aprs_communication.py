@@ -26,42 +26,6 @@ import re
 
 import mpad_config
 
-# APRS_IS bulletin messages (will be sent every 4 hrs)
-# Note: these HAVE to have 67 characters (or less) per entry
-# MPAD will NOT check the content and send it out 'as is'
-bulletin_texts: dict = {
-    "BLN0": f"{mpad_config.mpad_alias} {mpad_config.mpad_version} Multi-Purpose APRS Daemon",
-    "BLN1": f"See https://github.com/joergschultzelutter/mpad for command syntax",
-    "BLN2": f"and program source code. 73 de DF1JSL",
-}
-
-# APRS_IS beacon texts (will be sent every 30 mins)
-# - APRS Position (first line) needs to have 63 characters or less
-# - APRS Status can have 67 chars (as usual)
-# Details: see aprs101.pdf chapter 8
-
-# MPAD will NOT check the content and send it out 'as is'
-#
-# This message is a position report; format description can be found on pg. 23ff and pg. 94ff.
-# of aprs101.pdf. Message symbols: see http://www.aprs.org/symbols/symbolsX.txt and aprs101.pdf
-# on page 104ff.
-# Format is as follows: =Lat primary-symbol-table-identifier lon symbol-identifier test-message
-# Lat/lon from the configuration have to be valid or the message will not be accepted by aprs-is
-#
-# Example nessage: MPAD>APRS:=5150.34N/00819.60E?MPAD 0.01
-# results in
-# lat = 5150.34N
-# primary symbol identifier = /
-# lon = 00819.60E
-# symbol identifier = ?
-# plus some text.
-# The overall total symbol code /? refers to a server icon - see list of symbols
-#
-beacon_text_array: list = [
-    f"={mpad_config.mpad_latitude}{mpad_config.aprs_table}{mpad_config.mpad_longitude}{mpad_config.aprs_symbol}{mpad_config.mpad_alias} {mpad_config.mpad_version} /A={mpad_config.mpad_beacon_altitude_ft:06}",
-    #    ">Multi-Purpose APRS Daemon",
-]
-
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
 )
@@ -110,7 +74,7 @@ def send_beacon_and_status_msg(myaprsis: aprslib.inet.IS, simulate_send: bool = 
     none
     """
     logger.info(msg="Reached beacon interval; sending beacons")
-    for bcn in beacon_text_array:
+    for bcn in mpad_config.aprs_beacon_messages:
         stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}:{bcn}"
         if not simulate_send:
             logger.info(msg=f"Sending beacon: {stringtosend}")
@@ -120,16 +84,21 @@ def send_beacon_and_status_msg(myaprsis: aprslib.inet.IS, simulate_send: bool = 
             logger.info(msg=f"Simulating beacons: {stringtosend}")
 
 
-def send_bulletin_messages(myaprsis: aprslib.inet.IS, simulate_send: bool = True):
+def send_bulletin_messages(
+    myaprsis: aprslib.inet.IS, bulletin_dict: dict, simulate_send: bool = True
+):
     """
     Sends bulletin message list to APRS_IS
-    'Recipient' is 'BLN0' ...'BLNn' and is predefined in the bulletin's dict element
+    'Recipient' is 'BLNxxx' and is predefined in the bulletin's dict 'key'. The actual message
+    itself is stored in the dict's 'value'.
     If 'simulate_send'= True, we still prepare the message but only send it to our log file
 
     Parameters
     ==========
     myaprsis: 'aprslib.inet.IS'
         Our aprslib object that we will use for the communication part
+    bulletin_dict: 'dict'
+        The bulletins that we are going to send upt to the user. Key = BLNxxx, Value = Bulletin Text
     simulate_send: 'bool'
         If True: Prepare string but only send it to logger
 
@@ -138,7 +107,7 @@ def send_bulletin_messages(myaprsis: aprslib.inet.IS, simulate_send: bool = True
     none
     """
     logger.info(msg="reached bulletin interval; sending bulletins")
-    for recipient_id, bln in bulletin_texts.items():
+    for recipient_id, bln in bulletin_dict.items():
         stringtosend = f"{mpad_config.mpad_alias}>{mpad_config.mpad_aprs_tocall}::{recipient_id:9}:{bln}"
         if not simulate_send:
             logger.info(msg=f"Sending bulletin: {stringtosend}")

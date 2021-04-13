@@ -26,6 +26,7 @@ from output_generator import generate_output_message
 from airport_data_modules import update_local_airport_stations_file
 from repeater_modules import update_local_repeatermap_file
 from skyfield_modules import update_local_mpad_satellite_data
+from deutscher_wetterdienst_modules import send_dwd_bulletins
 from utility_modules import (
     read_program_config,
     read_number_of_served_packages,
@@ -550,14 +551,27 @@ if __name__ == "__main__":
                     minutes=30,
                     args=[AIS, aprsis_simulate_send],
                 )
-                # Install scheduler task 2 - bulletins
+                # Install scheduler task 2 - MPAD standard bulletins (advertising the program instance)
                 aprs_scheduler.add_job(
                     send_bulletin_messages,
                     "interval",
                     id="aprsbulletin",
                     hours=4,
+                    args=[
+                        AIS,
+                        mpad_config.aprs_bulletin_messages,
+                        aprsis_simulate_send,
+                    ],
+                )
+                # Install scheduler task 3 - Deutscher Wetterdienst
+                aprs_scheduler.add_job(
+                    send_dwd_bulletins,
+                    "interval",
+                    id="dwdbulletin",
+                    hours=1,
                     args=[AIS, aprsis_simulate_send],
                 )
+
                 # start both tasks
                 aprs_scheduler.start()
 
