@@ -84,7 +84,7 @@ External service dependencies:
 
 | What do we want | Command string User > MPAD | Response example MPAD > User |
 | --------------- | -------------------------- | ---------------------------- |
-| METAR / TAR data of a METAR-enabled airport, related to the user's position | ```metar``` | ```EDDF 171150Z 02008KT 340V050 5000 -SHSNRA FEW004 SCT011CB BKN019``` |
+| METAR / TAF data of a METAR-enabled airport, related to the user's position | ```metar``` | ```EDDF 171150Z 02008KT 340V050 5000 -SHSNRA FEW004 SCT011CB BKN019``` |
 | | | ```03/01 Q1023 NOSIG ### TAF EDDF 171100Z 1712/1818 02008KT 9999``` |
 | | | ```BKN030 TEMPO 1712/1716 SHRAGS BKN020TCU BECMG 1717/1720 FEW030``` |
 | | | ```BECMG 1800/1802 02002KT BECMG 1806/1809 30005KT TEMPO 1811/1818``` |
