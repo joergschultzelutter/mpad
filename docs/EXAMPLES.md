@@ -145,7 +145,7 @@ External service dependencies:
 | Nearest police to my location (non-keyword search) | ```police``` | ```Polizei Stadtoldendorf Amtsstraße 4 Stadtoldendorf Dst 8 km``` |
 | | | ```Brg 29 deg NNE``` |
 
-Keyword-less variants may or may work, so ```osm supermarket``` and ```supermarket``` should return the same values. However, ambiguous (shorter) search terms might get misinterpreted as earlier parser processes might mistake them for something else. Example: ```osm pub``` will give you the direction to the nearest pub whereas ```pub``` will return METAR data for an airport location in Pueblo, CO (whose IATA code is -as you might have guessed- PUB). 
+Keyword-less variants may or may not work, so ```osm supermarket``` and ```supermarket``` should return the same values. However, ambiguous (shorter) search terms might get misinterpreted as earlier parser processes might mistake them for something else. Example: ```osm pub``` will give you the direction to the nearest pub whereas ```pub``` will return METAR data for an airport location in Pueblo, CO (whose IATA code is -as you might have guessed- PUB). 
 
 ## Send message to DAPNET user
 
