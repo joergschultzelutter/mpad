@@ -217,7 +217,7 @@ External service dependencies:
 | | | ```Downlink 10489.550-10489.800 Mode Linear  transponder #2``` |
 | | | ```Up 2401.500-2409.500 Dn 10491.000-10499.000 Md Digital transponder``` |
 
-Note that the requested satellite in question MUST exist in [Celestrak's Amateur Radio Satellite](http://www.celestrak.com/NORAD/elements/amateur.txt) list. Satellites which do not exist in the Celestrak data but not in JE9PEL's data will not be taken into consideration.
+Note that the requested satellite in question MUST exist in [Celestrak's Amateur Radio Satellite](http://www.celestrak.com/NORAD/elements/amateur.txt) list. Satellites which do not exist in the Celestrak data but in JE9PEL's data will not be taken into consideration.
 
 If the requested satellite has more than one uplink/downlink frequency tupel, MPAD will abbreviate the descriptive text for results 2..n in order to save a few bytes per message. The format for messages 2..n is the same as for the first message which comes with a full descriptive text.
 
