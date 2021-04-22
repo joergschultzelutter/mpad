@@ -587,7 +587,7 @@ This keyword uses ```predict.habhub.org``` for the whole prediction landing pred
 - ```longitude``` - ```longitude``` value from aprs.fi
 - ```altitude``` - ```altitude``` value from aprs.fi
 - ```launch time``` and ```launch date``` - time stamp from aprs.fi
-- ```ascent rate```: equal to aprs.fi ```clmb``` value if that value is > 0. If ```clmb``` has a negative value, then ```ascent rate``` is set to zero.
+- ```ascent rate```: equal to aprs.fi ```clmb``` value if that value is > 0. If ```clmb``` has a negative value, then ```ascent rate``` is set to 0.01.
 - ```descent rate```: set to value ```6``` if ```clmb``` value is > 0. If ```clmb``` has a negative value, then ```descent rate``` is set to the absolute (sign-less) value of ```clmb```
 - ```burst altitude```: 
     - clmb = positive: set to ```25000``` if aprs.fi ```altitude``` is < 25000. Set to ```30000``` if aprs.fi ```altitude``` is > 25000 and < 30000. Set to ```35000``` if aprs.fi ```altitude``` is > 30000 and < 35000. Set to ```38000``` if aprs.fi ```altitude``` is > 35000.

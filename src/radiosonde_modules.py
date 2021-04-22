@@ -67,7 +67,7 @@ def get_ascent_descent_burst(clmb: float, altitude: float):
             burst_altitude = 38000
     else:
         burst_altitude = altitude + 1
-        ascent_rate = 0.0
+        ascent_rate = 0.01
         descent_rate = abs(clmb)
     return ascent_rate, descent_rate, burst_altitude
 
@@ -334,6 +334,6 @@ if __name__ == "__main__":
     if success:
         logger.info(
             get_radiosonde_landing_prediction(
-                aprsfi_callsign="r3320169", aprsdotfi_api_key=aprsdotfi_api_key
+                aprsfi_callsign="S2260117", aprsdotfi_api_key=aprsdotfi_api_key
             )
         )
