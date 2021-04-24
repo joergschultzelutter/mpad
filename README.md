@@ -32,6 +32,10 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/TAF/CWOP reports,
 - Automatic detection of incoming duplicate / delayed APRS message requests
 - Full UTF-8 support for incoming messages. For outgoing APRS messages, the configuration can be set to either 'plain ASCII' (default) or UTF-8. Email messages are not affected by this restriction
 
+## Sample dialogue with MPAD
+
+![Screencast](https://github.com/joergschultzelutter/mpad/blob/master/docs/screencast.gif)
+
 ## Usage and command syntax
 
 [Usage information](docs/USAGE.md) and the command keywords:
