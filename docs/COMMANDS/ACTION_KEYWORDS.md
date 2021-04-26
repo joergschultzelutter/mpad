@@ -735,6 +735,21 @@ Currently, this keyword is __only__ used for WX reports from Openweathermap. In 
 - ```tw``` Chinese Traditional
 - ```zu``` Zulu
 
+## Enforce outgoing UTF-8 messages
+
+By default, MPAD 'downgrades' all of its content prior to sending its responses to the user. The reason behind this is simple: nearly all transceivers cannot digest unicode characters and display them as e.g. placeholders etc. You can override this behavior in two ways:
+
+- change the program configuration of your local instance (```mpad_enforce_unicode_messages```)
+- use the ```unicode``` keyword
+
+#### Formats
+
+- ```unicode```
+
+#### Example requests
+
+```fortuneteller lang ru unicode```
+
 ## Allow to receive more than one result
 
 Certain keywords such as the ```osm``` or the ```repeater``` keyword allow more than one result. For example, an OSM query for the nearest ```supermarket``` along with the ```top5``` command will return up to 5 results to you which are even ordered by distance between your current location and the target location. For the ```repeater``` keyword, you can run a query such as ```repeater c4fm 70cm top3``` which will return the nearest 3 repeater results to you.

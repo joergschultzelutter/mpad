@@ -197,6 +197,9 @@ def generate_output_message_wx(response_parameters: dict):
     altitude = response_parameters["altitude"]
     human_readable_message = response_parameters["human_readable_message"]
     openweathermapdotorg_api_key = response_parameters["openweathermapdotorg_api_key"]
+    force_outgoing_unicode_messages = response_parameters[
+        "force_outgoing_unicode_messages"
+    ]
 
     # populate the correct offset & mode , dependent on
     # what the user wants (daily, hourly or current wx data)
@@ -229,7 +232,12 @@ def generate_output_message_wx(response_parameters: dict):
             )
 
         output_list = parse_daily_weather_from_openweathermapdotorg(
-            myweather, units, human_readable_message, when, when_daytime
+            weather_tuple=myweather,
+            units=units,
+            human_readable_text=human_readable_message,
+            when=when,
+            when_dt=when_daytime,
+            force_outgoing_unicode_messages=force_outgoing_unicode_messages,
         )
 
         # Add altitude from aprs.fi if present
@@ -419,7 +427,9 @@ def generate_output_message_satpass(response_parameters: dict):
     else:
         dictlen = len(satellite_response_data)
         if dictlen == 0:
-            output_list = make_pretty_aprs_messages(f"'{satellite}':", output_list)
+            output_list = make_pretty_aprs_messages(
+                message_to_add=f"'{satellite}':", destination_list=output_list
+            )
             output_list = make_pretty_aprs_messages(
                 message_to_add="cannot find satpasses for your loc.",
                 destination_list=output_list,
@@ -524,7 +534,9 @@ def generate_output_message_satfreq(response_parameters: dict):
     else:
         dictlen = len(frequency_data)
         if dictlen == 0:
-            output_list = make_pretty_aprs_messages(f"'{satellite}'", output_list)
+            output_list = make_pretty_aprs_messages(
+                message_to_add=f"'{satellite}'", destination_list=output_list
+            )
             output_list = make_pretty_aprs_messages(
                 message_to_add="has no frequency data",
                 destination_list=output_list,
@@ -785,6 +797,9 @@ def generate_output_message_radiosonde(response_parameters: dict):
     users_longitude = response_parameters["users_longitude"]
     units = response_parameters["units"]
     language = response_parameters["language"]
+    force_outgoing_unicode_messages = response_parameters[
+        "force_outgoing_unicode_messages"
+    ]
 
     output_list = []
 
@@ -798,7 +813,9 @@ def generate_output_message_radiosonde(response_parameters: dict):
     )
     if success:
         output_list = make_pretty_aprs_messages(
-            message_to_add=human_readable_message, destination_list=output_list
+            message_to_add=human_readable_message,
+            destination_list=output_list,
+            force_outgoing_unicode_messages=force_outgoing_unicode_messages,
         )
         output_list = make_pretty_aprs_messages(
             message_to_add="Lat/Lon", destination_list=output_list
@@ -858,7 +875,9 @@ def generate_output_message_radiosonde(response_parameters: dict):
         if success:
             address = response_data["address"]
             output_list = make_pretty_aprs_messages(
-                message_to_add=f"Addr: {address}", destination_list=output_list
+                message_to_add=f"Addr: {address}",
+                destination_list=output_list,
+                force_outgoing_unicode_messages=force_outgoing_unicode_messages,
             )
     else:
         output_list = make_pretty_aprs_messages(
@@ -905,6 +924,9 @@ def generate_output_message_whereis(response_parameters: dict):
     lasttime = response_parameters["lasttime"]
     if not isinstance(lasttime, datetime.datetime):
         lasttime = datetime.datetime.min
+    force_outgoing_unicode_messages = response_parameters[
+        "force_outgoing_unicode_messages"
+    ]
 
     # all of the following data was reverse-lookup'ed and can be 'None'
     city = response_parameters["city"]
@@ -1020,7 +1042,9 @@ def generate_output_message_whereis(response_parameters: dict):
 
     # add OSM location information (e.g. street, city, state)
     output_list = make_pretty_aprs_messages(
-        message_to_add=f"Addr: {address}", destination_list=output_list
+        message_to_add=f"Addr: {address}",
+        destination_list=output_list,
+        force_outgoing_unicode_messages=force_outgoing_unicode_messages,
     )
 
     if _whereis_mode:
@@ -1063,6 +1087,9 @@ def generate_output_message_repeater(response_parameters: dict):
     repeater_band = response_parameters["repeater_band"]
     repeater_mode = response_parameters["repeater_mode"]
     number_of_results = response_parameters["number_of_results"]
+    force_outgoing_unicode_messages = response_parameters[
+        "force_outgoing_unicode_messages"
+    ]
 
     # Static file solution; needs dynamic refresh
     success, nearest_repeater_list = get_nearest_repeater(
@@ -1115,35 +1142,51 @@ def generate_output_message_repeater(response_parameters: dict):
                     message_to_add=f"#{entry}", destination_list=output_list
                 )
 
-            output_list = make_pretty_aprs_messages(f"{location}", output_list)
+            output_list = make_pretty_aprs_messages(
+                message_to_add="{location}",
+                destination_list=output_list,
+                force_outgoing_unicode_messages=force_outgoing_unicode_messages,
+            )
 
             output_list = make_pretty_aprs_messages(
-                f"Dst {distance} {distance_uom}", output_list
+                message_to_add=f"Dst {distance} {distance_uom}",
+                destination_list=output_list,
             )
             output_list = make_pretty_aprs_messages(
-                f"{bearing} deg {direction}", output_list
+                message_to_add=f"{bearing} deg {direction}",
+                destination_list=output_list,
             )
             # Both repeater frequency and shift are in Hz. Let's convert to MHz
             repeater_frequency = round(repeater_frequency / 1000000, 4)
             repeater_shift = round(repeater_shift / 1000000, 4)
             if repeater_shift != 0:
                 output_list = make_pretty_aprs_messages(
-                    f"{repeater_frequency:0.4f}{repeater_shift:+0.1f} MHz", output_list
+                    message_to_add=f"{repeater_frequency:0.4f}{repeater_shift:+0.1f} MHz",
+                    destination_list=output_list,
                 )
             else:
                 output_list = make_pretty_aprs_messages(
-                    f"{repeater_frequency:0.4f} MHz", output_list
+                    message_to_add=f"{repeater_frequency:0.4f} MHz",
+                    destination_list=output_list,
                 )
 
             if encode:
-                output_list = make_pretty_aprs_messages(f"Enc {encode}", output_list)
+                output_list = make_pretty_aprs_messages(
+                    message_to_add=f"Enc {encode}", destination_list=output_list
+                )
 
             if decode:
-                output_list = make_pretty_aprs_messages(f"Dec {decode}", output_list)
+                output_list = make_pretty_aprs_messages(
+                    message_to_add=f"Dec {decode}", destination_list=output_list
+                )
 
             # Comments can be empty
             if comments:
-                output_list = make_pretty_aprs_messages(f"{comments}", output_list)
+                output_list = make_pretty_aprs_messages(
+                    message_to_add=f"{comments}",
+                    destination_list=output_list,
+                    force_outgoing_unicode_messages=force_outgoing_unicode_messages,
+                )
             #
             # "band' and 'mode' are only added to the outgoing message if the user
             # has NOT requested these as input parameters. We can save a few bytes per
@@ -1153,14 +1196,18 @@ def generate_output_message_repeater(response_parameters: dict):
             # the data to the user so that the user knows if e.g. these values are
             # valid for c4fm, d-star, ....
             if not repeater_mode:
-                output_list = make_pretty_aprs_messages(f"{mode}", output_list)
+                output_list = make_pretty_aprs_messages(
+                    message_to_add=f"{mode}", destination_list=output_list
+                )
             #            if not repeater_band:
             #                output_list = make_pretty_aprs_messages(f"{band}", output_list)
 
-            output_list = make_pretty_aprs_messages(f"{locator}", output_list)
+            output_list = make_pretty_aprs_messages(
+                message_to_add=f"{locator}", destination_list=output_list
+            )
     else:
         output_list = make_pretty_aprs_messages(
-            "Cannot locate nearest repeater for your query parameter set"
+            message_to_add="Cannot locate nearest repeater for your query parameter set"
         )
         success = True  # The operation failed but we still have message that we want to send to the user
     return success, output_list
@@ -1190,6 +1237,9 @@ def generate_output_message_osm_special_phrase(response_parameters: dict):
     number_of_results = response_parameters["number_of_results"]
     osm_special_phrase = response_parameters["osm_special_phrase"]
     units = response_parameters["units"]
+    force_outgoing_unicode_messages = response_parameters[
+        "force_outgoing_unicode_messages"
+    ]
 
     success, osm_data_list = get_osm_special_phrase_data(
         latitude=latitude,
@@ -1243,19 +1293,27 @@ def generate_output_message_osm_special_phrase(response_parameters: dict):
 
             if amenity:
                 output_list = make_pretty_aprs_messages(
-                    message_to_add=amenity, destination_list=output_list
+                    message_to_add=amenity,
+                    destination_list=output_list,
+                    force_outgoing_unicode_messages=force_outgoing_unicode_messages,
                 )
             if road:
                 output_list = make_pretty_aprs_messages(
-                    message_to_add=road, destination_list=output_list
+                    message_to_add=road,
+                    destination_list=output_list,
+                    force_outgoing_unicode_messages=force_outgoing_unicode_messages,
                 )
             if house_number:
                 output_list = make_pretty_aprs_messages(
-                    message_to_add=house_number, destination_list=output_list
+                    message_to_add=house_number,
+                    destination_list=output_list,
+                    force_outgoing_unicode_messages=force_outgoing_unicode_messages,
                 )
             if city:
                 output_list = make_pretty_aprs_messages(
-                    message_to_add=city, destination_list=output_list
+                    message_to_add=city,
+                    destination_list=output_list,
+                    force_outgoing_unicode_messages=force_outgoing_unicode_messages,
                 )
 
             dst_uom = "km"
@@ -1297,9 +1355,13 @@ def generate_output_message_fortuneteller(response_parameters: dict):
         This is plain text list without APRS message ID's
     """
     language = response_parameters["language"]
+    force_outgoing_unicode_messages = response_parameters[
+        "force_outgoing_unicode_messages"
+    ]
 
     output_list = make_pretty_aprs_messages(
-        message_to_add=get_fortuneteller_message(language=language)
+        message_to_add=get_fortuneteller_message(language=language),
+        force_outgoing_unicode_messages=force_outgoing_unicode_messages,
     )
     success = True
     return success, output_list

@@ -63,7 +63,7 @@ Open the program configuration file (```mpad_config.py```). Change/Review the fo
 
 - ```mpad_latitude``` and ```mpad_longitude```. These are the coordinates of your local instance. Once your instance of MPAD is up and running, it will submit APRS broadcasts to APRS, thus allowing other users to see your station info on services such as aprs.fi
 - ```mpad_alias```. This is the identifier/station name which will be used by the program for all outgoing APRS messages
-- ```mpad_aprs_tocall``` - The program's (unique) APRS "TOCALL" identifier. MPAD has just hatched and currently has no "TOCALL" identifier of its own. This may change in the future.
+- ```mpad_aprs_tocall``` - The program's (unique) APRS "TOCALL" identifier (```APMPAD```)
 
 You also need to set the APRS-IS access and server credentials:
 
@@ -85,7 +85,7 @@ Excerpt from ```mpad_config.py```:
 # Constants, do not change#
 ###########################
 #
-mpad_version: str = "0.01"
+mpad_version: str = "0.30"
 #
 # APRS position report: message symbol
 # see also http://www.aprs.org/symbols/symbolsX.txt and aprs_communication.py
@@ -128,8 +128,9 @@ mpad_alias: str = "MPAD"  # Identifier for sending outgoing data to APRS-IS
 mpad_beacon_altitude_ft = 123
 #
 # APRS "TOCALL" identifier - see http://aprs.org/aprs11/tocalls.txt
-# Needs to get its own identifier at a later point in time
-mpad_aprs_tocall: str = "APRS"  # APRS "TOCALL"
+# The original MPAD instance has its own TOCALL identifier - if you clone & modify
+# the program, you might request a new one for yourself
+mpad_aprs_tocall: str = "APMPAD"  # APRS "TOCALL"
 #
 ####################
 # APRS-IS Settings #

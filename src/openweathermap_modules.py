@@ -151,7 +151,12 @@ def get_daily_weather_from_openweathermapdotorg(
 
 
 def parse_daily_weather_from_openweathermapdotorg(
-    weather_tuple: dict, units: str, human_readable_text: str, when: str, when_dt: str
+    weather_tuple: dict,
+    units: str,
+    human_readable_text: str,
+    when: str,
+    when_dt: str,
+    force_outgoing_unicode_messages: bool = False,
 ):
     """
     Parses the wx data for a given day (as returned by function
@@ -176,7 +181,10 @@ def parse_daily_weather_from_openweathermapdotorg(
     when_dt: 'str'
         Parameter that tells the daytime for the wx forcast. Can
         be 'full', 'morning', 'daytime', 'evening', 'night'
-
+    force_outgoing_unicode_messages: 'bool'
+        False (default): Do not send out content as UTF-8 but
+        down-convert strings to ASCII
+        True: Send out all content as UTF-8
 
     Returns
     =======
@@ -285,38 +293,49 @@ def parse_daily_weather_from_openweathermapdotorg(
         # prevents the final messages from being split up in the
         # middle of the respective substrings.
 
+        # For now, only the user's address and the forecast string can contain 'real' UTF-8 data
+        #
         # Start with the human-readable address that the user has requested.
         weather_forecast_array = make_pretty_aprs_messages(
-            f"{when_text} {human_readable_text}", weather_forecast_array
+            message_to_add=f"{when_text} {human_readable_text}",
+            destination_list=weather_forecast_array,
+            force_outgoing_unicode_messages=force_outgoing_unicode_messages,
         )
 
         # Add the forecast string
         if w_weather_description:
             weather_forecast_array = make_pretty_aprs_messages(
-                w_weather_description, weather_forecast_array
+                message_to_add=w_weather_description,
+                destination_list=weather_forecast_array,
+                force_outgoing_unicode_messages=force_outgoing_unicode_messages,
             )
 
         # Add temperatures whereas applicable per 'when_dt' parameters
         if w_temp_day or w_temp_morn or w_temp_eve or w_temp_night or w_temp:
             if w_temp_morn and when_dt in ["full", "morning"]:
                 weather_forecast_array = make_pretty_aprs_messages(
-                    f"morn:{round(w_temp_morn)}{temp_uom}", weather_forecast_array
+                    message_to_add=f"morn:{round(w_temp_morn)}{temp_uom}",
+                    destination_list=weather_forecast_array,
                 )
             if w_temp_day and when_dt in ["full", "daytime"]:
                 weather_forecast_array = make_pretty_aprs_messages(
-                    f"day:{round(w_temp_day)}{temp_uom}", weather_forecast_array
+                    message_to_add=f"day:{round(w_temp_day)}{temp_uom}",
+                    destination_list=weather_forecast_array,
                 )
             if w_temp_eve and when_dt in ["full", "evening"]:
                 weather_forecast_array = make_pretty_aprs_messages(
-                    f"eve:{round(w_temp_eve)}{temp_uom}", weather_forecast_array
+                    message_to_add=f"eve:{round(w_temp_eve)}{temp_uom}",
+                    destination_list=weather_forecast_array,
                 )
             if w_temp_night and when_dt in ["full", "night"]:
                 weather_forecast_array = make_pretty_aprs_messages(
-                    f"nite:{round(w_temp_night)}{temp_uom}", weather_forecast_array
+                    message_to_add=f"nite:{round(w_temp_night)}{temp_uom}",
+                    destination_list=weather_forecast_array,
                 )
             if w_temp:  # hourly report
                 weather_forecast_array = make_pretty_aprs_messages(
-                    f"temp:{round(w_temp)}{temp_uom}", weather_forecast_array
+                    message_to_add=f"temp:{round(w_temp)}{temp_uom}",
+                    destination_list=weather_forecast_array,
                 )
 
         # Sunrise and Sunset
@@ -324,61 +343,72 @@ def parse_daily_weather_from_openweathermapdotorg(
             tmp1 = datetime.utcfromtimestamp(w_sunrise)
             tmp2 = datetime.utcfromtimestamp(w_sunset)
             weather_forecast_array = make_pretty_aprs_messages(
-                f"sunrise/set {tmp1.hour:02d}:{tmp1.minute:02d}/{tmp2.hour:02d}:{tmp2.minute:02d}UTC",
-                weather_forecast_array,
+                message_to_add=f"sunrise/set {tmp1.hour:02d}:{tmp1.minute:02d}/{tmp2.hour:02d}:{tmp2.minute:02d}UTC",
+                destination_list=weather_forecast_array,
             )
         elif w_sunrise and not w_sunset:
             tmp = datetime.utcfromtimestamp(w_sunrise)
             weather_forecast_array = make_pretty_aprs_messages(
-                f"sunrise {tmp.hour}:{tmp.minute}UTC", weather_forecast_array
+                message_to_add=f"sunrise {tmp.hour}:{tmp.minute}UTC",
+                destination_list=weather_forecast_array,
             )
         elif w_sunset and not w_sunrise:
             tmp = datetime.utcfromtimestamp(w_sunset)
             weather_forecast_array = make_pretty_aprs_messages(
-                f"sunset {tmp.hour}:{tmp.minute}UTC", weather_forecast_array
+                message_to_add=f"sunset {tmp.hour}:{tmp.minute}UTC",
+                destination_list=weather_forecast_array,
             )
 
         # Add remaining parameters
         if w_rain:
             weather_forecast_array = make_pretty_aprs_messages(
-                f"rain:{math.ceil(w_rain)}{rain_uom}", weather_forecast_array
+                message_to_add=f"rain:{math.ceil(w_rain)}{rain_uom}",
+                destination_list=weather_forecast_array,
             )
         if w_snow:
             weather_forecast_array = make_pretty_aprs_messages(
-                f"snow:{math.ceil(w_snow)}{snow_uom}", weather_forecast_array
+                message_to_add=f"snow:{math.ceil(w_snow)}{snow_uom}",
+                destination_list=weather_forecast_array,
             )
         if w_clouds:
             weather_forecast_array = make_pretty_aprs_messages(
-                f"clouds:{w_clouds}{clouds_uom}", weather_forecast_array
+                message_to_add=f"clouds:{w_clouds}{clouds_uom}",
+                destination_list=weather_forecast_array,
             )
         if w_uvi:
             weather_forecast_array = make_pretty_aprs_messages(
-                f"uvi:{w_uvi:.1f}", weather_forecast_array
+                message_to_add=f"uvi:{w_uvi:.1f}",
+                destination_list=weather_forecast_array,
             )
         if w_pressure:
             weather_forecast_array = make_pretty_aprs_messages(
-                f"{pressure_uom}:{w_pressure}", weather_forecast_array
+                message_to_add=f"{pressure_uom}:{w_pressure}",
+                destination_list=weather_forecast_array,
             )
         if w_humidity:
             weather_forecast_array = make_pretty_aprs_messages(
-                f"hum:{w_humidity}{humidity_uom}", weather_forecast_array
+                message_to_add=f"hum:{w_humidity}{humidity_uom}",
+                destination_list=weather_forecast_array,
             )
         if w_dew_point:
             weather_forecast_array = make_pretty_aprs_messages(
-                f"dewpt:{math.ceil(w_dew_point)}{temp_uom}", weather_forecast_array
+                message_to_add=f"dewpt:{math.ceil(w_dew_point)}{temp_uom}",
+                destination_list=weather_forecast_array,
             )
         if w_wind_speed:
             weather_forecast_array = make_pretty_aprs_messages(
-                f"wndspd:{math.ceil(w_wind_speed)}{wind_speed_uom}",
-                weather_forecast_array,
+                message_to_add=f"wndspd:{math.ceil(w_wind_speed)}{wind_speed_uom}",
+                destination_list=weather_forecast_array,
             )
         if w_wind_deg:
             weather_forecast_array = make_pretty_aprs_messages(
-                f"wnddeg:{w_wind_deg}{wind_deg_uom}", weather_forecast_array
+                message_to_add=f"wnddeg:{w_wind_deg}{wind_deg_uom}",
+                destination_list=weather_forecast_array,
             )
         if w_visibility:
             weather_forecast_array = make_pretty_aprs_messages(
-                f"vis:{w_visibility}{visibility_uom}", weather_forecast_array
+                message_to_add=f"vis:{w_visibility}{visibility_uom}",
+                destination_list=weather_forecast_array,
             )
 
         # Ultimately, return the array
@@ -394,6 +424,8 @@ if __name__ == "__main__":
         aprsis_passcode,
         dapnet_callsign,
         dapnet_passcode,
+        smtpimap_email_address,
+        smtpimap_email_password,
     ) = read_program_config()
     if success:
         (
@@ -413,8 +445,9 @@ if __name__ == "__main__":
             my_weather_forecast_array = parse_daily_weather_from_openweathermapdotorg(
                 weather_tuple=weather_tuple,
                 units="metric",
-                human_readable_text="Und jetzt das Wetter",
+                human_readable_text="Und jetzt das Wetter ÄäÖöÜüß",
                 when="Samstag",
                 when_dt="full",
+                force_outgoing_unicode_messages=True,
             )
             logger.info(my_weather_forecast_array)

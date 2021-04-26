@@ -40,6 +40,7 @@ def make_pretty_aprs_messages(
     max_len: int = 67,
     separator_char: str = " ",
     add_sep: bool = True,
+    force_outgoing_unicode_messages: bool = False,
 ):
     """
     Pretty Printer for APRS messages. As APRS messages are likely to be split
@@ -97,12 +98,16 @@ def make_pretty_aprs_messages(
         False = do not add the separator (e.g. if we add the
                 very first line of text, then we don't want a
                 comma straight after the location
+    force_outgoing_unicode_messages: 'bool'
+        False = all outgoing UTF-8 content will be down-converted
+                to ASCII content
+        True = all outgoing UTF-8 content will sent out 'as is'
 
     Returns
     =======
-    weather_forecast_array: 'list'
+    destination_list: 'list'
         List array, containing 1..n human readable strings with
-        the parsed wx data
+        the "message_to_add' input data
     """
     # Dummy handler in case the list is completely empty
     # or a reference to a list item has not been specified at all
@@ -116,7 +121,10 @@ def make_pretty_aprs_messages(
     message_to_add = re.sub("[{}|~]+", "", message_to_add)
 
     # Check if the user wants unicode messages. Default is ASCII
-    if not mpad_config.mpad_enforce_unicode_messages:
+    if (
+        not mpad_config.mpad_enforce_unicode_messages
+        and not force_outgoing_unicode_messages
+    ):
         # Convert the message to plain ascii
         # Unidecode does not take care of German special characters
         # Therefore, we need to 'translate' them first
@@ -138,6 +146,7 @@ def make_pretty_aprs_messages(
                     max_len=max_len,
                     separator_char=separator_char,
                     add_sep=add_sep,
+                    force_outgoing_unicode_messages=force_outgoing_unicode_messages,
                 )
             else:
                 # string exceeds max len; split it up and add it as is

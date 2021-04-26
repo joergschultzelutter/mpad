@@ -107,6 +107,9 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # else's call sign
     message_callsign = None
 
+    # Force UTF-8 output messages switch
+    force_outgoing_unicode_messages = False
+
     # This is the general 'we have found something and we know what to do'
     # marker. If set to true, it will prevent any further attempts to parse other
     # parts of the message wrt position information (first-come-first-serve)
@@ -132,6 +135,16 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     if found_my_keyword:
         aprs_message = parser_rd_units["aprs_message"]
         units = parser_rd_units["units"]
+
+    # Check if the user explicitly requests unicode messages
+    found_my_keyword, parser_rd_unicode = parse_keyword_unicode(
+        aprs_message=aprs_message
+    )
+    if found_my_keyword:
+        aprs_message = parser_rd_unicode["aprs_message"]
+        force_outgoing_unicode_messages = parser_rd_unicode[
+            "force_outgoing_unicode_messages"
+        ]
 
     # check if the user wants to change the language
     # Note: this is not an action keyword so we don't set the duty roster flag
@@ -698,6 +711,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         "osm_special_phrase": osm_special_phrase,  # openstreetmap special phrases https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases/EN
         "dapnet_message": dapnet_message,
         "mail_recipient": mail_recipient,  # APRS position reports that are sent to an email address
+        "force_outgoing_unicode_messages": force_outgoing_unicode_messages,  # True if the user demands UTF8 MPAD messages
     }
 
     # Finally, set the return code. Unless there was an error, we return a True status
@@ -2714,6 +2728,46 @@ def parse_keyword_number_of_results(aprs_message: str):
     return found_my_keyword, parser_rd_number_of_results
 
 
+def parse_keyword_unicode(aprs_message: str):
+    """
+    Keyword parser for the utf8 command (user demands that we send the
+    outgoing message in UTF-8 and don't downgrade the content to ASCII)
+
+    Parameters
+    ==========
+    aprs_message : 'str'
+        the original aprs message
+
+    Returns
+    =======
+    found_my_keyword: 'bool'
+        True if the keyword and associated parameters have been found
+    parser_rd_unicode: 'dict'
+        response data dictionary, containing the keyword-relevant data
+    """
+
+    found_my_keyword = False
+    force_outgoing_unicode_messages = False
+
+    regex_string = r"\bunicode\b"
+    matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
+    if matches:
+        try:
+            force_outgoing_unicode_messages = True
+        except:
+            force_outgoing_unicode_messages = False
+        aprs_message = re.sub(
+            pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
+        ).strip()
+        found_my_keyword = True
+
+    parser_rd_unicode = {
+        "aprs_message": aprs_message,
+        "force_outgoing_unicode_messages": force_outgoing_unicode_messages,
+    }
+    return found_my_keyword, parser_rd_unicode
+
+
 def parse_what_keyword_fortuneteller(aprs_message: str):
     """
     Keyword parser for our fortuneteller language + UTF-8 testing
@@ -2898,5 +2952,7 @@ if __name__ == "__main__":
         smtpimap_email_password,
     ) = read_program_config()
     logger.info(
-        pformat(parse_input_message("los angeles", "df1jsl-1", aprsdotfi_api_key))
+        pformat(
+            parse_input_message("los angeles unicode", "df1jsl-1", aprsdotfi_api_key)
+        )
     )

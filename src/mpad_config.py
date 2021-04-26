@@ -22,7 +22,7 @@ import os
 #
 # Program version
 #
-mpad_version: str = "0.29"
+mpad_version: str = "0.30"
 #
 ###########################
 # Constants, do not change#
@@ -76,8 +76,9 @@ mpad_alias: str = "MPAD"  # Identifier for sending outgoing data to APRS-IS
 mpad_beacon_altitude_ft = 243
 #
 # APRS "TOCALL" identifier - see http://aprs.org/aprs11/tocalls.txt
-# Needs to get its own identifier at a later point in time
-mpad_aprs_tocall: str = "APRS"  # APRS "TOCALL"
+# The original MPAD instance has its own TOCALL identifier - if you clone & modify
+# the program, you might request a new one for yourself
+mpad_aprs_tocall: str = "APMPAD"  # APRS "TOCALL"
 #
 ####################
 # APRS-IS Settings #
