@@ -98,60 +98,79 @@ def generate_output_message(response_parameters: dict):
     # -a boolean status which is a general indicator if something was wrong
     # -a list object which contains the ready-to-send messages to the end user
     if what == "wx":
+        logger.info("Running output worker generate_output_message_wx()")
         success, output_list = generate_output_message_wx(
             response_parameters=response_parameters,
         )
     elif what == "metar":
+        logger.info("Running output worker generate_output_message_metar()")
         success, output_list = generate_output_message_metar(
             response_parameters=response_parameters
         )
     elif what == "help":
+        logger.info("Running output worker generate_output_message_help()")
         success, output_list = generate_output_message_help()
     elif what == "cwop_by_latlon":
+        logger.info("Running output worker generate_output_message_cwop_by_latlon()")
         success, output_list = generate_output_message_cwop_by_latlon(
             response_parameters=response_parameters
         )
     elif what == "cwop_by_cwop_id":
+        logger.info("Running output worker generate_output_message_cwop_by_cwop_id()")
         success, output_list = generate_output_message_cwop_by_cwop_id(
             response_parameters=response_parameters
         )
     elif what == "riseset":
+        logger.info("Running output worker generate_output_message_riseset()")
         success, output_list = generate_output_message_riseset(
             response_parameters=response_parameters
         )
     elif what == "satpass" or what == "vispass":
+        logger.info("Running output worker generate_output_message_satpass()")
         success, output_list = generate_output_message_satpass(
             response_parameters=response_parameters
         )
     elif what == "satfreq":
+        logger.info("Running output worker generate_output_message_satfreq()")
         success, output_list = generate_output_message_satfreq(
             response_parameters=response_parameters
         )
     elif what == "repeater":
+        logger.info("Running output worker generate_output_message_repeater()")
         success, output_list = generate_output_message_repeater(
             response_parameters=response_parameters
         )
     elif what == "whereis":
+        logger.info("Running output worker generate_output_message_whereis()")
         success, output_list = generate_output_message_whereis(
             response_parameters=response_parameters
         )
     elif what == "osm_special_phrase":
+        logger.info(
+            "Running output worker generate_output_message_osm_special_phrase()"
+        )
         success, output_list = generate_output_message_osm_special_phrase(
             response_parameters=response_parameters
         )
     elif what == "dapnet" or what == "dapnethp":
+        logger.info("Running output worker generate_output_message_dapnet()")
         success, output_list = generate_output_message_dapnet(
             response_parameters=response_parameters
         )
     elif what == "sonde":
+        logger.info("Running output worker generate_output_message_radiosonde()")
         success, output_list = generate_output_message_radiosonde(
             response_parameters=response_parameters
         )
     elif what == "fortuneteller":
+        logger.info("Running output worker generate_output_message_fortuneteller()")
         success, output_list = generate_output_message_fortuneteller(
             response_parameters=response_parameters
         )
     elif what == "email_position_report":
+        logger.info(
+            "Running output worker generate_output_message_email_position_report()"
+        )
         success, output_list = generate_output_message_email_position_report(
             response_parameters=response_parameters
         )

@@ -116,7 +116,9 @@ def send_dwd_bulletins(myaprsis: aprslib.inet.IS, simulate_send: bool = True):
                                 # https://stackoverflow.com/questions/904928/python-strftime-date-without-leading-0
                                 #
                                 # As this is a bulletin message, we always convert its content from UTF-8 to ASCII
-                                dwd_event = convert_text_to_plain_ascii(message_string=dwd_event)
+                                dwd_event = convert_text_to_plain_ascii(
+                                    message_string=dwd_event
+                                )
                                 dwd_event = dwd_event.upper()
                                 bln_message = f"DWD Warnung vor {dwd_event} in {warncell_abbrev} bis {dwd_end.strftime('%d-%b %-Hh')}"
                                 if len(bln_message) > 67:
