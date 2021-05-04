@@ -21,7 +21,7 @@
 
 # List of valid WarnCellIDs can be found here: https://www.dwd.de/DE/leistungen/opendata/hilfe.html
 
-from utility_modules import read_program_config
+from utility_modules import read_program_config, convert_text_to_plain_ascii
 import logging
 from datetime import datetime
 import mpad_config
@@ -102,7 +102,6 @@ def send_dwd_bulletins(myaprsis: aprslib.inet.IS, simulate_send: bool = True):
                             dwd_event = bln_message = None
                             dwd_end = datetime.min
                             if "event" in single_warncell:
-
                                 dwd_event = single_warncell["event"]
                             if "end" in single_warncell:
                                 try:
@@ -113,8 +112,12 @@ def send_dwd_bulletins(myaprsis: aprslib.inet.IS, simulate_send: bool = True):
                                     dwd_end = datetime.min
                             if dwd_end != datetime.min and dwd_event:
                                 # This time stamp uses LOCAL time settings and NOT UTC time settings
-                                # hour format string will now work on windows, see
+                                # hour format string will not work on Windows, see
                                 # https://stackoverflow.com/questions/904928/python-strftime-date-without-leading-0
+                                #
+                                # As this is a bulletin message, we always convert its content from UTF-8 to ASCII
+                                dwd_event = convert_text_to_plain_ascii(message_string=dwd_event)
+                                dwd_event = dwd_event.upper()
                                 bln_message = f"DWD Warnung vor {dwd_event} in {warncell_abbrev} bis {dwd_end.strftime('%d-%b %-Hh')}"
                                 if len(bln_message) > 67:
                                     bln_message = bln_message[:67]

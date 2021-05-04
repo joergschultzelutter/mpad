@@ -22,7 +22,7 @@ import os
 #
 # Program version
 #
-mpad_version: str = "0.30"
+mpad_version: str = "0.31"
 #
 ###########################
 # Constants, do not change#
@@ -77,7 +77,7 @@ mpad_beacon_altitude_ft = 243
 #
 # APRS "TOCALL" identifier - see http://aprs.org/aprs11/tocalls.txt
 # The original MPAD instance has its own TOCALL identifier - if you clone & modify
-# the program, you might request a new one for yourself
+# the program, you might request a new one for yourself via WP4APR
 mpad_aprs_tocall: str = "APMPAD"  # APRS "TOCALL"
 #
 ####################
