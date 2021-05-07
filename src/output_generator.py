@@ -827,6 +827,7 @@ def generate_output_message_radiosonde(response_parameters: dict):
         landing_latitude,
         landing_longitude,
         landing_timestamp,
+        landing_url,
     ) = get_radiosonde_landing_prediction(
         aprsfi_callsign=message_callsign, aprsdotfi_api_key=aprsdotfi_api_key
     )
