@@ -27,8 +27,6 @@ A decaying cache for __outgoing__ messages to the user is currently not implemen
 
 If you provide a call sign to MPAD and it tells you that it cannot find that call sign's coordinates, then open up aprs.fi and run a search on that call sign (keep in mind that the API uses an *EXACT* search - __wildcards do not work__). If aprs.fi either returns no results __or__ returns multiple results __for the *exact* spelling of the call sign that you've used in your message__, then you can tell the reason why MPAD cannot your call sign.
 
-Apart from the ```probe``` keyword which __requires__ the specified APRS call sign of APRS type 'Object', there is no deliberate selection/exclusion of certain APRS types in the software.
-
 - Weather report data from openweathermap:
     - Wx Alert data is not returned to the user. This can be added in a later version but keep in mind that the text is very long and would result in multiple (10-15) APRS messages per alert!
     - Access to openweathermap.org requires an API key which has a traffic limit

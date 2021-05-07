@@ -328,6 +328,10 @@ def get_radiosonde_landing_prediction(aprsfi_callsign: str, aprsdotfi_api_key: s
                 ) = get_kml_data_from_habhub(
                     latitude=latitude, longitude=longitude, altitude=altitude, clmb=clmb
                 )
+            else:
+                success = False
+        else:
+            success = False
     return success, landing_latitude, landing_longitude, landing_timestamp, landing_url
 
 
@@ -346,6 +350,6 @@ if __name__ == "__main__":
     if success:
         logger.info(
             get_radiosonde_landing_prediction(
-                aprsfi_callsign="T1310961", aprsdotfi_api_key=aprsdotfi_api_key
+                aprsfi_callsign="DF1JSL-1", aprsdotfi_api_key=aprsdotfi_api_key
             )
         )

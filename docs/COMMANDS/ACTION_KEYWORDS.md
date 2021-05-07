@@ -601,8 +601,6 @@ This keyword uses ```predict.habhub.org``` for the whole prediction landing pred
 ```callsign``` can be specified with or without SSID (if specified with SSID, the SSID will be removed). Additionally, radiosonde callsigns which do not follow the standard APRS call sign pattern are also recognised.
 ```sonde``` can be combined with the ```lang``` keyword.
 
-Note: this keyword expects that the specified call sign is qualified as APRS "Object" ([see type information](https://aprs.fi/page/api) on aprs.fi). If you specify a regular APRS call sign, MPAD will reject your query and returns a "Callsign not found" message to the user.
-
 #### Example requests
 
 - ```sonde S3421116``` will request a radiosonde landing prediction for the given probe
