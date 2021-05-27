@@ -25,6 +25,9 @@ from datetime import datetime, timedelta
 import re
 import requests
 import xmltodict
+import activesoup  # requires version 0.23 or greater
+from bs4 import BeautifulSoup
+from pprint import pformat
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -335,6 +338,307 @@ def get_radiosonde_landing_prediction(aprsfi_callsign: str, aprsdotfi_api_key: s
     return success, landing_latitude, landing_longitude, landing_timestamp, landing_url
 
 
+def remove_trailing_content(source_string: str, trailing_content: str):
+    if source_string:
+        source_string = source_string.replace(trailing_content, "")
+        source_string = None if len(source_string) == 0 else source_string
+    return source_string
+
+
+def get_radiosondy_data(sonde_id: str):
+    """Get Radiosonde data from radiosondy.info
+    Parameters
+    ==========
+    sonde_id : 'str'
+        ID of the sonde whose data
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful
+    radiosondy_response: 'dict'
+        Dictionary with all possible response fields
+        (value 'None' if not present)
+    """
+
+    sonde_id = sonde_id.upper()
+
+    # start the communication
+    d = activesoup.Driver()
+    headers = {"User-Agent": "Mozilla"}
+
+    # Init our target variables - this is the data that will be returned to the user
+    launch_site = (
+        probe_type
+    ) = (
+        probe_aux
+    ) = (
+        probe_freq
+    ) = (
+        probe_status
+    ) = probe_finder = landing_point = landing_description = changes_made = None
+    receiver = (
+        sonde_number
+    ) = (
+        datetime_utc
+    ) = latitude = longitude = course_deg = speed_kmh = altitude_m = aprs_comment = None
+    climbing = temperature = pressure = humidity = aux_o3 = None
+
+    # general success / failure boolean
+    success = False
+
+    # We need to service up to two URLs:
+    # main URL is of relevance if the probe has been archived (static content)
+    # dyn URL will be used if the probeis still active (dynamic content)
+    main_url = f"https://radiosondy.info/sonde.php?sondenumber={sonde_id}"
+    dyn_url = f"https://radiosondy.info/dyn/get_sondeinfo.php?sondenumber={sonde_id}"
+
+    # Get the main URL
+    page = d.get(url=main_url, headers=headers)
+
+    if page.last_response.status_code == 200:
+        success = True
+        # In case the response's URL indicates that the request got redirected to the archived data
+        if "sonde_archive.php" in page.last_response.url:
+            logger.info("Parsing static Radiosondy data")
+            soup = BeautifulSoup(page.last_response.response.text, "html.parser")
+            # Archived probe; we have proper tables and can parse them. Page has STATIC content
+            # Parse Table "Status Changes"
+            table = soup.find("table", attrs={"id": "Table2"})
+            if table:
+                # get first row
+                rows = table.find("tr", attrs={"class": "bg_1"})
+                # There was at least one minimal change
+                if rows:
+                    # There was at least one minimal change for this radiosonde
+                    cols = rows.find_all("td")
+                    if cols and len(cols) == 9:
+                        launch_site = cols[0].string
+                        probe_type = cols[1].string
+                        probe_aux = cols[2].string
+                        probe_freq = cols[3].string
+                        probe_status = cols[4].string
+                        probe_finder = cols[5].string
+                        landing_point = cols[6].string
+                        landing_description = cols[7].string
+                        changes_made = cols[8].string
+                else:
+                    # This branch gets executed in case the probe's status has never changed since its inception
+                    regex_string = r"images\/balloon.png\"\> Number: ([\w\s]+)\<\/h4\>"
+                    matches = re.search(
+                        pattern=regex_string,
+                        string=page.last_response.response.text,
+                        flags=re.IGNORECASE,
+                    )
+                    if matches:
+                        sonde_number = matches[1]
+
+                    regex_string = r"images\/house.png\"\> Launch Site: (.*)\<\/h4\>"
+                    matches = re.search(
+                        pattern=regex_string,
+                        string=page.last_response.response.text,
+                        flags=re.IGNORECASE,
+                    )
+                    if matches:
+                        launch_site = matches[1]
+
+                    regex_string = r"images\/type.png\"\> Type: (.*)\<\/h4\>"
+                    matches = re.search(
+                        pattern=regex_string,
+                        string=page.last_response.response.text,
+                        flags=re.IGNORECASE,
+                    )
+                    if matches:
+                        probe_type = matches[1]
+
+                    regex_string = r"images\/aux.png\"\> AUX: (.*)\<\/h4\>"
+                    matches = re.search(
+                        pattern=regex_string,
+                        string=page.last_response.response.text,
+                        flags=re.IGNORECASE,
+                    )
+                    if matches:
+                        probe_aux = matches[1]
+
+                    regex_string = r"images\/freq.png\"\> Frequency: (.*)\<\/h4\>"
+                    matches = re.search(
+                        pattern=regex_string,
+                        string=page.last_response.response.text,
+                        flags=re.IGNORECASE,
+                    )
+                    if matches:
+                        probe_freq = matches[1]
+
+                    regex_string = r"images\/found.png\"\> Status: (.*)\<\/h4\>"
+                    matches = re.search(
+                        pattern=regex_string,
+                        string=page.last_response.response.text,
+                        flags=re.IGNORECASE,
+                    )
+                    if matches:
+                        probe_status = matches[1]
+
+            # pparse APRS data
+            table = soup.find("table", attrs={"id": "Table1"})
+            if table:
+                # get first row
+                rows = table.find("tr", attrs={"class": "bg_1"})
+                if rows:
+                    cols = rows.find_all("td")
+                    if cols and len(cols) == 9:
+                        receiver = cols[0].string
+                        sonde_number = cols[1].string
+                        datetime_utc = cols[2].string
+                        latitude = cols[3].string
+                        longitude = cols[4].string
+                        course_deg = cols[5].string
+                        speed_kmh = cols[6].string
+                        altitude_m = cols[7].string
+                        aprs_comment = cols[8].string
+        else:
+            # Probe is either planned or still in process. We have DYNAMIC content and need to get this from a different URL
+            logger.info("parsing dynamic URL")
+            page = d.get(url=dyn_url, headers=headers)
+            if page.last_response.status_code == 200:
+
+                # With the exception of the APRS data, the data that we want / need is stored as regular
+                # text. We use the text's icons in order to identify the content
+                regex_string = r"images\/balloon.png\"\> Number: ([\w\s]+)\<\/h4\>"
+                matches = re.search(
+                    pattern=regex_string,
+                    string=page.last_response.response.text,
+                    flags=re.IGNORECASE,
+                )
+                if matches:
+                    sonde_number = matches[1]
+
+                regex_string = r"images\/house.png\"\> Launch Site: (.*)\<\/h4\>"
+                matches = re.search(
+                    pattern=regex_string,
+                    string=page.last_response.response.text,
+                    flags=re.IGNORECASE,
+                )
+                if matches:
+                    launch_site = matches[1]
+
+                regex_string = r"images\/type.png\"\> Type: (.*)\<\/h4\>"
+                matches = re.search(
+                    pattern=regex_string,
+                    string=page.last_response.response.text,
+                    flags=re.IGNORECASE,
+                )
+                if matches:
+                    probe_type = matches[1]
+
+                regex_string = r"images\/aux.png\"\> AUX: (.*)\<\/h4\>"
+                matches = re.search(
+                    pattern=regex_string,
+                    string=page.last_response.response.text,
+                    flags=re.IGNORECASE,
+                )
+                if matches:
+                    probe_aux = matches[1]
+
+                regex_string = r"images\/freq.png\"\> Frequency: (.*)\<\/h4\>"
+                matches = re.search(
+                    pattern=regex_string,
+                    string=page.last_response.response.text,
+                    flags=re.IGNORECASE,
+                )
+                if matches:
+                    probe_freq = matches[1]
+
+                regex_string = r"images\/found.png\"\> Status: (.*)\<\/h4\>"
+                matches = re.search(
+                    pattern=regex_string,
+                    string=page.last_response.response.text,
+                    flags=re.IGNORECASE,
+                )
+                if matches:
+                    probe_status = matches[1]
+
+                soup = BeautifulSoup(page.last_response.response.text, "html.parser")
+                # Parse the APRS data
+                table = soup.find("table", attrs={"id": "Table1"})
+                if table:
+                    # get first row
+                    rows = table.find("tr", attrs={"class": "bg_1"})
+                    if rows:
+                        cols = rows.find_all("td")
+                        if cols and len(cols) == 13:
+                            receiver = cols[0].string
+                            sonde_number = cols[1].string
+                            datetime_utc = cols[2].string
+                            latitude = cols[3].string
+                            longitude = cols[4].string
+                            course_deg = cols[5].string
+                            speed_kmh = cols[6].string
+                            altitude_m = cols[7].string
+                            climbing = cols[8].string
+                            temperature = cols[9].string
+                            pressure = cols[10].string
+                            humidity = cols[11].string
+                            aux_o3 = cols[12].string
+
+                            # Remove the additional content such as units of measure etc.
+                            climbing = remove_trailing_content(
+                                source_string=climbing, trailing_content=" m/s"
+                            )
+                            altitude_m = remove_trailing_content(
+                                source_string=altitude_m, trailing_content=" m"
+                            )
+                            aux_o3 = remove_trailing_content(
+                                source_string=aux_o3, trailing_content=" mPa"
+                            )
+                            course_deg = remove_trailing_content(
+                                source_string=course_deg, trailing_content=" °"
+                            )
+                            humidity = remove_trailing_content(
+                                source_string=humidity, trailing_content=" %"
+                            )
+                            speed_kmh = remove_trailing_content(
+                                source_string=speed_kmh, trailing_content=" km/h"
+                            )
+                            temperature = remove_trailing_content(
+                                source_string=temperature, trailing_content=" °C"
+                            )
+                            latitude = remove_trailing_content(
+                                source_string=latitude, trailing_content=" φ"
+                            )
+                            longitude = remove_trailing_content(
+                                source_string=longitude, trailing_content=" λ"
+                            )
+
+            else:
+                # We were unable to access the dynamic PHP data - return an error to the user
+                success = False
+    radiosondy_response = {
+        "launch_site": launch_site,
+        "probe_type": probe_type,
+        "probe_aux": probe_aux,
+        "probe_freq": probe_freq,
+        "probe_status": probe_status,
+        "probe_finder": probe_finder,
+        "landing_point": landing_point,
+        "landing_description": landing_description,
+        "changes_made": changes_made,
+        "receiver": receiver,
+        "sonde_number": sonde_number,
+        "datetime_utc": datetime_utc,
+        "latitude": latitude,
+        "longitude": longitude,
+        "course_deg": course_deg,
+        "speed_kmh": speed_kmh,
+        "altitude_m": altitude_m,
+        "aprs_comment": aprs_comment,
+        "climbing_meters_per_second": climbing,
+        "temperature_celsius": temperature,
+        "pressure_hpa": pressure,
+        "humidity_percent": humidity,
+        "aux_o3": aux_o3,
+    }
+    return success, radiosondy_response
+
+
 if __name__ == "__main__":
     (
         success,
@@ -349,7 +653,10 @@ if __name__ == "__main__":
     ) = read_program_config()
     if success:
         logger.info(
-            get_radiosonde_landing_prediction(
-                aprsfi_callsign="DF1JSL-1", aprsdotfi_api_key=aprsdotfi_api_key
+            pformat(
+                get_radiosonde_landing_prediction(
+                    aprsfi_callsign="D19031453", aprsdotfi_api_key=aprsdotfi_api_key
+                )
             )
         )
+        logger.info(pformat(get_radiosondy_data(sonde_id="D19031453")))
