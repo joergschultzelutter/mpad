@@ -184,6 +184,8 @@ def get_kml_data_from_habhub(
             if "valid" in json_content:
                 valid = json_content["valid"]
 
+            logger.info("Have received valid initial response from Habhub")
+
             # Everything seems to be okay so let's get the UUID (if present)
             if valid == "true":
                 if "uuid" in json_content:
@@ -203,6 +205,8 @@ def get_kml_data_from_habhub(
                                 kml_dict = xmltodict.parse(resp.text)
                             except:
                                 kml_dict = {}
+
+                            logger.info("Have received valid uuid response from Habhub")
 
                             # Now navigate through the structure and get our data
                             # The stuff that we want is in the "Placemark" subsection
@@ -226,7 +230,7 @@ def get_kml_data_from_habhub(
                                                         ]
 
                                                         # run some regex magic for extracting what we want
-                                                        regex_string = r"^Balloon landing at (\d*[.]\d*),\s*(\d*[.]\d*)\s*at\s*(\d*[:]\d* \d{2}\/\d{2}\/\d{4}).$"
+                                                        regex_string = r"^Balloon landing at (-?\d*[.]\d*),\s*(-?\d*[.]\d*)\s*at\s*(\d*[:]\d* \d{2}\/\d{2}\/\d{4}).$"
                                                         matches = re.search(
                                                             pattern=regex_string,
                                                             string=description,
@@ -316,12 +320,15 @@ def get_radiosonde_landing_prediction(aprsfi_callsign: str, aprsdotfi_api_key: s
         #  aprs_target_type="o",
     )
 
+    logger.info("Running query on aprs.fi")
+
     # We found the entry - so let's continue
     if success:
         if comment:
             # logger.info(comment)
             clmb = get_clmb_from_comment(probe_comment=comment)
             if clmb:
+                logger.info("Getting KML data from Habhub")
                 (
                     success,
                     landing_latitude,
@@ -367,20 +374,13 @@ def get_radiosondy_data(sonde_id: str):
     headers = {"User-Agent": "Mozilla"}
 
     # Init our target variables - this is the data that will be returned to the user
-    launch_site = (
-        probe_type
-    ) = (
-        probe_aux
-    ) = (
-        probe_freq
-    ) = (
-        probe_status
-    ) = probe_finder = landing_point = landing_description = changes_made = None
-    receiver = (
-        sonde_number
-    ) = (
-        datetime_utc
-    ) = latitude = longitude = course_deg = speed_kmh = altitude_m = aprs_comment = None
+    launch_site = probe_type = probe_aux = probe_freq = None
+    probe_status = probe_finder = landing_point = None
+    landing_point_latitude = landing_point_longitude = 0.0
+    landing_description = changes_made = None
+    receiver = sonde_number = datetime_utc = None
+    latitude = longitude = course_deg = speed_kmh = None
+    altitude_m = aprs_comment = None
     climbing = temperature = pressure = humidity = aux_o3 = None
 
     # general success / failure boolean
@@ -421,6 +421,19 @@ def get_radiosondy_data(sonde_id: str):
                         landing_point = cols[6].string
                         landing_description = cols[7].string
                         changes_made = cols[8].string
+
+                        regex_string = r"^(-?\d*[.]\d*),\s*(-?\d*[.]\d*)$"
+                        matches = re.search(
+                            pattern=regex_string,
+                            string=landing_point,
+                            flags=re.IGNORECASE,
+                        )
+                        if matches:
+                            try:
+                                landing_point_latitude = float(matches[1])
+                                landing_point_longitude = float(matches[2])
+                            except ValueError:
+                                landing_point_longitude = landing_point_longitude = 0.0
                 else:
                     # This branch gets executed in case the probe's status has never changed since its inception
                     regex_string = r"images\/balloon.png\"\> Number: ([\w\s]+)\<\/h4\>"
@@ -619,6 +632,8 @@ def get_radiosondy_data(sonde_id: str):
         "probe_status": probe_status,
         "probe_finder": probe_finder,
         "landing_point": landing_point,
+        "landing_point_latitude": landing_point_latitude,
+        "landing_point_longitude": landing_point_longitude,
         "landing_description": landing_description,
         "changes_made": changes_made,
         "receiver": receiver,
@@ -640,23 +655,4 @@ def get_radiosondy_data(sonde_id: str):
 
 
 if __name__ == "__main__":
-    (
-        success,
-        aprsdotfi_api_key,
-        openweathermapdotorg_api_key,
-        aprsis_callsign,
-        aprsis_passcode,
-        dapnet_callsign,
-        dapnet_passcode,
-        smtpimap_email_address,
-        smtpimap_email_password,
-    ) = read_program_config()
-    if success:
-        logger.info(
-            pformat(
-                get_radiosonde_landing_prediction(
-                    aprsfi_callsign="D19031453", aprsdotfi_api_key=aprsdotfi_api_key
-                )
-            )
-        )
-        logger.info(pformat(get_radiosondy_data(sonde_id="D19031453")))
+    logger.info(pformat(get_radiosondy_data(sonde_id="R2420139")))
