@@ -4,6 +4,7 @@
 
 The following Python packages need to be installed:
 
+- [activesoup](https://github.com/jelford/activesoup) required: version 0.3.0 or greater
 - [apscheduler](https://github.com/agronholm/apscheduler)
 - [aprslib](https://github.com/rossengeorgiev/aprs-python)
 - [beautifulsoup4](https://www.crummy.com/software/BeautifulSoup/)
@@ -25,9 +26,9 @@ If you install MPAD and its components on a Raspberry Pi, the skyfield package r
 ## API Dependencies
 
 - [aprs.fi](https://aprs.fi/page/api) - thank you Hessu!
+- [aprs-is](http://www.aprs-is.net/Default.aspx) - thank you Steve Loveall!
 - [findu.com](https://www.findu.com) - thank you Steve Dimse!
 - [openweathermap.org](https://www.openweathermap.org)
-- [aprs-is](http://www.aprs-is.net/Default.aspx) - thank you Steve Loveall!
 
 Both aprs.fi and openweathermap.org require an API access key which needs to be added to the program's configuration file - see [installation instructions](INSTALLATION.md)
 
@@ -35,11 +36,11 @@ Both aprs.fi and openweathermap.org require an API access key which needs to be 
 
 - [aviationweather.gov](https://www.aviationweather.gov)
 - [celestrak.com](https://www.celestrak.com)
-- [openstreetmap.org](https://www.openstreetmap.org)
-- [repeatermap.de](https://www.repeatermap.de)
+- [habhub.org](habhub.org)
 - [hearham.com](https://www.hearham.com)
 - [JE9PEL's satellite frequency data](http://www.ne.jp/asahi/hamradio/je9pel/satslist.htm)
-- [habhub.org](habhub.org)
+- [openstreetmap.org](https://www.openstreetmap.org)
+- [repeatermap.de](https://www.repeatermap.de)
 
 ## Programming & knowledge resources
 
