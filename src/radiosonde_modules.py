@@ -352,6 +352,131 @@ def remove_trailing_content(source_string: str, trailing_content: str):
     return source_string
 
 
+def parse_radiosondy_html_content(html_raw_content: str):
+    _sonde_number = _launch_site = _probe_type = None
+    _probe_aux = _probe_freq = _probe_status = None
+    _max_speed = _max_speed_height = _avg_speed_kmh = None
+    _max_altitude = _avg_ascent_speed = _avg_descent_speed = None
+
+    # With the exception of the APRS data, the data that we want / need is stored as regular
+    # text. We use the text's icons in order to identify the content
+    regex_string = r"images\/balloon.png\"\> Number: ([\w\s]+)\<\/h4\>"
+    matches = re.search(
+        pattern=regex_string,
+        string=html_raw_content,
+        flags=re.IGNORECASE,
+    )
+    if matches:
+        _sonde_number = matches[1]
+
+    regex_string = r"images\/house.png\"\> Launch Site: (.*)\<\/h4\>"
+    matches = re.search(
+        pattern=regex_string,
+        string=html_raw_content,
+        flags=re.IGNORECASE,
+    )
+    if matches:
+        _launch_site = matches[1]
+
+    regex_string = r"images\/type.png\"\> Type: (.*)\<\/h4\>"
+    matches = re.search(
+        pattern=regex_string,
+        string=html_raw_content,
+        flags=re.IGNORECASE,
+    )
+    if matches:
+        _probe_type = matches[1]
+
+    regex_string = r"images\/aux.png\"\> AUX: (.*)\<\/h4\>"
+    matches = re.search(
+        pattern=regex_string,
+        string=html_raw_content,
+        flags=re.IGNORECASE,
+    )
+    if matches:
+        _probe_aux = matches[1]
+
+    regex_string = r"images\/freq.png\"\> Frequency: (.*) MHz\<\/h4\>"
+    matches = re.search(
+        pattern=regex_string,
+        string=html_raw_content,
+        flags=re.IGNORECASE,
+    )
+    if matches:
+        _probe_freq = matches[1]
+
+    regex_string = r"images\/found.png\"\> Status: (.*)\<\/h4\>"
+    matches = re.search(
+        pattern=regex_string,
+        string=html_raw_content,
+        flags=re.IGNORECASE,
+    )
+    if matches:
+        _probe_status = matches[1]
+
+    regex_string = r"images\/speed.png\"\> Max Speed: (.*) km\/h at (.*) m\<\/h4\>"
+    matches = re.search(
+        pattern=regex_string,
+        string=html_raw_content,
+        flags=re.IGNORECASE,
+    )
+    if matches:
+        _max_speed = matches[1]
+        _max_speed_height = matches[2]
+
+    regex_string = r"images\/speed.png\"\> Average Speed: (.*) km\/h\<\/h4\>"
+    matches = re.search(
+        pattern=regex_string,
+        string=html_raw_content,
+        flags=re.IGNORECASE,
+    )
+    if matches:
+        _avg_speed_kmh = matches[1]
+
+    regex_string = r"images\/altitude.png\"\> Max Altitude: (.*) m\<\/h4\>"
+    matches = re.search(
+        pattern=regex_string,
+        string=html_raw_content,
+        flags=re.IGNORECASE,
+    )
+    if matches:
+        _max_altitude = matches[1]
+
+    regex_string = r"images\/up.png\"\> Average Ascent Speed: (.*) m\/s\<\/h4\>"
+    matches = re.search(
+        pattern=regex_string,
+        string=html_raw_content,
+        flags=re.IGNORECASE,
+    )
+    if matches:
+        _avg_ascent_speed = matches[1]
+
+    regex_string = r"images\/down.png\"\> Average Descent Speed: (.*) m\/s\<\/h4\>"
+    matches = re.search(
+        pattern=regex_string,
+        string=html_raw_content,
+        flags=re.IGNORECASE,
+    )
+    if matches:
+        _avg_descent_speed = matches[1]
+
+    response_dict = {
+        "sonde_number": _sonde_number,
+        "launch_site": _launch_site,
+        "probe_type": _probe_type,
+        "probe_aux": _probe_aux,
+        "probe_freq": _probe_freq,
+        "probe_status": _probe_status,
+        "max_speed": _max_speed,
+        "max_speed_height": _max_speed_height,
+        "avg_speed_kmh": _avg_speed_kmh,
+        "max_altitude": _max_altitude,
+        "avg_ascent_speed": _avg_ascent_speed,
+        "avg_descent_speed": _avg_descent_speed,
+    }
+    return response_dict
+
+
 def get_radiosondy_data(sonde_id: str):
     """Get Radiosonde data from radiosondy.info
     Parameters
@@ -382,6 +507,8 @@ def get_radiosondy_data(sonde_id: str):
     latitude = longitude = course_deg = speed_kmh = None
     altitude_m = aprs_comment = None
     climbing = temperature = pressure = humidity = aux_o3 = None
+    max_speed = max_speed_height = avg_speed_kmh = max_altitude = None
+    avg_ascent_speed = avg_descent_speed = None
 
     # general success / failure boolean
     success = False
@@ -436,59 +563,23 @@ def get_radiosondy_data(sonde_id: str):
                                 landing_point_longitude = landing_point_longitude = 0.0
                 else:
                     # This branch gets executed in case the probe's status has never changed since its inception
-                    regex_string = r"images\/balloon.png\"\> Number: ([\w\s]+)\<\/h4\>"
-                    matches = re.search(
-                        pattern=regex_string,
-                        string=page.last_response.response.text,
-                        flags=re.IGNORECASE,
+                    # With the exception of the APRS data, the data that we want / need is stored as regular
+                    # text. We use the text's icons in order to identify the content
+                    html_response_dict = parse_radiosondy_html_content(
+                        html_raw_content=page.last_response.response.text
                     )
-                    if matches:
-                        sonde_number = matches[1]
-
-                    regex_string = r"images\/house.png\"\> Launch Site: (.*)\<\/h4\>"
-                    matches = re.search(
-                        pattern=regex_string,
-                        string=page.last_response.response.text,
-                        flags=re.IGNORECASE,
-                    )
-                    if matches:
-                        launch_site = matches[1]
-
-                    regex_string = r"images\/type.png\"\> Type: (.*)\<\/h4\>"
-                    matches = re.search(
-                        pattern=regex_string,
-                        string=page.last_response.response.text,
-                        flags=re.IGNORECASE,
-                    )
-                    if matches:
-                        probe_type = matches[1]
-
-                    regex_string = r"images\/aux.png\"\> AUX: (.*)\<\/h4\>"
-                    matches = re.search(
-                        pattern=regex_string,
-                        string=page.last_response.response.text,
-                        flags=re.IGNORECASE,
-                    )
-                    if matches:
-                        probe_aux = matches[1]
-
-                    regex_string = r"images\/freq.png\"\> Frequency: (.*)\<\/h4\>"
-                    matches = re.search(
-                        pattern=regex_string,
-                        string=page.last_response.response.text,
-                        flags=re.IGNORECASE,
-                    )
-                    if matches:
-                        probe_freq = matches[1]
-
-                    regex_string = r"images\/found.png\"\> Status: (.*)\<\/h4\>"
-                    matches = re.search(
-                        pattern=regex_string,
-                        string=page.last_response.response.text,
-                        flags=re.IGNORECASE,
-                    )
-                    if matches:
-                        probe_status = matches[1]
+                    sonde_number = html_response_dict["sonde_number"]
+                    launch_site = html_response_dict["launch_site"]
+                    probe_type = html_response_dict["probe_type"]
+                    probe_freq = html_response_dict["probe_freq"]
+                    probe_aux = html_response_dict["probe_aux"]
+                    probe_status = html_response_dict["probe_status"]
+                    max_speed = html_response_dict["max_speed"]
+                    max_speed_height = html_response_dict["max_speed_height"]
+                    avg_speed_kmh = html_response_dict["avg_speed_kmh"]
+                    max_altitude = html_response_dict["max_altitude"]
+                    avg_ascent_speed = html_response_dict["avg_ascent_speed"]
+                    avg_descent_speed = html_response_dict["avg_descent_speed"]
 
             # pparse APRS data
             table = soup.find("table", attrs={"id": "Table1"})
@@ -515,59 +606,21 @@ def get_radiosondy_data(sonde_id: str):
 
                 # With the exception of the APRS data, the data that we want / need is stored as regular
                 # text. We use the text's icons in order to identify the content
-                regex_string = r"images\/balloon.png\"\> Number: ([\w\s]+)\<\/h4\>"
-                matches = re.search(
-                    pattern=regex_string,
-                    string=page.last_response.response.text,
-                    flags=re.IGNORECASE,
+                html_response_dict = parse_radiosondy_html_content(
+                    html_raw_content=page.last_response.response.text
                 )
-                if matches:
-                    sonde_number = matches[1]
-
-                regex_string = r"images\/house.png\"\> Launch Site: (.*)\<\/h4\>"
-                matches = re.search(
-                    pattern=regex_string,
-                    string=page.last_response.response.text,
-                    flags=re.IGNORECASE,
-                )
-                if matches:
-                    launch_site = matches[1]
-
-                regex_string = r"images\/type.png\"\> Type: (.*)\<\/h4\>"
-                matches = re.search(
-                    pattern=regex_string,
-                    string=page.last_response.response.text,
-                    flags=re.IGNORECASE,
-                )
-                if matches:
-                    probe_type = matches[1]
-
-                regex_string = r"images\/aux.png\"\> AUX: (.*)\<\/h4\>"
-                matches = re.search(
-                    pattern=regex_string,
-                    string=page.last_response.response.text,
-                    flags=re.IGNORECASE,
-                )
-                if matches:
-                    probe_aux = matches[1]
-
-                regex_string = r"images\/freq.png\"\> Frequency: (.*)\<\/h4\>"
-                matches = re.search(
-                    pattern=regex_string,
-                    string=page.last_response.response.text,
-                    flags=re.IGNORECASE,
-                )
-                if matches:
-                    probe_freq = matches[1]
-
-                regex_string = r"images\/found.png\"\> Status: (.*)\<\/h4\>"
-                matches = re.search(
-                    pattern=regex_string,
-                    string=page.last_response.response.text,
-                    flags=re.IGNORECASE,
-                )
-                if matches:
-                    probe_status = matches[1]
+                sonde_number = html_response_dict["sonde_number"]
+                launch_site = html_response_dict["launch_site"]
+                probe_type = html_response_dict["probe_type"]
+                probe_freq = html_response_dict["probe_freq"]
+                probe_aux = html_response_dict["probe_aux"]
+                probe_status = html_response_dict["probe_status"]
+                max_speed = html_response_dict["max_speed"]
+                max_speed_height = html_response_dict["max_speed_height"]
+                avg_speed_kmh = html_response_dict["avg_speed_kmh"]
+                max_altitude = html_response_dict["max_altitude"]
+                avg_ascent_speed = html_response_dict["avg_ascent_speed"]
+                avg_descent_speed = html_response_dict["avg_descent_speed"]
 
                 soup = BeautifulSoup(page.last_response.response.text, "html.parser")
                 # Parse the APRS data
@@ -593,6 +646,7 @@ def get_radiosondy_data(sonde_id: str):
                             aux_o3 = cols[12].string
 
                             # Remove the additional content such as units of measure etc.
+                            # Yes, this is quick and dirty
                             climbing = remove_trailing_content(
                                 source_string=climbing, trailing_content=" m/s"
                             )
@@ -607,6 +661,9 @@ def get_radiosondy_data(sonde_id: str):
                             )
                             humidity = remove_trailing_content(
                                 source_string=humidity, trailing_content=" %"
+                            )
+                            pressure = remove_trailing_content(
+                                source_string=pressure, trailing_content=" hPa"
                             )
                             speed_kmh = remove_trailing_content(
                                 source_string=speed_kmh, trailing_content=" km/h"
@@ -650,9 +707,15 @@ def get_radiosondy_data(sonde_id: str):
         "pressure_hpa": pressure,
         "humidity_percent": humidity,
         "aux_o3": aux_o3,
+        "max_speed": max_speed,
+        "max_speed_height": max_speed_height,
+        "avg_speed_kmh": avg_speed_kmh,
+        "max_altitude": max_altitude,
+        "avg_ascent_speed": avg_ascent_speed,
+        "avg_descent_speed": avg_descent_speed,
     }
     return success, radiosondy_response
 
 
 if __name__ == "__main__":
-    logger.info(pformat(get_radiosondy_data(sonde_id="R2420139")))
+    logger.info(pformat(get_radiosondy_data(sonde_id="S3130229")))
