@@ -717,30 +717,78 @@ def generate_output_message_riseset(response_parameters: dict):
         message_to_add=datetime.datetime.strftime(requested_date, "%d-%b"),
         destination_list=output_list,
     )
-    output_list = make_pretty_aprs_messages(
-        message_to_add="GMT sun_rs", destination_list=output_list
-    )
-    output_list = make_pretty_aprs_messages(
-        message_to_add=datetime.datetime.strftime(sunrise, "%H:%M"),
-        destination_list=output_list,
-    )
-    output_list = make_pretty_aprs_messages(
-        message_to_add=datetime.datetime.strftime(sunset, "-%H:%M"),
-        destination_list=output_list,
-        add_sep=False,
-    )
-    output_list = make_pretty_aprs_messages(
-        message_to_add="mn_sr", destination_list=output_list
-    )
-    output_list = make_pretty_aprs_messages(
-        message_to_add=datetime.datetime.strftime(moonset, "%H:%M"),
-        destination_list=output_list,
-    )
-    output_list = make_pretty_aprs_messages(
-        message_to_add=datetime.datetime.strftime(moonrise, "-%H:%M"),
-        destination_list=output_list,
-        add_sep=False,
-    )
+
+    # For certain datetime events, Skyfield cannot always find
+    # either sunrise and/or sunset
+    # For such cases, ensure that the pretty-printer is not used
+    if sunrise and sunset:
+        output_list = make_pretty_aprs_messages(
+            message_to_add="GMT sun_rs", destination_list=output_list
+        )
+        output_list = make_pretty_aprs_messages(
+            message_to_add=datetime.datetime.strftime(sunrise, "%H:%M"),
+            destination_list=output_list,
+        )
+        output_list = make_pretty_aprs_messages(
+            message_to_add=datetime.datetime.strftime(sunset, "-%H:%M"),
+            destination_list=output_list,
+            add_sep=False,
+        )
+
+    if sunrise and not sunset:
+        output_list = make_pretty_aprs_messages(
+            message_to_add="GMT sunrise", destination_list=output_list
+        )
+        output_list = make_pretty_aprs_messages(
+            message_to_add=datetime.datetime.strftime(sunrise, "%H:%M"),
+            destination_list=output_list,
+        )
+
+    if sunset and not sunrise:
+        output_list = make_pretty_aprs_messages(
+            message_to_add="GMT sunset", destination_list=output_list
+        )
+        output_list = make_pretty_aprs_messages(
+            message_to_add=datetime.datetime.strftime(sunset, "%H:%M"),
+            destination_list=output_list,
+        )
+
+    # For certain datetime events, Skyfield cannot always find
+    # either moonrise and/or moonset
+    # For such cases, ensure that the pretty-printer is not used
+
+    if moonset and moonrise:
+        output_list = make_pretty_aprs_messages(
+            message_to_add="mn_sr", destination_list=output_list
+        )
+        output_list = make_pretty_aprs_messages(
+            message_to_add=datetime.datetime.strftime(moonset, "%H:%M"),
+            destination_list=output_list,
+        )
+        output_list = make_pretty_aprs_messages(
+            message_to_add=datetime.datetime.strftime(moonrise, "-%H:%M"),
+            destination_list=output_list,
+            add_sep=False,
+        )
+
+    if moonset and not moonrise:
+        output_list = make_pretty_aprs_messages(
+            message_to_add="mn_set", destination_list=output_list
+        )
+        output_list = make_pretty_aprs_messages(
+            message_to_add=datetime.datetime.strftime(moonset, "%H:%M"),
+            destination_list=output_list,
+        )
+
+    if moonrise and not moonset:
+        output_list = make_pretty_aprs_messages(
+            message_to_add="mn_rise", destination_list=output_list
+        )
+        output_list = make_pretty_aprs_messages(
+            message_to_add=datetime.datetime.strftime(moonrise, "%H:%M"),
+            destination_list=output_list,
+        )
+
     success = True
     return success, output_list
 
