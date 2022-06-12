@@ -113,7 +113,7 @@ def make_pretty_aprs_messages(
     # or a reference to a list item has not been specified at all
     # In this case, create an empty list
     if not destination_list:
-        destination_list = [""]
+        destination_list = []
 
     # replace non-permitted APRS characters from the
     # message text
@@ -157,15 +157,18 @@ def make_pretty_aprs_messages(
                     destination_list.append(msg)
     else:  # try to insert
         # Get very last element from list
-        string_from_list = destination_list[-1]
+        if len(destination_list) > 0:
+            string_from_list = destination_list[-1]
 
-        # element + new string > max len? no: add to existing string, else create new element in list
-        if len(string_from_list) + len(message_to_add) + 1 <= max_len:
-            delimiter = ""
-            if len(string_from_list) > 0 and add_sep:
-                delimiter = separator_char
-            string_from_list = string_from_list + delimiter + message_to_add
-            destination_list[-1] = string_from_list
+            # element + new string > max len? no: add to existing string, else create new element in list
+            if len(string_from_list) + len(message_to_add) + 1 <= max_len:
+                delimiter = ""
+                if len(string_from_list) > 0 and add_sep:
+                    delimiter = separator_char
+                string_from_list = string_from_list + delimiter + message_to_add
+                destination_list[-1] = string_from_list
+            else:
+                destination_list.append(message_to_add)
         else:
             destination_list.append(message_to_add)
 
@@ -656,23 +659,4 @@ def check_and_create_data_directory(
 
 
 if __name__ == "__main__":
-    my_array = make_pretty_aprs_messages("Hello World")
-    my_array = make_pretty_aprs_messages("Wie geht es Dir", my_array)
-    my_array = make_pretty_aprs_messages(
-        "jdsfhjdshfjhjkshdfjhdsjfhjhdsfhjdshfjdhsfhdhsf", my_array
-    )
-    my_array = make_pretty_aprs_messages(
-        "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeffffffffffgggggggggghhhhhhhhhh",
-        my_array,
-    )
-    my_array = make_pretty_aprs_messages(
-        "1111111111 2222222222 3333333333 4444444444 5555555555 6666666666 7777777777 8888888888 9999999999 0000000000 1111111111 2222222222",
-        my_array,
-    )
-
-    my_array = make_pretty_aprs_messages("Äußerste Grüße aus Höxter", my_array)
-    logger.info(my_array)
-
-    logger.info("Logtext erfolgreich")
-    logger.info(read_program_config())
-    logger.info(build_full_pathname("hello.txt", ""))
+    pass
