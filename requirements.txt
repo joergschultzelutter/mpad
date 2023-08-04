@@ -1,0 +1,15 @@
+activesoup>=0.3.0
+apscheduler>=3.7.0
+aprslib>=0.6.47
+beautifulsoup4>=4.9.3
+expiringdict>=1.2.1
+geopy>=2.2.0
+iso3166>==1.0.1
+maidenhead>=1.6.0
+requests>=2.26.0
+skyfield>=1.39
+timezonefinder>=5.2.0
+unidecode>=1.3.2
+us>=2.0.2
+utm>=0.7.0
+xmltodict>=0.12.0

@@ -93,52 +93,60 @@ def get_cwop_findu(cwop_id: str, units: str = "metric"):
         speedgust_uom = "mph"
         rain_uom = "in"
 
-    resp = requests.get(
-        f"http://www.findu.com/cgi-bin/wx.cgi?call={cwop_id}&last=1&units={units}"
-    )
-    if resp.status_code == 200:
-        soup = BeautifulSoup(resp.text, features="html.parser")
-        matches = re.search(
-            r"\b(Sorry, no weather reports found)\b", soup.get_text(), re.IGNORECASE
+    # findu seems to be experiencing frequent downtimes since Q3/2023
+    # better ensure that we catch any exceptions and continue with our code
+    # in case of an errors
+    try:
+        resp = requests.get(
+            f"http://www.findu.com/cgi-bin/wx.cgi?call={cwop_id}&last=1&units={units}"
         )
-        if not matches:
-            # Tabelle parsen; Regex funktioniert nicht immer sauber
-            table = soup.find("table")
-            output_rows = []
-            if table:
-                for table_row in table.findAll("tr"):
-                    columns = table_row.findAll("td")
-                    output_row = []
-                    for column in columns:
-                        output_row.append(column.text.strip())
-                    output_rows.append(output_row)
-                if len(output_rows) > 0:
-                    if len(output_rows[0]) >= 10:
-                        time = output_rows[1][0]
-                        time_year = int(time[0:4])
-                        time_month = int(time[4:6])
-                        time_day = int(time[6:8])
-                        time_hh = int(time[8:10])
-                        time_mm = int(time[10:12])
-                        time_ss = int(time[12:14])
-                        my_timestamp = datetime.datetime(
-                            year=time_year,
-                            month=time_month,
-                            day=time_day,
-                            hour=time_hh,
-                            minute=time_mm,
-                            second=time_ss,
-                        )
-                        temp = output_rows[1][1]
-                        wind_direction = output_rows[1][2]
-                        wind_speed = output_rows[1][3]
-                        wind_gust = output_rows[1][4]
-                        rain_1h = output_rows[1][5]
-                        rain_24h = output_rows[1][6]
-                        rain_mn = output_rows[1][7]
-                        humidity = output_rows[1][8]
-                        air_pressure = output_rows[1][9]
-                        success = True
+    except requests.exceptions.RequestException as e:
+        logger.error(msg="{e}")
+        resp = None
+    if resp:
+        if resp.status_code == 200:
+            soup = BeautifulSoup(resp.text, features="html.parser")
+            matches = re.search(
+                r"\b(Sorry, no weather reports found)\b", soup.get_text(), re.IGNORECASE
+            )
+            if not matches:
+                # Tabelle parsen; Regex funktioniert nicht immer sauber
+                table = soup.find("table")
+                output_rows = []
+                if table:
+                    for table_row in table.findAll("tr"):
+                        columns = table_row.findAll("td")
+                        output_row = []
+                        for column in columns:
+                            output_row.append(column.text.strip())
+                        output_rows.append(output_row)
+                    if len(output_rows) > 0:
+                        if len(output_rows[0]) >= 10:
+                            time = output_rows[1][0]
+                            time_year = int(time[0:4])
+                            time_month = int(time[4:6])
+                            time_day = int(time[6:8])
+                            time_hh = int(time[8:10])
+                            time_mm = int(time[10:12])
+                            time_ss = int(time[12:14])
+                            my_timestamp = datetime.datetime(
+                                year=time_year,
+                                month=time_month,
+                                day=time_day,
+                                hour=time_hh,
+                                minute=time_mm,
+                                second=time_ss,
+                            )
+                            temp = output_rows[1][1]
+                            wind_direction = output_rows[1][2]
+                            wind_speed = output_rows[1][3]
+                            wind_gust = output_rows[1][4]
+                            rain_1h = output_rows[1][5]
+                            rain_24h = output_rows[1][6]
+                            rain_mn = output_rows[1][7]
+                            humidity = output_rows[1][8]
+                            air_pressure = output_rows[1][9]
+                            success = True
     cwop_response = {
         "cwop_id": cwop_id,
         "time": my_timestamp,
@@ -218,26 +226,34 @@ def get_nearest_cwop_findu(latitude: float, longitude: float, units: str = "metr
         speedgust_uom = "mph"
         rain_uom = "in"
 
-    resp = requests.get(
-        f"http://www.findu.com/cgi-bin/wxnear.cgi?lat={latitude}&lon={longitude}&noold=1&limits=1"
-    )
-    if resp.status_code == 200:
-        soup = BeautifulSoup(resp.text, features="html.parser")
-        matches = re.search(r"\b(sorry)\b", soup.get_text(), re.IGNORECASE)
-        if not matches:
-            # Parse table
-            table = soup.find("table")
-            output_rows = []
-            for table_row in table.findAll("tr"):
-                columns = table_row.findAll("td")
-                output_row = []
-                for column in columns:
-                    output_row.append(column.text.strip())
-                output_rows.append(output_row)
-            if len(output_rows) > 0:
-                if len(output_rows[0]) >= 13:
-                    # call findu again as the previous URL does not support units :-(
-                    return get_cwop_findu(output_rows[1][0], units)
+    # findu seems to be experiencing frequent downtimes since Q3/2023
+    # better ensure that we catch any exceptions and continue with our code
+    # in case of an errors
+    try:
+        resp = requests.get(
+            f"http://www.findu.com/cgi-bin/wxnear.cgi?lat={latitude}&lon={longitude}&noold=1&limits=1"
+        )
+    except requests.exceptions.RequestException as e:
+        logger.error(msg="{e}")
+        resp = None
+    if resp:
+        if resp.status_code == 200:
+            soup = BeautifulSoup(resp.text, features="html.parser")
+            matches = re.search(r"\b(sorry)\b", soup.get_text(), re.IGNORECASE)
+            if not matches:
+                # Parse table
+                table = soup.find("table")
+                output_rows = []
+                for table_row in table.findAll("tr"):
+                    columns = table_row.findAll("td")
+                    output_row = []
+                    for column in columns:
+                        output_row.append(column.text.strip())
+                    output_rows.append(output_row)
+                if len(output_rows) > 0:
+                    if len(output_rows[0]) >= 13:
+                        # call findu again as the previous URL does not support units :-(
+                        return get_cwop_findu(output_rows[1][0], units)
     # This code will only be triggered in the event of a failure
     cwop_response = {
         "cwop_id": cwop_id,

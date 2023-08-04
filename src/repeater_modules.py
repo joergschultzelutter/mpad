@@ -61,17 +61,23 @@ def download_repeatermap_raw_data_to_local_file(
     """
     success = False
     absolute_path_filename = build_full_pathname(file_name=repeatermap_raw_data_file)
-    resp = requests.get(url)
-    if resp.status_code == 200:
-        try:
-            with open(f"{absolute_path_filename}", "w") as f:
-                f.write(resp.text)
-                f.close()
-            success = True
-        except:
-            logger.info(
-                msg=f"Cannot write repeatermap.de data to local disc file '{absolute_path_filename}'"
-            )
+    try:
+        resp = requests.get(url)
+    except requests.exceptions.RequestException as e:
+        logger.error(msg="{e}")
+        resp = None
+
+    if resp:
+        if resp.status_code == 200:
+            try:
+                with open(f"{absolute_path_filename}", "w") as f:
+                    f.write(resp.text)
+                    f.close()
+                success = True
+            except:
+                logger.info(
+                    msg=f"Cannot write repeatermap.de data to local disc file '{absolute_path_filename}'"
+                )
     return success
 
 
@@ -750,17 +756,23 @@ def download_hearham_raw_data_to_local_file(
     """
     success = False
     absolute_path_filename = build_full_pathname(file_name=hearham_raw_data_file)
-    resp = requests.get(url)
-    if resp.status_code == 200:
-        try:
-            with open(f"{absolute_path_filename}", "w") as f:
-                f.write(resp.text)
-                f.close()
-            success = True
-        except:
-            logger.info(
-                msg=f"Cannot write hearham.com data to local disc file '{absolute_path_filename}'"
-            )
+    try:
+        resp = requests.get(url)
+    except requests.exceptions.RequestException as e:
+        logger.error(msg="{e}")
+        resp = None
+
+    if resp:
+        if resp.status_code == 200:
+            try:
+                with open(f"{absolute_path_filename}", "w") as f:
+                    f.write(resp.text)
+                    f.close()
+                success = True
+            except:
+                logger.info(
+                    msg=f"Cannot write hearham.com data to local disc file '{absolute_path_filename}'"
+                )
     return success
 
 

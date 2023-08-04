@@ -127,26 +127,31 @@ def get_daily_weather_from_openweathermapdotorg(
 
     # Issue the request to OWN
     url = f"https://api.openweathermap.org/data/2.5/onecall?lat={latitude}&lon={longitude}&units={units}&exclude=alerts,minutely&lang={language}&appid={openweathermap_api_key}"
-    resp = requests.get(url)
-    if resp.status_code == 200:
-        x = resp.json()
-        # get weather for the given day offset
-        if "current" in x and access_mode == "current":
-            weather_tuple = x["current"]
-            success = True
-        elif "daily" in x and access_mode == "day":
-            if offset < len(x["daily"]):
-                weather_tuple = x["daily"][offset]
+    try:
+        resp = requests.get(url)
+    except requests.exceptions.RequestException as e:
+        logger.error(msg="{e}")
+        resp = None
+    if resp:
+        if resp.status_code == 200:
+            x = resp.json()
+            # get weather for the given day offset
+            if "current" in x and access_mode == "current":
+                weather_tuple = x["current"]
                 success = True
-        elif "hourly" in x and access_mode == "hour":
-            if offset < len(x["hourly"]):
-                weather_tuple = x["hourly"][offset]
-                success = True
-        if "timezone_offset" in x:
-            timezone_offset = x["timezone_offset"]
-        if "timezone" in x:
-            timezone = x["timezone"]
-        logger.info(msg=pformat(weather_tuple))
+            elif "daily" in x and access_mode == "day":
+                if offset < len(x["daily"]):
+                    weather_tuple = x["daily"][offset]
+                    success = True
+            elif "hourly" in x and access_mode == "hour":
+                if offset < len(x["hourly"]):
+                    weather_tuple = x["hourly"][offset]
+                    success = True
+            if "timezone_offset" in x:
+                timezone_offset = x["timezone_offset"]
+            if "timezone" in x:
+                timezone = x["timezone"]
+            logger.info(msg=pformat(weather_tuple))
     return success, weather_tuple, timezone_offset, timezone
 
 

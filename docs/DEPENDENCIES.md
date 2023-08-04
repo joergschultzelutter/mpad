@@ -2,7 +2,7 @@
 
 ## Python Library Dependencies
 
-The following Python packages need to be installed:
+The following Python packages need to be installed (see also [requirements.txt](../requirements.txt):
 
 - [activesoup](https://github.com/jelford/activesoup) required: version 0.3.0 or greater
 - [apscheduler](https://github.com/agronholm/apscheduler)
@@ -12,7 +12,7 @@ The following Python packages need to be installed:
 - [geopy](https://github.com/geopy/geopy)
 - [iso3166](https://github.com/deactivated/python-iso3166)
 - [maidenhead](https://github.com/space-physics/maidenhead)
-- [pymgrs](https://github.com/aydink/pymgrs) Note: this is not a pip package; download the mgrs.py file and save it in the src directory
+- [pymgrs](https://github.com/aydink/pymgrs) Note: this is __not__ a pip package; download the mgrs.py file and save it in the src directory
 - [requests](https://github.com/psf/requests)
 - [skyfield](https://github.com/skyfielders/python-skyfield)
 - [timezonefinder](https://github.com/MrMinimal64/timezonefinder)

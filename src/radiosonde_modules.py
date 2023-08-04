@@ -199,7 +199,11 @@ def get_kml_data_from_habhub(
                     # We're going to download the KML file for this UUID
                     # Let's construct the respective URL
                     url = f"http://predict.habhub.org/kml.php?uuid={uuid}"
-                    resp = requests.get(url=url)
+                    try:
+                        resp = requests.get(url=url)
+                    except requests.exceptions.RequestException as e:
+                        logger.error(msg="{e}")
+                        resp = None
                     if resp:
                         if resp.status_code == 200:
 
