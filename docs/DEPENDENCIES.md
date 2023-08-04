@@ -2,7 +2,7 @@
 
 ## Python Library Dependencies
 
-The following Python packages need to be installed (see also [requirements.txt](../requirements.txt):
+The following Python packages need to be installed (see also [requirements.txt](../requirements.txt)):
 
 - [activesoup](https://github.com/jelford/activesoup) required: version 0.3.0 or greater
 - [apscheduler](https://github.com/agronholm/apscheduler)
