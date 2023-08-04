@@ -66,14 +66,14 @@ help_text_array = [
 # Degrees: lat: 0-90, lon: 0-180
 # Minutes and Seconds: 00-60
 # Bearing: latitude N or S, longitude: E or W
-mpad_latitude: str = "5150.34N"  # 8 chars fixed length, ddmm.ssN
-mpad_longitude: str = "00819.60E"  # 9 chars fixed length, dddmm.ssE
+mpad_latitude: str = "5151.84N"  # 8 chars fixed length, ddmm.ssN
+mpad_longitude: str = "00935.48E"  # 9 chars fixed length, dddmm.ssE
 #
 # Program alias: This is the APRS name that will be used for all outgoing messages
 mpad_alias: str = "MPAD"  # Identifier for sending outgoing data to APRS-IS
 #
 # Altitude in *FEET* (not meters) for APRS beacon. Details: see aprs101.pdf chapter 8
-mpad_beacon_altitude_ft = 243
+mpad_beacon_altitude_ft = 824
 #
 # APRS "TOCALL" identifier - see http://aprs.org/aprs11/tocalls.txt
 # The original MPAD instance has its own TOCALL identifier - if you clone & modify
