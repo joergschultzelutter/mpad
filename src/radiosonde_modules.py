@@ -545,78 +545,79 @@ def get_radiosondy_data(sonde_id: str):
             if "sonde_archive.php" in page.last_response.url:
                 logger.info("Parsing static Radiosondy data")
                 soup = BeautifulSoup(page.last_response.response.text, "html.parser")
-                # Archived probe; we have proper tables and can parse them. Page has STATIC content
-                # Parse Table "Status Changes"
-                table = soup.find("table", attrs={"id": "Table2"})
-                if table:
-                    # get first row
-                    rows = table.find("tr", attrs={"class": "bg_1"})
-                    # There was at least one minimal change
-                    if rows:
-                        # There was at least one minimal change for this radiosonde
-                        cols = rows.find_all("td")
-                        if cols and len(cols) == 9:
-                            launch_site = cols[0].string
-                            probe_type = cols[1].string
-                            probe_aux = cols[2].string
-                            probe_freq = cols[3].string
-                            probe_status = cols[4].string
-                            probe_finder = cols[5].string
-                            landing_point = cols[6].string
-                            landing_description = cols[7].string
-                            changes_made = cols[8].string
+                if soup:
+                    # Archived probe; we have proper tables and can parse them. Page has STATIC content
+                    # Parse Table "Status Changes"
+                    table = soup.find("table", attrs={"id": "Table2"})
+                    if table:
+                        # get first row
+                        rows = table.find("tr", attrs={"class": "bg_1"})
+                        # There was at least one minimal change
+                        if rows:
+                            # There was at least one minimal change for this radiosonde
+                            cols = rows.find_all("td")
+                            if cols and len(cols) == 9:
+                                launch_site = cols[0].string
+                                probe_type = cols[1].string
+                                probe_aux = cols[2].string
+                                probe_freq = cols[3].string
+                                probe_status = cols[4].string
+                                probe_finder = cols[5].string
+                                landing_point = cols[6].string
+                                landing_description = cols[7].string
+                                changes_made = cols[8].string
 
-                            regex_string = r"^(-?\d*[.]\d*),\s*(-?\d*[.]\d*)$"
-                            matches = re.search(
-                                pattern=regex_string,
-                                string=landing_point,
-                                flags=re.IGNORECASE,
+                                regex_string = r"^(-?\d*[.]\d*),\s*(-?\d*[.]\d*)$"
+                                matches = re.search(
+                                    pattern=regex_string,
+                                    string=landing_point,
+                                    flags=re.IGNORECASE,
+                                )
+                                if matches:
+                                    try:
+                                        landing_point_latitude = float(matches[1])
+                                        landing_point_longitude = float(matches[2])
+                                    except ValueError:
+                                        landing_point_longitude = (
+                                            landing_point_longitude
+                                        ) = 0.0
+                        else:
+                            # This branch gets executed in case the probe's status has never changed since its inception
+                            # With the exception of the APRS data, the data that we want / need is stored as regular
+                            # text. We use the text's icons in order to identify the content
+                            html_response_dict = parse_radiosondy_html_content(
+                                html_raw_content=page.last_response.response.text
                             )
-                            if matches:
-                                try:
-                                    landing_point_latitude = float(matches[1])
-                                    landing_point_longitude = float(matches[2])
-                                except ValueError:
-                                    landing_point_longitude = (
-                                        landing_point_longitude
-                                    ) = 0.0
-                    else:
-                        # This branch gets executed in case the probe's status has never changed since its inception
-                        # With the exception of the APRS data, the data that we want / need is stored as regular
-                        # text. We use the text's icons in order to identify the content
-                        html_response_dict = parse_radiosondy_html_content(
-                            html_raw_content=page.last_response.response.text
-                        )
-                        sonde_number = html_response_dict["sonde_number"]
-                        launch_site = html_response_dict["launch_site"]
-                        probe_type = html_response_dict["probe_type"]
-                        probe_freq = html_response_dict["probe_freq"]
-                        probe_aux = html_response_dict["probe_aux"]
-                        probe_status = html_response_dict["probe_status"]
-                        max_speed = html_response_dict["max_speed"]
-                        max_speed_height = html_response_dict["max_speed_height"]
-                        avg_speed_kmh = html_response_dict["avg_speed_kmh"]
-                        max_altitude = html_response_dict["max_altitude"]
-                        avg_ascent_speed = html_response_dict["avg_ascent_speed"]
-                        avg_descent_speed = html_response_dict["avg_descent_speed"]
+                            sonde_number = html_response_dict["sonde_number"]
+                            launch_site = html_response_dict["launch_site"]
+                            probe_type = html_response_dict["probe_type"]
+                            probe_freq = html_response_dict["probe_freq"]
+                            probe_aux = html_response_dict["probe_aux"]
+                            probe_status = html_response_dict["probe_status"]
+                            max_speed = html_response_dict["max_speed"]
+                            max_speed_height = html_response_dict["max_speed_height"]
+                            avg_speed_kmh = html_response_dict["avg_speed_kmh"]
+                            max_altitude = html_response_dict["max_altitude"]
+                            avg_ascent_speed = html_response_dict["avg_ascent_speed"]
+                            avg_descent_speed = html_response_dict["avg_descent_speed"]
 
-                # pparse APRS data
-                table = soup.find("table", attrs={"id": "Table1"})
-                if table:
-                    # get first row
-                    rows = table.find("tr", attrs={"class": "bg_1"})
-                    if rows:
-                        cols = rows.find_all("td")
-                        if cols and len(cols) == 9:
-                            receiver = cols[0].string
-                            sonde_number = cols[1].string
-                            datetime_utc = cols[2].string
-                            latitude = cols[3].string
-                            longitude = cols[4].string
-                            course_deg = cols[5].string
-                            speed_kmh = cols[6].string
-                            altitude_m = cols[7].string
-                            aprs_comment = cols[8].string
+                    # pparse APRS data
+                    table = soup.find("table", attrs={"id": "Table1"})
+                    if table:
+                        # get first row
+                        rows = table.find("tr", attrs={"class": "bg_1"})
+                        if rows:
+                            cols = rows.find_all("td")
+                            if cols and len(cols) == 9:
+                                receiver = cols[0].string
+                                sonde_number = cols[1].string
+                                datetime_utc = cols[2].string
+                                latitude = cols[3].string
+                                longitude = cols[4].string
+                                course_deg = cols[5].string
+                                speed_kmh = cols[6].string
+                                altitude_m = cols[7].string
+                                aprs_comment = cols[8].string
             else:
                 # Probe is either planned or still in process. We have DYNAMIC content and need to get this from a different URL
                 logger.info("parsing dynamic URL")
@@ -649,62 +650,63 @@ def get_radiosondy_data(sonde_id: str):
                         soup = BeautifulSoup(
                             page.last_response.response.text, "html.parser"
                         )
-                        # Parse the APRS data
-                        table = soup.find("table", attrs={"id": "Table1"})
-                        if table:
-                            # get first row
-                            rows = table.find("tr", attrs={"class": "bg_1"})
-                            if rows:
-                                cols = rows.find_all("td")
-                                if cols and len(cols) == 13:
-                                    receiver = cols[0].string
-                                    sonde_number = cols[1].string
-                                    datetime_utc = cols[2].string
-                                    latitude = cols[3].string
-                                    longitude = cols[4].string
-                                    course_deg = cols[5].string
-                                    speed_kmh = cols[6].string
-                                    altitude_m = cols[7].string
-                                    climbing = cols[8].string
-                                    temperature = cols[9].string
-                                    pressure = cols[10].string
-                                    humidity = cols[11].string
-                                    aux_o3 = cols[12].string
+                        if soup:
+                            # Parse the APRS data
+                            table = soup.find("table", attrs={"id": "Table1"})
+                            if table:
+                                # get first row
+                                rows = table.find("tr", attrs={"class": "bg_1"})
+                                if rows:
+                                    cols = rows.find_all("td")
+                                    if cols and len(cols) == 13:
+                                        receiver = cols[0].string
+                                        sonde_number = cols[1].string
+                                        datetime_utc = cols[2].string
+                                        latitude = cols[3].string
+                                        longitude = cols[4].string
+                                        course_deg = cols[5].string
+                                        speed_kmh = cols[6].string
+                                        altitude_m = cols[7].string
+                                        climbing = cols[8].string
+                                        temperature = cols[9].string
+                                        pressure = cols[10].string
+                                        humidity = cols[11].string
+                                        aux_o3 = cols[12].string
 
-                                    # Remove the additional content such as units of measure etc.
-                                    # Yes, this is quick and dirty
-                                    climbing = remove_trailing_content(
-                                        source_string=climbing, trailing_content=" m/s"
-                                    )
-                                    altitude_m = remove_trailing_content(
-                                        source_string=altitude_m, trailing_content=" m"
-                                    )
-                                    aux_o3 = remove_trailing_content(
-                                        source_string=aux_o3, trailing_content=" mPa"
-                                    )
-                                    course_deg = remove_trailing_content(
-                                        source_string=course_deg, trailing_content=" °"
-                                    )
-                                    humidity = remove_trailing_content(
-                                        source_string=humidity, trailing_content=" %"
-                                    )
-                                    pressure = remove_trailing_content(
-                                        source_string=pressure, trailing_content=" hPa"
-                                    )
-                                    speed_kmh = remove_trailing_content(
-                                        source_string=speed_kmh,
-                                        trailing_content=" km/h",
-                                    )
-                                    temperature = remove_trailing_content(
-                                        source_string=temperature,
-                                        trailing_content=" °C",
-                                    )
-                                    latitude = remove_trailing_content(
-                                        source_string=latitude, trailing_content=" φ"
-                                    )
-                                    longitude = remove_trailing_content(
-                                        source_string=longitude, trailing_content=" λ"
-                                    )
+                                        # Remove the additional content such as units of measure etc.
+                                        # Yes, this is quick and dirty
+                                        climbing = remove_trailing_content(
+                                            source_string=climbing, trailing_content=" m/s"
+                                        )
+                                        altitude_m = remove_trailing_content(
+                                            source_string=altitude_m, trailing_content=" m"
+                                        )
+                                        aux_o3 = remove_trailing_content(
+                                            source_string=aux_o3, trailing_content=" mPa"
+                                        )
+                                        course_deg = remove_trailing_content(
+                                            source_string=course_deg, trailing_content=" °"
+                                        )
+                                        humidity = remove_trailing_content(
+                                            source_string=humidity, trailing_content=" %"
+                                        )
+                                        pressure = remove_trailing_content(
+                                            source_string=pressure, trailing_content=" hPa"
+                                        )
+                                        speed_kmh = remove_trailing_content(
+                                            source_string=speed_kmh,
+                                            trailing_content=" km/h",
+                                        )
+                                        temperature = remove_trailing_content(
+                                            source_string=temperature,
+                                            trailing_content=" °C",
+                                        )
+                                        latitude = remove_trailing_content(
+                                            source_string=latitude, trailing_content=" φ"
+                                        )
+                                        longitude = remove_trailing_content(
+                                            source_string=longitude, trailing_content=" λ"
+                                        )
                     else:
                         # We were unable to access the dynamic PHP data - return an error to the user
                         success = False

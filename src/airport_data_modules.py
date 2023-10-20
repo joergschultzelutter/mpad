@@ -173,27 +173,28 @@ def get_metar_data(icao_code: str):
     if resp:
         if resp.status_code == 200:
             soup = BeautifulSoup(resp.text, features="html.parser")
-            meintext = re.sub(" {2,}", " ", soup.get_text())
+            if soup:
+                meintext = re.sub(" {2,}", " ", soup.get_text())
 
-            # Start by searching the web site for whether our request has failed
-            matches = re.search(r"\b(sorry)\b", meintext, re.IGNORECASE)
-            if not matches:
-                # Request seems to be successful, search for the airport position in the text
-                pos = meintext.find(icao_code)
-                if pos != -1:
-                    remainder = meintext[pos:]
-                    # Split the resulting text up into multiple lines
-                    metar_result_array = remainder.splitlines()
-                    # start with an empty response
-                    response = ""
-                    # Iterate through the list. We stop at that line which starts with TAF (TAF report)
-                    # Everything else before that line is our METAR report which may consist of 1..n lines
-                    for metar_result_item in metar_result_array:
-                        if metar_result_item.startswith("TAF"):
-                            response = response + " ### "
-                        response = response + metar_result_item
-                    success = True
-                    response = response.strip()
+                # Start by searching the web site for whether our request has failed
+                matches = re.search(r"\b(sorry)\b", meintext, re.IGNORECASE)
+                if not matches:
+                    # Request seems to be successful, search for the airport position in the text
+                    pos = meintext.find(icao_code)
+                    if pos != -1:
+                        remainder = meintext[pos:]
+                        # Split the resulting text up into multiple lines
+                        metar_result_array = remainder.splitlines()
+                        # start with an empty response
+                        response = ""
+                        # Iterate through the list. We stop at that line which starts with TAF (TAF report)
+                        # Everything else before that line is our METAR report which may consist of 1..n lines
+                        for metar_result_item in metar_result_array:
+                            if metar_result_item.startswith("TAF"):
+                                response = response + " ### "
+                            response = response + metar_result_item
+                        success = True
+                        response = response.strip()
     return success, response
 
 
