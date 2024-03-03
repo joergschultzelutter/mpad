@@ -4,7 +4,7 @@ aprslib>=0.6.47
 beautifulsoup4>=4.9.3
 expiringdict>=1.2.1
 geopy>=2.2.0
-iso3166>==1.0.1
+iso3166>=1.0.1
 maidenhead>=1.6.0
 requests>=2.26.0
 skyfield>=1.39

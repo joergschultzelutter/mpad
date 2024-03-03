@@ -27,7 +27,6 @@ import math
 import logging
 from utility_modules import check_if_file_exists, build_full_pathname
 
-
 # icao https://www.aviationweather.gov/docs/metar/stations.txt
 
 logging.basicConfig(
@@ -159,9 +158,9 @@ def get_metar_data(icao_code: str):
     try:
         resp = requests.get(
             f"https://www.aviationweather.gov/"
-            f"adds/metars/?station_ids={icao_code}"
-            f"&std_trans=standard&chk_metars=on"
-            f"&hoursStr=most+recent+only&submitmet=Submit"
+            f"cgi-bin/data/metar.php/?ids={icao_code}"
+            f"&hours=0&order=id%2C-obs&sep=true"
+            f"&taf=true"
         )
     except requests.exceptions.RequestException as e:
         logger.error(msg="{e}")
@@ -382,7 +381,7 @@ def get_nearest_icao(latitude: float, longitude: float):
 
 
 if __name__ == "__main__":
-    logger.info(get_metar_data("EDDF"))
+    logger.info(get_metar_data("EDDL"))
     logger.info(validate_iata("KLV"))
     logger.info(validate_icao("EDDF"))
     logger.info(get_nearest_icao(51.538882, 8.32679))
