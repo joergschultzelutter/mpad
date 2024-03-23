@@ -220,6 +220,7 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # whereis (location information for the user's position)
     # riseset (Sunrise/Sunset and moonrise/moonset info)
     # metar (nearest METAR data for the user's position)
+    # taf (nearest TAF date for the user's position)
     # CWOP (nearest CWOP data for user's position)
     #
     if not found_my_duty_roster and not err:
@@ -325,7 +326,11 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
 
     # Search for repeater-mode-band
     if not found_my_duty_roster and not err:
-        (found_my_keyword, kw_err, parser_rd_repeater,) = parse_what_keyword_repeater(
+        (
+            found_my_keyword,
+            kw_err,
+            parser_rd_repeater,
+        ) = parse_what_keyword_repeater(
             aprs_message=aprs_message,
             users_callsign=users_callsign,
             aprsdotfi_api_key=aprsdotfi_api_key,
@@ -441,7 +446,11 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # parsing and needs to be placed relatively to the end of the input parser
     # in order to avoid misinterpretations wrt the message content.
     if not found_my_duty_roster and not err:
-        (found_my_keyword, kw_err, parser_rd_metar,) = parse_what_keyword_metar(
+        (
+            found_my_keyword,
+            kw_err,
+            parser_rd_metar,
+        ) = parse_what_keyword_metar(
             aprs_message=aprs_message,
             users_callsign=users_callsign,
             aprsdotfi_api_key=aprsdotfi_api_key,
@@ -470,7 +479,11 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # chance of misinterpreting the user's message
 
     if not found_my_duty_roster and not err:
-        (found_my_keyword, kw_err, parser_rd_wx,) = parse_what_keyword_wx(
+        (
+            found_my_keyword,
+            kw_err,
+            parser_rd_wx,
+        ) = parse_what_keyword_wx(
             aprs_message=aprs_message, users_callsign=users_callsign, language=language
         )
         # did we find something? Then overwrite the existing variables with the retrieved content
@@ -507,25 +520,6 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
     # for. We only enter the WHEN parser routines in case the
     # previous parser did nor encounter any errors.
     #
-    # Parse the "when" information if we don't have an error
-    # and if we haven't retrieved the command data in a previous run
-    # if not found_when and not err:
-    #    _msg, found_when, when, date_offset, hour_offset = parse_when(aprs_message)
-    #    # if we've found something, then replace the original APRS message with
-    #    # what is left of it (minus the parts that were removed by the parse_when
-    #    # parser code
-    #    if found_when:
-    #        aprs_message = _msg
-
-    # Parse the "when_daytime" information if we don't have an error
-    # and if we haven't retrieved the command data in a previous run
-    # if not found_when_daytime and not err:
-    #    _msg, found_when_daytime, when_daytime = parse_when_daytime(aprs_message)
-    #    # if we've found something, then replace the original APRS message with
-    #    # what is left of it (minus the parts that were removed by the parse_when
-    #    # parser code
-    #    if found_when_daytime:
-    #        aprs_message = _msg
 
     #
     # We have reached the very end of the parser
@@ -564,8 +558,17 @@ def parse_input_message(aprs_message: str, users_callsign: str, aprsdotfi_api_ke
         date_offset = 0
 
     # apply default to 'when_daytime' if still not populated
+    # for special keywords such as the "metar" keyword, we
+    # (ab)use the when_daytime field for other purposes, thus
+    # allowing us to control the output in a proper way UNLESS
+    # the user has explicitly specified the "full" command
     if not found_when_daytime and not err:
-        when_daytime = "full"
+        if what in ("metar", "taf"):
+            # populate with some default value so that we
+            # don't run into trouble later on
+            when_daytime = "day"
+        else:
+            when_daytime = "full"
         found_when_daytime = True
 
     # apply default to 'what' if still not populated
@@ -1142,7 +1145,7 @@ def parse_what_keyword_metar(
 ):
     """
     Keyword parser for the IATA/ICAO/METAR keywords (resulting in
-    a request for METAR data for a specific airport)
+    a request for METAR or TAF data for a specific airport)
 
     Parameters
     ==========
@@ -1360,6 +1363,52 @@ def parse_what_keyword_metar(
                             icao = None
                             human_readable_message = f"Wx for '{icao}'"
 
+    # if the user has specified the 'taf' keyword, then
+    # try to determine the nearest airport in relation to
+    # the user's own call sign position
+    if not found_my_keyword and not kw_err:
+        regex_string = r"\b(taf)\b"
+        matches = re.findall(
+            pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
+        )
+        if matches:
+            (
+                success,
+                latitude,
+                longitude,
+                altitude,
+                lasttime,
+                comment,
+                message_callsign,
+            ) = get_position_on_aprsfi(
+                aprsfi_callsign=users_callsign, aprsdotfi_api_key=aprsdotfi_api_key
+            )
+            if success:
+                icao = get_nearest_icao(latitude=latitude, longitude=longitude)
+                if icao:
+                    (
+                        success,
+                        latitude,
+                        longitude,
+                        metar_capable,
+                        icao,
+                    ) = validate_icao(icao)
+                    if success:
+                        what = "taf"
+                        human_readable_message = f"TAF for '{icao}'"
+                        found_my_keyword = True
+                        aprs_message = re.sub(
+                            pattern=regex_string,
+                            repl="",
+                            string=aprs_message,
+                            flags=re.IGNORECASE,
+                        ).strip()
+                        # If we did find the airport but it is not METAR-capable,
+                        # then supply a wx report instead
+                        if not metar_capable:
+                            what = "wx"
+                            icao = None
+                            human_readable_message = f"Wx for '{icao}'"
     parser_rd_metar = {
         "what": what,
         "message_callsign": users_callsign,
@@ -2153,6 +2202,7 @@ def parse_what_keyword_callsign_multi(
     whereis (location information for the user's position)
     riseset (Sunrise/Sunset and moonrise/moonset info)
     metar (nearest METAR data for the user's position)
+    taf (nearest taf data for the user's position)
     CWOP (nearest CWOP data for user's position)
 
     Parameters
@@ -2194,7 +2244,7 @@ def parse_what_keyword_callsign_multi(
     # sequence and -if found- use the user's call sign
     #
     # Check - full call sign with SSID
-    regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar|sonde)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[a-zA-Z0-9]{1,2})\b"
+    regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar|taf|sonde)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3}-[a-zA-Z0-9]{1,2})\b"
     matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
         what = matches[1].lower()
@@ -2205,7 +2255,7 @@ def parse_what_keyword_callsign_multi(
         found_my_keyword = True
     if not found_my_keyword:
         # Check - call sign without SSID
-        regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar|sonde)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3})\b"
+        regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar|taf|sonde)\s*([a-zA-Z0-9]{1,3}[0-9][a-zA-Z0-9]{0,3})\b"
         matches = re.search(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
@@ -2218,7 +2268,7 @@ def parse_what_keyword_callsign_multi(
             ).strip()
     if not found_my_keyword:
         # Check - call sign whose pattern deviates from the standard call sign pattern (e.g. bot, CWOP station etc)
-        regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar|sonde)\s*(\w+)\b"
+        regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar|taf|sonde)\s*(\w+)\b"
         matches = re.search(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
@@ -2235,7 +2285,7 @@ def parse_what_keyword_callsign_multi(
         # Hint: normally excludes the 'sonde' keyword as it requires a separate ID
         # But maybe the probe itself is asking for pos data so let's keep it in
         # Future processing of probe data will fail anyway if it's no radiosonde callsign
-        regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar|sonde)\b"
+        regex_string = r"\b(wx|forecast|whereis|riseset|cwop|metar|taf|sonde)\b"
         matches = re.search(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
@@ -2323,7 +2373,7 @@ def parse_what_keyword_callsign_multi(
             elif what == "cwop":
                 human_readable_message = f"CWOP for {message_callsign}"
                 what = "cwop_by_latlon"
-            elif what == "metar":
+            elif what in ("metar", "taf"):
                 icao = get_nearest_icao(latitude=latitude, longitude=longitude)
                 if icao:
                     (
@@ -2335,7 +2385,7 @@ def parse_what_keyword_callsign_multi(
                     ) = validate_icao(icao_code=icao)
                     if success:
                         found_my_keyword = True
-                        human_readable_message = f"METAR for '{icao}'"
+                        human_readable_message = f"{what.upper()} for '{icao}'"
                         # If we did find the airport but it is not METAR-capable,
                         # then supply a wx report instead
                         if not metar_capable:
@@ -2951,8 +3001,4 @@ if __name__ == "__main__":
         smtpimap_email_address,
         smtpimap_email_password,
     ) = read_program_config()
-    logger.info(
-        pformat(
-            parse_input_message("los angeles unicode", "df1jsl-1", aprsdotfi_api_key)
-        )
-    )
+    logger.info(pformat(parse_input_message("taf eddf", "df1jsl-1", aprsdotfi_api_key)))

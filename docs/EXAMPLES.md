@@ -10,32 +10,32 @@ External service dependencies:
 - [Openstreetmap](www.openstreetmap.org) for coordinate transformation (e.g. City/country or zipcode to lat/lon)
 - [aprs.fi](www.aprs.fi) for APRS call sign coordinates
 
-| What do we want | Command string User > MPAD | Response example MPAD > User |
-| --------------- | -------------------------- | ---------------------------- |
+| What do we want | Command string User > MPAD | Response example MPAD > User                                           |
+| --------------- | -------------------------- |------------------------------------------------------------------------|
 | localised Wx report for the city of Holzminden, Germany | ```Holzminden;de tomorrow lang de``` | ```16-Jan-21 Holzminden;DE Bedeckt morn:-3c day:-1c eve:-2c nite:-2c``` |
-| | | ```sunrise/set 08:21/16:42UTC clouds:89% uvi:0.5 hPa:1026 hum:92%``` |
-| | | ```dewpt:-5c wndspd:2m/s wnddeg:252``` |
+| | | ```sunrise/set 08:21/16:42UTC clouds:89% uvi:0.5 hPa:1026 hum:92%```   |
+| | | ```dewpt:-5c wndspd:2m/s wnddeg:252```                                 |
 | WX report for monday for the user's own current position | ```monday``` | ```18-Jan-21 Hoexter;DE rain and snow morn:-1c day:1c eve:2c nite:0c``` |
 | | | ```sunrise/set 08:25/16:48UTC rain:1mm snow:2mm clouds:100% uvi:0.3``` |
-| | | ```hPa:1017 hum:98% dewpt:1c wndspd:2m/s wnddeg:223``` |
-| WX report for monday for another user's position | ```wa1gov-10 monday``` | ```20-Jan-21 Taunton,MA,02718;US overcast clouds morn:-1c day:1c``` |
-| | | ```eve:0c nite:-4c sunrise/set 13:06/22:43UTC clouds:100% uvi:0.9```|
-| | |```hPa:1010 hum:84% dewpt:-4c wndspd:1m/s wnddeg:280```|
-| Wx report for zipcode 94043 |```94043``` | ```17-Jan-21 Mountain View,94043;US clear sky morn:13c day:22c eve:16c```|
-| U.S. country code is added implicitly for a 5-digit zip|```zip 94043``` returns same results| ```nite:14c sunrise/set 16:20/02:16UTC clouds:1% uvi:2.6 hPa:1019```|
-| (see keyword specification) | |```hum:27% dewpt:2c wndspd:2m/s wnddeg:353```|
-| WX report for zipcode 37603 in Germany |```zip 37603;de``` | ```19-Jan-21 Holzminden,37603;DE moderate rain morn:3c day:4c eve:8c```|
-| | same as ```37603;de``` |```nite:5c sunrise/set 08:18/16:46UTC rain:13mm clouds:100% uvi:0.3```|
-| | |```hPa:1006 hum:90% dewpt:3c wndspd:7m/s wnddeg:217```|
-| WX report for Grid JO41du |```grid jo41du``` | ```17-Jan-21 jo41du rain and snow morn:-1c day:0c eve:1c nite:2c```|
-| |```mh jo41du``` or ```jo41du``` returns same results | ```sunrise/set 08:25/16:48UTC rain:1mm snow:2mm clouds:100% uvi:0.3```|
-| | |```hPa:1018 hum:97% dewpt:-1c wndspd:2m/s wnddeg:153```|
-| Wx report for numeric latitude and longitude|```50.1211/8.7938``` | ```19-Jan-21 Offenbach am Main,63075;DE moderate rain morn:2c day:3c```|
-| | |```eve:5c nite:3c sunrise/set 08:14/16:56UTC rain:5mm clouds:100%```|
-| | |```uvi:0.1 hPa:1014 hum:79% dewpt:0c wndspd:8m/s wnddeg:217```|
-| WX report in 47h for zipcode 37627 in Germany |```zip 37603;de 47h``` | ```15-Feb-21 in 47h Stadtoldendorf,37627;DE overcast clouds temp:-2c```|
-| | |```clouds:100% uvi:0.5 hPa:1032 hum:87% dewpt:-8c wndspd:5m/s```|
-| | |```wnddeg:166 vis:10000m```|
+| | | ```hPa:1017 hum:98% dewpt:1c wndspd:2m/s wnddeg:223```                 |
+| WX report for monday for another user's position | ```wa1gov-10 monday``` | ```20-Jan-21 Taunton,MA,02718;US overcast clouds morn:-1c day:1c```    |
+| | | ```eve:0c nite:-4c sunrise/set 13:06/22:43UTC clouds:100% uvi:0.9```   |
+| | | ```hPa:1010 hum:84% dewpt:-4c wndspd:1m/s wnddeg:280```                |
+| Wx report for zipcode 94043 |```94043``` | ```17-Jan-21 Mountain View,94043;US clear sky morn:13c day:22c eve:16c``` |
+| U.S. country code is added implicitly for a 5-digit zip|```zip 94043``` returns same results| ```nite:14c sunrise/set 16:20/02:16UTC clouds:1% uvi:2.6 hPa:1019```   |
+| (see keyword specification) | | ```hum:27% dewpt:2c wndspd:2m/s wnddeg:353```                          |
+| WX report for zipcode 37603 in Germany |```zip 37603;de``` | ```19-Jan-21 Holzminden,37603;DE moderate rain morn:3c day:4c eve:8c``` |
+| | same as ```37603;de``` | ```nite:5c sunrise/set 08:18/16:46UTC rain:13mm clouds:100% uvi:0.3``` |
+| | | ```hPa:1006 hum:90% dewpt:3c wndspd:7m/s wnddeg:217```                 |
+| WX report for Grid JO41du |```grid jo41du``` | ```17-Jan-21 jo41du rain and snow morn:-1c day:0c eve:1c nite:2c```    |
+| |```mh jo41du``` or ```jo41du``` returns same results | ```sunrise/set 08:25/16:48UTC rain:1mm snow:2mm clouds:100% uvi:0.3``` |
+| | | ```hPa:1018 hum:97% dewpt:-1c wndspd:2m/s wnddeg:153```                |
+| Wx report for numeric latitude and longitude|```50.1211/8.7938``` | ```19-Jan-21 Offenbach am Main,63075;DE moderate rain morn:2c day:3c``` |
+| | | ```eve:5c nite:3c sunrise/set 08:14/16:56UTC rain:5mm clouds:100%```   |
+| | | ```uvi:0.1 hPa:1014 hum:79% dewpt:0c wndspd:8m/s wnddeg:217```         |
+| WX report in 47h for zipcode 37627 in Germany |```zip 37603;de 47h``` | ```15-Feb-21 in 47h Stadtoldendorf,37627;DE overcast clouds temp:-2c``` |
+| | | ```clouds:100% uvi:0.5 hPa:1032 hum:87% dewpt:-8c wndspd:5m/s```       |
+| | | ```wnddeg:166 vis:10000m```                                            |
 
 ## Repeater
 
@@ -82,20 +82,25 @@ External service dependencies:
 - [Aviation Weather](www.aviationweather.gov) for coordinate transformation (airport code to lat/lon) and  METAR/TAF data
 - [aprs.fi](www.aprs.fi) for APRS call sign coordinates
 
-| What do we want | Command string User > MPAD | Response example MPAD > User |
-| --------------- | -------------------------- | ---------------------------- |
-| METAR / TAF data of a METAR-enabled airport, related to the user's position | ```metar``` | ```EDDF 171150Z 02008KT 340V050 5000 -SHSNRA FEW004 SCT011CB BKN019``` |
-| | | ```03/01 Q1023 NOSIG ### TAF EDDF 171100Z 1712/1818 02008KT 9999``` |
-| | | ```BKN030 TEMPO 1712/1716 SHRAGS BKN020TCU BECMG 1717/1720 FEW030``` |
-| | | ```BECMG 1800/1802 02002KT BECMG 1806/1809 30005KT TEMPO 1811/1818``` |
-| | | ```SHRAGS BKN020TCU SCT030``` |
-| METAR data of a METAR-enabled airport, related to another user's position | ```metar wa1gov-10``` | similar output to 1st example |
-| METAR data for ICAO code EDDF | ```icao eddf``` or ```eddf``` | similar output to 1st example |
-| METAR data for IATA code FRA | ```iata fra``` or ```fra``` | similar output to 1st example |
+| What do we want                                                                 | Command string User > MPAD             | Response example MPAD > User                                               |
+|---------------------------------------------------------------------------------|----------------------------------------|----------------------------------------------------------------------------|
+| METAR data of a METAR-enabled airport, related to the user's position           | ```metar```                            | ```EDDF 171150Z 02008KT 340V050 5000 -SHSNRA FEW004 SCT011CB BKN019```     |
+|                                                                                 |                                        | ```03/01 Q1023 NOSIG```                                                    |
+| TAF data of a METAR-enabled airport, related to the user's position             | ```taf```                              | ```TAF EDDF 171100Z 1712/1818 02008KT 9999 BKN030 TEMPO 1712/1716```       |
+|                                                                                 |                                        | ```SHRAGS BKN020TCU BECMG 1717/1720 FEW030 BECMG 1800/1802 02002KT ```     |
+|                                                                                 |                                        | ```BECMG 1806/1809 30005KT TEMPO 1811/1818 SHRAGS BKN020TCU SCT030```      |
+| METAR _and_ TAF data of a METAR-enabled airport, related to the user's position | ```metar full``` __or__ ```taf full``` | ```EDDF 171150Z 02008KT 340V050 5000 -SHSNRA FEW004 SCT011CB BKN019```     |
+|                                                                                 |                                        | ```03/01 Q1023 NOSIG ## TAF EDDF 171100Z 1712/1818 02008KT 9999```         |
+|                                                                                 |                                        | ```BKN030 TEMPO 1712/1716 SHRAGS BKN020TCU BECMG 1717/1720 FEW030```       |
+|                                                                                 |                                        | ```BECMG 1800/1802 02002KT BECMG 1806/1809 30005KT TEMPO 1811/1818```      |
+|                                                                                 |                                        | ```SHRAGS BKN020TCU SCT030```                                              |
+| METAR data of a METAR-enabled airport, related to another user's position       | ```metar wa1gov-10```                  | similar output to 1st example; add ```full``` keyword for METAR & TAF data |
+| METAR data for ICAO code EDDF                                                   | ```icao eddf``` or ```eddf```          | similar output to 1st example; add ```full``` keyword for METAR & TAF data |
+| METAR data for IATA code FRA                                                    | ```iata fra``` or ```fra```            | similar output to 1st example; add ```full``` keyword for METAR & TAF data |
 
 IATA codes are taken from [https://www.aviationweather.gov/docs/metar/stations.txt](https://www.aviationweather.gov/docs/metar/stations.txt). This file does not contain several international IATA codes. If your IATA code does not work, use an ICAO code.
 
-For better legibility, METAR and TAF data are separated by a ### sequence - see example.
+In case you use either the ```metar``` or the ```taf``` keyword in combination with the ```full``` keyword, `For better legibility,```mpad``` will separate METAR and TAF data by a ## sequence - see example.
 
 ## CWOP data
 

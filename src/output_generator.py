@@ -102,7 +102,7 @@ def generate_output_message(response_parameters: dict):
         success, output_list = generate_output_message_wx(
             response_parameters=response_parameters,
         )
-    elif what == "metar":
+    elif what in ("metar", "taf"):
         logger.info("Running output worker generate_output_message_metar()")
         success, output_list = generate_output_message_metar(
             response_parameters=response_parameters
@@ -284,7 +284,7 @@ def generate_output_message_wx(response_parameters: dict):
 
 def generate_output_message_metar(response_parameters: dict):
     """
-    Generate a metar report for a specific airport (ICAO code)
+    Generate a METAR and/or TAF report for a specific airport (ICAO code)
 
     Parameters
     ==========
@@ -310,7 +310,18 @@ def generate_output_message_metar(response_parameters: dict):
     # shorten the user message
     #
     icao_code = response_parameters["icao"]
-    success, metar_response = get_metar_data(icao_code=icao_code)
+
+    # now get the action command which was requested by the user
+    # value can only be "metar" or "taf"
+    _what = response_parameters["what"]
+
+    # and get info on whether the user wants both ME
+    when_daytime = response_parameters["when_daytime"]
+    _full = True if when_daytime == "full" else False
+
+    success, metar_response = get_metar_data(
+        icao_code=icao_code, keyword=_what, full_msg=_full
+    )
     if success:
         output_list = make_pretty_aprs_messages(
             message_to_add=metar_response,
@@ -898,7 +909,6 @@ def generate_output_message_radiosonde(response_parameters: dict):
         )
 
         if landing_latitude != users_latitude and landing_longitude != users_longitude:
-
             # We have different identities and switch from "whereami" mode
             # to the "whereis" mode where we will also calculate the distance,
             # heading and direction between these two positions
@@ -1043,7 +1053,6 @@ def generate_output_message_whereis(response_parameters: dict):
     # calculate distance, heading and bearing if message call sign position
     # differs from our own call sign's position
     if latitude != users_latitude and longitude != users_longitude:
-
         # We have different identities and switch from "whereami" mode
         # to the "whereis" mode where we will also calculate the distance,
         # heading and direction between these two positions
@@ -1170,7 +1179,6 @@ def generate_output_message_repeater(response_parameters: dict):
     )
     # success = we have at least one dict entry in our list
     if success:
-
         number_of_actual_results = len(nearest_repeater_list)
         entry = 0
 
