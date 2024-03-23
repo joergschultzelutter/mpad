@@ -75,7 +75,7 @@ def read_local_airport_data_file(
         except:
             lines = None
     else:
-        logger.info(msg=f"Airport data file '{absolute_path_filename}' does not exist")
+        logger.error(msg=f"Airport data file '{absolute_path_filename}' does not exist")
 
     # If the file did contain content, then parse it
     if lines:
@@ -134,7 +134,7 @@ def read_local_airport_data_file(
     return iata_dict, icao_dict
 
 
-def get_metar_data(icao_code: str):
+def get_metar_data(icao_code: str, keyword: str = None, full_msg: bool = False):
     """
     Get METAR and TAF data for a given ICAO code.
     May need to be switched to https://api.met.no/weatherapi/ at
@@ -145,6 +145,13 @@ def get_metar_data(icao_code: str):
     icao_code : 'str'
         4-character ICAO code of the airport whose
         METAR data is to be downloaded.
+    keyword: 'str'
+        mode that we intend to run; value is either
+        "metar" or "taf"
+    full_msg: 'bool'
+        True = always forces the selected keyword to
+               return both METAR and TAF data
+        False = only returns METAR or TAF data
 
     Returns
     =======
@@ -155,12 +162,21 @@ def get_metar_data(icao_code: str):
         (or "NOTFOUND" if no data was found)
     """
 
+    assert keyword in ("metar", "taf")
+
+    # prepare the request parameters
+    # false = request METAR data but no TAF data
+
+    request_mode = "false"
+    if keyword == "taf" or full_msg == True:
+        request_mode = "true"
+
     try:
         resp = requests.get(
             f"https://www.aviationweather.gov/"
             f"cgi-bin/data/metar.php/?ids={icao_code}"
-            f"&hours=0&order=id%2C-obs&sep=true"
-            f"&taf=true"
+            f"&hours=0&order=id%2C-obs&sep=false"
+            f"&taf={request_mode}"
         )
     except requests.exceptions.RequestException as e:
         logger.error(msg="{e}")
@@ -186,13 +202,27 @@ def get_metar_data(icao_code: str):
                         metar_result_array = remainder.splitlines()
                         # start with an empty response
                         response = ""
+                        metar = ""
+                        taf = ""
                         # Iterate through the list. We stop at that line which starts with TAF (TAF report)
                         # Everything else before that line is our METAR report which may consist of 1..n lines
-                        for metar_result_item in metar_result_array:
-                            if metar_result_item.startswith("TAF"):
-                                response = response + " ### "
-                            response = response + metar_result_item
+                        for index, metar_result_item in enumerate(metar_result_array):
+                            if index == 0:
+                                # METAR content is ALWAYS received and consists of a single line
+                                metar = metar_result_item
+                            else:
+                                # TAF content may be optional, starts at index 1 and may consist of 1..n lines
+                                taf = taf + metar_result_item.lstrip()
+                        # end of parser; construct the outgoing message
                         success = True
+
+                        # if the user requested both METAR and TAF data,
+                        # concatenate both messages with a separator
+                        if full_msg:
+                            response = f"{metar} ## {taf}"
+                        else:
+                            # assign either the METAR or TAF content as response
+                            response = metar if keyword == "metar" else taf
                         response = response.strip()
     return success, response
 
@@ -316,7 +346,7 @@ def update_local_airport_stations_file(
     try:
         r = requests.get(file_url)
     except:
-        logger.info(msg=f"Cannot download airport data from '{file_url}'")
+        logger.debug(msg=f"Cannot download airport data from '{file_url}'")
         r = None
     if r:
         if r.status_code == 200:
@@ -326,7 +356,7 @@ def update_local_airport_stations_file(
                     f.close()
                     success = True
             except:
-                logger.info(
+                logger.debug(
                     msg=f"Cannot update airport data to local file '{absolute_path_filename}'"
                 )
     return success

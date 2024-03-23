@@ -113,11 +113,11 @@ You have three options:
 
 - specify a specific ICAO code
 - specify a specific IATA code
-- specify the METAR keyword, which instructs the program to look for the airport that is close to your position. That 'nearest' airport position can either be based on the user's own call sign or alternatively on a different user's call sign.
+- specify the ```metar``` or the ```taf``` keyword, which instructs the program to look for the airport that is close to your position. That 'nearest' airport position can either be based on the user's own call sign or alternatively on a different user's call sign.
 
 If the given airport or the nearest one has been found but does __not__ support METAR data, the program will try to provide you with a standard WX report for the airport's coordinates instead. If the airport is capable of providing METAR data but the METAR report cannot be retrieved, an error message is returned to the user.
 
-Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __NO__. If WX data is returned, 'today'/'full' settings will be applied.
+Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __YES__. If the user specifies the ```metar``` or the ```taf``` keyword in combination with the ```full``` keyword, the returned message will contain both METAR and TAF information. Otherwise, only the data related to the given keyword is returned (e.g. METAR data for ```metar```, TAF data for ```taf```). If WX data is returned, 'today'/'full' settings will be applied.
 
 ### ICAO METAR / wx inquiries
 
@@ -140,7 +140,7 @@ Get a METAR/TAF report for a specific ICAO code. If the ICAO code is valid but t
 
 ```EDDF 171150Z 02008KT 340V050 5000 -SHSNRA FEW004 SCT011CB BKN019```
 
-```03/01 Q1023 NOSIG ### TAF EDDF 171100Z 1712/1818 02008KT 9999```
+```03/01 Q1023 NOSIG ## TAF EDDF 171100Z 1712/1818 02008KT 9999```
 
 ```BKN030 TEMPO 1712/1716 SHRAGS BKN020TCU BECMG 1717/1720 FEW030```
 
@@ -167,14 +167,18 @@ Get a METAR/TAF report for a specific IATA code by retrieving its associated ICA
 
 Specifying an IATA code without keyword may or may not be successful as as there is a log of ambiguity.
 
-### METAR keyword
+### METAR / TAF keywords
 
-Get a METAR/TAF report for the nearest airport in relation to the user's own call sign or a different call sign
+Get a METAR / TAF report for the nearest airport in relation to the user's own call sign or a different call sign
 
 #### Formats
 
-- ```metar <callsign>[-ssid]``` - metar report that is closest to the call sign's position
-- ```metar``` - metar/taf report that is closest to the user's own position
+- ```metar <callsign>[-ssid]``` - METAR report that is closest to the call sign's position
+- ```taf <callsign>[-ssid]``` - TAF report that is closest to the call sign's position
+- ```metar <callsign>[-ssid] full``` or ```taf <callsign>[-ssid] full``` - METAR & TAF report that is closest to the call sign's position
+- ```metar``` - METAR report that is closest to the user's own position
+- ```taf``` - TAF report that is closest to the user's own position
+- ```metar full``` or ```taf full``` - METAR & TAF report that is closest to the user's own position
 
 If no call sign is specified, then the user's own call sign (the one that he has send us the message with) is used
 
@@ -182,9 +186,9 @@ If no call sign is specified, then the user's own call sign (the one that he has
 
 ```metar ko4jvr-9```
 
-```metar lb7ji```
+```taf lb7ji```
 
-```metar ```
+```metar full```
 
 Based on the user's lat/lon, the program will then try to find the nearest airport for you. If that airport supports METAR data, the program is going to return METAR data to the user. Otherwise, it will try to pull a standard wx report for the airport's coordinates. If the airport is capable of providing METAR data but the METAR report cannot be retrieved, an error message is returned to the user.
 

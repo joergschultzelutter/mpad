@@ -4,6 +4,8 @@
 
 - The program's default ```action``` is to retrieve a wx report for the given address/coordinates. This assumption is valid as long as the user has not specified a keyword that tells the program to do something different. This means that you can a single datetime-related keyword like e.g. 'tomorrow' and the program will try to return the wx report for you.
 
+- By default, the ```metar``` and ```taf``` commands will only return the data requested by the user, read: if ```metar``` data was requested, the user will only receive METAR data. You can request both METAR and TAF data at the same time by adding the ```full``` keyword to your inquiry, e.g. ```metar full``` or ```taf full``` will return both METAR and TAF information to the user.
+
 - Default ```date``` is always ```today```. If you omit any date-related information, ```today``` will be the default value.
 
 - Default ```daytime``` is always ```full```, meaning that you will get e.g. the wx report for the whole day. See the next paragraph on limitations wrt keywords and time zones. Note that ```full``` can be time- or content-specific.

@@ -53,9 +53,7 @@ def testcall(message_text: str, from_callsign: str):
         logger.info(msg="Response:")
         logger.info(msg=pformat(generate_output_message(response_parameters)))
     else:
-        human_readable_message = response_parameters[
-            "human_readable_message"
-        ]
+        human_readable_message = response_parameters["human_readable_message"]
         # Dump the HRM to the user if we have one
         if human_readable_message:
             output_message = make_pretty_aprs_messages(
@@ -66,11 +64,11 @@ def testcall(message_text: str, from_callsign: str):
         else:
             output_message = [
                 "Sorry, did not understand your request. Have a look at my command",
-                "syntax, see https://github.com/joergschultzelutter/mpad"
+                "syntax, see https://github.com/joergschultzelutter/mpad",
             ]
         logger.info(output_message)
-        #logger.info(msg=pformat(response_parameters))
+        # logger.info(msg=pformat(response_parameters))
 
 
 if __name__ == "__main__":
-    testcall(message_text="fhadsjfhjdsahf", from_callsign="ua3mlr-9")
+    testcall(message_text="taf df1jsl-1", from_callsign="df1jsl-1")
