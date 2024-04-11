@@ -71,4 +71,4 @@ def testcall(message_text: str, from_callsign: str):
 
 
 if __name__ == "__main__":
-    testcall(message_text="taf df1jsl-1", from_callsign="df1jsl-1")
+    testcall(message_text="metars bli", from_callsign="KI7JOM-10")

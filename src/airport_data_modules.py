@@ -164,6 +164,17 @@ def get_metar_data(icao_code: str, keyword: str = None, full_msg: bool = False):
 
     assert keyword in ("metar", "taf")
 
+    # These are our default values
+    response: str = "NOTFOUND"
+    success: bool = False
+
+    # safety net for https://github.com/joergschultzelutter/mpad/issues/23
+    if not icao_code:
+        logger.debug(
+            msg="Tried to call 'get_metar_data' without specifying an ICAO code"
+        )
+        return success, response
+
     # prepare the request parameters
     # false = request METAR data but no TAF data
 
@@ -181,9 +192,6 @@ def get_metar_data(icao_code: str, keyword: str = None, full_msg: bool = False):
     except requests.exceptions.RequestException as e:
         logger.error(msg="{e}")
         resp = None
-
-    response: str = "NOTFOUND"
-    success: bool = False
 
     if resp:
         if resp.status_code == 200:
@@ -411,7 +419,8 @@ def get_nearest_icao(latitude: float, longitude: float):
 
 
 if __name__ == "__main__":
-    logger.info(get_metar_data("EDDL"))
+    logger.info(get_metar_data(icao_code="EDDL", keyword="metar"))
+    logger.info(get_metar_data(icao_code=None, keyword="taf"))
     logger.info(validate_iata("KLV"))
     logger.info(validate_icao("EDDF"))
     logger.info(get_nearest_icao(51.538882, 8.32679))
