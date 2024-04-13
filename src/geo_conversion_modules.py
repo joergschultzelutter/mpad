@@ -21,7 +21,8 @@
 
 import utm
 import maidenhead
-from mgrs import MGRStoLL, LLtoMGRS
+
+import mgrs as mg
 from math import radians, cos, sin, asin, sqrt, atan2, degrees
 import logging
 
@@ -176,8 +177,9 @@ def convert_latlon_to_mgrs(latitude: float, longitude: float):
     mgrs_coordinates: 'str'
         MGRS coordinates for the given set of lat/lon coordinates
     """
+    m = mg.MGRS()
 
-    mgrs_coordinates: str = LLtoMGRS(latitude, longitude)
+    mgrs_coordinates: str = m.toMGRS(latitude=latitude, longitude=longitude)
     return mgrs_coordinates
 
 
@@ -201,9 +203,11 @@ def convert_mgrs_to_latlon(mgrs_coordinates: str, output_precision: int = 6):
         Longitude value
     """
 
-    response = MGRStoLL(mgrs_coordinates)
-    latitude = round(response["lat"], output_precision)
-    longitude = round(response["lon"], output_precision)
+    m = mg.MGRS()
+    latitude, longitude = m.toLatLon(MGRS=mgrs_coordinates)
+    latitude = round(latitude, output_precision)
+    longitude = round(longitude, output_precision)
+
     return latitude, longitude
 
 
@@ -441,7 +445,7 @@ if __name__ == "__main__":
     logger.info(convert_latlon_to_maidenhead(51.838720, 08.326819))
     logger.info(convert_maidenhead_to_latlon("JO41du91"))
 
-    logger.info(convert_latlon_to_mgrs(51.838720, 08.326819))
+    #logger.info(convert_latlon_to_mgrs(51.838720, 08.326819))
     logger.info(convert_mgrs_to_latlon("32UMC5362043315"))
 
     logger.info(convert_latlon_to_dms(51.838720, 08.326819))
