@@ -33,6 +33,12 @@ from geo_conversion_modules import haversine
 import logging
 import operator
 
+from mpad_config import (
+    mpad_hearham_raw_data_filename,
+    mpad_repeatermap_raw_data_filename,
+    mpad_repeater_data_filename,
+)
+
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
 )
@@ -40,8 +46,8 @@ logger = logging.getLogger(__name__)
 
 
 def download_repeatermap_raw_data_to_local_file(
-    url: str = "http://www.repeatermap.de/api.php",
-    repeatermap_raw_data_file: str = "repeatermap_raw_data.json",
+    url: str = "http://www.repeatermap.de/apinew.php",
+    repeatermap_raw_data_file: str = mpad_repeatermap_raw_data_filename,
 ):
     """
     Downloads the repeatermap.de data and write it to a file 'as is'
@@ -82,7 +88,7 @@ def download_repeatermap_raw_data_to_local_file(
 
 
 def read_repeatermap_raw_data_from_disk(
-    repeatermap_raw_data_file: str = "repeatermap_raw_data.json",
+    repeatermap_raw_data_file: str = mpad_repeatermap_raw_data_filename,
 ):
     """
     Read the repeatermap.de raw data from disc.
@@ -447,7 +453,7 @@ def process_raw_data_from_hearham_com(mpad_repeater_dict: dict):
 
 def write_mpad_repeater_data_to_disc(
     mpad_repeatermap_json: str,
-    mpad_repeatermap_filename: str = "mpad_repeater_data.json",
+    mpad_repeatermap_filename: str = mpad_repeater_data_filename,
 ):
     """
     writes the processed repeatermap data in enriched MPAD format
@@ -480,7 +486,7 @@ def write_mpad_repeater_data_to_disc(
 
 
 def read_mpad_repeatermap_data_from_disc(
-    mpad_repeatermap_filename: str = "mpad_repeater_data.json",
+    mpad_repeatermap_filename: str = mpad_repeater_data_filename,
 ):
     """
     Read the MPAD preprocessed repeatermap file from disc
@@ -611,7 +617,6 @@ def get_nearest_repeater(
         location_dictionary_unsorted = {}
 
         for repeater in mpad_repeatermap_dictionary:
-
             # get latitude/longitude from the repeatermap dictionary
             rm_lat = mpad_repeatermap_dictionary[repeater]["latitude"]
             rm_lon = mpad_repeatermap_dictionary[repeater]["longitude"]
@@ -736,7 +741,7 @@ def get_nearest_repeater(
 
 def download_hearham_raw_data_to_local_file(
     url: str = "https://hearham.com/api/repeaters/v1",
-    hearham_raw_data_file: str = "hearham_raw_data.json",
+    hearham_raw_data_file: str = mpad_hearham_raw_data_filename,
 ):
     """
     Downloads the repeatermap.de data and write it to a file 'as is'
@@ -777,7 +782,7 @@ def download_hearham_raw_data_to_local_file(
 
 
 def read_hearham_raw_data_from_disk(
-    hearham_raw_data_file: str = "hearham_raw_data.json",
+    hearham_raw_data_file: str = mpad_hearham_raw_data_filename,
 ):
     """
     Read the repeatermap.de raw data from disc.
@@ -821,7 +826,7 @@ if __name__ == "__main__":
         get_nearest_repeater(
             latitude=51.8458575,
             longitude=8.2997425,
-            mode="c4fm",
+            mode="fm",
             units="metric",
             number_of_results=5,
         )

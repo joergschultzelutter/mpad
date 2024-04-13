@@ -31,6 +31,11 @@ import csv
 import json
 from pprint import pformat
 from utility_modules import check_if_file_exists
+from mpad_config import (
+    mpad_tle_amateur_satellites_filename,
+    mpad_satellite_frequencies_filename,
+    mpad_satellite_data_filename,
+)
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -38,7 +43,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def download_and_write_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
+def download_and_write_local_tle_file(
+    tle_filename: str = mpad_tle_amateur_satellites_filename,
+):
     """
     Download the amateur radio satellite TLE data
     and save it to a local file.
@@ -82,7 +89,7 @@ def download_and_write_local_tle_file(tle_filename: str = "tle_amateur_satellite
 
 
 def download_and_write_local_satfreq_file(
-    satfreq_filename: str = "satellite_frequencies.csv",
+    satfreq_filename: str = mpad_satellite_frequencies_filename,
 ):
     """
     Download the amateur radio satellite frequency data
@@ -124,7 +131,7 @@ def download_and_write_local_satfreq_file(
     return success
 
 
-def read_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
+def read_local_tle_file(tle_filename: str = mpad_tle_amateur_satellites_filename):
     """
     Imports the Celestrak TLE data from a local file.
     Create dictionary based on given data.
@@ -184,7 +191,6 @@ def read_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
         lc = 1
         # Retrieve the data and create the dictionary
         for tle_satellite in lines[0::3]:
-
             # Process the key. Try to extract the ID (if present).
             # Otherwise, replace all blanks with dashes
             tle_satellite = tle_satellite.rstrip()
@@ -214,7 +220,9 @@ def read_local_tle_file(tle_filename: str = "tle_amateur_satellites.txt"):
     return success, tle_data
 
 
-def read_local_satfreq_file(satfreq_filename: str = "satellite_frequencies.csv"):
+def read_local_satfreq_file(
+    satfreq_filename: str = mpad_satellite_frequencies_filename,
+):
     """
     Reads the local amateur radio satellite frequency data
     from disc, transforms the data and creates a dictionary
@@ -409,7 +417,7 @@ def create_native_satellite_data():
 
 def write_mpad_satellite_data_to_disc(
     mpad_satellite_json: str,
-    mpad_satellite_filename: str = "mpad_satellite_data.json",
+    mpad_satellite_filename: str = mpad_satellite_data_filename,
 ):
     """
     writes the processed satellite data in enriched MPAD format
@@ -443,7 +451,7 @@ def write_mpad_satellite_data_to_disc(
 
 
 def read_mpad_satellite_data_from_disc(
-    mpad_satellite_filename: str = "mpad_satellite_data.json",
+    mpad_satellite_filename: str = mpad_satellite_data_filename,
 ):
     """
     reads the pre-processed satellite data in enriched MPAD format

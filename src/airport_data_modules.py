@@ -26,6 +26,7 @@ import re
 import math
 import logging
 from utility_modules import check_if_file_exists, build_full_pathname
+from mpad_config import mpad_airport_stations_filename
 
 # icao https://www.aviationweather.gov/docs/metar/stations.txt
 
@@ -36,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 def read_local_airport_data_file(
-    airport_stations_filename: str = "airport_stations.txt",
+    airport_stations_filename: str = mpad_airport_stations_filename,
 ):
     """
     Imports the ICAO/IATA data from a local file. Creates dictionaries for
@@ -47,7 +48,6 @@ def read_local_airport_data_file(
     airport_stations_filename : 'str'
         local file that is to be parsed. File format:
         see https://www.aviationweather.gov/docs/metar/stations.txt
-        default filename: "airport_stations.txt"
 
     Returns
     =======
@@ -326,7 +326,7 @@ def validate_icao(icao_code: str):
 
 
 def update_local_airport_stations_file(
-    airport_stations_filename: str = "airport_stations.txt",
+    airport_stations_filename: str = mpad_airport_stations_filename,
 ):
     """
     Imports the ICAO/IATA data from the web and saves it to a local file.
@@ -336,7 +336,6 @@ def update_local_airport_stations_file(
     airport_stations_filename : 'str'
         This local file will hold the content
         from https://www.aviationweather.gov/docs/metar/stations.txt.
-        Default filename is "airport_stations.txt"
 
     Returns
     =======
@@ -345,7 +344,7 @@ def update_local_airport_stations_file(
     """
 
     # This is the fixed name of the URL Source that we are going to download
-    file_url = "https://www.aviationweather.gov/docs/metar/stations.txt"
+    file_url = "https://weather.ral.ucar.edu/surface/stations.txt"
     success: bool = False
 
     absolute_path_filename = build_full_pathname(file_name=airport_stations_filename)

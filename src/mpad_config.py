@@ -22,7 +22,7 @@ import os
 #
 # Program version
 #
-mpad_version: str = "0.43"
+mpad_version: str = "0.50"
 #
 ###########################
 # Constants, do not change#
@@ -291,3 +291,11 @@ aprs_beacon_messages: list = [
     #    ">Multi-Purpose APRS Daemon",
 ]
 #
+# Several file names that are used throughout the program and act as local databases
+mpad_airport_stations_filename = "airport_stations.txt"
+mpad_tle_amateur_satellites_filename = "tle_amateur_satellites.txt"
+mpad_satellite_frequencies_filename = "satellite_frequencies.csv"
+mpad_hearham_raw_data_filename = "hearham_raw_data.json"
+mpad_repeatermap_raw_data_filename = "repeatermap_raw_data.json"
+mpad_repeater_data_filename = "mpad_repeater_data.json"
+mpad_satellite_data_filename = "mpad_satellite_data.json"

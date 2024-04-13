@@ -23,6 +23,7 @@ import logging
 import smtplib
 import imaplib
 from email.message import EmailMessage
+from email.utils import make_msgid
 import re
 import datetime
 import mpad_config
@@ -32,6 +33,7 @@ from geo_conversion_modules import (
     convert_latlon_to_utm,
     convert_latlon_to_mgrs,
 )
+from staticmap import render_png_map
 from utility_modules import read_program_config
 
 logging.basicConfig(
@@ -39,8 +41,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# The following two variables define the templates for the outgoing email
-# The first one is simple plain text whereas the second one is HTML
+# The following three variables define the templates for the outgoing email
+# Template 1 = plain text (also used as fallback format)
+# Templates 2 and 3 = html data with/without image with user's position
+#                     template without user's position is only used in case
+#                     we were unable to generate the image
 #
 # YES - I KNOW. Normal people would import this from a file. Welcome to Team Different.
 
@@ -71,7 +76,7 @@ More info on MPAD can be found here: https://www.github.com/joergschultzelutter/
 Proudly made in the district of Holzminden, Lower Saxony, Germany. 73 de DF1JSL
 """
 
-html_template = """\
+html_template_without_image = """\
 <h2>Automated email - please do not respond</h2>
 <p>APRS position data for <strong>REPLACE_MESSAGECALLSIGN</strong> on the Internet:</p>
 <ul>
@@ -141,6 +146,79 @@ html_template = """\
 <p>Proudly made in the district of Holzminden, Lower Saxony, Germany. 73 de DF1JSL</p>
 """
 
+html_template_with_image = """\
+<h2>Automated email - please do not respond</h2>
+<p>APRS position data for <strong>REPLACE_MESSAGECALLSIGN</strong> on the Internet:</p>
+<ul>
+<li><a href="REPLACE_APRSDOTFI" target="_blank" rel="noopener">aprs.fi</a></li>
+<li><a href="REPLACE_FINDUDOTCOM" target="_blank" rel="noopener">FindU.com</a></li>
+<li><a href="REPLACE_GOOGLEMAPS" target="_blank" rel="noopener">Google Maps</a>&nbsp;</li>
+<li><a href="REPLACE_QRZDOTCOM" target="_blank" rel="noopener">QRZ.com</a>&nbsp;</li>
+</ul>
+<table border="1">
+<thead>
+<tr style="background-color: #bbbbbb;">
+<td><strong>Position details</strong></td>
+<td><strong>Values</strong></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>&nbsp;Maidenhead</strong> Grid Locator</td>
+<td>&nbsp;REPLACE_MAIDENHEAD</td>
+</tr>
+<tr>
+<td><strong>&nbsp;DMS</strong> Degrees and Decimal Minutes&nbsp;</td>
+<td>&nbsp;REPLACE_DMS</td>
+</tr>
+<tr>
+<td><strong>&nbsp;UTM</strong> Universal Transverse Mercator</td>
+<td>&nbsp;REPLACE_UTM</td>
+</tr>
+<tr>
+<td>
+<p><strong>&nbsp;MGRS</strong> Military Grid Reference System</p>
+<p><strong>&nbsp;USNG</strong> United States National Grid</p>
+</td>
+<td>&nbsp;REPLACE_MGRS</td>
+</tr>
+<tr>
+<td>
+<p><strong>&nbsp;Latitude and Longitude</strong></p>
+</td>
+<td>&nbsp;REPLACE_LATLON</td>
+</tr>
+<tr>
+<td>
+<p><strong>&nbsp;Altitude</strong></p>
+</td>
+<td>&nbsp;REPLACE_ALTITUDE</td>
+</tr>
+<tr>
+<td>
+<p><strong>&nbsp;Last heard on APRS-IS</strong></p>
+</td>
+<td>&nbsp;REPLACE_LASTHEARD</td>
+</tr>
+<tr>
+<td>
+<p><strong>&nbsp;Address data</strong></p>
+</td>
+<td>
+<p>&nbsp;REPLACE_ADDRESS_DATA</p>
+</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><center><img src="cid:{image_cid}" /></center></p>
+<hr />
+<p>This position report was requested by <strong>REPLACE_USERSCALLSIGN</strong> via APRS and was processed by <a href="https://aprs.fi/#!call=a%2FMPAD&amp;timerange=3600&amp;tail=3600" target="_blank" rel="noopener">MPAD (Multi-Purpose APRS Daemon)</a>. Generated at <strong>REPLACE_DATETIME_CREATED</strong></p>
+<p>More info on MPAD can be found here: <a href="https://www.github.com/joergschultzelutter/mpad" target="_blank" rel="noopener">https://www.github.com/joergschultzelutter/mpad</a></p>
+<hr />
+<p>Proudly made in the district of Holzminden, Lower Saxony, Germany. 73 de DF1JSL</p>
+"""
+
 mail_subject_template = "APRS Position Report for REPLACE_MESSAGECALLSIGN"
 
 
@@ -162,13 +240,9 @@ def send_email_position_report(response_parameters: dict):
         back to the APRS user (does not contain any email content)
     """
 
+    # get the required email data from our data pool
     smtpimap_email_address = response_parameters["smtpimap_email_address"]
     smtpimap_email_password = response_parameters["smtpimap_email_password"]
-
-    # copy the templates
-    plaintext_message = plaintext_template
-    html_message = html_template
-    subject_message = mail_subject_template
 
     latitude = response_parameters["latitude"]
     longitude = response_parameters["longitude"]
@@ -178,6 +252,19 @@ def send_email_position_report(response_parameters: dict):
     users_callsign = response_parameters["users_callsign"]
     mail_recipient = response_parameters["mail_recipient"]
 
+    # Now try to generate an image map of the user's position...
+    html_image = render_png_map(aprs_latitude=latitude, aprs_longitude=longitude)
+    # ... and now choose the template according to whether we happen to
+    # have been able to generate an image or not
+    html_message = (
+        html_template_with_image if html_image else html_template_without_image
+    )
+
+    # copy the remaining templates
+    plaintext_message = plaintext_template
+    subject_message = mail_subject_template
+
+    # generate the time stamp
     lasttime = response_parameters["lasttime"]
     if not isinstance(lasttime, datetime.datetime):
         lasttime = datetime.datetime.min
@@ -311,7 +398,21 @@ def send_email_position_report(response_parameters: dict):
     msg["From"] = f"MPAD Multi-Purpose APRS Daemon <{smtpimap_email_address}>"
     msg["To"] = mail_recipient
     msg.set_content(plaintext_message)
-    msg.add_alternative(html_message, subtype="html")
+
+    # Image present? Then encode it properly
+    if html_image:
+        image_cid = make_msgid()
+        msg.add_alternative(
+            html_message.format(image_cid=image_cid[1:-1]), subtype="html"
+        )
+        x = msg.get_payload()
+
+        msg.get_payload()[1].add_related(
+            html_image, maintype="image", subtype="png", cid=image_cid
+        )
+    else:
+        # otherwise, send the HTML content without an image
+        msg.add_alternative(html_message, subtype="html")
 
     success, output_message = send_message_via_snmp(
         smtpimap_email_address=smtpimap_email_address,
@@ -369,7 +470,9 @@ def imap_garbage_collector(smtpimap_email_address: str, smtpimap_email_password:
                 # typ, dat = imap.list()     # get list of mailboxes
                 typ, dat = imap.select(mailbox=mpad_config.mpad_imap_mailbox_name)
                 if typ == "OK":
-                    logger.info(msg=f"IMAP folder SELECT for {mpad_config.mpad_imap_mailbox_name} successful")
+                    logger.info(
+                        msg=f"IMAP folder SELECT for {mpad_config.mpad_imap_mailbox_name} successful"
+                    )
                     typ, msgnums = imap.search(None, "ALL", query_parms)
                     if typ == "OK":
                         for num in msgnums[0].split():

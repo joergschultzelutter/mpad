@@ -2,26 +2,11 @@
 
 ## Python Library Dependencies
 
-The following Python packages need to be installed (see also [requirements.txt](../requirements.txt)):
-
-- [activesoup](https://github.com/jelford/activesoup) required: version 0.3.0 or greater
-- [apscheduler](https://github.com/agronholm/apscheduler)
-- [aprslib](https://github.com/rossengeorgiev/aprs-python)
-- [beautifulsoup4](https://www.crummy.com/software/BeautifulSoup/)
-- [expiringdict](https://pypi.org/project/expiringdict/)
-- [geopy](https://github.com/geopy/geopy)
-- [iso3166](https://github.com/deactivated/python-iso3166)
-- [maidenhead](https://github.com/space-physics/maidenhead)
-- [pymgrs](https://github.com/aydink/pymgrs) Note: this is __not__ a pip package; download the mgrs.py file and save it in the src directory
-- [requests](https://github.com/psf/requests)
-- [skyfield](https://github.com/skyfielders/python-skyfield)
-- [timezonefinder](https://github.com/MrMinimal64/timezonefinder)
-- [unidecode](https://github.com/avian2/unidecode)
-- [us](https://github.com/unitedstates/python-us)
-- [utm](https://github.com/Turbo87/utm)
-- [xmltodict](https://github.com/martinblech/xmltodict)
+All dependencies are included in [requirements.txt](../requirements.txt). Install via ```pip install -r requirements.txt```
 
 If you install MPAD and its components on a Raspberry Pi, the skyfield package requires you to install ```apt-get install libatlas-base-dev``` as a separate dependency.
+
+Dependent on your OS' flavor, you may be required to install the following additional packages: ```apt-get install libgeos-dev libopenjp2-7```
 
 ## API Dependencies
 
