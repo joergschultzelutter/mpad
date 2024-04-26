@@ -40,6 +40,7 @@ def get_daily_weather_from_yrdotcom(
     offset: int,
     units: str = "metric",
     access_mode: str = "day",
+    daytime: str = "daytime"
 ):
     """
     Gets the yr.no weather forecast for a given latitide
@@ -73,11 +74,6 @@ def get_daily_weather_from_yrdotcom(
     weather_tuple: 'dict'
         JSON weather tuple for the requested day.
         Format: see https://openweathermap.org/api/one-call-api
-    timezone_offset: 'int'
-        Shift in seconds from UTC.
-        Format: see https://openweathermap.org/api/one-call-api
-    timezone: 'str'
-        Timezone name for the requested location
     """
 
     headers = {"User-Agent": mpad_config.mpad_default_user_agent}
@@ -86,6 +82,8 @@ def get_daily_weather_from_yrdotcom(
     success = False
 
     assert access_mode in ["day", "hour", "current"]
+    assert daytime in ["full","morning","daytime","evening","night"]
+
 
     # return 'false' if user has requested a day that is out of bounds
     if access_mode == "day":
@@ -120,15 +118,22 @@ def get_daily_weather_from_yrdotcom(
 
             if "properties" in response:
                 if "timeseries" in response["properties"]:
+
+                    # Get the wx content from the response.
                     weather_tuples = response["properties"]["timeseries"]
+
+                    # build a generic index, thus allowing us to access the element
+                    # directly at a later point in time
                     for index, weather_tuple in enumerate(weather_tuples):
                         dt = datetime.strptime(weather_tuple["time"], "%Y-%m-%dT%H:%M:%SZ")
                         unix_timestamp = int(dt.replace(tzinfo=timezone.utc).timestamp())
-                        wx_time_offsets[unix_timestamp] = {"date":weather_tuple["time"],"index": index}
+                        wx_time_offsets[unix_timestamp] = {"date":weather_tuple["time"],"index": index,"hour":dt.hour}
 
-
-
-
+                    # get our current UTC timestamp
+                    dt_utc = datetime.utcnow()
+                    pass
+                    pass
+                    pass
 
 
 
@@ -438,6 +443,7 @@ if __name__ == "__main__":
             offset=0,
             units="metric",
             access_mode="day",
+            daytime="daytime"
         )
 
         success = False

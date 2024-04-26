@@ -299,3 +299,12 @@ mpad_hearham_raw_data_filename = "hearham_raw_data.json"
 mpad_repeatermap_raw_data_filename = "repeatermap_raw_data.json"
 mpad_repeater_data_filename = "mpad_repeater_data.json"
 mpad_satellite_data_filename = "mpad_satellite_data.json"
+
+# definitions for the various day times (e.g. "noon"), used by the wx forecast process
+# Each definition represents the hour in UTC format, e.g. 12 = 12h UTC
+# You can reconfigure these settings in case you intend to run MPAD in a time zone different
+# to UTC
+mpad_wx_morning = 6
+mpad_wx_daytime = 12
+mpad_wx_evening = 18
+mpad_wx_night = 0

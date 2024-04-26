@@ -896,7 +896,7 @@ def parse_when(aprs_message: str):
                 found_when = False
                 date_offset = -1
 
-    # OWM supports hourly wx forecasts for up to 47h, let's get that value
+    # WX supports hourly wx forecasts for up to 47h, let's get that value
     if not found_when:
         regex_string = r"\b(4[0-7]|3[0-9]|2[0-9]|1[0-9]|[1-9])h\b"
         matches = re.findall(
