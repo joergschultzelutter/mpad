@@ -1,8 +1,8 @@
 #
-# Multi-Purpose APRS Daemon: OpenWeatherMap Modules
+# Multi-Purpose APRS Daemon: yr.no Modules
 # Author: Joerg Schultze-Lutter, 2020
 #
-# Purpose: Uses openweathermap.org for WX report prediction
+# Purpose: Uses yr.no for WX report prediction
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,12 +26,67 @@ import logging
 from pprint import pformat
 import math
 import mpad_config
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from math import sin, cos, atan2
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+
+def calculate_daily_forecast(
+    pressure_values: list,
+    temperature_values: list,
+    cloudiness_values: list,
+    humidity_values: list,
+    wind_direction_degrees: list,
+    wind_speed_values: list,
+):
+    # Calculate average pressure
+    avg_pressure = sum(pressure_values) / len(pressure_values)
+
+    # Calculate average temperature
+    avg_temperature = sum(temperature_values) / len(temperature_values)
+
+    # Calculate average cloudiness
+    avg_cloudiness = sum(cloudiness_values) / len(cloudiness_values)
+
+    # Calculate average humidity
+    avg_humidity = sum(humidity_values) / len(humidity_values)
+
+    # Convert wind direction degrees to radians for vector addition
+    wind_direction_radians = [
+        degrees * (3.14159 / 180) for degrees in wind_direction_degrees
+    ]
+
+    # Calculate x and y components of wind direction vectors
+    wind_direction_x = sum([cos(rad) for rad in wind_direction_radians]) / len(
+        wind_direction_radians
+    )
+    wind_direction_y = sum([sin(rad) for rad in wind_direction_radians]) / len(
+        wind_direction_radians
+    )
+
+    # Calculate resulting wind direction
+    avg_wind_direction_degrees = atan2(wind_direction_y, wind_direction_x) * (
+        180 / 3.14159
+    )
+
+    # Ensure wind direction is within [0, 360) degrees
+    avg_wind_direction_degrees %= 360
+
+    # Calculate average wind speed
+    avg_wind_speed = sum(wind_speed_values) / len(wind_speed_values)
+
+    return (
+        round(avg_pressure),
+        round(avg_temperature, 1),
+        round(avg_cloudiness),
+        round(avg_humidity),
+        round(avg_wind_direction_degrees),
+        round(avg_wind_speed, 1),
+    )
 
 
 def get_daily_weather_from_yrdotcom(
@@ -40,7 +95,7 @@ def get_daily_weather_from_yrdotcom(
     offset: int,
     units: str = "metric",
     access_mode: str = "day",
-    daytime: str = "daytime"
+    daytime: str = "daytime",
 ):
     """
     Gets the yr.no weather forecast for a given latitide
@@ -82,8 +137,7 @@ def get_daily_weather_from_yrdotcom(
     success = False
 
     assert access_mode in ["day", "hour", "current"]
-    assert daytime in ["full","morning","daytime","evening","night"]
-
+    assert daytime in ["full", "morning", "daytime", "evening", "night"]
 
     # return 'false' if user has requested a day that is out of bounds
     if access_mode == "day":
@@ -99,13 +153,15 @@ def get_daily_weather_from_yrdotcom(
     # Prepare the URL
     url = f"https://api.met.no/weatherapi/locationforecast/2.0/compact?lat={latitude}&lon={longitude}"
     try:
-        resp = requests.get(url=url,headers=headers)
+        resp = requests.get(url=url, headers=headers)
     except requests.exceptions.RequestException as e:
         logger.error(msg="{e}")
         resp = None
     if resp:
         if resp.status_code == 203:
-            logger.error(msg="Request to yr.no indicates API deprecation - see https://developer.yr.no/doc/locationforecast/HowTO/")
+            logger.error(
+                msg="Request to yr.no indicates API deprecation - see https://developer.yr.no/doc/locationforecast/HowTO/"
+            )
         if resp.status_code == 200:
             response = resp.json()
 
@@ -118,40 +174,221 @@ def get_daily_weather_from_yrdotcom(
 
             if "properties" in response:
                 if "timeseries" in response["properties"]:
-
                     # Get the wx content from the response.
                     weather_tuples = response["properties"]["timeseries"]
 
-                    # build a generic index, thus allowing us to access the element
-                    # directly at a later point in time
-                    for index, weather_tuple in enumerate(weather_tuples):
-                        dt = datetime.strptime(weather_tuple["time"], "%Y-%m-%dT%H:%M:%SZ")
-                        unix_timestamp = int(dt.replace(tzinfo=timezone.utc).timestamp())
-                        wx_time_offsets[unix_timestamp] = {"date":weather_tuple["time"],"index": index,"hour":dt.hour}
+                    # Now let's distinguish between the various modes
+                    # which can be requested by the user. First, let's
+                    # check if the user intents to get the current
+                    # weather and return it, if applicable.
+                    if access_mode == "current":
+                        success = True
+                        try:
+                            return (
+                                success,
+                                weather_tuples[0]["data"]["instant"]["details"],
+                            )
+                        except KeyError:
+                            return False, None
+                    # if user wants an hour offset, try to return that
+                    # one back to the user
+                    elif access_mode == "hour":
+                        if len(weather_tuples) > offset:
+                            success = True
+                            try:
+                                return (
+                                    success,
+                                    weather_tuples[offset]["data"]["instant"][
+                                        "details"
+                                    ],
+                                )
+                            except KeyError:
+                                return False, None
+                    else:
+                        # "day" mode access
+                        #
+                        # In comparison to OpenWeatherMap, yr.no's integration is a tad messy
+                        # as there are no information clusters on e.g. "noon", "night" et al.
+                        # Additionally, there is no "full day" overview, thus we need to rebuild
+                        # all of this ourselves in case the user requests it
+                        #
+                        # build a generic index secondary index on our data
+                        # not really required but I am a lazy guy and
+                        # it makes debugging a lot easier
+                        # Ensure to use enumeration, thus allowing us to
+                        # access the future target element directly
 
-                    # get our current UTC timestamp
-                    dt_utc = datetime.utcnow()
-                    pass
-                    pass
-                    pass
+                        wx_time_offsets = []
 
+                        for index, weather_tuple in enumerate(weather_tuples):
+                            dt = datetime.strptime(
+                                weather_tuple["time"], "%Y-%m-%dT%H:%M:%SZ"
+                            )
+                            wx_time_offsets.append(
+                                {
+                                    "date": weather_tuple["time"],
+                                    "timestamp": dt,
+                                    "index": index,
+                                }
+                            )
+                        # get our *current* UTC timestamp
+                        dt_utc = datetime.utcnow()
 
+                        # Add our offset to this timestamp
+                        dt_utc = dt_utc + timedelta(days=offset)
 
+                        # Now remove the actual time information, thus effectively
+                        # setting the datetime's stamp to midnight
+                        # not reallay required in this case but safer in case I intend
+                        # to use this field for other purposes at a later point in time
+                        dt_utc = dt_utc.replace(
+                            hour=0, minute=0, second=0, microsecond=0
+                        )
 
-            x = response
+                        # used whenever a full day's results are NOT requested
+                        found_generic = False
+                        generic_index = -1
 
-            if "current" in x and access_mode == "current":
-                weather_tuple = x["current"]
-                success = True
-            elif "daily" in x and access_mode == "day":
-                if offset < len(x["daily"]):
-                    weather_tuple = x["daily"][offset]
-                    success = True
-            elif "hourly" in x and access_mode == "hour":
-                if offset < len(x["hourly"]):
-                    weather_tuple = x["hourly"][offset]
-                    success = True
-            logger.info(msg=pformat(weather_tuple))
+                        # used whenever a full day's results ARE requested
+                        found_full = False
+                        full_pressure = []
+                        full_temperature = []
+                        full_cloudiness = []
+                        full_humidity = []
+                        full_wind_direction = []
+                        full_wind_speed = []
+
+                        # Interate through the index that we have built ourselves
+                        for wx_time_offset in wx_time_offsets:
+                            wx_dt = wx_time_offset["timestamp"]
+                            if (
+                                dt_utc.day == wx_dt.day
+                                and dt_utc.month == wx_dt.month
+                                and dt_utc.year == wx_dt.year
+                            ):
+                                # We have found an entry for the current day
+                                # Now lets check which timeslot fits
+                                if (
+                                    daytime == "morning"
+                                    and wx_dt.hour == mpad_config.mpad_wx_morning
+                                ):
+                                    found_generic = True
+                                    found_generic_index = wx_time_offset["index"]
+                                    break
+                                elif (
+                                    daytime == "daytime"
+                                    and wx_dt.hour == mpad_config.mpad_wx_daytime
+                                ):
+                                    found_generic = True
+                                    found_generic_index = wx_time_offset["index"]
+                                    break
+                                elif (
+                                    daytime == "evening"
+                                    and wx_dt.hour == mpad_config.mpad_wx_evening
+                                ):
+                                    found_generic = True
+                                    found_generic_index = wx_time_offset["index"]
+                                    break
+                                elif (
+                                    daytime == "night"
+                                    and wx_dt.hour == mpad_config.mpad_wx_night
+                                ):
+                                    found_generic = True
+                                    found_generic_index = wx_time_offset["index"]
+                                    break
+                                else:
+                                    # the only remaining option is now a full day's result
+                                    # Add the values to a list and we will deal with them later
+                                    if wx_time_offset["index"] < len(weather_tuples):
+                                        try:
+                                            full_pressure.append(
+                                                weather_tuples[wx_time_offset["index"]][
+                                                    "data"
+                                                ]["instant"]["details"][
+                                                    "air_pressure_at_sea_level"
+                                                ]
+                                            )
+                                            full_cloudiness.append(
+                                                weather_tuples[wx_time_offset["index"]][
+                                                    "data"
+                                                ]["instant"]["details"][
+                                                    "cloud_area_fraction"
+                                                ]
+                                            )
+                                            full_temperature.append(
+                                                weather_tuples[wx_time_offset["index"]][
+                                                    "data"
+                                                ]["instant"]["details"][
+                                                    "air_temperature"
+                                                ]
+                                            )
+                                            full_humidity.append(
+                                                weather_tuples[wx_time_offset["index"]][
+                                                    "data"
+                                                ]["instant"]["details"][
+                                                    "relative_humidity"
+                                                ]
+                                            )
+                                            full_wind_speed.append(
+                                                weather_tuples[wx_time_offset["index"]][
+                                                    "data"
+                                                ]["instant"]["details"]["wind_speed"]
+                                            )
+                                            full_wind_direction.append(
+                                                weather_tuples[wx_time_offset["index"]][
+                                                    "data"
+                                                ]["instant"]["details"][
+                                                    "wind_from_direction"
+                                                ]
+                                            )
+                                            found_full = True
+                                        except KeyError:
+                                            found_full = False
+
+                        # Did we retrieve anything but a full day's response?
+                        # Then return the tuple back to the user
+                        if found_generic:
+                            if generic_index < len(weather_tuples):
+                                try:
+                                    success = True
+                                    return (
+                                        success,
+                                        weather_tuples[generic_index]["data"][
+                                            "instant"
+                                        ]["details"],
+                                    )
+                                except KeyError:
+                                    return False, None
+                        # if we were supposed to gather a full day's results, try our
+                        # best to provide the user with an average based on what we
+                        # have gathered
+                        if found_full:
+                            (
+                                avg_pressure,
+                                avg_temperature,
+                                avg_cloudiness,
+                                avg_humidity,
+                                avg_wind_direction_degrees,
+                                avg_wind_speed,
+                            ) = calculate_daily_forecast(
+                                pressure_values=full_pressure,
+                                temperature_values=full_temperature,
+                                cloudiness_values=full_cloudiness,
+                                humidity_values=full_humidity,
+                                wind_direction_degrees=full_wind_direction,
+                                wind_speed_values=full_wind_speed,
+                            )
+                            success = True
+                            response = {
+                                "air_pressure_at_sea_level": avg_pressure,
+                                "air_temperature": avg_temperature,
+                                "cloud_area_fraction": avg_cloudiness,
+                                "relative_humidity": avg_humidity,
+                                "wind_from_direction": avg_wind_direction_degrees,
+                                "wind_speed": avg_wind_speed,
+                            }
+                            return success, response
+
     return success, weather_tuple
 
 
@@ -440,10 +677,10 @@ if __name__ == "__main__":
         ) = get_daily_weather_from_yrdotcom(
             latitude=51.8458575,
             longitude=8.2997425,
-            offset=0,
+            offset=2,
             units="metric",
             access_mode="day",
-            daytime="daytime"
+            daytime="full",
         )
 
         success = False
