@@ -1,8 +1,11 @@
 #
-# Multi-Purpose APRS Daemon: yr.no Modules
+# Multi-Purpose APRS Daemon: met.no Modules
 # Author: Joerg Schultze-Lutter, 2020
 #
-# Purpose: Uses yr.no for WX report prediction
+# Purpose: Uses met.no for WX report prediction
+# Tries to rebuild the old OpenWeatherMap API output as close as possible
+#
+# API documentation: https://developer.yr.no/featured-products/forecast/
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,6 +36,94 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+# Map the yr.no wx symbol to MPAD target msg
+# source: https://api.met.no/weatherapi/locationforecast/2.0/swagger
+metdotno_symbol_mapper: dict = {
+    "clearsky_day": "ClearSky",
+    "clearsky_night": "ClearSky",
+    "clearsky_polartwilight": "ClearSky",
+    "fair_day": "Moderate",
+    "fair_night": "Moderate",
+    "fair_polartwilight": "Moderate",
+    "lightssnowshowersandthunder_day": "LightSnow",
+    "lightssnowshowersandthunder_night": "LightSnow",
+    "lightssnowshowersandthunder_polartwilight": "LightSnow",
+    "lightsnowshowers_day": "LightSnow",
+    "lightsnowshowers_night": "LightSnow",
+    "lightsnowshowers_polartwilight": "LightSnow",
+    "heavyrainandthunder": "HeavyRain",
+    "heavysnowandthunder": "HeavySnow",
+    "rainandthunder": "Rain",
+    "heavysleetshowersandthunder_day": "HeavySleet",
+    "heavysleetshowersandthunder_night": "HeavySleet",
+    "heavysleetshowersandthunder_polartwilight": "HeavySleet",
+    "heavysnow": "HeavySnow",
+    "heavyrainshowers_day": "HeavyRain",
+    "heavyrainshowers_night": "HeavyRain",
+    "heavyrainshowers_polartwilight": "HeavyRain",
+    "lightsleet": "LightSleet",
+    "heavyrain": "HeavyRain",
+    "lightrainshowers_day": "LightRain",
+    "lightrainshowers_night": "LightRain",
+    "lightrainshowers_polartwilight": "LightRain",
+    "heavysleetshowers_day": "HeavySleet",
+    "heavysleetshowers_night": "HeavySleet",
+    "heavysleetshowers_polartwilight": "HeavySleet",
+    "lightsleetshowers_day": "LightSleet",
+    "lightsleetshowers_night": "LightSleet",
+    "lightsleetshowers_polartwilight": "LightSleet",
+    "snow": "Snow",
+    "heavyrainshowersandthunder_day": "HeavyRain",
+    "heavyrainshowersandthunder_night": "HeavyRain",
+    "heavyrainshowersandthunder_polartwilight": "HeavyRain",
+    "snowshowers_day": "Snow",
+    "snowshowers_night": "Snow",
+    "snowshowers_polartwilight": "Snow",
+    "fog": "Fog",
+    "snowshowersandthunder_day": "Snow",
+    "snowshowersandthunder_night": "Snow",
+    "snowshowersandthunder_polartwilight": "Snow",
+    "lightsnowandthunder": "LightSnow",
+    "heavysleetandthunder": "HeavySleet",
+    "lightrain": "LightRain",
+    "rainshowersandthunder_day": "Rain",
+    "rainshowersandthunder_night": "Rain",
+    "rainshowersandthunder_polartwilight": "Rain",
+    "rain": "Rain",
+    "lightsnow": "LightSnow",
+    "lightrainshowersandthunder_day": "LightRain",
+    "lightrainshowersandthunder_night": "LightRain",
+    "lightrainshowersandthunder_polartwilight": "LightRain",
+    "heavysleet": "HEavySleet",
+    "sleetandthunder": "Sleet",
+    "lightrainandthunder": "LightRain",
+    "sleet": "Sleet",
+    "lightssleetshowersandthunder_day": "LightSleet",
+    "lightssleetshowersandthunder_night": "LightSleet",
+    "lightssleetshowersandthunder_polartwilight": "LightSleet",
+    "lightsleetandthunder": "LightSleet",
+    "partlycloudy_day": "PartlyCloudy",
+    "partlycloudy_night": "PartlyCloudy",
+    "partlycloudy_polartwilight": "PartlyCloudy",
+    "sleetshowersandthunder_day": "Sleet",
+    "sleetshowersandthunder_night": "Sleet",
+    "sleetshowersandthunder_polartwilight": "Sleet",
+    "rainshowers_day": "Rain",
+    "rainshowers_night": "Rain",
+    "rainshowers_polartwilight": "Rain",
+    "snowandthunder": "Snow",
+    "sleetshowers_day": "Sleet",
+    "sleetshowers_night": "Sleet",
+    "sleetshowers_polartwilight": "Sleet",
+    "cloudy": "Cloudy",
+    "heavysnowshowersandthunder_day": "HeavySnow",
+    "heavysnowshowersandthunder_night": "HeavySnow",
+    "heavysnowshowersandthunder_polartwilight": "HeavySnow",
+    "heavysnowshowers_day": "HeavySnow",
+    "heavysnowshowers_night": "HeavySnow",
+    "heavysnowshowers_polartwilight": "HeavySnow",
+}
 
 
 def calculate_daily_forecast(
@@ -89,18 +180,20 @@ def calculate_daily_forecast(
     )
 
 
-def get_daily_weather_from_yrdotcom(
+def get_daily_weather_from_metdotno(
     latitude: float,
     longitude: float,
     offset: int,
-    units: str = "metric",
     access_mode: str = "day",
     daytime: str = "daytime",
 ):
     """
-    Gets the yr.no weather forecast for a given latitide
+    Gets the met.no weather forecast for a given latitide
     and longitude and tries to extract the raw weather data for
     a certain date.
+
+    NOTE: Every data that is retrieved here is in metric format
+          and has to be converted to imperial format
 
     Parameters
     ==========
@@ -128,7 +221,6 @@ def get_daily_weather_from_yrdotcom(
         True if we were able to download the data
     weather_tuple: 'dict'
         JSON weather tuple for the requested day.
-        Format: see https://openweathermap.org/api/one-call-api
     """
 
     headers = {"User-Agent": mpad_config.mpad_default_user_agent}
@@ -147,11 +239,8 @@ def get_daily_weather_from_yrdotcom(
         if offset < 0 or offset > 47:
             return success, weather_tuple
 
-    if units not in ["imperial", "metric"]:
-        return success, weather_tuple
-
     # Prepare the URL
-    url = f"https://api.met.no/weatherapi/locationforecast/2.0/compact?lat={latitude}&lon={longitude}"
+    url = f"https://api.met.no/weatherapi/locationforecast/2.0/complete?lat={latitude}&lon={longitude}"
     try:
         resp = requests.get(url=url, headers=headers)
     except requests.exceptions.RequestException as e:
@@ -182,28 +271,58 @@ def get_daily_weather_from_yrdotcom(
                     # check if the user intents to get the current
                     # weather and return it, if applicable.
                     if access_mode == "current":
-                        success = True
                         try:
-                            return (
-                                success,
-                                weather_tuples[0]["data"]["instant"]["details"],
-                            )
+                            result = weather_tuples[0]["data"]["instant"]["details"]
                         except KeyError:
                             return False, None
+                        # we received the main tuple. Now try to get the remaining
+                        # optional content and add it to our tuple
+                        success = True
+                        try:
+                            symbol_code = weather_tuples[0]["data"]["next_1_hours"][
+                                "summary"
+                            ]["symbol_code"]
+                            result["symbol_code"] = symbol_code
+                        except KeyError:
+                            pass
+                        try:
+                            precipitation_amount = weather_tuples[0]["data"][
+                                "next_1_hours"
+                            ]["details"]["precipitation_amount"]
+                            result["precipitation_amount"] = precipitation_amount
+                        except KeyError:
+                            pass
+                        return success, result
+
                     # if user wants an hour offset, try to return that
                     # one back to the user
                     elif access_mode == "hour":
                         if len(weather_tuples) > offset:
-                            success = True
                             try:
-                                return (
-                                    success,
-                                    weather_tuples[offset]["data"]["instant"][
-                                        "details"
-                                    ],
-                                )
+                                result = weather_tuples[offset]["data"]["instant"][
+                                    "details"
+                                ]
                             except KeyError:
                                 return False, None
+
+                            # we received the main tuple. Now try to get the remaining
+                            # optional content and add it to our tuple
+                            success = True
+                            try:
+                                symbol_code = weather_tuples[offset]["data"][
+                                    "next_1_hours"
+                                ]["summary"]["symbol_code"]
+                                result["symbol_code"] = symbol_code
+                            except KeyError:
+                                pass
+                            try:
+                                precipitation_amount = weather_tuples[offset]["data"][
+                                    "next_1_hours"
+                                ]["details"]["precipitation_amount"]
+                                result["precipitation_amount"] = precipitation_amount
+                            except KeyError:
+                                pass
+                            return success, result
                     else:
                         # "day" mode access
                         #
@@ -239,7 +358,7 @@ def get_daily_weather_from_yrdotcom(
 
                         # Now remove the actual time information, thus effectively
                         # setting the datetime's stamp to midnight
-                        # not reallay required in this case but safer in case I intend
+                        # not really required in this case but safer in case I intend
                         # to use this field for other purposes at a later point in time
                         dt_utc = dt_utc.replace(
                             hour=0, minute=0, second=0, microsecond=0
@@ -674,12 +793,11 @@ if __name__ == "__main__":
         (
             success,
             weather_tuple,
-        ) = get_daily_weather_from_yrdotcom(
+        ) = get_daily_weather_from_metdotno(
             latitude=51.8458575,
             longitude=8.2997425,
-            offset=2,
-            units="metric",
-            access_mode="day",
+            offset=12,
+            access_mode="hour",
             daytime="full",
         )
 
