@@ -180,6 +180,32 @@ def calculate_daily_forecast(
     )
 
 
+def get_wx_data_tuple(weather_tuples: dict, index: int):
+    success = False
+    try:
+        result = weather_tuples[index]["data"]["instant"]["details"]
+    except KeyError:
+        return False, None
+    # we received the main tuple. Now try to get the remaining
+    # optional content and add it to our tuple
+    success = True
+    try:
+        symbol_code = weather_tuples[index]["data"]["next_1_hours"]["summary"][
+            "symbol_code"
+        ]
+        result["symbol_code"] = symbol_code
+    except KeyError:
+        pass
+    try:
+        precipitation_amount = weather_tuples[index]["data"]["next_1_hours"]["details"][
+            "precipitation_amount"
+        ]
+        result["precipitation_amount"] = precipitation_amount
+    except KeyError:
+        pass
+    return success, result
+
+
 def get_daily_weather_from_metdotno(
     latitude: float,
     longitude: float,
@@ -271,58 +297,17 @@ def get_daily_weather_from_metdotno(
                     # check if the user intents to get the current
                     # weather and return it, if applicable.
                     if access_mode == "current":
-                        try:
-                            result = weather_tuples[0]["data"]["instant"]["details"]
-                        except KeyError:
-                            return False, None
-                        # we received the main tuple. Now try to get the remaining
-                        # optional content and add it to our tuple
-                        success = True
-                        try:
-                            symbol_code = weather_tuples[0]["data"]["next_1_hours"][
-                                "summary"
-                            ]["symbol_code"]
-                            result["symbol_code"] = symbol_code
-                        except KeyError:
-                            pass
-                        try:
-                            precipitation_amount = weather_tuples[0]["data"][
-                                "next_1_hours"
-                            ]["details"]["precipitation_amount"]
-                            result["precipitation_amount"] = precipitation_amount
-                        except KeyError:
-                            pass
-                        return success, result
+                        return get_wx_data_tuple(weather_tuples=weather_tuples, index=0)
 
                     # if user wants an hour offset, try to return that
                     # one back to the user
                     elif access_mode == "hour":
                         if len(weather_tuples) > offset:
-                            try:
-                                result = weather_tuples[offset]["data"]["instant"][
-                                    "details"
-                                ]
-                            except KeyError:
-                                return False, None
-
-                            # we received the main tuple. Now try to get the remaining
-                            # optional content and add it to our tuple
-                            success = True
-                            try:
-                                symbol_code = weather_tuples[offset]["data"][
-                                    "next_1_hours"
-                                ]["summary"]["symbol_code"]
-                                result["symbol_code"] = symbol_code
-                            except KeyError:
-                                pass
-                            try:
-                                precipitation_amount = weather_tuples[offset]["data"][
-                                    "next_1_hours"
-                                ]["details"]["precipitation_amount"]
-                                result["precipitation_amount"] = precipitation_amount
-                            except KeyError:
-                                pass
-                            return success, result
+                            return get_wx_data_tuple(
+                                weather_tuples=weather_tuples, index=offset
+                            )
+                        else:
+                            return False, None
                     else:
                         # "day" mode access
                         #
@@ -366,7 +351,7 @@ def get_daily_weather_from_metdotno(
 
                         # used whenever a full day's results are NOT requested
                         found_generic = False
-                        generic_index = -1
+                        found_generic_index = -1
 
                         # used whenever a full day's results ARE requested
                         found_full = False
@@ -467,17 +452,14 @@ def get_daily_weather_from_metdotno(
                         # Did we retrieve anything but a full day's response?
                         # Then return the tuple back to the user
                         if found_generic:
-                            if generic_index < len(weather_tuples):
-                                try:
-                                    success = True
-                                    return (
-                                        success,
-                                        weather_tuples[generic_index]["data"][
-                                            "instant"
-                                        ]["details"],
-                                    )
-                                except KeyError:
-                                    return False, None
+                            if found_generic_index < len(weather_tuples):
+                                return get_wx_data_tuple(
+                                    weather_tuples=weather_tuples,
+                                    index=found_generic_index,
+                                )
+                            else:
+                                return False, None
+
                         # if we were supposed to gather a full day's results, try our
                         # best to provide the user with an average based on what we
                         # have gathered
@@ -796,9 +778,9 @@ if __name__ == "__main__":
         ) = get_daily_weather_from_metdotno(
             latitude=51.8458575,
             longitude=8.2997425,
-            offset=12,
-            access_mode="hour",
-            daytime="full",
+            offset=1,
+            access_mode="day",
+            daytime="morning",
         )
 
         success = False
