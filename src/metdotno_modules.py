@@ -126,60 +126,6 @@ metdotno_symbol_mapper: dict = {
 }
 
 
-def calculate_daily_forecast(
-    pressure_values: list,
-    temperature_values: list,
-    cloudiness_values: list,
-    humidity_values: list,
-    wind_direction_degrees: list,
-    wind_speed_values: list,
-):
-    # Calculate average pressure
-    avg_pressure = sum(pressure_values) / len(pressure_values)
-
-    # Calculate average temperature
-    avg_temperature = sum(temperature_values) / len(temperature_values)
-
-    # Calculate average cloudiness
-    avg_cloudiness = sum(cloudiness_values) / len(cloudiness_values)
-
-    # Calculate average humidity
-    avg_humidity = sum(humidity_values) / len(humidity_values)
-
-    # Convert wind direction degrees to radians for vector addition
-    wind_direction_radians = [
-        degrees * (3.14159 / 180) for degrees in wind_direction_degrees
-    ]
-
-    # Calculate x and y components of wind direction vectors
-    wind_direction_x = sum([cos(rad) for rad in wind_direction_radians]) / len(
-        wind_direction_radians
-    )
-    wind_direction_y = sum([sin(rad) for rad in wind_direction_radians]) / len(
-        wind_direction_radians
-    )
-
-    # Calculate resulting wind direction
-    avg_wind_direction_degrees = atan2(wind_direction_y, wind_direction_x) * (
-        180 / 3.14159
-    )
-
-    # Ensure wind direction is within [0, 360) degrees
-    avg_wind_direction_degrees %= 360
-
-    # Calculate average wind speed
-    avg_wind_speed = sum(wind_speed_values) / len(wind_speed_values)
-
-    return (
-        round(avg_pressure),
-        round(avg_temperature, 1),
-        round(avg_cloudiness),
-        round(avg_humidity),
-        round(avg_wind_direction_degrees),
-        round(avg_wind_speed, 1),
-    )
-
-
 def get_wx_data_tuple(weather_tuples: dict, index: int):
     success = False
     try:
@@ -317,7 +263,7 @@ def get_daily_weather_from_metdotno(
                         # all of this ourselves in case the user requests it
                         #
                         # build a generic index secondary index on our data
-                        # not really required but I am a lazy guy and
+                        # not really required but I am a lazy SOB and
                         # it makes debugging a lot easier
                         # Ensure to use enumeration, thus allowing us to
                         # access the future target element directly
@@ -355,12 +301,7 @@ def get_daily_weather_from_metdotno(
 
                         # used whenever a full day's results ARE requested
                         found_full = False
-                        full_pressure = []
-                        full_temperature = []
-                        full_cloudiness = []
-                        full_humidity = []
-                        full_wind_direction = []
-                        full_wind_speed = []
+                        found_full_dict = {}
 
                         # Interate through the index that we have built ourselves
                         for wx_time_offset in wx_time_offsets:
@@ -373,81 +314,56 @@ def get_daily_weather_from_metdotno(
                                 # We have found an entry for the current day
                                 # Now lets check which timeslot fits
                                 if (
-                                    daytime == "morning"
-                                    and wx_dt.hour == mpad_config.mpad_wx_morning
+                                    daytime == mpad_config.mpad_str_morning
+                                    and wx_dt.hour == mpad_config.mpad_int_morning
                                 ):
                                     found_generic = True
                                     found_generic_index = wx_time_offset["index"]
                                     break
                                 elif (
-                                    daytime == "daytime"
-                                    and wx_dt.hour == mpad_config.mpad_wx_daytime
+                                    daytime == mpad_config.mpad_str_daytime
+                                    and wx_dt.hour == mpad_config.mpad_int_daytime
                                 ):
                                     found_generic = True
                                     found_generic_index = wx_time_offset["index"]
                                     break
                                 elif (
-                                    daytime == "evening"
-                                    and wx_dt.hour == mpad_config.mpad_wx_evening
+                                    daytime == mpad_config.mpad_str_evening
+                                    and wx_dt.hour == mpad_config.mpad_int_evening
                                 ):
                                     found_generic = True
                                     found_generic_index = wx_time_offset["index"]
                                     break
                                 elif (
-                                    daytime == "night"
-                                    and wx_dt.hour == mpad_config.mpad_wx_night
+                                    daytime == mpad_config.mpad_str_night
+                                    and wx_dt.hour == mpad_config.mpad_int_night
                                 ):
                                     found_generic = True
                                     found_generic_index = wx_time_offset["index"]
                                     break
                                 else:
                                     # the only remaining option is now a full day's result
-                                    # Add the values to a list and we will deal with them later
                                     if wx_time_offset["index"] < len(weather_tuples):
-                                        try:
-                                            full_pressure.append(
-                                                weather_tuples[wx_time_offset["index"]][
-                                                    "data"
-                                                ]["instant"]["details"][
-                                                    "air_pressure_at_sea_level"
+                                        local_daytime = None
+                                        local_index = None
+                                        if (
+                                            wx_dt.hour
+                                            in mpad_config.mpad_daytime_mapper
+                                        ):
+                                            # get our index
+                                            local_index = wx_time_offset["index"]
+                                            # and get the human readable description
+                                            local_daytime = (
+                                                mpad_config.mpad_daytime_mapper[
+                                                    wx_dt.hour
                                                 ]
                                             )
-                                            full_cloudiness.append(
-                                                weather_tuples[wx_time_offset["index"]][
-                                                    "data"
-                                                ]["instant"]["details"][
-                                                    "cloud_area_fraction"
-                                                ]
-                                            )
-                                            full_temperature.append(
-                                                weather_tuples[wx_time_offset["index"]][
-                                                    "data"
-                                                ]["instant"]["details"][
-                                                    "air_temperature"
-                                                ]
-                                            )
-                                            full_humidity.append(
-                                                weather_tuples[wx_time_offset["index"]][
-                                                    "data"
-                                                ]["instant"]["details"][
-                                                    "relative_humidity"
-                                                ]
-                                            )
-                                            full_wind_speed.append(
-                                                weather_tuples[wx_time_offset["index"]][
-                                                    "data"
-                                                ]["instant"]["details"]["wind_speed"]
-                                            )
-                                            full_wind_direction.append(
-                                                weather_tuples[wx_time_offset["index"]][
-                                                    "data"
-                                                ]["instant"]["details"][
-                                                    "wind_from_direction"
-                                                ]
-                                            )
+
+                                            # We have found at least one entry
                                             found_full = True
-                                        except KeyError:
-                                            found_full = False
+
+                                            # Now add the index and its human readable description to the directory
+                                            found_full_dict[local_daytime] = local_index
 
                         # Did we retrieve anything but a full day's response?
                         # Then return the tuple back to the user
@@ -464,33 +380,42 @@ def get_daily_weather_from_metdotno(
                         # best to provide the user with an average based on what we
                         # have gathered
                         if found_full:
-                            (
-                                avg_pressure,
-                                avg_temperature,
-                                avg_cloudiness,
-                                avg_humidity,
-                                avg_wind_direction_degrees,
-                                avg_wind_speed,
-                            ) = calculate_daily_forecast(
-                                pressure_values=full_pressure,
-                                temperature_values=full_temperature,
-                                cloudiness_values=full_cloudiness,
-                                humidity_values=full_humidity,
-                                wind_direction_degrees=full_wind_direction,
-                                wind_speed_values=full_wind_speed,
-                            )
-                            success = True
-                            response = {
-                                "air_pressure_at_sea_level": avg_pressure,
-                                "air_temperature": avg_temperature,
-                                "cloud_area_fraction": avg_cloudiness,
-                                "relative_humidity": avg_humidity,
-                                "wind_from_direction": avg_wind_direction_degrees,
-                                "wind_speed": avg_wind_speed,
-                            }
-                            return success, response
+                            wx_dict = {"_type:": "MULTI"}
+                            if mpad_config.mpad_str_morning in found_full_dict:
+                                _ret, _tuple = get_wx_data_tuple(
+                                    weather_tuples=weather_tuples,
+                                    index=found_full_dict[mpad_config.mpad_str_morning],
+                                )
+                                if _ret:
+                                    wx_dict[mpad_config.mpad_str_morning] = _tuple
+                                    success = True
+                            if mpad_config.mpad_str_daytime in found_full_dict:
+                                _ret, _tuple = get_wx_data_tuple(
+                                    weather_tuples=weather_tuples,
+                                    index=found_full_dict[mpad_config.mpad_str_daytime],
+                                )
+                                if _ret:
+                                    wx_dict[mpad_config.mpad_str_daytime] = _tuple
+                                    success = True
+                            if mpad_config.mpad_str_evening in found_full_dict:
+                                _ret, _tuple = get_wx_data_tuple(
+                                    weather_tuples=weather_tuples,
+                                    index=found_full_dict[mpad_config.mpad_str_evening],
+                                )
+                                if _ret:
+                                    wx_dict[mpad_config.mpad_str_evening] = _tuple
+                                    success = True
+                            if mpad_config.mpad_str_night in found_full_dict:
+                                _ret, _tuple = get_wx_data_tuple(
+                                    weather_tuples=weather_tuples,
+                                    index=found_full_dict[mpad_config.mpad_str_night],
+                                )
+                                if _ret:
+                                    wx_dict[mpad_config.mpad_str_night] = _tuple
+                                    success = True
+                            return success, wx_dict
 
-    return success, weather_tuple
+    return False, None
 
 
 def parse_daily_weather_from_openweathermapdotorg(
@@ -780,7 +705,7 @@ if __name__ == "__main__":
             longitude=8.2997425,
             offset=1,
             access_mode="day",
-            daytime="morning",
+            daytime="full",
         )
 
         success = False

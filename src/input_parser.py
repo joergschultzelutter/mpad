@@ -959,7 +959,7 @@ def parse_when_daytime(aprs_message: str):
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
         if matches:
-            when_daytime = "morning"
+            when_daytime = mpad_config.mpad_str_morning
             found_when_daytime = True
             regex_match = regex_string
 
@@ -969,7 +969,7 @@ def parse_when_daytime(aprs_message: str):
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
         if matches:
-            when_daytime = "daytime"
+            when_daytime = mpad_config.mpad_str_daytime
             found_when_daytime = True
             regex_match = regex_string
 
@@ -979,7 +979,7 @@ def parse_when_daytime(aprs_message: str):
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
         if matches:
-            when_daytime = "evening"
+            when_daytime = mpad_config.mpad_str_evening
             found_when_daytime = True
             regex_match = regex_string
 
@@ -989,7 +989,7 @@ def parse_when_daytime(aprs_message: str):
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
         if matches:
-            when_daytime = "night"
+            when_daytime = mpad_config.mpad_str_night
             found_when_daytime = True
             regex_match = regex_string
 

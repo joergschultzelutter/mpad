@@ -427,13 +427,13 @@ def generate_output_message_satpass(response_parameters: dict):
                 second=0,
                 microsecond=0,
             )
-            if when_daytime == "morning":
+            if when_daytime == mpad_config.mpad_str_morning:
                 ds += datetime.timedelta(hours=3)
-            elif when_daytime == "daytime":
+            elif when_daytime == mpad_config.mpad_str_daytime:
                 ds += datetime.timedelta(hours=12)
-            elif when_daytime == "evening":
+            elif when_daytime == mpad_config.mpad_str_evening:
                 ds += datetime.timedelta(hours=17)
-            elif when_daytime == "night":
+            elif when_daytime == mpad_config.mpad_str_night:
                 ds += datetime.timedelta(hours=22)
             request_datestamp = ds
 

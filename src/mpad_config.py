@@ -304,7 +304,19 @@ mpad_satellite_data_filename = "mpad_satellite_data.json"
 # Each definition represents the hour in UTC format, e.g. 12 = 12h UTC
 # You can reconfigure these settings in case you intend to run MPAD in a time zone different
 # to UTC
-mpad_wx_morning = 6
-mpad_wx_daytime = 12
-mpad_wx_evening = 18
-mpad_wx_night = 0
+mpad_int_morning = 6
+mpad_int_daytime = 12
+mpad_int_evening = 18
+mpad_int_night = 0
+
+mpad_str_morning = "morning"
+mpad_str_daytime = "daytime"
+mpad_str_evening = "evening"
+mpad_str_night = "night"
+
+mpad_daytime_mapper = {
+    mpad_int_morning: mpad_str_morning,
+    mpad_int_daytime: mpad_str_daytime,
+    mpad_int_evening: mpad_str_evening,
+    mpad_int_night: mpad_str_night,
+}
