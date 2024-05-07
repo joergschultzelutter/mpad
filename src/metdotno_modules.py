@@ -380,7 +380,7 @@ def get_daily_weather_from_metdotno(
                         # best to provide the user with an average based on what we
                         # have gathered
                         if found_full:
-                            wx_dict = {"_type:": "MULTI"}
+                            wx_dict = {"_type": "MULTI"}
                             if mpad_config.mpad_str_morning in found_full_dict:
                                 _ret, _tuple = get_wx_data_tuple(
                                     weather_tuples=weather_tuples,
@@ -628,7 +628,7 @@ def parse_daily_weather_from_metdotno(
 
             w_wind_speed = convert_speed(speed=w_wind_speed, units=units)
             weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"wndspd:{math.ceil(w_wind_speed)}{wind_speed_uom}",
+                message_to_add=f"wspd:{math.ceil(w_wind_speed)}{wind_speed_uom}",
                 destination_list=weather_forecast_array,
             )
 
@@ -637,11 +637,165 @@ def parse_daily_weather_from_metdotno(
             w_wind_deg = weather_tuple["wind_from_direction"]
 
             weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"wnddeg:{math.ceil(w_wind_deg)}{wind_deg_uom}",
+                message_to_add=f"wdeg:{math.ceil(w_wind_deg)}{wind_deg_uom}",
                 destination_list=weather_forecast_array,
             )
 
     else:
+        # We need to do the impossible :-) Try to retrieve all four wx tuples
+        # whereas present in our dictionary
+
+        wx_night = (
+            weather_tuple[mpad_config.mpad_str_night]
+            if mpad_config.mpad_str_night in weather_tuple
+            else None
+        )
+        wx_morning = (
+            weather_tuple[mpad_config.mpad_str_morning]
+            if mpad_config.mpad_str_morning in weather_tuple
+            else None
+        )
+        wx_daytime = (
+            weather_tuple[mpad_config.mpad_str_daytime]
+            if mpad_config.mpad_str_daytime in weather_tuple
+            else None
+        )
+        wx_evening = (
+            weather_tuple[mpad_config.mpad_str_evening]
+            if mpad_config.mpad_str_evening in weather_tuple
+            else None
+        )
+
+        # determine the human readable WX description.
+        # we will use the WX description at noon
+        if wx_daytime:
+            if "symbol_code" in wx_daytime:
+                symbol_code = wx_daytime["symbol_code"]
+                if symbol_code in metdotno_symbol_mapper:
+                    # get the human readable description
+                    symbol_desc = metdotno_symbol_mapper[symbol_code]
+                    # and add it to the outgoing message
+                    weather_forecast_array = make_pretty_aprs_messages(
+                        message_to_add=symbol_desc,
+                        destination_list=weather_forecast_array,
+                        force_outgoing_unicode_messages=force_outgoing_unicode_messages,
+                    )
+
+        # get the temperatures whereas available
+        if wx_night:
+            if "air_temperature" in wx_night:
+                night_temperature = wx_night["air_temperature"]
+
+                # convert to Fahrenheit, if necessary
+                night_temperature = round(
+                    convert_temperature(temperature=night_temperature, units=units)
+                )
+        else:
+            night_temperature = None
+
+        if wx_morning:
+            if "air_temperature" in wx_morning:
+                morning_temperature = wx_morning["air_temperature"]
+
+                # convert to Fahrenheit, if necessary
+                morning_temperature = round(
+                    convert_temperature(temperature=morning_temperature, units=units)
+                )
+        else:
+            morning_temperature = None
+
+        if wx_daytime:
+            if "air_temperature" in wx_daytime:
+                daytime_temperature = wx_daytime["air_temperature"]
+
+                # convert to Fahrenheit, if necessary
+                daytime_temperature = round(
+                    convert_temperature(temperature=daytime_temperature, units=units)
+                )
+        else:
+            daytime_temperature = None
+
+        if wx_evening:
+            if "air_temperature" in wx_evening:
+                evening_temperature = wx_evening["air_temperature"]
+
+                # convert to Fahrenheit, if necessary
+                evening_temperature = round(
+                    convert_temperature(temperature=evening_temperature, units=units)
+                )
+        else:
+            evening_temperature = None
+
+        # Do we have at least one value?
+        if (
+            night_temperature
+            or daytime_temperature
+            or morning_temperature
+            or night_temperature
+        ):
+            wx_string = ""
+
+            if night_temperature:
+                wx_string = wx_string + f"Nite:{night_temperature}{temp_uom} "
+
+            if morning_temperature:
+                wx_string = wx_string + f"Morn:{morning_temperature}{temp_uom} "
+
+            if daytime_temperature:
+                wx_string = wx_string + f"Day:{daytime_temperature}{temp_uom} "
+
+            if evening_temperature:
+                wx_string = wx_string + f"Eve:{evening_temperature}{temp_uom} "
+
+            # remove trailing spaces whereas present
+            wx_string = wx_string.rstrip()
+
+            # and add the message to our list
+            weather_forecast_array = make_pretty_aprs_messages(
+                message_to_add=f"Temp {wx_string}",
+                destination_list=weather_forecast_array,
+                force_outgoing_unicode_messages=force_outgoing_unicode_messages,
+            )
+
+        # get the UVI values whereas present
+        uvi_night = uvi_morning = uvi_daytime = uvi_evening = 0.0
+
+        if wx_night:
+            if "ultraviolet_index_clear_sky" in wx_night:
+                uvi_night = wx_night["ultraviolet_index_clear_sky"]
+
+        if wx_morning:
+            if "ultraviolet_index_clear_sky" in wx_morning:
+                uvi_morning = wx_morning["ultraviolet_index_clear_sky"]
+
+        if wx_daytime:
+            if "ultraviolet_index_clear_sky" in wx_daytime:
+                uvi_daytime = wx_daytime["ultraviolet_index_clear_sky"]
+
+        if wx_evening:
+            if "ultraviolet_index_clear_sky" in wx_evening:
+                uvi_evening = wx_evening["ultraviolet_index_clear_sky"]
+
+        # get the max UVI value
+        uvi_max = 0.0
+        if uvi_night > uvi_max:
+            uvi_max = uvi_night
+
+        if uvi_morning > uvi_max:
+            uvi_max = uvi_morning
+
+        if uvi_daytime > uvi_max:
+            uvi_max = uvi_daytime
+
+        if uvi_evening > uvi_max:
+            uvi_max = uvi_evening
+
+        # and add the message to our list
+        weather_forecast_array = make_pretty_aprs_messages(
+            message_to_add=f"uvi:{uvi_max:.1f}",
+            destination_list=weather_forecast_array,
+        )
+
         pass
 
     # Ultimately, return the array
@@ -670,7 +824,7 @@ if __name__ == "__main__":
             longitude=8.2997425,
             offset=1,
             access_mode="day",
-            daytime=mpad_config.mpad_str_morning,
+            daytime=mpad_config.mpad_str_full,
         )
 
         logger.info(pformat(weather_tuple))
@@ -681,7 +835,7 @@ if __name__ == "__main__":
                 units="metric",
                 human_readable_text="Und jetzt das Wetter ÄäÖöÜüß",
                 when="Samstag",
-                when_dt="full",
+                when_dt=mpad_config.mpad_str_full,
                 force_outgoing_unicode_messages=True,
             )
             logger.info(my_weather_forecast_array)

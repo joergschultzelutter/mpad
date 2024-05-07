@@ -313,6 +313,7 @@ mpad_str_morning = "morning"
 mpad_str_daytime = "daytime"
 mpad_str_evening = "evening"
 mpad_str_night = "night"
+mpad_str_full = "full"
 
 mpad_daytime_mapper = {
     mpad_int_morning: mpad_str_morning,
