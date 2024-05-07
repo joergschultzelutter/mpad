@@ -531,6 +531,7 @@ def parse_daily_weather_from_metdotno(
 
     symbol_desc = None
 
+    # do we need to generate a full day's report?
     if not is_multi:
         # single report - yay
         # get the human readable WX description
@@ -562,11 +563,11 @@ def parse_daily_weather_from_metdotno(
 
         # get the humidity
         if "relative_humidity" in weather_tuple:
-            temperature = weather_tuple["relative_humidity"]
+            w_humidity = weather_tuple["relative_humidity"]
 
             # and add the message to our list
             weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"hum:{w_humidity}{humidity_uom}",
+                message_to_add=f"hum:{math.ceil(w_humidity)}{humidity_uom}",
                 destination_list=weather_forecast_array,
             )
 
@@ -621,117 +622,27 @@ def parse_daily_weather_from_metdotno(
                 destination_list=weather_forecast_array,
             )
 
+        # get the wind speed
+        if "wind_speed" in weather_tuple:
+            w_wind_speed = weather_tuple["wind_speed"]
+
+            w_wind_speed = convert_speed(speed=w_wind_speed, units=units)
+            weather_forecast_array = make_pretty_aprs_messages(
+                message_to_add=f"wndspd:{math.ceil(w_wind_speed)}{wind_speed_uom}",
+                destination_list=weather_forecast_array,
+            )
+
+        # get the wind degrees
+        if "wind_from_direction" in weather_tuple:
+            w_wind_deg = weather_tuple["wind_from_direction"]
+
+            weather_forecast_array = make_pretty_aprs_messages(
+                message_to_add=f"wnddeg:{math.ceil(w_wind_deg)}{wind_deg_uom}",
+                destination_list=weather_forecast_array,
+            )
+
     else:
         pass
-
-    # Add the forecast string
-    if w_weather_description:
-        weather_forecast_array = make_pretty_aprs_messages(
-            message_to_add=w_weather_description,
-            destination_list=weather_forecast_array,
-            force_outgoing_unicode_messages=force_outgoing_unicode_messages,
-        )
-
-    # Add temperatures whereas applicable per 'when_dt' parameters
-    if w_temp_day or w_temp_morn or w_temp_eve or w_temp_night or w_temp:
-        if w_temp_morn and when_dt in ["full", "morning"]:
-            weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"morn:{round(w_temp_morn)}{temp_uom}",
-                destination_list=weather_forecast_array,
-            )
-        if w_temp_day and when_dt in ["full", "daytime"]:
-            weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"day:{round(w_temp_day)}{temp_uom}",
-                destination_list=weather_forecast_array,
-            )
-        if w_temp_eve and when_dt in ["full", "evening"]:
-            weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"eve:{round(w_temp_eve)}{temp_uom}",
-                destination_list=weather_forecast_array,
-            )
-        if w_temp_night and when_dt in ["full", "night"]:
-            weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"nite:{round(w_temp_night)}{temp_uom}",
-                destination_list=weather_forecast_array,
-            )
-        if w_temp:  # hourly report
-            weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"temp:{round(w_temp)}{temp_uom}",
-                destination_list=weather_forecast_array,
-            )
-
-    # Sunrise and Sunset
-    if w_sunset and w_sunrise:
-        tmp1 = datetime.utcfromtimestamp(w_sunrise)
-        tmp2 = datetime.utcfromtimestamp(w_sunset)
-        weather_forecast_array = make_pretty_aprs_messages(
-            message_to_add=f"sunrise/set {tmp1.hour:02d}:{tmp1.minute:02d}/{tmp2.hour:02d}:{tmp2.minute:02d}UTC",
-            destination_list=weather_forecast_array,
-        )
-    elif w_sunrise and not w_sunset:
-        tmp = datetime.utcfromtimestamp(w_sunrise)
-        weather_forecast_array = make_pretty_aprs_messages(
-            message_to_add=f"sunrise {tmp.hour}:{tmp.minute}UTC",
-            destination_list=weather_forecast_array,
-        )
-    elif w_sunset and not w_sunrise:
-        tmp = datetime.utcfromtimestamp(w_sunset)
-        weather_forecast_array = make_pretty_aprs_messages(
-            message_to_add=f"sunset {tmp.hour}:{tmp.minute}UTC",
-            destination_list=weather_forecast_array,
-        )
-
-    # Add remaining parameters
-    if w_rain:
-        weather_forecast_array = make_pretty_aprs_messages(
-            message_to_add=f"rain:{math.ceil(w_rain)}{rain_uom}",
-            destination_list=weather_forecast_array,
-        )
-    if w_snow:
-        weather_forecast_array = make_pretty_aprs_messages(
-            message_to_add=f"snow:{math.ceil(w_snow)}{snow_uom}",
-            destination_list=weather_forecast_array,
-        )
-    if w_clouds:
-        weather_forecast_array = make_pretty_aprs_messages(
-            message_to_add=f"clouds:{w_clouds}{clouds_uom}",
-            destination_list=weather_forecast_array,
-        )
-    if w_uvi:
-        weather_forecast_array = make_pretty_aprs_messages(
-            message_to_add=f"uvi:{w_uvi:.1f}",
-            destination_list=weather_forecast_array,
-        )
-    if w_pressure:
-        weather_forecast_array = make_pretty_aprs_messages(
-            message_to_add=f"{pressure_uom}:{w_pressure}",
-            destination_list=weather_forecast_array,
-        )
-    if w_humidity:
-        weather_forecast_array = make_pretty_aprs_messages(
-            message_to_add=f"hum:{w_humidity}{humidity_uom}",
-            destination_list=weather_forecast_array,
-        )
-    if w_dew_point:
-        weather_forecast_array = make_pretty_aprs_messages(
-            message_to_add=f"dewpt:{math.ceil(w_dew_point)}{temp_uom}",
-            destination_list=weather_forecast_array,
-        )
-    if w_wind_speed:
-        weather_forecast_array = make_pretty_aprs_messages(
-            message_to_add=f"wndspd:{math.ceil(w_wind_speed)}{wind_speed_uom}",
-            destination_list=weather_forecast_array,
-        )
-    if w_wind_deg:
-        weather_forecast_array = make_pretty_aprs_messages(
-            message_to_add=f"wnddeg:{w_wind_deg}{wind_deg_uom}",
-            destination_list=weather_forecast_array,
-        )
-    if w_visibility:
-        weather_forecast_array = make_pretty_aprs_messages(
-            message_to_add=f"vis:{w_visibility}{visibility_uom}",
-            destination_list=weather_forecast_array,
-        )
 
     # Ultimately, return the array
     return weather_forecast_array
