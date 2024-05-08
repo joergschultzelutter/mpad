@@ -95,7 +95,7 @@ metdotno_symbol_mapper: dict = {
     "lightrainshowersandthunder_day": "LightRain",
     "lightrainshowersandthunder_night": "LightRain",
     "lightrainshowersandthunder_polartwilight": "LightRain",
-    "heavysleet": "HEavySleet",
+    "heavysleet": "HeavySleet",
     "sleetandthunder": "Sleet",
     "lightrainandthunder": "LightRain",
     "sleet": "Sleet",
@@ -426,7 +426,7 @@ def convert_temperature(temperature: float, units: str = "metric"):
 
 def convert_speed(speed: float, units: str = "metric"):
     assert units in ("metric", "imperial")
-    speed = (speed * 0.621371) if units == "imperial" else speed
+    speed = (speed * 2.23694) if units == "imperial" else speed
     return speed
 
 
@@ -641,6 +641,24 @@ def parse_daily_weather_from_metdotno(
                 destination_list=weather_forecast_array,
             )
 
+        # Get the cloud coverage
+        if "cloud_area_fraction" in weather_tuple:
+            w_clouds = weather_tuple["cloud_area_fraction"]
+
+            weather_forecast_array = make_pretty_aprs_messages(
+                message_to_add=f"cld:{math.ceil(w_clouds)}{clouds_uom}",
+                destination_list=weather_forecast_array,
+            )
+
+        # Get the cloud coverage
+        if "air_pressure_at_sea_level" in weather_tuple:
+            w_pressure = weather_tuple["air_pressure_at_sea_level"]
+
+            weather_forecast_array = make_pretty_aprs_messages(
+                message_to_add=f"{pressure_uom}:{math.ceil(w_pressure)}",
+                destination_list=weather_forecast_array,
+            )
+
     else:
         # We need to do the impossible :-) Try to retrieve all four wx tuples
         # whereas present in our dictionary
@@ -824,7 +842,7 @@ if __name__ == "__main__":
             longitude=8.2997425,
             offset=1,
             access_mode="day",
-            daytime=mpad_config.mpad_str_full,
+            daytime=mpad_config.mpad_str_morning,
         )
 
         logger.info(pformat(weather_tuple))
@@ -835,7 +853,7 @@ if __name__ == "__main__":
                 units="metric",
                 human_readable_text="Und jetzt das Wetter ÄäÖöÜüß",
                 when="Samstag",
-                when_dt=mpad_config.mpad_str_full,
+                when_dt=mpad_config.mpad_str_morning,
                 force_outgoing_unicode_messages=True,
             )
             logger.info(my_weather_forecast_array)
