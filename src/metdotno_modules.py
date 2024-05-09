@@ -814,7 +814,53 @@ def parse_daily_weather_from_metdotno(
             destination_list=weather_forecast_array,
         )
 
-        pass
+        # get the pressure values whereas present
+        psi_night = psi_morning = psi_daytime = psi_evening = 0.0
+
+        if wx_night:
+            if "air_pressure_at_sea_level" in wx_night:
+                psi_night = wx_night["air_pressure_at_sea_level"]
+
+        if wx_morning:
+            if "air_pressure_at_sea_level" in wx_morning:
+                psi_morning = wx_morning["air_pressure_at_sea_level"]
+
+        if wx_daytime:
+            if "ultraviolet_index_clear_sky" in wx_daytime:
+                psi_daytime = wx_daytime["air_pressure_at_sea_level"]
+
+        if wx_evening:
+            if "ultraviolet_index_clear_sky" in wx_evening:
+                psi_evening = wx_evening["air_pressure_at_sea_level"]
+
+        # get the max and min pressure values
+        psi_max = 0.0
+        psi_min = 9999
+
+        if psi_night > psi_max:
+            psi_max = psi_night
+        if psi_night < psi_min:
+            psi_min = psi_night
+
+        if psi_morning > psi_max:
+            psi_max = psi_morning
+        if psi_morning < psi_min:
+            psi_min = psi_morning
+
+        if psi_daytime > psi_max:
+            psi_max = psi_daytime
+        if psi_daytime < psi_min:
+            psi_min = psi_daytime
+
+        if psi_evening > psi_max:
+            psi_max = psi_evening
+        if psi_evening < psi_min:
+            psi_min = psi_evening
+
+        weather_forecast_array = make_pretty_aprs_messages(
+            message_to_add=f"{math.ceil(psi_min)}-{math.ceil(psi_max)}{pressure_uom}",
+            destination_list=weather_forecast_array,
+        )
 
     # Ultimately, return the array
     return weather_forecast_array
@@ -842,7 +888,7 @@ if __name__ == "__main__":
             longitude=8.2997425,
             offset=1,
             access_mode="day",
-            daytime=mpad_config.mpad_str_morning,
+            daytime=mpad_config.mpad_str_full,
         )
 
         logger.info(pformat(weather_tuple))
@@ -853,7 +899,7 @@ if __name__ == "__main__":
                 units="metric",
                 human_readable_text="Und jetzt das Wetter ÄäÖöÜüß",
                 when="Samstag",
-                when_dt=mpad_config.mpad_str_morning,
+                when_dt=mpad_config.mpad_str_full,
                 force_outgoing_unicode_messages=True,
             )
             logger.info(my_weather_forecast_array)
