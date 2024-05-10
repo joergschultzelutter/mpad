@@ -826,11 +826,11 @@ def parse_daily_weather_from_metdotno(
                 psi_morning = wx_morning["air_pressure_at_sea_level"]
 
         if wx_daytime:
-            if "ultraviolet_index_clear_sky" in wx_daytime:
+            if "air_pressure_at_sea_level" in wx_daytime:
                 psi_daytime = wx_daytime["air_pressure_at_sea_level"]
 
         if wx_evening:
-            if "ultraviolet_index_clear_sky" in wx_evening:
+            if "air_pressure_at_sea_level" in wx_evening:
                 psi_evening = wx_evening["air_pressure_at_sea_level"]
 
         # get the max and min pressure values
