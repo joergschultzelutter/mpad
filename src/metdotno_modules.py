@@ -660,8 +660,11 @@ def parse_daily_weather_from_metdotno(
             )
 
     else:
-        # We need to do the impossible :-) Try to retrieve all four wx tuples
-        # whereas present in our dictionary
+
+        # This is the "Full Day" branch
+        #
+        # As the met.no service does not offer a full day's wx forecast,
+        # we will try to build it for the user
 
         wx_night = (
             weather_tuple[mpad_config.mpad_str_night]
@@ -859,6 +862,112 @@ def parse_daily_weather_from_metdotno(
 
         weather_forecast_array = make_pretty_aprs_messages(
             message_to_add=f"{math.ceil(psi_min)}-{math.ceil(psi_max)}{pressure_uom}",
+            destination_list=weather_forecast_array,
+        )
+
+        # get the average humidity
+        avg_hum = 0.0
+        avg_hum_count = 0
+
+        if wx_night:
+            if "relative_humidity" in wx_night:
+                avg_hum = avg_hum + wx_night["relative_humidity"]
+                avg_hum_count = avg_hum_count + 1
+
+        if wx_morning:
+            if "relative_humidity" in wx_morning:
+                avg_hum = avg_hum + wx_morning["relative_humidity"]
+                avg_hum_count = avg_hum_count + 1
+
+        if wx_daytime:
+            if "relative_humidity" in wx_daytime:
+                avg_hum = avg_hum + wx_daytime["relative_humidity"]
+                avg_hum_count = avg_hum_count + 1
+
+        if wx_evening:
+            if "relative_humidity" in wx_evening:
+                avg_hum = avg_hum + wx_evening["relative_humidity"]
+                avg_hum_count = avg_hum_count + 1
+
+        if avg_hum_count > 0:
+            weather_forecast_array = make_pretty_aprs_messages(
+                message_to_add=f"avghum{math.ceil(avg_hum/avg_hum_count)}{humidity_uom}",
+                destination_list=weather_forecast_array,
+            )
+
+        # get the pressure values whereas present
+        pre_night = pre_morning = pre_daytime = pre_evening = 0.0
+
+        if wx_night:
+            if "precipitation_amount" in wx_night:
+                pre_night = wx_night["precipitation_amount"]
+
+        if wx_morning:
+            if "precipitation_amount" in wx_morning:
+                pre_morning = wx_morning["precipitation_amount"]
+
+        if wx_daytime:
+            if "precipitation_amount" in wx_daytime:
+                pre_daytime = wx_daytime["precipitation_amount"]
+
+        if wx_evening:
+            if "precipitation_amount" in wx_evening:
+                pre_evening = wx_evening["precipitation_amount"]
+
+        # get the max and min pressure values
+        pre_max = 0.0
+        symbol_code = None
+
+        if pre_night > pre_max:
+            pre_max = pre_night
+            symbol_code = wx_night["symbol_code"]
+            if symbol_code in metdotno_symbol_mapper:
+                # get the human readable description
+                symbol_desc = metdotno_symbol_mapper[symbol_code]
+
+        if pre_morning > pre_max:
+            pre_max = pre_morning
+            symbol_code = wx_morning["symbol_code"]
+            if symbol_code in metdotno_symbol_mapper:
+                # get the human readable description
+                symbol_desc = metdotno_symbol_mapper[symbol_code]
+
+        if pre_daytime > pre_max:
+            pre_max = pre_daytime
+            symbol_code = wx_daytime["symbol_code"]
+            if symbol_code in metdotno_symbol_mapper:
+                # get the human readable description
+                symbol_desc = metdotno_symbol_mapper[symbol_code]
+
+        if pre_evening > pre_max:
+            pre_max = pre_evening
+            symbol_code = wx_evening["symbol_code"]
+            if symbol_code in metdotno_symbol_mapper:
+                # get the human readable description
+                symbol_desc = metdotno_symbol_mapper[symbol_code]
+
+        # try to determine what we're dealing with
+        if symbol_desc:
+            symbol_desc = symbol_desc.lower()
+            if "rain" in symbol_desc:
+                s_prec = "rain"
+                uom_prec = rain_uom
+            elif "snow" in symbol_desc:
+                s_prec = "snow"
+                uom_prec = snow_uom
+            elif "sleet" in symbol_desc:
+                s_prec = "sleet"
+                uom_prec = sleet_uom
+            else:
+                s_prec = "prec"
+                uom_prec = prec_uom
+        else:
+            s_prec = "prec"
+            uom_prec = prec_uom
+
+        # and add the message to our list
+        weather_forecast_array = make_pretty_aprs_messages(
+            message_to_add=f"{s_prec}:{math.ceil(pre_max)}{uom_prec}",
             destination_list=weather_forecast_array,
         )
 
