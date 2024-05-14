@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 
 # Map the yr.no wx symbol to MPAD target msg
 # source: https://api.met.no/weatherapi/locationforecast/2.0/swagger
+#
 metdotno_symbol_mapper: dict = {
     "clearsky_day": "ClearSky",
     "clearsky_night": "ClearSky",
@@ -180,8 +181,6 @@ def get_daily_weather_from_metdotno(
         day = thursday, then date_offset = 2
         if 'access_mode' == 'hour':
         mumeric hourly offset, e.g. 1 = one hour from now
-    openweathermap_api_key: str
-        API key for accessing openweathermap.org api
     units: 'str'
         Unit of measure. Can either be 'metric' or 'imperial'
     access_mode: 'str'
@@ -449,7 +448,6 @@ def parse_daily_weather_from_metdotno(
     ==========
     weather_tuple: 'dict'
         JSON weather tuple substring for the requested day.
-        Format: see https://openweathermap.org/api/one-call-api
     units: 'str'
         Unit of measure. Can either be 'metric' or 'imperial'
     human_readable_text: 'str'
@@ -666,6 +664,7 @@ def parse_daily_weather_from_metdotno(
         # As the met.no service does not offer a full day's wx forecast,
         # we will try to build it for the user
 
+        # get the four tuples for night, morning, daytime and evening
         wx_night = (
             weather_tuple[mpad_config.mpad_str_night]
             if mpad_config.mpad_str_night in weather_tuple
@@ -703,6 +702,10 @@ def parse_daily_weather_from_metdotno(
                     )
 
         # get the temperatures whereas available
+        night_temperature = morning_temperature = daytime_temperature = (
+            evening_temperature
+        ) = 0.0
+
         if wx_night:
             if "air_temperature" in wx_night:
                 night_temperature = wx_night["air_temperature"]
@@ -711,8 +714,6 @@ def parse_daily_weather_from_metdotno(
                 night_temperature = round(
                     convert_temperature(temperature=night_temperature, units=units)
                 )
-        else:
-            night_temperature = None
 
         if wx_morning:
             if "air_temperature" in wx_morning:
@@ -722,8 +723,6 @@ def parse_daily_weather_from_metdotno(
                 morning_temperature = round(
                     convert_temperature(temperature=morning_temperature, units=units)
                 )
-        else:
-            morning_temperature = None
 
         if wx_daytime:
             if "air_temperature" in wx_daytime:
@@ -733,8 +732,6 @@ def parse_daily_weather_from_metdotno(
                 daytime_temperature = round(
                     convert_temperature(temperature=daytime_temperature, units=units)
                 )
-        else:
-            daytime_temperature = None
 
         if wx_evening:
             if "air_temperature" in wx_evening:
@@ -744,8 +741,6 @@ def parse_daily_weather_from_metdotno(
                 evening_temperature = round(
                     convert_temperature(temperature=evening_temperature, units=units)
                 )
-        else:
-            evening_temperature = None
 
         # Do we have at least one value?
         if (
@@ -754,29 +749,68 @@ def parse_daily_weather_from_metdotno(
             or morning_temperature
             or night_temperature
         ):
-            wx_string = ""
+            added_temp = False
 
             if night_temperature:
-                wx_string = wx_string + f"Nite:{night_temperature}{temp_uom} "
+                if not added_temp:
+                    weather_forecast_array = make_pretty_aprs_messages(
+                        message_to_add=f"Temp",
+                        destination_list=weather_forecast_array,
+                        force_outgoing_unicode_messages=force_outgoing_unicode_messages,
+                    )
+                    added_temp = True
+
+                wx_string = f"Nite:{night_temperature}{temp_uom}"
+                weather_forecast_array = make_pretty_aprs_messages(
+                    message_to_add=wx_string,
+                    destination_list=weather_forecast_array,
+                    force_outgoing_unicode_messages=force_outgoing_unicode_messages,
+                )
 
             if morning_temperature:
-                wx_string = wx_string + f"Morn:{morning_temperature}{temp_uom} "
+                if not added_temp:
+                    weather_forecast_array = make_pretty_aprs_messages(
+                        message_to_add=f"Temp",
+                        destination_list=weather_forecast_array,
+                        force_outgoing_unicode_messages=force_outgoing_unicode_messages,
+                    )
+                    added_temp = True
+                wx_string = f"Morn:{morning_temperature}{temp_uom}"
+                weather_forecast_array = make_pretty_aprs_messages(
+                    message_to_add=wx_string,
+                    destination_list=weather_forecast_array,
+                    force_outgoing_unicode_messages=force_outgoing_unicode_messages,
+                )
 
             if daytime_temperature:
-                wx_string = wx_string + f"Day:{daytime_temperature}{temp_uom} "
+                if not added_temp:
+                    weather_forecast_array = make_pretty_aprs_messages(
+                        message_to_add=f"Temp",
+                        destination_list=weather_forecast_array,
+                        force_outgoing_unicode_messages=force_outgoing_unicode_messages,
+                    )
+                    added_temp = True
+                wx_string = f"Day:{daytime_temperature}{temp_uom}"
+                weather_forecast_array = make_pretty_aprs_messages(
+                    message_to_add=wx_string,
+                    destination_list=weather_forecast_array,
+                    force_outgoing_unicode_messages=force_outgoing_unicode_messages,
+                )
 
             if evening_temperature:
-                wx_string = wx_string + f"Eve:{evening_temperature}{temp_uom} "
-
-            # remove trailing spaces whereas present
-            wx_string = wx_string.rstrip()
-
-            # and add the message to our list
-            weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"Temp {wx_string}",
-                destination_list=weather_forecast_array,
-                force_outgoing_unicode_messages=force_outgoing_unicode_messages,
-            )
+                if not added_temp:
+                    weather_forecast_array = make_pretty_aprs_messages(
+                        message_to_add=f"Temp",
+                        destination_list=weather_forecast_array,
+                        force_outgoing_unicode_messages=force_outgoing_unicode_messages,
+                    )
+                    added_temp = True
+                wx_string = f"Eve:{evening_temperature}{temp_uom}"
+                weather_forecast_array = make_pretty_aprs_messages(
+                    message_to_add=wx_string,
+                    destination_list=weather_forecast_array,
+                    force_outgoing_unicode_messages=force_outgoing_unicode_messages,
+                )
 
         # get the UVI values whereas present
         uvi_night = uvi_morning = uvi_daytime = uvi_evening = 0.0
@@ -797,7 +831,8 @@ def parse_daily_weather_from_metdotno(
             if "ultraviolet_index_clear_sky" in wx_evening:
                 uvi_evening = wx_evening["ultraviolet_index_clear_sky"]
 
-        # get the max UVI value
+        # get the max UVI value. We will only concentrate on the maximum value
+        # and disregard the minimum value
         uvi_max = 0.0
         if uvi_night > uvi_max:
             uvi_max = uvi_night
@@ -817,7 +852,7 @@ def parse_daily_weather_from_metdotno(
             destination_list=weather_forecast_array,
         )
 
-        # get the pressure values whereas present
+        # get the air pressure values whereas present
         psi_night = psi_morning = psi_daytime = psi_evening = 0.0
 
         if wx_night:
@@ -895,7 +930,7 @@ def parse_daily_weather_from_metdotno(
                 destination_list=weather_forecast_array,
             )
 
-        # get the pressure values whereas present
+        # get the precipitation values whereas present
         pre_night = pre_morning = pre_daytime = pre_evening = 0.0
 
         if wx_night:
@@ -914,7 +949,8 @@ def parse_daily_weather_from_metdotno(
             if "precipitation_amount" in wx_evening:
                 pre_evening = wx_evening["precipitation_amount"]
 
-        # get the max and min pressure values
+        # get the max precipitation value and use the symbol code
+        # for determining what we are about to receive (rain, snow, sleet)
         pre_max = 0.0
         symbol_code = None
 
@@ -947,6 +983,8 @@ def parse_daily_weather_from_metdotno(
                 symbol_desc = metdotno_symbol_mapper[symbol_code]
 
         # try to determine what we're dealing with
+        # if we can't determine that it is either rain,
+        # snow, or sleet, then use a "precipitation" default label
         if symbol_desc:
             symbol_desc = symbol_desc.lower()
             if "rain" in symbol_desc:
