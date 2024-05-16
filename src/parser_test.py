@@ -84,7 +84,7 @@ def testcall(message_text: str, from_callsign: str):
                 "syntax, see https://github.com/joergschultzelutter/mpad",
             ]
         logger.info(output_message)
-        # logger.info(msg=pformat(response_parameters))
+        logger.info(msg=pformat(response_parameters))
 
 
 def download_data_files_if_missing():
