@@ -491,7 +491,7 @@ def parse_daily_weather_from_metdotno(
 
     pressure_uom = "hPa"
     humidity_uom = "%"
-    wind_deg_uom = ""
+    wind_deg_uom = "deg"
     clouds_uom = "%"
     visibility_uom = "m"
 
@@ -577,19 +577,6 @@ def parse_daily_weather_from_metdotno(
             # and add the message to our list
             weather_forecast_array = make_pretty_aprs_messages(
                 message_to_add=f"uvi:{w_uvi:.1f}",
-                destination_list=weather_forecast_array,
-            )
-
-        # get the dew point
-        if "dew_point_temperature" in weather_tuple:
-            w_dew_pt = weather_tuple["dew_point_temperature"]
-
-            # convert the temperature, if necessary
-            w_dew_pt = convert_temperature(temperature=w_dew_pt, units=units)
-
-            # and add the message to our list
-            weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"dewpt:{math.ceil(w_dew_pt)}{temp_uom}",
                 destination_list=weather_forecast_array,
             )
 
@@ -813,8 +800,38 @@ def parse_daily_weather_from_metdotno(
                     force_outgoing_unicode_messages=force_outgoing_unicode_messages,
                 )
 
+        # get the average humidity
+        avg_hum = 0.0
+        avg_hum_count = 0
+
+        if wx_night:
+            if "relative_humidity" in wx_night:
+                avg_hum = avg_hum + wx_night["relative_humidity"]
+                avg_hum_count = avg_hum_count + 1
+
+        if wx_morning:
+            if "relative_humidity" in wx_morning:
+                avg_hum = avg_hum + wx_morning["relative_humidity"]
+                avg_hum_count = avg_hum_count + 1
+
+        if wx_daytime:
+            if "relative_humidity" in wx_daytime:
+                avg_hum = avg_hum + wx_daytime["relative_humidity"]
+                avg_hum_count = avg_hum_count + 1
+
+        if wx_evening:
+            if "relative_humidity" in wx_evening:
+                avg_hum = avg_hum + wx_evening["relative_humidity"]
+                avg_hum_count = avg_hum_count + 1
+
+        if avg_hum_count > 0:
+            weather_forecast_array = make_pretty_aprs_messages(
+                message_to_add=f"avghum:{math.ceil(avg_hum/avg_hum_count)}{humidity_uom}",
+                destination_list=weather_forecast_array,
+            )
+
         # get the UVI values whereas present
-        uvi_night = uvi_morning = uvi_daytime = uvi_evening = 0.0
+        uvi_night = uvi_morning = uvi_daytime = uvi_evening = None
 
         if wx_night:
             if "ultraviolet_index_clear_sky" in wx_night:
@@ -842,82 +859,9 @@ def parse_daily_weather_from_metdotno(
         )
 
         # and add the message to our list
-        weather_forecast_array = make_pretty_aprs_messages(
-            message_to_add=f"uvi:{uvi_max:.1f}",
-            destination_list=weather_forecast_array,
-        )
-
-        # get the air pressure values whereas present
-        psi_night = psi_morning = psi_daytime = psi_evening = 0.0
-
-        if wx_night:
-            if "air_pressure_at_sea_level" in wx_night:
-                psi_night = wx_night["air_pressure_at_sea_level"]
-
-        if wx_morning:
-            if "air_pressure_at_sea_level" in wx_morning:
-                psi_morning = wx_morning["air_pressure_at_sea_level"]
-
-        if wx_daytime:
-            if "air_pressure_at_sea_level" in wx_daytime:
-                psi_daytime = wx_daytime["air_pressure_at_sea_level"]
-
-        if wx_evening:
-            if "air_pressure_at_sea_level" in wx_evening:
-                psi_evening = wx_evening["air_pressure_at_sea_level"]
-
-        # get the max and min pressure values
-        psi_max, psi_min = get_maxmin(
-            value_night=psi_night,
-            value_morning=psi_morning,
-            value_daytime=psi_daytime,
-            value_evening=psi_evening,
-        )
-
-        if psi_max and psi_min:
+        if uvi_max:
             weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"{math.ceil(psi_min)}-{math.ceil(psi_max)}{pressure_uom}",
-                destination_list=weather_forecast_array,
-            )
-        else:
-            if psi_max:
-                weather_forecast_array = make_pretty_aprs_messages(
-                    message_to_add=f"{math.ceil(psi_max)}{pressure_uom}",
-                    destination_list=weather_forecast_array,
-                )
-            if psi_min:
-                weather_forecast_array = make_pretty_aprs_messages(
-                    message_to_add=f"{math.ceil(psi_min)}{pressure_uom}",
-                    destination_list=weather_forecast_array,
-                )
-
-        # get the average humidity
-        avg_hum = 0.0
-        avg_hum_count = 0
-
-        if wx_night:
-            if "relative_humidity" in wx_night:
-                avg_hum = avg_hum + wx_night["relative_humidity"]
-                avg_hum_count = avg_hum_count + 1
-
-        if wx_morning:
-            if "relative_humidity" in wx_morning:
-                avg_hum = avg_hum + wx_morning["relative_humidity"]
-                avg_hum_count = avg_hum_count + 1
-
-        if wx_daytime:
-            if "relative_humidity" in wx_daytime:
-                avg_hum = avg_hum + wx_daytime["relative_humidity"]
-                avg_hum_count = avg_hum_count + 1
-
-        if wx_evening:
-            if "relative_humidity" in wx_evening:
-                avg_hum = avg_hum + wx_evening["relative_humidity"]
-                avg_hum_count = avg_hum_count + 1
-
-        if avg_hum_count > 0:
-            weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"avghum{math.ceil(avg_hum/avg_hum_count)}{humidity_uom}",
+                message_to_add=f"uvi:{uvi_max:.1f}",
                 destination_list=weather_forecast_array,
             )
 
@@ -995,13 +939,14 @@ def parse_daily_weather_from_metdotno(
             uom_prec = prec_uom
 
         # and add the message to our list
-        weather_forecast_array = make_pretty_aprs_messages(
-            message_to_add=f"{s_prec}:{math.ceil(pre_max)}{uom_prec}",
-            destination_list=weather_forecast_array,
-        )
+        if pre_max > 0.0:
+            weather_forecast_array = make_pretty_aprs_messages(
+                message_to_add=f"{s_prec}:{math.ceil(pre_max)}{uom_prec}",
+                destination_list=weather_forecast_array,
+            )
 
         # get the wind speed values whereas present
-        wsp_night = wsp_morning = wsp_daytime = wsp_evening = 0.0
+        wsp_night = wsp_morning = wsp_daytime = wsp_evening = None
 
         if wx_night:
             if "wind_speed" in wx_night:
@@ -1022,9 +967,9 @@ def parse_daily_weather_from_metdotno(
         # get the max/min values
         wsp_max, wsp_min = get_maxmin(
             value_night=wsp_night,
+            value_morning=wsp_morning,
             value_daytime=wsp_daytime,
             value_evening=wsp_evening,
-            wsp_morning=wsp_morning,
         )
 
         # convert to imperial system, if necessary
@@ -1034,29 +979,161 @@ def parse_daily_weather_from_metdotno(
             wsp_min = convert_speed(speed=wsp_min, units=units)
 
         # did wd get at least one value?
-        if wsp_max or wsp_min:
+        if wsp_max and wsp_min:
+            weather_forecast_array = make_pretty_aprs_messages(
+                message_to_add=f"wspd:{math.ceil(wsp_min)}-{math.ceil(wsp_max)}{wind_speed_uom}",
+                destination_list=weather_forecast_array,
+                add_sep=False,
+            )
+        else:
+            if wsp_min:
+                weather_forecast_array = make_pretty_aprs_messages(
+                    message_to_add=f"wspd:{math.ceil(wsp_min)}{wind_speed_uom}",
+                    destination_list=weather_forecast_array,
+                )
+            if wsp_max:
+                weather_forecast_array = make_pretty_aprs_messages(
+                    message_to_add=f"wspd:{math.ceil(wsp_max)}{wind_speed_uom}",
+                    destination_list=weather_forecast_array,
+                )
+
+        # get the wind directions values whereas present
+        wdr_night = wdr_morning = wdr_daytime = wdr_evening = None
+
+        if wx_night:
+            if "wind_from_direction" in wx_night:
+                wdr_night = wx_night["wind_from_direction"]
+
+        if wx_morning:
+            if "wind_from_direction" in wx_morning:
+                wdr_morning = wx_morning["wind_from_direction"]
+
+        if wx_daytime:
+            if "wind_from_direction" in wx_daytime:
+                wdr_daytime = wx_daytime["wind_from_direction"]
+
+        if wx_evening:
+            if "wind_from_direction" in wx_evening:
+                wdr_evening = wx_evening["wind_from_direction"]
+
+        # get the max/min values
+        wdr_max, wdr_min = get_maxmin(
+            value_night=wdr_night,
+            value_morning=wdr_morning,
+            value_daytime=wdr_daytime,
+            value_evening=wdr_evening,
+        )
+
+        if wdr_max and wdr_min:
+            weather_forecast_array = make_pretty_aprs_messages(
+                message_to_add=f"wdir:{math.ceil(wdr_min)}-{math.ceil(wdr_max)}{wind_deg_uom}",
+                destination_list=weather_forecast_array,
+            )
+        else:
+            if wdr_min:
+                weather_forecast_array = make_pretty_aprs_messages(
+                    message_to_add=f"wdir:{math.ceil(wdr_min)}{wind_deg_uom}",
+                    destination_list=weather_forecast_array,
+                )
+            if wdr_max:
+                weather_forecast_array = make_pretty_aprs_messages(
+                    message_to_add=f"wdir:{math.ceil(wdr_max)}{wind_deg_uom}",
+                    destination_list=weather_forecast_array,
+                )
+
+        # get the cloud area fraction values whereas present
+        caf_night = caf_morning = caf_daytime = caf_evening = None
+
+        if wx_night:
+            if "cloud_area_fraction" in wx_night:
+                caf_night = wx_night["cloud_area_fraction"]
+
+        if wx_morning:
+            if "cloud_area_fraction" in wx_morning:
+                caf_morning = wx_morning["cloud_area_fraction"]
+
+        if wx_daytime:
+            if "cloud_area_fraction" in wx_daytime:
+                caf_daytime = wx_daytime["cloud_area_fraction"]
+
+        if wx_evening:
+            if "cloud_area_fraction" in wx_evening:
+                caf_evening = wx_evening["cloud_area_fraction"]
+
+        # get the max value and ignore the min value
+        caf_max, _ = get_maxmin(
+            value_night=caf_night,
+            value_morning=caf_morning,
+            value_daytime=caf_daytime,
+            value_evening=caf_evening,
+        )
+
+        # did we get a value?
+        if caf_max:
 
             # build the message
             weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"wspd:",
+                message_to_add=f"cld:",
                 destination_list=weather_forecast_array,
             )
-            if wsp_max and wsp_min:
+            weather_forecast_array = make_pretty_aprs_messages(
+                message_to_add=f"{math.ceil(caf_max)}{clouds_uom}",
+                destination_list=weather_forecast_array,
+                add_sep=False,
+            )
+
+        # get the air pressure values whereas present
+        psi_night = psi_morning = psi_daytime = psi_evening = None
+
+        if wx_night:
+            if "air_pressure_at_sea_level" in wx_night:
+                psi_night = wx_night["air_pressure_at_sea_level"]
+
+        if wx_morning:
+            if "air_pressure_at_sea_level" in wx_morning:
+                psi_morning = wx_morning["air_pressure_at_sea_level"]
+
+        if wx_daytime:
+            if "air_pressure_at_sea_level" in wx_daytime:
+                psi_daytime = wx_daytime["air_pressure_at_sea_level"]
+
+        if wx_evening:
+            if "air_pressure_at_sea_level" in wx_evening:
+                psi_evening = wx_evening["air_pressure_at_sea_level"]
+
+        # get the max and min pressure values
+        psi_max, psi_min = get_maxmin(
+            value_night=psi_night,
+            value_morning=psi_morning,
+            value_daytime=psi_daytime,
+            value_evening=psi_evening,
+        )
+
+        if psi_max or psi_min:
+            weather_forecast_array = make_pretty_aprs_messages(
+                message_to_add=f"prs:",
+                destination_list=weather_forecast_array,
+            )
+
+        if psi_max and psi_min:
+            weather_forecast_array = make_pretty_aprs_messages(
+                message_to_add=f"{math.ceil(psi_min)}-{math.ceil(psi_max)}{pressure_uom}",
+                destination_list=weather_forecast_array,
+                add_sep=False,
+            )
+        else:
+            if psi_max:
                 weather_forecast_array = make_pretty_aprs_messages(
-                    message_to_add=f"{math.ceil(wsp_min)}-{math.ceil(wsp_max)}{wind_speed_uom}",
+                    message_to_add=f"{math.ceil(psi_max)}{pressure_uom}",
                     destination_list=weather_forecast_array,
+                    add_sep=False,
                 )
-            else:
-                if wsp_min:
-                    weather_forecast_array = make_pretty_aprs_messages(
-                        message_to_add=f"{math.ceil(wsp_min)}{wind_speed_uom}",
-                        destination_list=weather_forecast_array,
-                    )
-                if wsp_max:
-                    weather_forecast_array = make_pretty_aprs_messages(
-                        message_to_add=f"{math.ceil(wsp_max)}{wind_speed_uom}",
-                        destination_list=weather_forecast_array,
-                    )
+            if psi_min:
+                weather_forecast_array = make_pretty_aprs_messages(
+                    message_to_add=f"{math.ceil(psi_min)}{pressure_uom}",
+                    destination_list=weather_forecast_array,
+                    add_sep=False,
+                )
 
     # Ultimately, return the array
     return weather_forecast_array
@@ -1069,26 +1146,32 @@ def get_maxmin(
     value_max = sys.float_info.min
     value_min = sys.float_info.max
 
-    if value_night > value_max:
-        value_max = value_night
-    if value_night < value_min:
-        value_min = value_night
+    if value_night:
+        if value_night > value_max:
+            value_max = value_night
+        if value_night < value_min:
+            value_min = value_night
 
-    if value_morning > value_max:
-        value_max = value_morning
-    if value_morning < value_min:
-        value_min = value_morning
+    if value_morning:
+        if value_morning > value_max:
+            value_max = value_morning
+        if value_morning < value_min:
+            value_min = value_morning
 
-    if value_daytime > value_max:
-        value_max = value_daytime
-    if value_daytime < value_min:
-        value_min = value_daytime
+    if value_daytime:
+        if value_daytime > value_max:
+            value_max = value_daytime
+        if value_daytime < value_min:
+            value_min = value_daytime
 
-    if value_evening > value_max:
-        value_max = value_evening
-    if value_evening < value_min:
-        value_min = value_evening
+    if value_evening:
+        if value_evening > value_max:
+            value_max = value_evening
+        if value_evening < value_min:
+            value_min = value_evening
 
+    # In case we didn't succeed at all, ensure that we
+    # return the info accordingly
     if value_max == sys.float_info.min:
         value_max = None
 
