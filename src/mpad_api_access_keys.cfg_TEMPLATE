@@ -1,8 +1,5 @@
 [mpad_config]
 
-# API key for www.openweathermap.org
-openweathermapdotorg_api_key = NOT_CONFIGURED
-
 # API key for www.aprs.fi
 aprsdotfi_api_key = NOT_CONFIGURED
 

@@ -36,7 +36,6 @@ def testcall(message_text: str, from_callsign: str):
     (
         success,
         aprsdotfi_api_key,
-        openweathermapdotorg_api_key,
         aprsis_callsign,
         aprsis_passcode,
         dapnet_login_callsign,
@@ -60,7 +59,6 @@ def testcall(message_text: str, from_callsign: str):
         response_parameters.update(
             {
                 "aprsdotfi_api_key": aprsdotfi_api_key,
-                "openweathermapdotorg_api_key": openweathermapdotorg_api_key,
                 "dapnet_login_callsign": dapnet_login_callsign,
                 "dapnet_login_passcode": dapnet_login_passcode,
                 "smtpimap_email_address": smtpimap_email_address,
@@ -119,4 +117,4 @@ if __name__ == "__main__":
     # create them, if necessary
     download_data_files_if_missing()
 
-    testcall(message_text="posmsg jsl24469@gmail.com", from_callsign="DF1JSL-1")
+    testcall(message_text="tuesday", from_callsign="DF1JSL-1")

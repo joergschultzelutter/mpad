@@ -291,7 +291,6 @@ def mycallback(raw_aprs_packet: dict):
                         response_parameters.update(
                             {
                                 "aprsdotfi_api_key": aprsdotfi_api_key,
-                                "openweathermapdotorg_api_key": openweathermapdotorg_api_key,
                                 "dapnet_login_callsign": dapnet_login_callsign,
                                 "dapnet_login_passcode": dapnet_login_passcode,
                                 "smtpimap_email_address": smtpimap_email_address,
@@ -370,7 +369,7 @@ if __name__ == "__main__":
     )
     logger = logging.getLogger(__name__)
     #
-    # Get the API access keys for OpenWeatherMap and APRS.fi. If we don't have those
+    # Get the API access keys for APRS.fi et al. If we don't have those
     # then there is no point in continuing
     #
     logger.info(msg="Program startup ...")
@@ -385,7 +384,6 @@ if __name__ == "__main__":
     (
         success,
         aprsdotfi_api_key,
-        openweathermapdotorg_api_key,
         aprsis_login_callsign,
         aprsis_login_passcode,
         dapnet_login_callsign,

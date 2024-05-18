@@ -37,7 +37,7 @@ from datetime import datetime
 import mpad_config
 from pprint import pformat
 
-aprsdotfi_api_key = openweathermap_api_key = None
+aprsdotfi_api_key = None
 
 errmsg_cannot_find_coords_for_address: str = (
     "Cannot find coordinates for requested address"
@@ -2233,9 +2233,9 @@ def parse_what_keyword_callsign_multi(
     altitude = 0
     lasttime = datetime.min
     what = message_callsign = city = state = county = None
-    zipcode = (
-        country
-    ) = country_code = district = address = street = street_number = None
+    zipcode = country = country_code = district = address = street = street_number = (
+        None
+    )
 
     # First check the APRS message and see if the user has submitted
     # a call sign with the message (we will first check for a call
@@ -2462,9 +2462,9 @@ def parse_what_keyword_whereami(
     altitude = 0
     lasttime = datetime.min
     what = message_callsign = city = state = county = None
-    zipcode = (
-        country
-    ) = country_code = district = address = street = street_number = None
+    zipcode = country = country_code = district = address = street = street_number = (
+        None
+    )
 
     regex_string = r"\b(whereami)\b"
     matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
@@ -2720,8 +2720,6 @@ def parse_keyword_language(aprs_message: str):
     language = "en"
 
     # check if the user wants to change the language
-    # for openweathermap.com (currently fix for 'en' but
-    # might change in the future
     # hint: setting is not tied to the program's duty roster
     regex_string = r"\b(lang|lng)\s*([a-zA-Z]{2})\b"
     matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
@@ -2894,9 +2892,9 @@ def parse_what_keyword_email_position_report(
     altitude = 0
     lasttime = datetime.min
     what = message_callsign = city = state = county = None
-    zipcode = (
-        country
-    ) = country_code = district = address = street = street_number = None
+    zipcode = country = country_code = district = address = street = street_number = (
+        None
+    )
 
     # check for a keyword - email pattern
     regex_string = (
@@ -2993,7 +2991,6 @@ if __name__ == "__main__":
     (
         success,
         aprsdotfi_api_key,
-        openweathermap_api_key,
         aprsis_callsign,
         aprsis_passcode,
         dapnet_callsign,

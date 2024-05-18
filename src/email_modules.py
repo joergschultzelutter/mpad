@@ -572,7 +572,6 @@ if __name__ == "__main__":
     (
         success,
         aprsdotfi_api_key,
-        openweathermap_api_key,
         aprsis_callsign,
         aprsis_passcode,
         dapnet_callsign,

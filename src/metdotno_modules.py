@@ -1,6 +1,6 @@
 #
 # Multi-Purpose APRS Daemon: met.no Modules
-# Author: Joerg Schultze-Lutter, 2020
+# Author: Joerg Schultze-Lutter, 2024
 #
 # Purpose: Uses met.no for WX report prediction
 # Tries to rebuild the old OpenWeatherMap API output as close as possible
@@ -176,7 +176,7 @@ def get_wx_data_tuple(weather_tuples: dict, index: int):
     return success, result
 
 
-def get_daily_weather_from_metdotno(
+def get_weather_from_metdotno(
     latitude: float,
     longitude: float,
     offset: int,
@@ -486,7 +486,7 @@ def convert_speed(speed: float, units: str = "metric"):
     return speed
 
 
-def parse_daily_weather_from_metdotno(
+def parse_weather_from_metdotno(
     weather_tuple: dict,
     units: str,
     human_readable_text: str,
@@ -495,7 +495,7 @@ def parse_daily_weather_from_metdotno(
     force_outgoing_unicode_messages: bool = False,
 ):
     """
-    Parses the wx tuple (as returned by function get_daily_weather_from_metdotno)
+    Parses the wx tuple (as returned by function get_weather_from_metdotno)
     Once the data has been parsed, it will build a human-readable text array,
     consisting of 1..n text messages with 1..67 characters in length.
     This is the data that will ultimately be sent to the user.
@@ -548,7 +548,7 @@ def parse_daily_weather_from_metdotno(
 
     pressure_uom = "hPa"
     humidity_uom = "%"
-    wind_deg_uom = "deg"
+    wind_deg_uom = "dg"
     clouds_uom = "%"
     visibility_uom = "m"
 
@@ -1278,7 +1278,6 @@ if __name__ == "__main__":
     (
         success,
         aprsdotfi_api_key,
-        openweathermap_api_key,
         aprsis_callsign,
         aprsis_passcode,
         dapnet_callsign,
@@ -1291,9 +1290,11 @@ if __name__ == "__main__":
         (
             success,
             weather_tuple,
-        ) = get_daily_weather_from_metdotno(
+        ) = get_weather_from_metdotno(
             latitude=51.8458575,
             longitude=8.2997425,
+            #            latitude=34.03,
+            #            longitude=-118.24,
             offset=1,
             access_mode="day",
             daytime=mpad_config.mpad_str_full,
@@ -1302,9 +1303,9 @@ if __name__ == "__main__":
         logger.info(pformat(weather_tuple))
 
         if success:
-            my_weather_forecast_array = parse_daily_weather_from_metdotno(
+            my_weather_forecast_array = parse_weather_from_metdotno(
                 weather_tuple=weather_tuple,
-                units="metric",
+                units="imperial",
                 human_readable_text="Und jetzt das Wetter ÄäÖöÜüß",
                 when="Samstag",
                 when_dt=mpad_config.mpad_str_full,

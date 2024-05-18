@@ -20,10 +20,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-from openweathermap_modules import (
-    get_daily_weather_from_openweathermapdotorg,
-    parse_daily_weather_from_openweathermapdotorg,
-)
+from metdotno_modules import get_weather_from_metdotno, parse_weather_from_metdotno
+
 from cwop_modules import (
     get_cwop_findu,
     get_nearest_cwop_findu,
@@ -215,7 +213,6 @@ def generate_output_message_wx(response_parameters: dict):
     language = response_parameters["language"]
     altitude = response_parameters["altitude"]
     human_readable_message = response_parameters["human_readable_message"]
-    openweathermapdotorg_api_key = response_parameters["openweathermapdotorg_api_key"]
     force_outgoing_unicode_messages = response_parameters[
         "force_outgoing_unicode_messages"
     ]
@@ -231,14 +228,12 @@ def generate_output_message_wx(response_parameters: dict):
         offset = -1
         access_mode = "current"
 
-    success, myweather, tz_offset, tz = get_daily_weather_from_openweathermapdotorg(
+    success, myweather = get_weather_from_metdotno(
         latitude=latitude,
         longitude=longitude,
-        units=units,
         offset=offset,
-        openweathermap_api_key=openweathermapdotorg_api_key,
-        language=language,
         access_mode=access_mode,
+        daytime=when_daytime,
     )
     if success:
         if when == "hour":
@@ -246,11 +241,11 @@ def generate_output_message_wx(response_parameters: dict):
         elif when == "now":
             human_readable_message = (
                 datetime.datetime.strftime(datetime.datetime.utcnow(), "%H:%M")
-                + "UTC "
+                + "Z "
                 + human_readable_message
             )
 
-        output_list = parse_daily_weather_from_openweathermapdotorg(
+        output_list = parse_weather_from_metdotno(
             weather_tuple=myweather,
             units=units,
             human_readable_text=human_readable_message,
@@ -1587,7 +1582,6 @@ if __name__ == "__main__":
     (
         success,
         aprsdotfi_api_key,
-        openweathermap_api_key,
         aprsis_callsign,
         aprsis_passcode,
         dapnet_callsign,

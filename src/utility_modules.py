@@ -237,8 +237,6 @@ def read_program_config(config_file_name: str = "mpad_api_access_keys.cfg"):
         the values from the config file
     aprsdotfi_cfg_key: 'str'
         aprs.fi API key
-    openweathermapdotorg_api_key: 'str'
-        openweathermap.org API key
     aprsis_login_callsign: 'str'
         Call sign for APRS-IS login
     aprsis_login_passcode: 'str'
@@ -258,7 +256,7 @@ def read_program_config(config_file_name: str = "mpad_api_access_keys.cfg"):
 
     config = configparser.ConfigParser()
     success = False
-    aprsdotfi_cfg_key = openweathermapdotorg_api_key = None
+    aprsdotfi_cfg_key = None
     aprsis_login_callsign = aprsis_login_passcode = None
     dapnet_login_callsign = dapnet_login_passcode = None
     smtpimap_email_address = smtpimap_email_password = None
@@ -266,9 +264,6 @@ def read_program_config(config_file_name: str = "mpad_api_access_keys.cfg"):
         try:
             config.read(config_file_name)
             aprsdotfi_cfg_key = config.get("mpad_config", "aprsdotfi_api_key")
-            openweathermapdotorg_api_key = config.get(
-                "mpad_config", "openweathermapdotorg_api_key"
-            )
             aprsis_login_callsign = config.get("mpad_config", "aprsis_login_callsign")
             aprsis_login_passcode = config.get("mpad_config", "aprsis_login_passcode")
             dapnet_login_callsign = config.get("mpad_config", "dapnet_login_callsign")
@@ -283,7 +278,6 @@ def read_program_config(config_file_name: str = "mpad_api_access_keys.cfg"):
     return (
         success,
         aprsdotfi_cfg_key,
-        openweathermapdotorg_api_key,
         aprsis_login_callsign,
         aprsis_login_passcode,
         dapnet_login_callsign,
