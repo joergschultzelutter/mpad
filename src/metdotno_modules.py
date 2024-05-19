@@ -539,8 +539,12 @@ def parse_weather_from_metdotno(
     weather_forecast_array = []
 
     # Set some unit-of-measure defaults...
-    temp_uom = "c"
+    temp_uom = "C"
+    temp_uom_imperial = "F"
+
     wind_speed_uom = "m/s"
+    wind_speed_uom_imperial = "mph"
+
     rain_uom = "mm"
     snow_uom = "mm"
     sleet_uom = "mm"
@@ -666,11 +670,13 @@ def parse_weather_from_metdotno(
 
         # get the wind speed
         if "wind_speed" in weather_tuple:
+            uom = wind_speed_uom
             w_wind_speed = weather_tuple["wind_speed"]
-
-            w_wind_speed = convert_speed(speed=w_wind_speed, units=units)
+            if units == "imperial":
+                w_wind_speed = convert_speed(speed=w_wind_speed, units=units)
+                uom = wind_speed_uom_imperial
             weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"wspd:{math.ceil(w_wind_speed)}{wind_speed_uom}",
+                message_to_add=f"wspd:{math.ceil(w_wind_speed)}{uom}",
                 destination_list=weather_forecast_array,
             )
 
@@ -819,6 +825,8 @@ def parse_weather_from_metdotno(
             evening_temperature
         ) = 0.0
 
+        uom = temp_uom_imperial if units == "imperial" else temp_uom
+
         if wx_night:
             if "air_temperature" in wx_night:
                 night_temperature = wx_night["air_temperature"]
@@ -863,7 +871,7 @@ def parse_weather_from_metdotno(
             or night_temperature
         ):
             if night_temperature:
-                wx_string = f"Nite:{night_temperature}{temp_uom}"
+                wx_string = f"Nite:{night_temperature}{uom}"
                 weather_forecast_array = make_pretty_aprs_messages(
                     message_to_add=wx_string,
                     destination_list=weather_forecast_array,
@@ -871,7 +879,7 @@ def parse_weather_from_metdotno(
                 )
 
             if morning_temperature:
-                wx_string = f"Morn:{morning_temperature}{temp_uom}"
+                wx_string = f"Morn:{morning_temperature}{uom}"
                 weather_forecast_array = make_pretty_aprs_messages(
                     message_to_add=wx_string,
                     destination_list=weather_forecast_array,
@@ -879,7 +887,7 @@ def parse_weather_from_metdotno(
                 )
 
             if daytime_temperature:
-                wx_string = f"Day:{daytime_temperature}{temp_uom}"
+                wx_string = f"Day:{daytime_temperature}{uom}"
                 weather_forecast_array = make_pretty_aprs_messages(
                     message_to_add=wx_string,
                     destination_list=weather_forecast_array,
@@ -887,7 +895,7 @@ def parse_weather_from_metdotno(
                 )
 
             if evening_temperature:
-                wx_string = f"Eve:{evening_temperature}{temp_uom}"
+                wx_string = f"Eve:{evening_temperature}{uom}"
                 weather_forecast_array = make_pretty_aprs_messages(
                     message_to_add=wx_string,
                     destination_list=weather_forecast_array,
@@ -1067,26 +1075,29 @@ def parse_weather_from_metdotno(
         )
 
         # convert to imperial system, if necessary
-        if wsp_max:
-            wsp_max = convert_speed(speed=wsp_max, units=units)
-        if wsp_min:
-            wsp_min = convert_speed(speed=wsp_min, units=units)
+        uom = wind_speed_uom
+        if units == "imperial":
+            if wsp_max:
+                wsp_max = convert_speed(speed=wsp_max, units=units)
+            if wsp_min:
+                wsp_min = convert_speed(speed=wsp_min, units=units)
+            uom = wind_speed_uom_imperial
 
         # did wd get at least one value?
         if wsp_max and wsp_min:
             weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"wspd:{math.ceil(wsp_min)}-{math.ceil(wsp_max)}{wind_speed_uom}",
+                message_to_add=f"wspd:{math.ceil(wsp_min)}-{math.ceil(wsp_max)}{uom}",
                 destination_list=weather_forecast_array,
             )
         else:
             if wsp_min:
                 weather_forecast_array = make_pretty_aprs_messages(
-                    message_to_add=f"wspd:{math.ceil(wsp_min)}{wind_speed_uom}",
+                    message_to_add=f"wspd:{math.ceil(wsp_min)}{uom}",
                     destination_list=weather_forecast_array,
                 )
             if wsp_max:
                 weather_forecast_array = make_pretty_aprs_messages(
-                    message_to_add=f"wspd:{math.ceil(wsp_max)}{wind_speed_uom}",
+                    message_to_add=f"wspd:{math.ceil(wsp_max)}{uom}",
                     destination_list=weather_forecast_array,
                 )
 
@@ -1166,13 +1177,8 @@ def parse_weather_from_metdotno(
 
             # build the message
             weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"cld:",
+                message_to_add=f"cld:{math.ceil(caf_max)}{clouds_uom}",
                 destination_list=weather_forecast_array,
-            )
-            weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"{math.ceil(caf_max)}{clouds_uom}",
-                destination_list=weather_forecast_array,
-                add_sep=False,
             )
 
         # get the air pressure values whereas present
@@ -1202,30 +1208,21 @@ def parse_weather_from_metdotno(
             value_evening=psi_evening,
         )
 
-        if psi_max or psi_min:
-            weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"prs:",
-                destination_list=weather_forecast_array,
-            )
-
         if psi_max and psi_min:
             weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"{math.ceil(psi_min)}-{math.ceil(psi_max)}{pressure_uom}",
+                message_to_add=f"prs:{math.ceil(psi_min)}-{math.ceil(psi_max)}{pressure_uom}",
                 destination_list=weather_forecast_array,
-                add_sep=False,
             )
         else:
             if psi_max:
                 weather_forecast_array = make_pretty_aprs_messages(
-                    message_to_add=f"{math.ceil(psi_max)}{pressure_uom}",
+                    message_to_add=f"prs:{math.ceil(psi_max)}{pressure_uom}",
                     destination_list=weather_forecast_array,
-                    add_sep=False,
                 )
             if psi_min:
                 weather_forecast_array = make_pretty_aprs_messages(
-                    message_to_add=f"{math.ceil(psi_min)}{pressure_uom}",
+                    message_to_add=f"prs:{math.ceil(psi_min)}{pressure_uom}",
                     destination_list=weather_forecast_array,
-                    add_sep=False,
                 )
 
     # Ultimately, return the array
