@@ -636,7 +636,7 @@ Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME
 By default, the program will automatically switch from the metric system (default) to the imperial system if the __sender's__ call sign is from Liberia, Myanmar or the United States (per Wikipedia, these are the only three countries which still use the imperial system over the metric system).
 
 - metric system (__default__): temperatures in degrees Celsius, speed in km/h, rain levels in cm etc.
-- imperial system: temperatures in degress Fahrenheit, speed in mph, rain levels in inch etc.
+- imperial system: temperatures in degress Fahrenheit, speed in mph etc.
 
 If you don't want to rely on the automatic mode, you can always override this automated setting by specifying one of the following keywords:
 
@@ -669,7 +669,7 @@ Now let's request the same wx report - but this time, we want it to be delivered
 
 ```hum:68% dewpt:43f wndspd:2mph wnddeg:50```
 
-MPAD does not perform an imperial-to-metric calculation (or vice versa) but requests the desired format as part of its REST requests to e.g. Openweathermap and other services. Apart from rounding these values in order to limit the message length, all data is displayed 'as is'.
+MPAD then performs an imperial-to-metric calculation in case the user has requested imperial format. Apart from rounding these values in order to limit the message length, all data is displayed 'as is'.
 
 ## Language
 

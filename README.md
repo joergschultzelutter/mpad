@@ -39,7 +39,7 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/TAF/CWOP reports,
 Thank you Jason/KM4ACK for your kind video review!
 [![MPAD on YouTube](https://img.youtube.com/vi/75W0UTL5eOY/0.jpg)](https://www.youtube.com/watch?v=75W0UTL5eOY)
 
-MPAD has been added to KC2SAH's excellent off-grid radio reference. [Order yours here!](https://offgridweather.com/)
+MPAD has been added to KC2SAH's off-grid radio reference (thank you!). [Order yours here!](https://offgridweather.com/)
 [![Great Off-Grid Radio Reference Solution!](https://img.youtube.com/vi/65AeOBy7fDM/0.jpg)](https://www.youtube.com/watch?v=65AeOBy7fDM)
 
 ## Sample dialogue with MPAD

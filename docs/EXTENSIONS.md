@@ -78,13 +78,12 @@ Here's how to call ```make_pretty_aprs_messages```:
 
 Once your native routine has prepared that list, there is nothing else that you need to do. If the original incoming message was sent with a message ID, MPAD will automatically add unique message IDs to each outgoing message. Finally, the(se) message(s) are sent to APRS-IS.
 
-The output generator has only two parameters:
+The output generator has only a single parameter:
 
 - the ```dictionary``` from the ```input_parser.py``` module
-- the API access key to openweathermap.org
 
 Entering the output parser ONLY happens if the input parser has found a valid ```what``` command. Otherwise, a generic error message is presented to the user.
 
 ## Test your new keyword
 
-For a non-live test of the input parser and output generator, you can use the ```parser_test.py``` Python file which is part of this repo. Simply specify your own call sign (the one that you would send the message from) and the APRS message. Both ```input_parser.py``` and ```output_generator.py``` will be triggered and you can test if your new keyword works as designed. This is also good for testing if all Python packages have been installed and everything has been configured in a proper way.
+For a non-live test of the input parser and output generator, you can use the ```parser_test.py``` Python file which is part of this repo. Simply specify your own call sign (the one that you would send the message from) and the APRS message. Both ```input_parser.py``` and ```output_generator.py``` will be triggered, and you can test if your new keyword works as designed. This is also good for testing if all Python packages have been installed and everything has been configured in a proper way.

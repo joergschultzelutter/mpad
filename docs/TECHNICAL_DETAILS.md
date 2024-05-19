@@ -27,11 +27,8 @@ A decaying cache for __outgoing__ messages to the user is currently not implemen
 
 If you provide a call sign to MPAD and it tells you that it cannot find that call sign's coordinates, then open up aprs.fi and run a search on that call sign (keep in mind that the API uses an *EXACT* search - __wildcards do not work__). If aprs.fi either returns no results __or__ returns multiple results __for the *exact* spelling of the call sign that you've used in your message__, then you can tell the reason why MPAD cannot your call sign.
 
-- Weather report data from openweathermap:
-    - Wx Alert data is not returned to the user. This can be added in a later version but keep in mind that the text is very long and would result in multiple (10-15) APRS messages per alert!
-    - Access to openweathermap.org requires an API key which has a traffic limit
-    - With its current implementation of its 'OneCall' API, Openweathermap does not return the human-readable address in case a query is performed for lat/lon coordinates - which is applicable to all queries from MAPD. As a result, additional calls to e.g. Openstreetmap etc. may be necessary in order to provide the user with a human readable address.
-
+- Weather report data from met.no:
+    - Wx forecasts from met.no require no access keys. Unlike the previously used API from OpenWeatherMap, met.no's API does not provide a cumulated "full day" report option. As a result, MPAD is trying to generate a full day report based on the hourly data (read: results may vary)
 
 - Repeater data:
     - Currently, the repeater data may be very much EU-centric (MPAD borrows its data from repeatermap.de as well as from hearham.com). Additional _free_ repeater data sources can be added to future MPAD versions if such sources are available. If you want to see your repeater added to repeatermap.de, [please submit your data on DK3ML's site](https://www.repeatermap.de/new_repeater.php?lang=en). Alternatively, feel free to recommend free sources for repeater data and I see what I'll can do to add them to the program.

@@ -56,8 +56,6 @@ In reference to the European Union's GDPR regulations and other legal rules and 
 
   - aprs.fi
 
-  - openweathermap.org
-
   - optional: DAPNET / hampager.de
   
   - optional: SMTP/IMAP user account

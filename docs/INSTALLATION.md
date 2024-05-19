@@ -19,11 +19,10 @@ Finally, run ```aprs_parser.py``` which will start your local MPAD instance.
 Currently, MPAD uses various APIs and access keys for its purposes:
 
 - aprs.fi
-- openweathermap.org
 - DAPNET API
 - SMTP/IMAP username and password
 
-If you want to host your own MPAD instance, you need to acquire your personal API access keys for aprs.fi and openweathermap.org APIs and add these to MPAD's API config file (```mpad_api_access_keys.cfg```). An empty config template file is part of the repository. If you are not a registered DAPNET user, set the DAPNET callsign in the config file to N0CALL. When MPAD encounters this DAPNET user, it will refrain from sending content to DAPNET.
+If you want to host your own MPAD instance, you need to acquire your personal API access keys (e.g. for aprs.fi) and add these to MPAD's API config file (```mpad_api_access_keys.cfg```). An empty config template file is part of the repository. If you are not a registered DAPNET user, set the DAPNET callsign in the config file to N0CALL. When MPAD encounters this DAPNET user, it will refrain from sending content to DAPNET.
 
 Additionally, you also need to set your APRS-IS login credentials (callsign and passcode). By default, the login callsign is set to ```N0CALL``` which does permit the program to connect to APRS_IS in read-only mode. You can still receive and process messages (based on your filter settings' call signs). However, any outgoing message will not be sent to the user (via APRS-IS) but ends up in the program's log file. Setting the user's call sign to ```N0CALL``` will automatically enforce the program to enter read-only mode. ```aprsis_login_passcode``` is automatically set to ```-1``` and no data will be sent to APRS-IS.
 
@@ -31,9 +30,6 @@ if the email address is not configured to a valid address (checked via regex), a
 
 ```python
 [mpad_config]
-
-# API key for www.openweathermap.org
-openweathermapdotorg_api_key = NOT_CONFIGURED
 
 # API key for www.aprs.fi
 aprsdotfi_api_key = NOT_CONFIGURED
