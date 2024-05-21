@@ -20,6 +20,8 @@
 import datetime
 import configparser
 import os.path
+import pytz
+from datetime import datetime, timedelta
 from timezonefinder import TimezoneFinder
 import re
 from unidecode import unidecode
@@ -317,31 +319,6 @@ def getdaysuntil(theweekday):
         return (target_date - today).days
     else:
         return 7
-
-
-def determine_timezone(latitude: float, longitude: float):
-    """
-    Determine the timezone for a given set of coordinates
-
-    Parameters
-    ==========
-    latitude : 'float'
-        Latitude value
-    longitude : 'float'
-        Longitude value
-
-    Returns
-    =======
-    timezone: 'str'
-        Timezone string for given coordinates or 'None' in case of an error
-    """
-
-    assert type(latitude) in [float, int]
-    assert type(longitude) in [float, int]
-
-    tf = TimezoneFinder()
-    timezone = tf.timezone_at(lng=longitude, lat=latitude)
-    return timezone
 
 
 def read_number_of_served_packages(file_name: str = "mpad_served_packages.txt"):
@@ -650,6 +627,202 @@ def check_and_create_data_directory(
             logger.info(msg=f"{_data_directory} is not a directory, aborting ...")
             success = False
     return success
+
+
+def get_timezone(latitude: float, longitude: float):
+    """
+    Gets the time zone for the current lat/lon values
+
+    Parameters
+    ==========
+    latitude: 'float'
+        our latitude
+    longitude: 'float'
+        our longitude
+
+    Returns
+    =======
+    timezone:
+        timezone object
+    """
+
+    assert type(latitude) in [float, int]
+    assert type(longitude) in [float, int]
+
+    tf = TimezoneFinder()
+    timezone_str = tf.timezone_at(lat=latitude, lng=longitude)
+
+    if timezone_str is None:
+        logger.debug(
+            msg="Could not determine the timezone for the given coordinates; assuming UTC"
+        )
+        timezone_str = "UTC"
+
+    return pytz.timezone(timezone_str)
+
+
+def get_local_and_utc_times(latitude: float, longitude: float, base_date: datetime):
+    """
+    Gets the time zone for the current lat/lon values
+    via helper method. Then builds an array for the four
+    daytime settings that we have defined in mpad_config
+    which are 'night', 'morning', 'daytime', and 'evening'.
+    We will then use our knowledge about the user's time zone
+    in order to cast the appropriate UTC values from its
+    local-time brethren
+
+    Parameters
+    ==========
+    latitude: 'float'
+        our latitude
+    longitude: 'float'
+        our longitude
+    base_date: 'datetime'
+        usually, this is equivalent to datetime.utcnow()
+
+    Returns
+    =======
+    local_and_utc_times: 'dict'
+        dictionary with our local time stamps and its UTC counterparts
+    """
+
+    # get our time zone
+    timezone = get_timezone(latitude=latitude, longitude=longitude)
+
+    # Pre-define our local times for 'night', 'morning', 'daytime', and 'evening'
+    local_times = {
+        mpad_config.mpad_str_night: datetime(
+            base_date.year,
+            base_date.month,
+            base_date.day,
+            mpad_config.mpad_int_night,
+            0,
+        ),
+        mpad_config.mpad_str_morning: datetime(
+            base_date.year,
+            base_date.month,
+            base_date.day,
+            mpad_config.mpad_int_morning,
+            0,
+        ),
+        mpad_config.mpad_str_daytime: datetime(
+            base_date.year,
+            base_date.month,
+            base_date.day,
+            mpad_config.mpad_int_daytime,
+            0,
+        ),
+        mpad_config.mpad_str_evening: datetime(
+            base_date.year,
+            base_date.month,
+            base_date.day,
+            mpad_config.mpad_int_evening,
+            0,
+        ),
+    }
+
+    local_and_utc_times = {}
+    for key, local_time in local_times.items():
+
+        # localize to local time
+        local_time = timezone.localize(local_time)
+
+        # convert to utc
+        utc_time = local_time.astimezone(pytz.utc)
+        utc_offset = local_time.utcoffset()
+
+        local_and_utc_times[key] = {
+            "local_time": local_time.strftime("%Y-%m-%d %H:%M:%S %Z%z"),
+            "utc_time": utc_time,
+            "utc_offset": utc_offset,
+        }
+
+    return local_and_utc_times
+
+
+def find_best_matching_time(
+    target_utc_time: datetime,
+    timestamp_data: dict,
+    timestamp_data_element: str,
+    gap_half: int = 3,
+):
+    """
+
+    Helper method which tries to get the 'best fitting' entry from a list of
+    timestamp elements. Whenever data from met.no is getting pulled, the first
+    48 hours of data will consist of 48 entries for each hour, followed by
+    additional entries for the adjacent days. These additional entries will
+    however change to a six hour interval. Additionally, time stamp will be in
+    UTC. Dependent on where in the world a user has requested a wx report (and
+    for which day), the user might get a direct hit on his wx data query
+    (applicable to the 1 hour wx entries) OR the local-time-to-utc translation
+    might end up in a gap in case the user has requested a wx forecast for one
+    of the days with six hour intervals.
+
+    In order to circumvent this issue, we will check which of the six-hour-interval
+    values is the closest to our very own local-time-to-utc values in case the user
+    has 'requested a gap value'. Otherwise (= user chooses a value from within the
+    next 48 hours), we don't have to do this and select the appropriate value directly.
+
+    Parameters
+    ==========
+    target_utc_time: 'datetime'
+        datetime object
+    timestamp_data: 'dict'
+        our dictionary with the timestamps
+    timestamp_data_element: 'str'
+        the element from the dictionary that we intend to access
+    gap_half: 'int'
+        represents the half of our maximum gap. For the current use
+        case, the gap itself is six (6) hours, thus setting
+        gap_half for 6/2 = 3
+
+    Returns
+    =======
+    next_entry: datetime
+        best fit for our situation
+    """
+
+    half_max_gap = timedelta(hours=gap_half)
+    best_entry = None
+    min_diff = timedelta.max
+
+    for entry in timestamp_data:
+        current_diff = entry[timestamp_data_element] - target_utc_time
+        if abs(current_diff) < min_diff:
+            min_diff = abs(current_diff)
+            best_entry = entry
+
+    if min_diff <= half_max_gap:
+        # Return the closest entry within the half max gap
+        return best_entry
+
+    # If no close entry found within half max gap, find the next
+    # greater or smaller entry based on the time difference
+    next_greater_entry = None
+    next_smaller_entry = None
+
+    for entry in timestamp_data:
+        if entry[timestamp_data_element] >= target_utc_time:
+            next_greater_entry = entry
+            break
+        next_smaller_entry = entry
+
+    # Return the appropriate entry based on the condition
+    if next_greater_entry and next_smaller_entry:
+        if (next_greater_entry[timestamp_data_element] - target_utc_time) < (
+            target_utc_time - next_smaller_entry[timestamp_data_element]
+        ):
+            return next_greater_entry
+        else:
+            return next_smaller_entry
+    elif next_greater_entry:
+        return next_greater_entry
+    elif next_smaller_entry:
+        return next_smaller_entry
+    else:
+        # No matching entry found
+        return None
 
 
 if __name__ == "__main__":
