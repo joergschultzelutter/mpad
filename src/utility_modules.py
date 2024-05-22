@@ -21,7 +21,7 @@ import datetime
 import configparser
 import os.path
 import pytz
-from datetime import datetime, timedelta
+import datetime
 from timezonefinder import TimezoneFinder
 import re
 from unidecode import unidecode
@@ -691,28 +691,28 @@ def get_local_and_utc_times(latitude: float, longitude: float, base_date: dateti
 
     # Pre-define our local times for 'night', 'morning', 'daytime', and 'evening'
     local_times = {
-        mpad_config.mpad_str_night: datetime(
+        mpad_config.mpad_str_night: datetime.datetime(
             base_date.year,
             base_date.month,
             base_date.day,
             mpad_config.mpad_int_night,
             0,
         ),
-        mpad_config.mpad_str_morning: datetime(
+        mpad_config.mpad_str_morning: datetime.datetime(
             base_date.year,
             base_date.month,
             base_date.day,
             mpad_config.mpad_int_morning,
             0,
         ),
-        mpad_config.mpad_str_daytime: datetime(
+        mpad_config.mpad_str_daytime: datetime.datetime(
             base_date.year,
             base_date.month,
             base_date.day,
             mpad_config.mpad_int_daytime,
             0,
         ),
-        mpad_config.mpad_str_evening: datetime(
+        mpad_config.mpad_str_evening: datetime.datetime(
             base_date.year,
             base_date.month,
             base_date.day,
@@ -783,12 +783,12 @@ def find_best_matching_time(
         best fit for our situation
     """
 
-    half_max_gap = timedelta(hours=gap_half)
+    half_max_gap = datetime.timedelta(hours=gap_half)
     best_entry = None
-    min_diff = timedelta.max
+    min_diff = datetime.timedelta.max
 
     for entry in timestamp_data:
-        current_diff = entry[timestamp_data_element] - target_utc_time
+        current_diff = entry["timestamp"] - target_utc_time
         if abs(current_diff) < min_diff:
             min_diff = abs(current_diff)
             best_entry = entry

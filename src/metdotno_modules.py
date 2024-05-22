@@ -25,6 +25,7 @@
 import requests
 from utility_modules import make_pretty_aprs_messages
 from utility_modules import read_program_config
+from utility_modules import get_local_and_utc_times,find_best_matching_time
 import logging
 from pprint import pformat
 import math
@@ -296,7 +297,7 @@ def get_weather_from_metdotno(
 
                         for index, weather_tuple in enumerate(weather_tuples):
                             dt = datetime.strptime(
-                                weather_tuple["time"], "%Y-%m-%dT%H:%M:%SZ"
+                                weather_tuple["time"], "%Y-%m-%dT%H:%M:%S%z"
                             )
                             wx_time_offsets.append(
                                 {
@@ -318,6 +319,38 @@ def get_weather_from_metdotno(
                         dt_utc = dt_utc.replace(
                             hour=0, minute=0, second=0, microsecond=0
                         )
+
+                        time_stamps = get_local_and_utc_times(latitude=latitude,longitude=longitude,base_date=dt_utc)
+
+                        night = time_stamps[mpad_config.mpad_str_night]["utc_time"]
+                        a = find_best_matching_time(target_utc_time=night,timestamp_data=wx_time_offsets,timestamp_data_element="timestamp",gap_half=3)
+
+                        if a:
+                            b = a["timestamp"] - night
+                            if b:
+                                c = b.seconds / 3600
+                                if c > 6:
+                                    pass
+                                else:
+                                    pass
+
+
+
+
+                        morning = time_stamps[mpad_config.mpad_str_morning]["utc_time"]
+                        a = find_best_matching_time(target_utc_time=morning,timestamp_data=wx_time_offsets,timestamp_data_element="timestamp",gap_half=3)
+
+                        daytime = time_stamps[mpad_config.mpad_str_daytime]["utc_time"]
+                        a = find_best_matching_time(target_utc_time=daytime,timestamp_data=wx_time_offsets,timestamp_data_element="timestamp",gap_half=3)
+
+                        evening = time_stamps[mpad_config.mpad_str_evening]["utc_time"]
+                        a = find_best_matching_time(target_utc_time=evening,timestamp_data=wx_time_offsets,timestamp_data_element="timestamp",gap_half=3)
+
+
+
+
+
+
 
                         # used whenever a full day's results are NOT requested
                         found_generic = False
@@ -1288,11 +1321,11 @@ if __name__ == "__main__":
             success,
             weather_tuple,
         ) = get_weather_from_metdotno(
-            latitude=51.8458575,
-            longitude=8.2997425,
-            #            latitude=34.03,
-            #            longitude=-118.24,
-            offset=1,
+#            latitude=51.8458575,
+#            longitude=8.2997425,
+            latitude=34.03,
+            longitude=-118.24,
+            offset=0,
             access_mode="day",
             daytime=mpad_config.mpad_str_full,
         )
