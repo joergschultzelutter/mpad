@@ -25,7 +25,7 @@
 import requests
 from utility_modules import make_pretty_aprs_messages
 from utility_modules import read_program_config
-from utility_modules import get_local_and_utc_times,find_best_matching_time
+from utility_modules import get_local_and_utc_times, find_best_matching_time
 import logging
 from pprint import pformat
 import math
@@ -320,37 +320,58 @@ def get_weather_from_metdotno(
                             hour=0, minute=0, second=0, microsecond=0
                         )
 
-                        time_stamps = get_local_and_utc_times(latitude=latitude,longitude=longitude,base_date=dt_utc)
+                        # get the local times for night / morning / noon / evening and their UTC counterparts
+                        time_stamps = get_local_and_utc_times(
+                            latitude=latitude, longitude=longitude, base_date=dt_utc
+                        )
+
+                        # this is the maximum gap in the dict that we are going to encounter
+                        # for the first 48 hours, met.no provides a wx report on an hourly
+                        # basis. All the other following days provide a wx report every 6 hours
+                        # (interval and time zone are fixed; 0 / 6 / 12 / 18 h UTC)
+                        max_dict_gap = 6
 
                         night = time_stamps[mpad_config.mpad_str_night]["utc_time"]
-                        a = find_best_matching_time(target_utc_time=night,timestamp_data=wx_time_offsets,timestamp_data_element="timestamp",gap_half=3)
+                        a = find_best_matching_time(
+                            target_utc_time=night,
+                            timestamp_data=wx_time_offsets,
+                            timestamp_data_element="timestamp",
+                            gap_half=max_dict_gap / 2,
+                        )
 
-                        if a:
-                            b = a["timestamp"] - night
-                            if b:
-                                c = b.seconds / 3600
-                                if c > 6:
-                                    pass
-                                else:
-                                    pass
-
-
-
+                        if daytime == "full":
+                            if a:
+                                b = a["timestamp"] - night
+                                if b:
+                                    c = b.seconds / 3600
+                                    if c > 6:
+                                        pass
+                                    else:
+                                        pass
 
                         morning = time_stamps[mpad_config.mpad_str_morning]["utc_time"]
-                        a = find_best_matching_time(target_utc_time=morning,timestamp_data=wx_time_offsets,timestamp_data_element="timestamp",gap_half=3)
+                        a = find_best_matching_time(
+                            target_utc_time=morning,
+                            timestamp_data=wx_time_offsets,
+                            timestamp_data_element="timestamp",
+                            gap_half=3,
+                        )
 
                         daytime = time_stamps[mpad_config.mpad_str_daytime]["utc_time"]
-                        a = find_best_matching_time(target_utc_time=daytime,timestamp_data=wx_time_offsets,timestamp_data_element="timestamp",gap_half=3)
+                        a = find_best_matching_time(
+                            target_utc_time=daytime,
+                            timestamp_data=wx_time_offsets,
+                            timestamp_data_element="timestamp",
+                            gap_half=3,
+                        )
 
                         evening = time_stamps[mpad_config.mpad_str_evening]["utc_time"]
-                        a = find_best_matching_time(target_utc_time=evening,timestamp_data=wx_time_offsets,timestamp_data_element="timestamp",gap_half=3)
-
-
-
-
-
-
+                        a = find_best_matching_time(
+                            target_utc_time=evening,
+                            timestamp_data=wx_time_offsets,
+                            timestamp_data_element="timestamp",
+                            gap_half=3,
+                        )
 
                         # used whenever a full day's results are NOT requested
                         found_generic = False
@@ -473,6 +494,73 @@ def get_weather_from_metdotno(
                             return success, wx_dict
 
     return False, None
+
+
+def validate_received_timestamp(
+    utc_timestamp: datetime, received_timestamp: datetime, mode: str, gap_full: int
+):
+    """
+    Helper method which checks and -if necessary- invalidates
+    a given time stamp
+
+    Parameters
+    ==========
+    utc_timestamp: 'datetime'
+        reference UTC timestamp, calculated based on the lat/lon
+        values earlier provided by the user
+    received_timestamp: 'datetime'
+        "best/closest" UTC timestamp, retrieved from met.no's wx
+        data lookup table
+    mode: 'str'
+        The mode that the user wants us to query. This helper
+        method is _only_ used for "full" day wx requests
+    gap_full: 'int'
+        This is the maximum gap in the dict that we are going to encounter
+        For the first 48 hours, met.no provides a wx report on an hourly
+        basis. All the other following days provide a wx report every 6 hours
+        Therefore, our gap will be passed to this method as '6' hours
+
+    Returns
+    =======
+    received_timestamp: 'datetime'
+        Either 'datetime' or None, in case we had to invalidate the time stamp
+    """
+
+    # Explanation on why we need this method:
+    #
+    # Dependent on where we are located in this world, we may retrieve an incorrect
+    # date in case the user has requested IN COMBINATION:
+    #
+    # - report type = "full" day report
+    # - date = current date (aka offset = 0)
+    # - time zone difference that is larger than 1 (e.g. program is hosted in UTC, but
+    # request originated from e.g. PST)
+    #
+    # In such a case (especially when moving westwards from a time zone perspective),
+    # the data provided my met.no may not contain a fitting entry for the desired date
+    # and the algo will pick a date for the NEXT day instead. We can bypass this issue
+    # by calculating the difference between our original (calculated) UTC timestamp and
+    # the UTC timestamp that has been retrieved from the met.no wx table. In case the
+    # difference is greater than 'gap_full' (usually: 6), we know that a different day
+    # has been picked and we will therefore invalidate the entry, thus preventing it
+    # from being used.
+
+    # We only need this method for "full" day requests.
+    if mode != "full" or not received_timestamp:
+        return received_timestamp
+
+    # Calculate the difference between the calculated and the retrieved timestamp
+    # ensure to use the ABS value as the difference may also be negative
+    diff_time = received_timestamp - utc_timestamp
+    diff_hours = abs(round(diff_time.seconds / 3600))
+
+    # Do we exceed the maximum gap value? If yes, invalidate the response, thus
+    # preventing the time stamp from being used
+    if diff_hours > gap_full:
+        return None
+
+    # otherwise, return the time stamp as is
+    return received_timestamp
 
 
 def convert_temperature(temperature: float, units: str = "metric"):
@@ -745,7 +833,6 @@ def parse_weather_from_metdotno(
         #
 
     else:
-
         # This is the "Full Day" branch
         #
         # As the met.no service does not offer a full day's wx forecast,
@@ -854,9 +941,9 @@ def parse_weather_from_metdotno(
                         )
 
         # get the temperatures whereas available
-        night_temperature = morning_temperature = daytime_temperature = (
-            evening_temperature
-        ) = 0.0
+        night_temperature = (
+            morning_temperature
+        ) = daytime_temperature = evening_temperature = 0.0
 
         uom = temp_uom_imperial if units == "imperial" else temp_uom
 
@@ -1207,7 +1294,6 @@ def parse_weather_from_metdotno(
 
         # did we get a value?
         if caf_max:
-
             # build the message
             weather_forecast_array = make_pretty_aprs_messages(
                 message_to_add=f"cld:{math.ceil(caf_max)}{clouds_uom}",
@@ -1321,8 +1407,8 @@ if __name__ == "__main__":
             success,
             weather_tuple,
         ) = get_weather_from_metdotno(
-#            latitude=51.8458575,
-#            longitude=8.2997425,
+            #            latitude=51.8458575,
+            #            longitude=8.2997425,
             latitude=34.03,
             longitude=-118.24,
             offset=0,
