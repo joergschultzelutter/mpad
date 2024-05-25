@@ -205,10 +205,10 @@ def get_weather_from_metdotno(
         day = thursday, then date_offset = 2
         if 'access_mode' == 'hour':
         mumeric hourly offset, e.g. 1 = one hour from now
-    units: 'str'
-        Unit of measure. Can either be 'metric' or 'imperial'
     access_mode: 'str'
         Can either be 'day','hour' or 'current'
+    daytime: 'str'
+        Can either be 'night','morning', 'daytime', 'evening', or 'full'
 
     Returns
     =======
@@ -330,169 +330,177 @@ def get_weather_from_metdotno(
                         # basis. All the other following days provide a wx report every 6 hours
                         # (interval and time zone are fixed; 0 / 6 / 12 / 18 h UTC)
                         max_dict_gap = 6
+                        max_dict_gap_half = max_dict_gap / 2
 
-                        night = time_stamps[mpad_config.mpad_str_night]["utc_time"]
-                        a = find_best_matching_time(
-                            target_utc_time=night,
+                        # For each of the time stamps, first get the UTC value and then
+                        # try to get the best matching entry
+                        night_timestamp_utc = time_stamps[mpad_config.mpad_str_night][
+                            "utc_time"
+                        ]
+                        night_timestamp_lt = find_best_matching_time(
+                            target_utc_time=night_timestamp_utc,
                             timestamp_data=wx_time_offsets,
                             timestamp_data_element="timestamp",
-                            gap_half=max_dict_gap / 2,
+                            gap_half=max_dict_gap_half,
                         )
-
-                        if daytime == "full":
-                            if a:
-                                b = a["timestamp"] - night
-                                if b:
-                                    c = b.seconds / 3600
-                                    if c > 6:
-                                        pass
-                                    else:
-                                        pass
-
-                        morning = time_stamps[mpad_config.mpad_str_morning]["utc_time"]
-                        a = find_best_matching_time(
-                            target_utc_time=morning,
+                        morning_timestamp_utc = time_stamps[
+                            mpad_config.mpad_str_morning
+                        ]["utc_time"]
+                        morning_timestamp_lt = find_best_matching_time(
+                            target_utc_time=morning_timestamp_utc,
                             timestamp_data=wx_time_offsets,
                             timestamp_data_element="timestamp",
-                            gap_half=3,
+                            gap_half=max_dict_gap_half,
                         )
 
-                        daytime = time_stamps[mpad_config.mpad_str_daytime]["utc_time"]
-                        a = find_best_matching_time(
-                            target_utc_time=daytime,
+                        daytime_timestamp_utc = time_stamps[
+                            mpad_config.mpad_str_daytime
+                        ]["utc_time"]
+                        daytime_timestamp_lt = find_best_matching_time(
+                            target_utc_time=daytime_timestamp_utc,
                             timestamp_data=wx_time_offsets,
                             timestamp_data_element="timestamp",
-                            gap_half=3,
+                            gap_half=max_dict_gap_half,
                         )
 
-                        evening = time_stamps[mpad_config.mpad_str_evening]["utc_time"]
-                        a = find_best_matching_time(
-                            target_utc_time=evening,
+                        evening_timestamp_utc = time_stamps[
+                            mpad_config.mpad_str_evening
+                        ]["utc_time"]
+                        evening_timestamp_lt = find_best_matching_time(
+                            target_utc_time=evening_timestamp_utc,
                             timestamp_data=wx_time_offsets,
                             timestamp_data_element="timestamp",
-                            gap_half=3,
+                            gap_half=max_dict_gap_half,
                         )
+                        # Now it's time to validate these entries. Dependent on where we are located,
+                        # we might encounter a situation where we do not have a fitting time stamp for
+                        # the CURRENT day but only for the NEXT day - which is not what we want
+                        #
+                        # note that the time stamps might already be invalid at this point; we don't care
+                        # about this and handle these issues in our subroutine
+                        #
+                        # the subroutine will check if the wx report for this day is valid (read:
+                        # its time stamp is within these 6 hours). If so, we will retrieve the
+                        # object's index, thus allowing it to get the actual wx element(s) from
+                        # met.no's wx data set
 
-                        # used whenever a full day's results are NOT requested
-                        found_generic = False
-                        found_generic_index = -1
+                        # First, invalidate all index setting
+                        night_timestamp_index = (
+                            morning_timestamp_index
+                        ) = daytime_timestamp_index = evening_timestamp_index = None
 
-                        # used whenever a full day's results ARE requested
-                        found_full = False
-                        found_full_dict = {}
+                        # now validate the time stamp and retrieve the index if the time stamp looks ok
+                        night_timestamp = validate_received_timestamp(
+                            utc_timestamp=night_timestamp_utc,
+                            received_timestamp=night_timestamp_lt["timestamp"],
+                            mode=daytime,
+                            gap_full=max_dict_gap,
+                        )
+                        if night_timestamp:
+                            night_timestamp_index = night_timestamp_lt["index"]
 
-                        # Interate through the index that we have built ourselves
-                        for wx_time_offset in wx_time_offsets:
-                            wx_dt = wx_time_offset["timestamp"]
-                            if (
-                                dt_utc.day == wx_dt.day
-                                and dt_utc.month == wx_dt.month
-                                and dt_utc.year == wx_dt.year
-                            ):
-                                # We have found an entry for the current day
-                                # Now lets check which timeslot fits
-                                if (
-                                    daytime == mpad_config.mpad_str_morning
-                                    and wx_dt.hour == mpad_config.mpad_int_morning
-                                ):
-                                    found_generic = True
-                                    found_generic_index = wx_time_offset["index"]
-                                    break
-                                elif (
-                                    daytime == mpad_config.mpad_str_daytime
-                                    and wx_dt.hour == mpad_config.mpad_int_daytime
-                                ):
-                                    found_generic = True
-                                    found_generic_index = wx_time_offset["index"]
-                                    break
-                                elif (
-                                    daytime == mpad_config.mpad_str_evening
-                                    and wx_dt.hour == mpad_config.mpad_int_evening
-                                ):
-                                    found_generic = True
-                                    found_generic_index = wx_time_offset["index"]
-                                    break
-                                elif (
-                                    daytime == mpad_config.mpad_str_night
-                                    and wx_dt.hour == mpad_config.mpad_int_night
-                                ):
-                                    found_generic = True
-                                    found_generic_index = wx_time_offset["index"]
-                                    break
-                                else:
-                                    # the only remaining option is now a full day's result
-                                    if wx_time_offset["index"] < len(weather_tuples):
-                                        local_daytime = None
-                                        local_index = None
-                                        if (
-                                            wx_dt.hour
-                                            in mpad_config.mpad_daytime_mapper
-                                        ):
-                                            # get our index
-                                            local_index = wx_time_offset["index"]
-                                            # and get the human readable description
-                                            local_daytime = (
-                                                mpad_config.mpad_daytime_mapper[
-                                                    wx_dt.hour
-                                                ]
-                                            )
+                        morning_timestamp = validate_received_timestamp(
+                            utc_timestamp=morning_timestamp_utc,
+                            received_timestamp=morning_timestamp_lt["timestamp"],
+                            mode=daytime,
+                            gap_full=max_dict_gap,
+                        )
+                        if morning_timestamp:
+                            morning_timestamp_index = morning_timestamp_lt["index"]
 
-                                            # We have found at least one entry
-                                            found_full = True
+                        daytime_timestamp = validate_received_timestamp(
+                            utc_timestamp=daytime_timestamp_utc,
+                            received_timestamp=daytime_timestamp_lt["timestamp"],
+                            mode=daytime,
+                            gap_full=max_dict_gap,
+                        )
+                        if daytime_timestamp:
+                            daytime_timestamp_index = daytime_timestamp_lt["index"]
 
-                                            # Now add the index and its human readable description to the directory
-                                            found_full_dict[local_daytime] = local_index
+                        evening_timestamp = validate_received_timestamp(
+                            utc_timestamp=evening_timestamp_utc,
+                            received_timestamp=evening_timestamp_lt["timestamp"],
+                            mode=daytime,
+                            gap_full=max_dict_gap,
+                        )
+                        if evening_timestamp:
+                            evening_timestamp_index = evening_timestamp_lt["index"]
 
-                        # Did we retrieve anything but a full day's response?
-                        # Then return the tuple back to the user
-                        if found_generic:
-                            if found_generic_index < len(weather_tuples):
-                                return get_wx_data_tuple(
-                                    weather_tuples=weather_tuples,
-                                    index=found_generic_index,
-                                )
+                        # We are now in a position where we have calculated all possible values for
+                        # the user's local time zone for night/morning/daytime/evening
+                        # now let's check and see what the user has requested
+
+                        if daytime in [
+                            mpad_config.mpad_str_morning,
+                            mpad_config.mpad_str_night,
+                            mpad_config.mpad_str_daytime,
+                            mpad_config.mpad_str_evening,
+                        ]:
+                            my_index = None
+                            if daytime == mpad_config.mpad_str_night:
+                                my_index = night_timestamp_index
+                            elif daytime == mpad_config.mpad_str_morning:
+                                my_index = morning_timestamp_index
+                            elif daytime == mpad_config.mpad_str_daytime:
+                                my_index = daytime_timestamp_index
                             else:
-                                return False, None
+                                my_index = evening_timestamp_index
 
-                        # if we were supposed to gather a full day's results, try our
-                        # best to provide the user with an average based on what we
-                        # have gathered
-                        if found_full:
+                            if my_index:
+                                if my_index < len(weather_tuples):
+                                    return get_wx_data_tuple(
+                                        weather_tuples=weather_tuples,
+                                        index=my_index,
+                                    )
+                                else:
+                                    return False, None
+                        else:  # can only be "full", see assertion
                             wx_dict = {"_type": "MULTI"}
-                            if mpad_config.mpad_str_morning in found_full_dict:
+
+                            # generate the entry for each index and
+                            # add it to our dictionary
+                            if morning_timestamp_index is not None:
                                 _ret, _tuple = get_wx_data_tuple(
                                     weather_tuples=weather_tuples,
-                                    index=found_full_dict[mpad_config.mpad_str_morning],
+                                    index=morning_timestamp_index,
                                 )
                                 if _ret:
                                     wx_dict[mpad_config.mpad_str_morning] = _tuple
                                     success = True
-                            if mpad_config.mpad_str_daytime in found_full_dict:
+
+                            # generate the entry for each index and
+                            # add it to our dictionary
+                            if daytime_timestamp_index is not None:
                                 _ret, _tuple = get_wx_data_tuple(
                                     weather_tuples=weather_tuples,
-                                    index=found_full_dict[mpad_config.mpad_str_daytime],
+                                    index=daytime_timestamp_index,
                                 )
                                 if _ret:
                                     wx_dict[mpad_config.mpad_str_daytime] = _tuple
                                     success = True
-                            if mpad_config.mpad_str_evening in found_full_dict:
+
+                            # generate the entry for each index and
+                            # add it to our dictionary
+                            if evening_timestamp_index is not None:
                                 _ret, _tuple = get_wx_data_tuple(
                                     weather_tuples=weather_tuples,
-                                    index=found_full_dict[mpad_config.mpad_str_evening],
+                                    index=evening_timestamp_index,
                                 )
                                 if _ret:
                                     wx_dict[mpad_config.mpad_str_evening] = _tuple
                                     success = True
-                            if mpad_config.mpad_str_night in found_full_dict:
+
+                            # generate the entry for each index and
+                            # add it to our dictionary
+                            if night_timestamp_index is not None:
                                 _ret, _tuple = get_wx_data_tuple(
                                     weather_tuples=weather_tuples,
-                                    index=found_full_dict[mpad_config.mpad_str_night],
+                                    index=night_timestamp_index,
                                 )
                                 if _ret:
                                     wx_dict[mpad_config.mpad_str_night] = _tuple
                                     success = True
                             return success, wx_dict
-
     return False, None
 
 
@@ -1421,7 +1429,7 @@ if __name__ == "__main__":
         if success:
             my_weather_forecast_array = parse_weather_from_metdotno(
                 weather_tuple=weather_tuple,
-                units="imperial",
+                units="metric",
                 human_readable_text="Und jetzt das Wetter ÄäÖöÜüß",
                 when="Samstag",
                 when_dt=mpad_config.mpad_str_full,

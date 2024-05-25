@@ -117,4 +117,4 @@ if __name__ == "__main__":
     # create them, if necessary
     download_data_files_if_missing()
 
-    testcall(message_text="tuesday", from_callsign="DF1JSL-1")
+    testcall(message_text="sunday", from_callsign="DF1JSL-1")
