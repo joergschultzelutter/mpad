@@ -16,3 +16,5 @@ xmltodict>=0.12.0
 pillow>=10.0.0
 git+https://github.com/flopp/py-staticmaps#egg-py-staticmaps
 mgrs>=1.4.6
+timezonefinder>=6.5.0
+pytz>=2023.3.post1
