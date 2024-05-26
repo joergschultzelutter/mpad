@@ -849,19 +849,25 @@ def parse_weather_from_metdotno(
             if units == "imperial":
                 w_wind_speed = convert_speed(speed=w_wind_speed, units=units)
                 uom = wind_speed_uom_imperial
-            weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"wspd:{math.ceil(w_wind_speed)}{uom}",
-                destination_list=weather_forecast_array,
-            )
 
-        # get the wind degrees
-        if "wind_from_direction" in weather_tuple:
-            w_wind_deg = weather_tuple["wind_from_direction"]
+            # placeholder for human readable degrees
+            wdir = None
 
-            weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"wdeg:{math.ceil(w_wind_deg)}{wind_deg_uom}",
-                destination_list=weather_forecast_array,
-            )
+            # get the wind degrees
+            if "wind_from_direction" in weather_tuple:
+                w_wind_deg = weather_tuple["wind_from_direction"]
+                wdir = convert_wind_direction_to_human_text(degree=w_wind_deg)
+
+            if wdir:
+                weather_forecast_array = make_pretty_aprs_messages(
+                    message_to_add=f"wspd:{math.ceil(w_wind_speed)}{uom} {wdir}",
+                    destination_list=weather_forecast_array,
+                )
+            else:
+                weather_forecast_array = make_pretty_aprs_messages(
+                    message_to_add=f"wspd:{math.ceil(w_wind_speed)}{uom}",
+                    destination_list=weather_forecast_array,
+                )
 
         # Get the cloud coverage
         if "cloud_area_fraction" in weather_tuple:
@@ -953,6 +959,10 @@ def parse_weather_from_metdotno(
                 else:
                     symbol_codes[sym_evening] = 1
 
+        # place holder for mapped symbol code in case we need it later
+        # for the precipitiation output value
+        precipitiation_symbol_desc = None
+
         # Now let's try to determine what we have received
         # did we not get four different codes? This means
         # that we got more a symbol more than once, meaning that there is a higher
@@ -966,6 +976,8 @@ def parse_weather_from_metdotno(
                     if symbol_code in metdotno_symbol_mapper:
                         # get the human readable description
                         symbol_desc = metdotno_symbol_mapper[symbol_code]
+                        # save it for the precipitiation output (if necessary)
+                        precipitiation_symbol_desc = symbol_desc
                         # and add it to the outgoing message
                         weather_forecast_array = make_pretty_aprs_messages(
                             message_to_add=symbol_desc,
@@ -986,6 +998,8 @@ def parse_weather_from_metdotno(
                     if symbol_code in metdotno_symbol_mapper:
                         # get the human readable description
                         symbol_desc = metdotno_symbol_mapper[symbol_code]
+                        # save it for the precipitiation output (if necessary)
+                        precipitiation_symbol_desc = symbol_desc
                         # and add it to the outgoing message
                         weather_forecast_array = make_pretty_aprs_messages(
                             message_to_add=symbol_desc,
@@ -1159,38 +1173,12 @@ def parse_weather_from_metdotno(
             if "precipitation_amount" in wx_evening:
                 pre_evening = wx_evening["precipitation_amount"]
 
-        # get the max precipitation value and use the symbol code
+        # get the  precipitation value and use the symbol code
         # for determining what we are about to receive (rain, snow, sleet)
-        pre_max = 0.0
-        symbol_code = None
-
-        if pre_night > pre_max:
-            pre_max = pre_night
-            symbol_code = wx_night["symbol_code"]
-            if symbol_code in metdotno_symbol_mapper:
-                # get the human readable description
-                symbol_desc = metdotno_symbol_mapper[symbol_code]
-
-        if pre_morning > pre_max:
-            pre_max = pre_morning
-            symbol_code = wx_morning["symbol_code"]
-            if symbol_code in metdotno_symbol_mapper:
-                # get the human readable description
-                symbol_desc = metdotno_symbol_mapper[symbol_code]
-
-        if pre_daytime > pre_max:
-            pre_max = pre_daytime
-            symbol_code = wx_daytime["symbol_code"]
-            if symbol_code in metdotno_symbol_mapper:
-                # get the human readable description
-                symbol_desc = metdotno_symbol_mapper[symbol_code]
-
-        if pre_evening > pre_max:
-            pre_max = pre_evening
-            symbol_code = wx_evening["symbol_code"]
-            if symbol_code in metdotno_symbol_mapper:
-                # get the human readable description
-                symbol_desc = metdotno_symbol_mapper[symbol_code]
+        # yr.no summarizes the data and we will do, too
+        pre_sum = pre_night + pre_morning + pre_daytime + pre_evening
+        # and use the description which we saved earlier
+        symbol_desc = precipitiation_symbol_desc
 
         # try to determine what we're dealing with
         # if we can't determine that it is either rain,
@@ -1214,9 +1202,9 @@ def parse_weather_from_metdotno(
             uom_prec = prec_uom
 
         # and add the message to our list
-        if pre_max > 0.0:
+        if pre_sum > 0.0:
             weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"{s_prec}:{math.ceil(pre_max)}{uom_prec}",
+                message_to_add=f"{s_prec}:{math.ceil(pre_sum)}{uom_prec}",
                 destination_list=weather_forecast_array,
             )
 
@@ -1256,23 +1244,7 @@ def parse_weather_from_metdotno(
                 wsp_min = convert_speed(speed=wsp_min, units=units)
             uom = wind_speed_uom_imperial
 
-        # did wd get at least one value?
-        if wsp_max and wsp_min:
-            weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"wspd:{math.ceil(wsp_min)}-{math.ceil(wsp_max)}{uom}",
-                destination_list=weather_forecast_array,
-            )
-        else:
-            if wsp_min:
-                weather_forecast_array = make_pretty_aprs_messages(
-                    message_to_add=f"wspd:{math.ceil(wsp_min)}{uom}",
-                    destination_list=weather_forecast_array,
-                )
-            if wsp_max:
-                weather_forecast_array = make_pretty_aprs_messages(
-                    message_to_add=f"wspd:{math.ceil(wsp_max)}{uom}",
-                    destination_list=weather_forecast_array,
-                )
+        # prior to generating the message, get the wind direction
 
         # get the wind directions values whereas present
         wdr_night = wdr_morning = wdr_daytime = wdr_evening = None
@@ -1301,20 +1273,39 @@ def parse_weather_from_metdotno(
             value_evening=wdr_evening,
         )
 
-        if wdr_max and wdr_min:
+        # and now convert the data to a human readable heading, e.g. SSW
+        wdr_max_str = convert_wind_direction_to_human_text(degree=wdr_max)
+        wdr_min_str = convert_wind_direction_to_human_text(degree=wdr_min)
+
+        wdr_str = ""
+        # we SHOULD get a text for both, but check the status first
+        if wdr_max_str or wdr_min_str:
+            if wdr_max_str and wdr_min_str:
+                if wdr_max_str == wdr_min_str:
+                    wdr_str = f"{wdr_max_str}"
+                else:
+                    wdr_str = f"{wdr_min_str}-{wdr_max_str}"
+            else:
+                if wdr_max_str:
+                    wdr_str = f"{wdr_max_str}"
+                else:
+                    wdr_str = f"{wdr_min_str}"
+
+        # did wd get at least one value?
+        if wsp_max and wsp_min:
             weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"wdir:{math.ceil(wdr_min)}-{math.ceil(wdr_max)}{wind_deg_uom}",
+                message_to_add=f"wind:{math.ceil(wsp_min)}-{math.ceil(wsp_max)}{uom} {wdr_str}",
                 destination_list=weather_forecast_array,
             )
         else:
-            if wdr_min:
+            if wsp_min:
                 weather_forecast_array = make_pretty_aprs_messages(
-                    message_to_add=f"wdir:{math.ceil(wdr_min)}{wind_deg_uom}",
+                    message_to_add=f"wind:{math.ceil(wsp_min)}{uom}{wdr_str} {wdr_str}",
                     destination_list=weather_forecast_array,
                 )
-            if wdr_max:
+            if wsp_max:
                 weather_forecast_array = make_pretty_aprs_messages(
-                    message_to_add=f"wdir:{math.ceil(wdr_max)}{wind_deg_uom}",
+                    message_to_add=f"wind:{math.ceil(wsp_max)}{uom} {wdr_str}",
                     destination_list=weather_forecast_array,
                 )
 
@@ -1399,6 +1390,40 @@ def parse_weather_from_metdotno(
 
     # Ultimately, return the array
     return weather_forecast_array
+
+
+def convert_wind_direction_to_human_text(degree: int):
+
+    if degree < 0 or degree > 360:
+        logger.debug(msg="invalid degree value received")
+        return None
+
+    directions = [
+        "N",
+        "NNE",
+        "NE",
+        "ENE",
+        "E",
+        "ESE",
+        "SE",
+        "SSE",
+        "S",
+        "SSW",
+        "SW",
+        "WSW",
+        "W",
+        "WNW",
+        "NW",
+        "NNW",
+    ]
+    cardinal_wind_step = 360 / len(
+        directions
+    )  # Degrees per cardinal direction (including intermediate)
+    index = int((degree % 360) / cardinal_wind_step)
+    return directions[index]
+
+    logger.debug(msg="Unable to assign wind direction value")
+    return None
 
 
 def get_maxmin(
