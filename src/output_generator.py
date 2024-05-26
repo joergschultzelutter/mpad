@@ -254,6 +254,8 @@ def generate_output_message_wx(response_parameters: dict):
             force_outgoing_unicode_messages=force_outgoing_unicode_messages,
         )
 
+        # deactivated for now - we need to save tx space
+        """
         # Add altitude from aprs.fi if present
         if altitude:
             altitude_uom = "m"
@@ -268,6 +270,7 @@ def generate_output_message_wx(response_parameters: dict):
                 message_to_add=human_readable_address,
                 destination_list=output_list,
             )
+        """
         return success, output_list
     else:
         success = True

@@ -430,9 +430,9 @@ def get_weather_from_metdotno(
                         # met.no's wx data set
 
                         # First, invalidate all index setting
-                        night_timestamp_index = morning_timestamp_index = (
-                            daytime_timestamp_index
-                        ) = evening_timestamp_index = None
+                        night_timestamp_index = (
+                            morning_timestamp_index
+                        ) = daytime_timestamp_index = evening_timestamp_index = None
 
                         # now validate the time stamp and retrieve the index if the time stamp looks ok
                         night_timestamp = validate_received_timestamp(
@@ -1008,9 +1008,9 @@ def parse_weather_from_metdotno(
                         )
 
         # get the temperatures whereas available
-        night_temperature = morning_temperature = daytime_temperature = (
-            evening_temperature
-        ) = 0.0
+        night_temperature = (
+            morning_temperature
+        ) = daytime_temperature = evening_temperature = 0.0
 
         uom = temp_uom_imperial if units == "imperial" else temp_uom
 
@@ -1371,6 +1371,14 @@ def parse_weather_from_metdotno(
             value_evening=psi_evening,
         )
 
+        # this is to reduce the message length
+        # if the difference between max and min is > 1
+        # then we will report both values. Otherwise,
+        # we will report the max value only
+        if psi_max and psi_min:
+            if (math.ceil(psi_max) - math.ceil(psi_min)) <= 1:
+                psi_min = None
+
         if psi_max and psi_min:
             weather_forecast_array = make_pretty_aprs_messages(
                 message_to_add=f"prs:{math.ceil(psi_min)}-{math.ceil(psi_max)}{pressure_uom}",
@@ -1408,7 +1416,7 @@ def convert_wind_direction_to_human_text(degrees: int):
         or None if not found
     """
 
-    if degree < 0 or degree > 360:
+    if degrees < 0 or degrees > 360:
         logger.debug(msg="invalid degree value received")
         return None
 
@@ -1433,7 +1441,7 @@ def convert_wind_direction_to_human_text(degrees: int):
 
     # Degrees per cardinal direction (including intermediate)
     cardinal_wind_step = 360 / len(directions)
-    index = int((degree % 360) / cardinal_wind_step)
+    index = int((degrees % 360) / cardinal_wind_step)
     return directions[index]
 
     logger.debug(msg="Unable to retrieve wind direction value")
