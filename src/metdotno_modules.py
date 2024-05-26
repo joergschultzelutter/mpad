@@ -856,7 +856,7 @@ def parse_weather_from_metdotno(
             # get the wind degrees
             if "wind_from_direction" in weather_tuple:
                 w_wind_deg = weather_tuple["wind_from_direction"]
-                wdir = convert_wind_direction_to_human_text(degree=w_wind_deg)
+                wdir = convert_wind_direction_to_human_text(degrees=w_wind_deg)
 
             if wdir:
                 weather_forecast_array = make_pretty_aprs_messages(
@@ -1274,8 +1274,8 @@ def parse_weather_from_metdotno(
         )
 
         # and now convert the data to a human readable heading, e.g. SSW
-        wdr_max_str = convert_wind_direction_to_human_text(degree=wdr_max)
-        wdr_min_str = convert_wind_direction_to_human_text(degree=wdr_min)
+        wdr_max_str = convert_wind_direction_to_human_text(degrees=wdr_max)
+        wdr_min_str = convert_wind_direction_to_human_text(degrees=wdr_min)
 
         wdr_str = ""
         # we SHOULD get a text for both, but check the status first
@@ -1392,7 +1392,21 @@ def parse_weather_from_metdotno(
     return weather_forecast_array
 
 
-def convert_wind_direction_to_human_text(degree: int):
+def convert_wind_direction_to_human_text(degrees: int):
+    """
+    Helper method for mapping an integer degrees value to
+    a human readable text (e.g. SSW)
+
+    Parameters
+    ==========
+    degrees: 'int'
+        Degrees value, 0..360
+
+    Returns
+    =======
+    degrees: 'str'
+        or None if not found
+    """
 
     if degree < 0 or degree > 360:
         logger.debug(msg="invalid degree value received")
@@ -1416,19 +1430,41 @@ def convert_wind_direction_to_human_text(degree: int):
         "NW",
         "NNW",
     ]
-    cardinal_wind_step = 360 / len(
-        directions
-    )  # Degrees per cardinal direction (including intermediate)
+
+    # Degrees per cardinal direction (including intermediate)
+    cardinal_wind_step = 360 / len(directions)
     index = int((degree % 360) / cardinal_wind_step)
     return directions[index]
 
-    logger.debug(msg="Unable to assign wind direction value")
+    logger.debug(msg="Unable to retrieve wind direction value")
     return None
 
 
 def get_maxmin(
     value_night: float, value_morning: float, value_daytime: float, value_evening: float
 ):
+    """
+    Helper method for finding the max and min value out of four values
+
+    Parameters
+    ==========
+    value_night: 'float'
+        numeric value
+    value_morning: 'float'
+        numeric value
+    value_daytime: 'float'
+        numeric value
+    value_evening: 'float'
+        numeric value
+
+    Returns
+    =======
+    value_max: 'float'
+        or None if not found
+    value_min: 'float'
+        or None if not found
+    """
+
     # get the max and min values for our input parameters
     value_max = sys.float_info.min
     value_min = sys.float_info.max
