@@ -153,27 +153,72 @@ def get_wx_data_tuple(weather_tuples: dict, index: int):
         JSON weather tuple for the requested day.
     """
     success = False
+
+    if index >= len(weather_tuples):
+        return False, None
+
     try:
         result = weather_tuples[index]["data"]["instant"]["details"]
-    except KeyError:
+    except (KeyError, IndexError):
         return False, None
-    # we received the main tuple. Now try to get the remaining
-    # optional content and add it to our tuple
+
+    # we received the main wx report
     success = True
+
+    # we received the main tuple. Now try to get the remaining
+    # OPTIONAL content and add it to our tuple
+    #
+    # dependent on how far we go into the future, the content might
+    # be listed within the next 1 / 6 / 12 hours
+    #
+    # precipitation may or may not be present, but the symbol code will
+    # always be present - meaning that we can use it as a detection
+    # for whether we were successful or not
+
+    # First, try to get the data for hour 1
     try:
         symbol_code = weather_tuples[index]["data"]["next_1_hours"]["summary"][
             "symbol_code"
         ]
         result["symbol_code"] = symbol_code
-    except KeyError:
-        pass
-    try:
         precipitation_amount = weather_tuples[index]["data"]["next_1_hours"]["details"][
             "precipitation_amount"
         ]
         result["precipitation_amount"] = precipitation_amount
-    except KeyError:
+
+    except (KeyError, IndexError):
         pass
+
+    # if we didn't get data for hour 1, let's try hour 6
+    if "symbol_code" not in result:
+        # try to get the data for hour 6
+        try:
+            symbol_code = weather_tuples[index]["data"]["next_6_hours"]["summary"][
+                "symbol_code"
+            ]
+            result["symbol_code"] = symbol_code
+            precipitation_amount = weather_tuples[index]["data"]["next_6_hours"][
+                "details"
+            ]["precipitation_amount"]
+            result["precipitation_amount"] = precipitation_amount
+        except (KeyError, IndexError):
+            pass
+
+    # Finally, if we didn't get data for hour 6, let's try hour 12
+    if "symbol_code" not in result:
+        # try to get the data for hour 12
+        try:
+            symbol_code = weather_tuples[index]["data"]["next_12_hours"]["summary"][
+                "symbol_code"
+            ]
+            result["symbol_code"] = symbol_code
+            precipitation_amount = weather_tuples[index]["data"]["next_12_hours"][
+                "details"
+            ]["precipitation_amount"]
+            result["precipitation_amount"] = precipitation_amount
+        except (KeyError, IndexError):
+            pass
+
     return success, result
 
 
@@ -385,9 +430,9 @@ def get_weather_from_metdotno(
                         # met.no's wx data set
 
                         # First, invalidate all index setting
-                        night_timestamp_index = (
-                            morning_timestamp_index
-                        ) = daytime_timestamp_index = evening_timestamp_index = None
+                        night_timestamp_index = morning_timestamp_index = (
+                            daytime_timestamp_index
+                        ) = evening_timestamp_index = None
 
                         # now validate the time stamp and retrieve the index if the time stamp looks ok
                         night_timestamp = validate_received_timestamp(
@@ -949,9 +994,9 @@ def parse_weather_from_metdotno(
                         )
 
         # get the temperatures whereas available
-        night_temperature = (
-            morning_temperature
-        ) = daytime_temperature = evening_temperature = 0.0
+        night_temperature = morning_temperature = daytime_temperature = (
+            evening_temperature
+        ) = 0.0
 
         uom = temp_uom_imperial if units == "imperial" else temp_uom
 
