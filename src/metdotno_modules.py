@@ -33,6 +33,7 @@ import mpad_config
 from datetime import datetime, timezone, timedelta
 from math import sin, cos, atan2
 import sys
+from geo_conversion_modules import convert_wind_direction_to_human_text
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -604,7 +605,13 @@ def validate_received_timestamp(
 
     # Calculate the difference between the calculated and the retrieved timestamp
     # ensure to use the ABS value as the difference may also be negative
-    diff_time = received_timestamp - utc_timestamp
+    if received_timestamp > utc_timestamp:
+        # calculation: westwards (e.g. UTC to the U.S.)
+        diff_time = received_timestamp - utc_timestamp
+    else:
+        # calculation: eastwards (e.g. UTC to the Japans)
+        diff_time = utc_timestamp - received_timestamp
+
     diff_hours = abs(round(diff_time.seconds / 3600))
 
     # Do we exceed the maximum gap value? If yes, invalidate the response, thus
@@ -1398,54 +1405,6 @@ def parse_weather_from_metdotno(
 
     # Ultimately, return the array
     return weather_forecast_array
-
-
-def convert_wind_direction_to_human_text(degrees: int):
-    """
-    Helper method for mapping an integer degrees value to
-    a human readable text (e.g. SSW)
-
-    Parameters
-    ==========
-    degrees: 'int'
-        Degrees value, 0..360
-
-    Returns
-    =======
-    degrees: 'str'
-        or None if not found
-    """
-
-    if degrees < 0 or degrees > 360:
-        logger.debug(msg="invalid degree value received")
-        return None
-
-    directions = [
-        "N",
-        "NNE",
-        "NE",
-        "ENE",
-        "E",
-        "ESE",
-        "SE",
-        "SSE",
-        "S",
-        "SSW",
-        "SW",
-        "WSW",
-        "W",
-        "WNW",
-        "NW",
-        "NNW",
-    ]
-
-    # Degrees per cardinal direction (including intermediate)
-    cardinal_wind_step = 360 / len(directions)
-    index = int((degrees % 360) / cardinal_wind_step)
-    return directions[index]
-
-    logger.debug(msg="Unable to retrieve wind direction value")
-    return None
 
 
 def get_maxmin(
