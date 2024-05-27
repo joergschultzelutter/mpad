@@ -14,7 +14,13 @@ MPAD is able to understand the following keywords:
 - 
 ```tonite``` and ```tonight``` keywords will set the ```date``` keyword to ```today``` unless the user has already specified a different day.
 
-All references are to UTC time zone settings.
+MPAD 0.60 or later:
+- WX reports: all references are in the user's local time zone (based on the coordinates associated with the user's call sign or the given reference such e.g. a city name)
+    - Night: 00:00 / 12AM local time
+    - Morning: 06:00 / 6AM local time
+    - Daytime: 12:00 / 12PM local time
+    - Evening: 10:00 / 6PM local time
+- Everything else: unless noted differently, all other time references are in UTC
 
 Whereas noted for the respective [action keyword](ACTION_KEYWORDS.md), these daytime setting keywords (and also the [date](DATE_KEYWORDS.md) setting keywords) can be combined with the action keywords. Examples:
 

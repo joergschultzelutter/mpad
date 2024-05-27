@@ -32,11 +32,9 @@ Spaces between the various parts of the message and the separators are permitted
 
 A wx response consists of 1..n lines, The actual content as well as the message lenght is dependent on how much data is actually available. Here is an example for a wx report in metric format:
 
-```10-Jan-21 San Francisco,CA overcast clouds morn:10c day:13c eve:12c```
+```saturday Schorborn,37627;DE LightRain Nite:11C Morn:12C Day:18C```
 
-```nite:11c sunrise/set 16:24/02:09UTC clouds:90% uvi:1.9 hPa:1026```
-
-```hum:57% dewpt:4c wndspd:2m/s wnddeg:52```
+```Eve:17C avghum:87% rain:2mm wind:3-6m/s NW-NNW cld:100% prs:1017hPa```
 
 Glossary:
 
@@ -44,14 +42,13 @@ Glossary:
 - ```day``` - daytime temperature
 - ```eve``` - evening temperature
 - ```nite``` - nighttime temperature
-- ```sunrise/set``` sunrise and sunset in UTC time zone format
-- ```clouds```
+- ```cld``` cloud coverage in percent
 - ```uvi``` - UV index
-- ```hPa``` - air pressure
-- ```hum``` - humidity
+- ```hPa``` - air pressure in hectopascal
+- ```hum``` - humidity (non-full-day requests only)
+- ```avghum``` - Average humidity (full day requests only)
 - ```dewpt``` - dew point
-- ```wndspd``` - wind speed
-- ```wnddeg``` - wind degrees
+- ```wind``` - wind speed and degrees
   
 ### Zip Codes
 
