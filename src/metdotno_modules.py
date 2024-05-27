@@ -1388,18 +1388,18 @@ def parse_weather_from_metdotno(
 
         if psi_max and psi_min:
             weather_forecast_array = make_pretty_aprs_messages(
-                message_to_add=f"prs:{math.ceil(psi_min)}-{math.ceil(psi_max)}{pressure_uom}",
+                message_to_add=f"{pressure_uom}:{math.ceil(psi_min)}-{math.ceil(psi_max)}",
                 destination_list=weather_forecast_array,
             )
         else:
             if psi_max:
                 weather_forecast_array = make_pretty_aprs_messages(
-                    message_to_add=f"prs:{math.ceil(psi_max)}{pressure_uom}",
+                    message_to_add=f"{pressure_uom}:{math.ceil(psi_max)}",
                     destination_list=weather_forecast_array,
                 )
             if psi_min:
                 weather_forecast_array = make_pretty_aprs_messages(
-                    message_to_add=f"prs:{math.ceil(psi_min)}{pressure_uom}",
+                    message_to_add=f"{pressure_uom}:{math.ceil(psi_min)}",
                     destination_list=weather_forecast_array,
                 )
 
