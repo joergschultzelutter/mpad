@@ -1482,8 +1482,8 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
     if matches:
         (city, state, country_code) = matches[0]
         city = string.capwords(city).strip()
-        country_code = country_code.upper().strip
-        state = state.upper().strip  # in theory, this could also be a non-US state
+        country_code = country_code.upper().strip()
+        state = state.upper().strip()  # in theory, this could also be a non-US state
         aprs_message = re.sub(
             pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
         ).strip()
@@ -2233,9 +2233,9 @@ def parse_what_keyword_callsign_multi(
     altitude = 0
     lasttime = datetime.min
     what = message_callsign = city = state = county = None
-    zipcode = country = country_code = district = address = street = street_number = (
-        None
-    )
+    zipcode = (
+        country
+    ) = country_code = district = address = street = street_number = None
 
     # First check the APRS message and see if the user has submitted
     # a call sign with the message (we will first check for a call
@@ -2462,9 +2462,9 @@ def parse_what_keyword_whereami(
     altitude = 0
     lasttime = datetime.min
     what = message_callsign = city = state = county = None
-    zipcode = country = country_code = district = address = street = street_number = (
-        None
-    )
+    zipcode = (
+        country
+    ) = country_code = district = address = street = street_number = None
 
     regex_string = r"\b(whereami)\b"
     matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
@@ -2892,9 +2892,9 @@ def parse_what_keyword_email_position_report(
     altitude = 0
     lasttime = datetime.min
     what = message_callsign = city = state = county = None
-    zipcode = country = country_code = district = address = street = street_number = (
-        None
-    )
+    zipcode = (
+        country
+    ) = country_code = district = address = street = street_number = None
 
     # check for a keyword - email pattern
     regex_string = (
