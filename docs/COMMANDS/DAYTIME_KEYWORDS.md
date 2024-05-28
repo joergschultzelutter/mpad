@@ -20,6 +20,7 @@ MPAD 0.60 or later:
     - Morning: 06:00 / 6AM local time
     - Daytime: 12:00 / 12PM local time
     - Evening: 10:00 / 6PM local time
+    - Note that this is also the order in which e.g. wx data is pulled. A day always starts with the "Night" and ends with the "Evening" values.
 - Everything else: unless noted differently, all other time references are in UTC
 
 Whereas noted for the respective [action keyword](ACTION_KEYWORDS.md), these daytime setting keywords (and also the [date](DATE_KEYWORDS.md) setting keywords) can be combined with the action keywords. Examples:

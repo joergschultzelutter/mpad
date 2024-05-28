@@ -674,7 +674,7 @@ Allows you to specify a language in a (somewhat) ISO639-1 format. Default langua
 
 Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __YES__
 
-Currently, this keyword is __only__ used for WX reports from Openweathermap. In addition, it only provides a localised version of the wx free text, e.g. en=```snow```, de=```Schnee```, pl=```Snieg```. If you enable your MPAD instance for UTF-8 support, those parts of the nessage may contain e.g. cyrillic characters.
+Currently, this keyword is __only__ used for the Fortuneteller /Magic8Ball keyword. If you enable your MPAD instance for UTF-8 support, those parts of the nessage may contain e.g. cyrillic characters.
 
 #### Formats
 
@@ -683,8 +683,7 @@ Currently, this keyword is __only__ used for WX reports from Openweathermap. In 
 
 #### Example requests
 
-- ```lang de```
-- ```Erding;de lng pl``` returns a wx report for the city of Erding in Germany where the wx report's free text part will be in Polish.
+- ```m8b lang de```
 
 #### Supported languages
 
