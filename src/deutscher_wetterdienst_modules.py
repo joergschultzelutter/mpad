@@ -21,7 +21,7 @@
 
 # List of valid WarnCellIDs can be found here: https://www.dwd.de/DE/leistungen/opendata/hilfe.html
 
-from utility_modules import read_program_config, convert_text_to_plain_ascii
+from utility_modules import convert_text_to_plain_ascii
 import logging
 from datetime import datetime
 import mpad_config
@@ -138,15 +138,4 @@ def send_dwd_bulletins(myaprsis: aprslib.inet.IS, simulate_send: bool = True):
 
 
 if __name__ == "__main__":
-    (
-        success,
-        aprsdotfi_api_key,
-        aprsis_callsign,
-        aprsis_passcode,
-        dapnet_callsign,
-        dapnet_passcode,
-        smtpimap_email_address,
-        smtpimap_email_password,
-    ) = read_program_config()
-    if success:
-        send_dwd_bulletins(myaprsis=None, simulate_send=True)
+    pass

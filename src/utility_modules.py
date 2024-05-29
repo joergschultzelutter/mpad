@@ -254,11 +254,12 @@ def read_program_config(config_file_name: str = "mpad_api_access_keys.cfg"):
         associated account password.
         If you use GMail, use an app-specific password;
         see https://myaccount.google.com/apppasswords
+    apprise_config_file: 'str'
     """
 
     config = configparser.ConfigParser()
     success = False
-    aprsdotfi_cfg_key = None
+    aprsdotfi_cfg_key = apprise_config_file = None
     aprsis_login_callsign = aprsis_login_passcode = None
     dapnet_login_callsign = dapnet_login_passcode = None
     smtpimap_email_address = smtpimap_email_password = None
@@ -274,6 +275,7 @@ def read_program_config(config_file_name: str = "mpad_api_access_keys.cfg"):
             smtpimap_email_password = config.get(
                 "mpad_config", "smtpimap_email_password"
             )
+            apprise_config_file = config.get("mpad_config", "apprise_config_file")
             success = True
         except:
             success = False
@@ -723,7 +725,6 @@ def get_local_and_utc_times(latitude: float, longitude: float, base_date: dateti
 
     local_and_utc_times = {}
     for key, local_time in local_times.items():
-
         # localize to local time
         local_time = timezone.localize(local_time)
 

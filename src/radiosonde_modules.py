@@ -755,4 +755,4 @@ def get_radiosondy_data(sonde_id: str):
 
 
 if __name__ == "__main__":
-    logger.info(pformat(get_radiosondy_data(sonde_id="S3130229")))
+    pass

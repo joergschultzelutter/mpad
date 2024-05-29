@@ -1481,6 +1481,7 @@ if __name__ == "__main__":
         dapnet_passcode,
         smtpimap_email_address,
         smtpimap_email_password,
+        apprise_config_file,
     ) = read_program_config()
 
     if success:

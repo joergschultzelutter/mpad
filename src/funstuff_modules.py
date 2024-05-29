@@ -327,4 +327,4 @@ def get_fortuneteller_message(language: str = "en"):
 
 
 if __name__ == "__main__":
-    print(get_fortuneteller_message(language="pl"))
+    pass

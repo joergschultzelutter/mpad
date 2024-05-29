@@ -860,23 +860,4 @@ def get_sun_moon_rise_set_for_latlon(
 
 
 if __name__ == "__main__":
-    update_local_mpad_satellite_data()
-
-    logger.info("Get TLE data for Es'Hail2")
-    logger.info(get_tle_data(satellite_id="ES'HAIL-2"))
-    logger.info(get_satellite_frequency_data(satellite_id="ISS"))
-    logger.info("Get next ISS pass")
-    thedate = datetime.datetime.utcnow()
-    logger.info(
-        pformat(
-            get_next_satellite_pass_for_latlon(
-                latitude=51.838890,
-                longitude=8.326747,
-                requested_date=thedate + datetime.timedelta(days=0),
-                tle_satellite_name="ISS",
-                elevation=74.0,
-                number_of_results=5,
-                visible_passes_only=True,
-            )
-        )
-    )
+    pass

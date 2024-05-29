@@ -27,6 +27,7 @@ from airport_data_modules import update_local_airport_stations_file
 from repeater_modules import update_local_repeatermap_file
 from skyfield_modules import update_local_mpad_satellite_data
 from deutscher_wetterdienst_modules import send_dwd_bulletins
+from messaging_modules import send_apprise_message
 from utility_modules import (
     read_program_config,
     read_number_of_served_packages,
@@ -79,6 +80,18 @@ def signal_term_handler(signal_number, frame):
 
     logger.info(msg="Received SIGTERM; forcing clean program exit")
     sys.exit(0)
+
+
+def mpad_exception_handler(exc_type, exc_value, exc_traceback):
+    # Send a message before we hit the bucket
+    send_apprise_message(
+        message_header="MPAD has crashed",
+        message_body="MPAD has just crashed. Please check log file.",
+        apprise_config_file=apprise_config_file,
+    )
+
+    # And continue with our regular work flow
+    sys.__excepthook__(exc_type, exc_value, exc_traceback)
 
 
 # APRSlib callback
@@ -390,6 +403,7 @@ if __name__ == "__main__":
         dapnet_login_passcode,
         smtpimap_email_address,
         smtpimap_email_password,
+        apprise_config_file,
     ) = read_program_config()
     if not success:
         logging.error(msg="Error while reading the program config file; aborting")
@@ -499,6 +513,11 @@ if __name__ == "__main__":
         max_len=mpad_config.mpad_msg_cache_max_entries,
         max_age_seconds=mpad_config.mpad_msg_cache_time_to_live,
     )
+
+    # Install our custom exception handler, thus allowing us to signal the
+    # user who hosts MPAD with a message whenever the program is prone to crash
+    logger.info(msg=f"activating custom exception handler")
+    sys.excepthook = mpad_exception_handler
 
     #
     # Finally, let's enter the 'eternal loop'

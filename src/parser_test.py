@@ -42,6 +42,7 @@ def testcall(message_text: str, from_callsign: str):
         dapnet_login_passcode,
         smtpimap_email_address,
         smtpimap_email_password,
+        apprise_config_file,
     ) = read_program_config()
     assert success
 

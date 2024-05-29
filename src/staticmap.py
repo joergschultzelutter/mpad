@@ -1,7 +1,7 @@
 #
 # Multi-Purpose APRS Daemon: Generate a static
 # image and indicate the user's coordinates on the map
-# Author: Joerg Schultze-Lutter, 2020
+# Author: Joerg Schultze-Lutter, 2024
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -92,4 +92,4 @@ def render_png_map(
 
 
 if __name__ == "__main__":
-    render_png_map(aprs_latitude=52.5186729836, aprs_longitude=13.3704687765)
+    pass

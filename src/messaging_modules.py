@@ -28,13 +28,15 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def generate_apprise_message(
-        message_header: str,
-        message_body: str,
-        apprise_config_file: str,
+def send_apprise_message(
+    message_header: str,
+    message_body: str,
+    apprise_config_file: str,
 ):
     """
     Generates Apprise messages and triggers transmission to the user
+    We will only use this for post-mortem dumps in case MPAD is on the
+    verge of crashing
 
     Parameters
     ==========
@@ -56,11 +58,15 @@ def generate_apprise_message(
 
     logger.debug(msg="Starting Apprise message processing")
 
+    if not apprise_config_file or apprise_config_file == "NOT_CONFIGURED":
+        logger.debug(msg="Skipping post-mortem dump; message file is not configured")
+        return success
+
     if not check_if_file_exists(apprise_config_file):
         logger.error(
             msg=f"Apprise config file {apprise_config_file} does not exist; aborting"
         )
-        return False
+        return success
 
     # Create the Apprise instance
     apobj = apprise.Apprise()

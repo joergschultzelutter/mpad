@@ -2997,5 +2997,6 @@ if __name__ == "__main__":
         dapnet_passcode,
         smtpimap_email_address,
         smtpimap_email_password,
+        apprise_config_file,
     ) = read_program_config()
     logger.info(pformat(parse_input_message("taf eddf", "df1jsl-1", aprsdotfi_api_key)))

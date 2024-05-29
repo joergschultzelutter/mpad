@@ -418,8 +418,4 @@ def get_nearest_icao(latitude: float, longitude: float):
 
 
 if __name__ == "__main__":
-    logger.info(get_metar_data(icao_code="EDDL", keyword="metar"))
-    logger.info(get_metar_data(icao_code=None, keyword="taf"))
-    logger.info(validate_iata("KLV"))
-    logger.info(validate_icao("EDDF"))
-    logger.info(get_nearest_icao(51.538882, 8.32679))
+    pass
