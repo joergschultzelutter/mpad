@@ -16,3 +16,4 @@ mpad_repeater_data.json
 mpad_message_counter.txt
 data_files
 mpad_apprise_config.yml
+nohup.out

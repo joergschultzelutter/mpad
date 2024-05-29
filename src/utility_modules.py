@@ -288,6 +288,7 @@ def read_program_config(config_file_name: str = "mpad_api_access_keys.cfg"):
         dapnet_login_passcode,
         smtpimap_email_address,
         smtpimap_email_password,
+        apprise_config_file,
     )
 
 

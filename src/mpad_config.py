@@ -321,3 +321,8 @@ mpad_daytime_mapper = {
     mpad_int_evening: mpad_str_evening,
     mpad_int_night: mpad_str_night,
 }
+
+# This is the file name for the file that we use for our nohup
+# stdout content. We use this name in order to send the log file
+# to mpad's host in case the program has crashed
+mpad_nohup_filename = "nohup.out"

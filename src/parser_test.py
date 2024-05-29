@@ -25,6 +25,8 @@ from mpad_config import (
     mpad_hearham_raw_data_filename,
     mpad_repeatermap_raw_data_filename,
 )
+from messaging_modules import send_apprise_message
+import sys
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -33,6 +35,8 @@ logger = logging.getLogger(__name__)
 
 
 def testcall(message_text: str, from_callsign: str):
+    global apprise_config_file
+
     (
         success,
         aprsdotfi_api_key,

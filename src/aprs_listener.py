@@ -57,6 +57,7 @@ import aprslib
 import time
 import mpad_config
 from expiringdict import ExpiringDict
+import atexit
 
 ########################################
 
@@ -84,14 +85,22 @@ def signal_term_handler(signal_number, frame):
 
 def mpad_exception_handler(exc_type, exc_value, exc_traceback):
     # Send a message before we hit the bucket
-    send_apprise_message(
-        message_header="MPAD has crashed",
-        message_body="MPAD has just crashed. Please check log file.",
-        apprise_config_file=apprise_config_file,
-    )
+    message_body = "MPAD either crashed or just got terminated."
 
-    # And continue with our regular work flow
-    sys.__excepthook__(exc_type, exc_value, exc_traceback)
+    # check if we can spot a 'nohup' file which already contains our status
+    if check_if_file_exists(mpad_config.mpad_nohup_filename):
+        message_body = (
+            message_body
+            + " Please find the latest stack trace attached to this message."
+        )
+
+    # send_apprise_message will check again if the file exists or not
+    send_apprise_message(
+        message_header="MPAD process has ended",
+        message_body=message_body,
+        apprise_config_file=apprise_config_file,
+        message_attachment=mpad_config.mpad_nohup_filename,
+    )
 
 
 # APRSlib callback
@@ -372,6 +381,7 @@ def mycallback(raw_aprs_packet: dict):
 
 
 if __name__ == "__main__":
+    global apprise_config_file
     #
     # MPAD main
     # Start by setting the logger parameters
@@ -516,8 +526,12 @@ if __name__ == "__main__":
 
     # Install our custom exception handler, thus allowing us to signal the
     # user who hosts MPAD with a message whenever the program is prone to crash
-    logger.info(msg=f"activating custom exception handler")
-    sys.excepthook = mpad_exception_handler
+    # OR has ended. In any case, we will then send the file to the host
+    #
+    # if you are not interested in a post-mortem call stack, remove the following
+    # two lines
+    logger.info(msg=f"Activating MPAD exception handler")
+    atexit.register(mpad_exception_handler)
 
     #
     # Finally, let's enter the 'eternal loop'

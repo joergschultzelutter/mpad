@@ -32,6 +32,7 @@ def send_apprise_message(
     message_header: str,
     message_body: str,
     apprise_config_file: str,
+    message_attachment: str = None,
 ):
     """
     Generates Apprise messages and triggers transmission to the user
@@ -68,6 +69,10 @@ def send_apprise_message(
         )
         return success
 
+    if not check_if_file_exists(message_attachment):
+        logger.debug("Attachment file missing; disabling attachments")
+        message_attachment = None
+
     # Create the Apprise instance
     apobj = apprise.Apprise()
 
@@ -80,13 +85,23 @@ def send_apprise_message(
     # Make sure to add our config into our apprise object
     apobj.add(config)
 
-    # Send the notification
-    apobj.notify(
-        body=message_body,
-        title=message_header,
-        tag="all",
-        notify_type=apprise.NotifyType.FAILURE,
-    )
+    if not message_attachment:
+        # Send the notification
+        apobj.notify(
+            body=message_body,
+            title=message_header,
+            tag="all",
+            notify_type=apprise.NotifyType.FAILURE,
+        )
+    else:
+        # Send the notification
+        apobj.notify(
+            body=message_body,
+            title=message_header,
+            tag="all",
+            notify_type=apprise.NotifyType.FAILURE,
+            attach=message_attachment,
+        )
 
     success = True
 
