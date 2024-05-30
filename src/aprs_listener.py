@@ -38,6 +38,7 @@ from utility_modules import (
     write_aprs_message_counter,
     check_and_create_data_directory,
     make_pretty_aprs_messages,
+    create_zip_file_from_log,
 )
 from aprs_communication import (
     parse_aprs_data,
@@ -109,16 +110,20 @@ def mpad_exception_handler():
     # Send a message before we hit the bucket
     message_body = f"The MPAD process has crashed. Reason: {ex_value}"
 
+    # Try to zip the log file if possible
+    success, log_file_name = create_zip_file_from_log(mpad_config.mpad_nohup_filename)
+
     # check if we can spot a 'nohup' file which already contains our status
-    if check_if_file_exists(mpad_config.mpad_nohup_filename):
+    if log_file_name and check_if_file_exists(log_file_name):
         message_body = message_body + " (log file attached)"
 
     # send_apprise_message will check again if the file exists or not
+    # Therefore, we can skip any further detection steps here
     send_apprise_message(
         message_header="MPAD process has crashed",
         message_body=message_body,
         apprise_config_file=apprise_config_file,
-        message_attachment=mpad_config.mpad_nohup_filename,
+        message_attachment=log_file_name,
     )
 
 

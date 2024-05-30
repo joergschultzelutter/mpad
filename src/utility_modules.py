@@ -29,6 +29,7 @@ import logging
 from expiringdict import ExpiringDict
 import hashlib
 import mpad_config
+import zipfile
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -825,6 +826,42 @@ def find_best_matching_time(
     else:
         # No matching entry found
         return None
+
+
+def create_zip_file_from_log(log_file_name: str):
+    """
+    Creates a zip file from our current log file and
+    returns the file name to the caller
+
+    Parameters
+    ==========
+    log_file_name: 'str'
+        our file name, e.g. 'nohup.out'
+
+    Returns
+    =======
+    success: 'bool'
+        True if we were able to create our zip file, otherwise false
+    """
+
+    # Check if the file actually exists
+    if not log_file_name:
+        return False, file_name
+    if not check_if_file_exists(file_name=log_file_name):
+        return False, None
+
+    # get a UTC time stamp as reference and create the file name
+    _utc = datetime.datetime.utcnow()
+    zip_file_name = datetime.datetime.strftime(
+        _utc, "mpad_crash_dump_%Y-%m-%d_%H-%M-%S%z.zip"
+    )
+
+    # write the zip file to disk
+    with zipfile.ZipFile(zip_file_name, mode="w") as archive:
+        archive.write(log_file_name)
+
+    # and return the file name
+    return True, zip_file_name
 
 
 if __name__ == "__main__":

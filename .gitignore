@@ -17,3 +17,4 @@ mpad_message_counter.txt
 data_files
 mpad_apprise_config.yml
 nohup.out
+mpad_crash_dump_*

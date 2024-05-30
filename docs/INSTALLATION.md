@@ -21,6 +21,7 @@ Currently, MPAD uses various APIs and access keys for its purposes:
 - aprs.fi
 - DAPNET API
 - SMTP/IMAP username and password
+- optional: file name reference to an [Apprise](https://github.com/caronc/apprise) YAML config [file](https://github.com/caronc/apprise/wiki/config_yaml). If a reference to an Apprise YML config file is specified and a program crash occurs, MPAD will send a message (along with the stack trace) to the user hosting the program.
 
 If you want to host your own MPAD instance, you need to acquire your personal API access keys (e.g. for aprs.fi) and add these to MPAD's API config file (```mpad_api_access_keys.cfg```). An empty config template file is part of the repository. If you are not a registered DAPNET user, set the DAPNET callsign in the config file to N0CALL. When MPAD encounters this DAPNET user, it will refrain from sending content to DAPNET.
 
@@ -51,6 +52,23 @@ dapnet_login_passcode = -1
 # (see https://myaccount.google.com/apppasswords)
 smtpimap_email_address = NOT_CONFIGURED
 smtpimap_email_password = NOT_CONFIGURED
+
+# Apprise config file for internal error messaging
+# will send a post mortem notification in case the program crashes
+#
+# This setting is purely optional
+#
+apprise_config_file = NOT_CONFIGURED
+```
+
+Apprise YML config file; a file template is included in this repository ([Documentation](https://github.com/caronc/apprise/wiki/config_yaml)):
+
+```yaml
+version: 1
+
+urls:
+  # One-liner (no colon at the end); just the url as you'd expect it:
+  - tgram://123456789:fdjkjgkdkgkdfgks9twerwtjrewtjejrtk
 ```
 
 ### Program configuration
@@ -337,4 +355,54 @@ aprs_beacon_messages: list = [
     #    ">Multi-Purpose APRS Daemon",
 ]
 #
+# Several file names that are used throughout the program and act as local databases
+mpad_airport_stations_filename = "airport_stations.txt"
+mpad_tle_amateur_satellites_filename = "tle_amateur_satellites.txt"
+mpad_satellite_frequencies_filename = "satellite_frequencies.csv"
+mpad_hearham_raw_data_filename = "hearham_raw_data.json"
+mpad_repeatermap_raw_data_filename = "repeatermap_raw_data.json"
+mpad_repeater_data_filename = "mpad_repeater_data.json"
+mpad_satellite_data_filename = "mpad_satellite_data.json"
+
+# definitions for the various day times (e.g. "noon"), used by the wx forecast process
+# Each definition represents the hour in LOCAL TIME format, e.g. 12 = 12h local time
+mpad_int_morning = 6
+mpad_int_daytime = 12
+mpad_int_evening = 18
+mpad_int_night = 0
+
+# These are the internal keywords for the various day times
+mpad_str_morning = "morning"
+mpad_str_daytime = "daytime"
+mpad_str_evening = "evening"
+mpad_str_night = "night"
+mpad_str_full = "full"
+
+# hour-to-string mapper for daytimes
+mpad_daytime_mapper = {
+    mpad_int_morning: mpad_str_morning,
+    mpad_int_daytime: mpad_str_daytime,
+    mpad_int_evening: mpad_str_evening,
+    mpad_int_night: mpad_str_night,
+}
+
+# This is the file name for the file that we use for our nohup
+# stdout content. We use this name in order to send the log file
+# to mpad's host in case the program has crashed.
+#
+# Only used if you activate the Apprise messaging option.
+#
+# Example: assume that you have started MPAD via
+#
+#       nohup python aprs_listener & 2>nohup.out
+#
+# Now, the program crashes because its author messed up things :-)
+# Assuming that you have activated the Apprise messaging option,
+# MPAD will look up the file associated with mpad_nohup_filename and
+# is going to send you a copy prior to the actual program crash
+# Note that the call stack is always included as message attachment
+# and not as message content - the call stack might be rather large, thus
+# getting potentially truncated in the message body
+#
+mpad_nohup_filename = "nohup.out"
 ```

@@ -23,4 +23,7 @@ smtpimap_email_password = NOT_CONFIGURED
 
 # Apprise config file for internal error messaging
 # will send a post mortem notification in case the program crashes
+#
+# This setting is purely optional
+#
 apprise_config_file = NOT_CONFIGURED
