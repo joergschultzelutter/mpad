@@ -59,6 +59,13 @@ import mpad_config
 from expiringdict import ExpiringDict
 import atexit
 
+# These are global variables which will be used
+# in case of an uncaught exception where we send
+# the host a final Apprise message along with the
+# program's stack trace
+exception_occurred = False
+ex_type = ex_value = ex_traceback = None
+
 ########################################
 
 
@@ -83,24 +90,73 @@ def signal_term_handler(signal_number, frame):
     sys.exit(0)
 
 
-def mpad_exception_handler(exc_type, exc_value, exc_traceback):
+def mpad_exception_handler():
+    """
+    This function will be called in case of a regular program exit OR
+    an uncaught exception. If an exception has occurred, we will try to
+    send out an Apprise message along with the stack trace to the user
+
+    Parameters
+    ==========
+
+    Returns
+    =======
+    """
+
+    if not exception_occurred:
+        return
+
     # Send a message before we hit the bucket
-    message_body = "MPAD either crashed or just got terminated."
+    message_body = f"The MPAD process has crashed. Reason: {ex_value}"
 
     # check if we can spot a 'nohup' file which already contains our status
     if check_if_file_exists(mpad_config.mpad_nohup_filename):
-        message_body = (
-            message_body
-            + " Please find the latest stack trace attached to this message."
-        )
+        message_body = message_body + " (log file attached)"
 
     # send_apprise_message will check again if the file exists or not
     send_apprise_message(
-        message_header="MPAD process has ended",
+        message_header="MPAD process has crashed",
         message_body=message_body,
         apprise_config_file=apprise_config_file,
         message_attachment=mpad_config.mpad_nohup_filename,
     )
+
+
+def handle_exception(exc_type, exc_value, exc_traceback):
+    """
+    Custom exception handler which is installed by the
+    main process. We only do a few things:
+    - remember that there has been an uncaught exception
+    - save the exception type / value / tracebace
+
+    Parameters
+    ==========
+    exc_type:
+        exception type object
+    exc_value:
+        exception value object
+    exc_traceback:
+        exception traceback object
+
+    Returns
+    =======
+    """
+
+    global exception_occurred
+    global ex_type
+    global ex_value
+    global ex_traceback
+
+    # set some global values so that we know why the program has crashed
+    exception_occurred = True
+    ex_type = exc_type
+    ex_value = exc_value
+    ex_traceback = exc_traceback
+
+    logger.info(f"Core process has received uncaught exception: {exc_value}")
+
+    # and continue with the regular flow of things
+    sys.__excepthook__(exc_type, exc_value, exc_traceback)
 
 
 # APRSlib callback
@@ -381,6 +437,8 @@ def mycallback(raw_aprs_packet: dict):
 
 
 if __name__ == "__main__":
+    # This variable has to be global as we are going to
+    # use it as part of our 'uncaught exception' crash handler
     global apprise_config_file
     #
     # MPAD main
@@ -396,6 +454,16 @@ if __name__ == "__main__":
     # then there is no point in continuing
     #
     logger.info(msg="Program startup ...")
+
+    # Install our custom exception handler, thus allowing us to signal the
+    # user who hosts MPAD with a message whenever the program is prone to crash
+    # OR has ended. In any case, we will then send the file to the host
+    #
+    # if you are not interested in a post-mortem call stack, remove the following
+    # two lines
+    logger.info(msg=f"Activating MPAD exception handler")
+    atexit.register(mpad_exception_handler)
+    sys.excepthook = handle_exception
 
     # Check whether the data directory exists
     success = check_and_create_data_directory()
@@ -523,15 +591,6 @@ if __name__ == "__main__":
         max_len=mpad_config.mpad_msg_cache_max_entries,
         max_age_seconds=mpad_config.mpad_msg_cache_time_to_live,
     )
-
-    # Install our custom exception handler, thus allowing us to signal the
-    # user who hosts MPAD with a message whenever the program is prone to crash
-    # OR has ended. In any case, we will then send the file to the host
-    #
-    # if you are not interested in a post-mortem call stack, remove the following
-    # two lines
-    logger.info(msg=f"Activating MPAD exception handler")
-    atexit.register(mpad_exception_handler)
 
     #
     # Finally, let's enter the 'eternal loop'
