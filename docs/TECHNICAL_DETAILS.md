@@ -27,20 +27,19 @@ A decaying cache for __outgoing__ messages to the user is currently not implemen
 
 If you provide a call sign to MPAD and it tells you that it cannot find that call sign's coordinates, then open up aprs.fi and run a search on that call sign (keep in mind that the API uses an *EXACT* search - __wildcards do not work__). If aprs.fi either returns no results __or__ returns multiple results __for the *exact* spelling of the call sign that you've used in your message__, then you can tell the reason why MPAD cannot your call sign.
 
-- Weather report data from openweathermap:
-    - Wx Alert data is not returned to the user. This can be added in a later version but keep in mind that the text is very long and would result in multiple (10-15) APRS messages per alert!
-    - Access to openweathermap.org requires an API key which has a traffic limit
-    - With its current implementation of its 'OneCall' API, Openweathermap does not return the human-readable address in case a query is performed for lat/lon coordinates - which is applicable to all queries from MAPD. As a result, additional calls to e.g. Openstreetmap etc. may be necessary in order to provide the user with a human readable address.
-
+- Weather report data from met.no:
+    - Wx forecasts from met.no require no access keys. 
+    - Unlike the previously used API from OpenWeatherMap, met.no's API does not provide a cumulated "full day" report option. As a result, MPAD is trying to generate a full day report based on the hourly data (read: results may vary)
 
 - Repeater data:
     - Currently, the repeater data may be very much EU-centric (MPAD borrows its data from repeatermap.de as well as from hearham.com). Additional _free_ repeater data sources can be added to future MPAD versions if such sources are available. If you want to see your repeater added to repeatermap.de, [please submit your data on DK3ML's site](https://www.repeatermap.de/new_repeater.php?lang=en). Alternatively, feel free to recommend free sources for repeater data and I see what I'll can do to add them to the program.
     - Apart from some internal pre-processing, the data from both input sites is taken 'as is'. There are also no dupe checks wrt the given data. When in doubt, request more than one result.
-    - There are plans for migrating to a single repeater data source in one of the upcoming releases. The keyword command structure will likely stay the same.
+    - There are plans for migrating to a single repeater data source e.g. repeatermap.com in one of the upcoming releases. The keyword command structure will likely stay the same.
 
 
 - Time zones:
-    - Currently, all timestamps returned by the program use UTC as time zone. Implicitly, __this constraint also applies to the time-related program keywords__ (see [USAGE.md](USAGE.md)) which instructs the program to return data for a certain time of the day. Dependent on your geographical location, a 'give me a wx report for today noon' may result in unwanted effects as the 'noon' part __is based on GMT__. When in doubt, do NOT limit your data to a certain time slot of the day ('full' day is the program default). I might implement local time zone data at a later point in time - for now, GMT applies.
+    - Most timestamps returned by the program use UTC as time zone. 
+    - Starting with MPAD version 0.60, local time settings are supported __for__ __wx__ __reports__. Other keywords may follow suit in the future.
 
 
 - Satellite frequency data:

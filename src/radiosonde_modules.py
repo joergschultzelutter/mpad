@@ -18,7 +18,6 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-from utility_modules import read_program_config
 import logging
 from aprsdotfi_modules import get_position_on_aprsfi
 from datetime import datetime, timedelta
@@ -676,22 +675,28 @@ def get_radiosondy_data(sonde_id: str):
                                         # Remove the additional content such as units of measure etc.
                                         # Yes, this is quick and dirty
                                         climbing = remove_trailing_content(
-                                            source_string=climbing, trailing_content=" m/s"
+                                            source_string=climbing,
+                                            trailing_content=" m/s",
                                         )
                                         altitude_m = remove_trailing_content(
-                                            source_string=altitude_m, trailing_content=" m"
+                                            source_string=altitude_m,
+                                            trailing_content=" m",
                                         )
                                         aux_o3 = remove_trailing_content(
-                                            source_string=aux_o3, trailing_content=" mPa"
+                                            source_string=aux_o3,
+                                            trailing_content=" mPa",
                                         )
                                         course_deg = remove_trailing_content(
-                                            source_string=course_deg, trailing_content=" °"
+                                            source_string=course_deg,
+                                            trailing_content=" °",
                                         )
                                         humidity = remove_trailing_content(
-                                            source_string=humidity, trailing_content=" %"
+                                            source_string=humidity,
+                                            trailing_content=" %",
                                         )
                                         pressure = remove_trailing_content(
-                                            source_string=pressure, trailing_content=" hPa"
+                                            source_string=pressure,
+                                            trailing_content=" hPa",
                                         )
                                         speed_kmh = remove_trailing_content(
                                             source_string=speed_kmh,
@@ -702,10 +707,12 @@ def get_radiosondy_data(sonde_id: str):
                                             trailing_content=" °C",
                                         )
                                         latitude = remove_trailing_content(
-                                            source_string=latitude, trailing_content=" φ"
+                                            source_string=latitude,
+                                            trailing_content=" φ",
                                         )
                                         longitude = remove_trailing_content(
-                                            source_string=longitude, trailing_content=" λ"
+                                            source_string=longitude,
+                                            trailing_content=" λ",
                                         )
                     else:
                         # We were unable to access the dynamic PHP data - return an error to the user
@@ -748,4 +755,4 @@ def get_radiosondy_data(sonde_id: str):
 
 
 if __name__ == "__main__":
-    logger.info(pformat(get_radiosondy_data(sonde_id="S3130229")))
+    pass

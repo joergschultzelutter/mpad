@@ -20,6 +20,8 @@
 import datetime
 import configparser
 import os.path
+import pytz
+import datetime
 from timezonefinder import TimezoneFinder
 import re
 from unidecode import unidecode
@@ -27,6 +29,7 @@ import logging
 from expiringdict import ExpiringDict
 import hashlib
 import mpad_config
+import zipfile
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -237,8 +240,6 @@ def read_program_config(config_file_name: str = "mpad_api_access_keys.cfg"):
         the values from the config file
     aprsdotfi_cfg_key: 'str'
         aprs.fi API key
-    openweathermapdotorg_api_key: 'str'
-        openweathermap.org API key
     aprsis_login_callsign: 'str'
         Call sign for APRS-IS login
     aprsis_login_passcode: 'str'
@@ -254,11 +255,12 @@ def read_program_config(config_file_name: str = "mpad_api_access_keys.cfg"):
         associated account password.
         If you use GMail, use an app-specific password;
         see https://myaccount.google.com/apppasswords
+    apprise_config_file: 'str'
     """
 
     config = configparser.ConfigParser()
     success = False
-    aprsdotfi_cfg_key = openweathermapdotorg_api_key = None
+    aprsdotfi_cfg_key = apprise_config_file = None
     aprsis_login_callsign = aprsis_login_passcode = None
     dapnet_login_callsign = dapnet_login_passcode = None
     smtpimap_email_address = smtpimap_email_password = None
@@ -266,9 +268,6 @@ def read_program_config(config_file_name: str = "mpad_api_access_keys.cfg"):
         try:
             config.read(config_file_name)
             aprsdotfi_cfg_key = config.get("mpad_config", "aprsdotfi_api_key")
-            openweathermapdotorg_api_key = config.get(
-                "mpad_config", "openweathermapdotorg_api_key"
-            )
             aprsis_login_callsign = config.get("mpad_config", "aprsis_login_callsign")
             aprsis_login_passcode = config.get("mpad_config", "aprsis_login_passcode")
             dapnet_login_callsign = config.get("mpad_config", "dapnet_login_callsign")
@@ -277,19 +276,20 @@ def read_program_config(config_file_name: str = "mpad_api_access_keys.cfg"):
             smtpimap_email_password = config.get(
                 "mpad_config", "smtpimap_email_password"
             )
+            apprise_config_file = config.get("mpad_config", "apprise_config_file")
             success = True
         except:
             success = False
     return (
         success,
         aprsdotfi_cfg_key,
-        openweathermapdotorg_api_key,
         aprsis_login_callsign,
         aprsis_login_passcode,
         dapnet_login_callsign,
         dapnet_login_passcode,
         smtpimap_email_address,
         smtpimap_email_password,
+        apprise_config_file,
     )
 
 
@@ -323,31 +323,6 @@ def getdaysuntil(theweekday):
         return (target_date - today).days
     else:
         return 7
-
-
-def determine_timezone(latitude: float, longitude: float):
-    """
-    Determine the timezone for a given set of coordinates
-
-    Parameters
-    ==========
-    latitude : 'float'
-        Latitude value
-    longitude : 'float'
-        Longitude value
-
-    Returns
-    =======
-    timezone: 'str'
-        Timezone string for given coordinates or 'None' in case of an error
-    """
-
-    assert type(latitude) in [float, int]
-    assert type(longitude) in [float, int]
-
-    tf = TimezoneFinder()
-    timezone = tf.timezone_at(lng=longitude, lat=latitude)
-    return timezone
 
 
 def read_number_of_served_packages(file_name: str = "mpad_served_packages.txt"):
@@ -656,6 +631,237 @@ def check_and_create_data_directory(
             logger.info(msg=f"{_data_directory} is not a directory, aborting ...")
             success = False
     return success
+
+
+def get_timezone(latitude: float, longitude: float):
+    """
+    Gets the time zone for the current lat/lon values
+
+    Parameters
+    ==========
+    latitude: 'float'
+        our latitude
+    longitude: 'float'
+        our longitude
+
+    Returns
+    =======
+    timezone:
+        timezone object
+    """
+
+    assert type(latitude) in [float, int]
+    assert type(longitude) in [float, int]
+
+    tf = TimezoneFinder()
+    timezone_str = tf.timezone_at(lat=latitude, lng=longitude)
+
+    if timezone_str is None:
+        logger.debug(
+            msg="Could not determine the timezone for the given coordinates; assuming UTC"
+        )
+        timezone_str = "UTC"
+
+    return pytz.timezone(timezone_str)
+
+
+def get_local_and_utc_times(latitude: float, longitude: float, base_date: datetime):
+    """
+    Gets the time zone for the current lat/lon values
+    via helper method. Then builds an array for the four
+    daytime settings that we have defined in mpad_config
+    which are 'night', 'morning', 'daytime', and 'evening'.
+    We will then use our knowledge about the user's time zone
+    in order to cast the appropriate UTC values from its
+    local-time brethren
+
+    Parameters
+    ==========
+    latitude: 'float'
+        our latitude
+    longitude: 'float'
+        our longitude
+    base_date: 'datetime'
+        usually, this is equivalent to datetime.utcnow()
+
+    Returns
+    =======
+    local_and_utc_times: 'dict'
+        dictionary with our local time stamps and its UTC counterparts
+    """
+
+    # get our time zone
+    timezone = get_timezone(latitude=latitude, longitude=longitude)
+
+    # Pre-define our local times for 'night', 'morning', 'daytime', and 'evening'
+    local_times = {
+        mpad_config.mpad_str_night: datetime.datetime(
+            base_date.year,
+            base_date.month,
+            base_date.day,
+            mpad_config.mpad_int_night,
+            0,
+        ),
+        mpad_config.mpad_str_morning: datetime.datetime(
+            base_date.year,
+            base_date.month,
+            base_date.day,
+            mpad_config.mpad_int_morning,
+            0,
+        ),
+        mpad_config.mpad_str_daytime: datetime.datetime(
+            base_date.year,
+            base_date.month,
+            base_date.day,
+            mpad_config.mpad_int_daytime,
+            0,
+        ),
+        mpad_config.mpad_str_evening: datetime.datetime(
+            base_date.year,
+            base_date.month,
+            base_date.day,
+            mpad_config.mpad_int_evening,
+            0,
+        ),
+    }
+
+    local_and_utc_times = {}
+    for key, local_time in local_times.items():
+        # localize to local time
+        local_time = timezone.localize(local_time)
+
+        # convert to utc
+        utc_time = local_time.astimezone(pytz.utc)
+        utc_offset = local_time.utcoffset()
+
+        local_and_utc_times[key] = {
+            "local_time": local_time.strftime("%Y-%m-%d %H:%M:%S %Z%z"),
+            "utc_time": utc_time,
+            "utc_offset": utc_offset,
+        }
+
+    return local_and_utc_times
+
+
+def find_best_matching_time(
+    target_utc_time: datetime,
+    timestamp_data: dict,
+    timestamp_data_element: str,
+    gap_half: int = 3,
+):
+    """
+
+    Helper method which tries to get the 'best fitting' entry from a list of
+    timestamp elements. Whenever data from met.no is getting pulled, the first
+    48 hours of data will consist of 48 entries for each hour, followed by
+    additional entries for the adjacent days. These additional entries will
+    however change to a six hour interval. Additionally, time stamp will be in
+    UTC. Dependent on where in the world a user has requested a wx report (and
+    for which day), the user might get a direct hit on his wx data query
+    (applicable to the 1 hour wx entries) OR the local-time-to-utc translation
+    might end up in a gap in case the user has requested a wx forecast for one
+    of the days with six hour intervals.
+
+    In order to circumvent this issue, we will check which of the six-hour-interval
+    values is the closest to our very own local-time-to-utc values in case the user
+    has 'requested a gap value'. Otherwise (= user chooses a value from within the
+    next 48 hours), we don't have to do this and select the appropriate value directly.
+
+    Parameters
+    ==========
+    target_utc_time: 'datetime'
+        datetime object
+    timestamp_data: 'dict'
+        our dictionary with the timestamps
+    timestamp_data_element: 'str'
+        the element from the dictionary that we intend to access
+    gap_half: 'int'
+        represents the half of our maximum gap. For the current use
+        case, the gap itself is six (6) hours, thus setting
+        gap_half for 6/2 = 3
+
+    Returns
+    =======
+    next_entry: datetime
+        best fit for our situation
+    """
+
+    half_max_gap = datetime.timedelta(hours=gap_half)
+    best_entry = None
+    min_diff = datetime.timedelta.max
+
+    for entry in timestamp_data:
+        current_diff = entry["timestamp"] - target_utc_time
+        if abs(current_diff) < min_diff:
+            min_diff = abs(current_diff)
+            best_entry = entry
+
+    if min_diff <= half_max_gap:
+        # Return the closest entry within the half max gap
+        return best_entry
+
+    # If no close entry found within half max gap, find the next
+    # greater or smaller entry based on the time difference
+    next_greater_entry = None
+    next_smaller_entry = None
+
+    for entry in timestamp_data:
+        if entry[timestamp_data_element] >= target_utc_time:
+            next_greater_entry = entry
+            break
+        next_smaller_entry = entry
+
+    # Return the appropriate entry based on the condition
+    if next_greater_entry and next_smaller_entry:
+        if (next_greater_entry[timestamp_data_element] - target_utc_time) < (
+            target_utc_time - next_smaller_entry[timestamp_data_element]
+        ):
+            return next_greater_entry
+        else:
+            return next_smaller_entry
+    elif next_greater_entry:
+        return next_greater_entry
+    elif next_smaller_entry:
+        return next_smaller_entry
+    else:
+        # No matching entry found
+        return None
+
+
+def create_zip_file_from_log(log_file_name: str):
+    """
+    Creates a zip file from our current log file and
+    returns the file name to the caller
+
+    Parameters
+    ==========
+    log_file_name: 'str'
+        our file name, e.g. 'nohup.out'
+
+    Returns
+    =======
+    success: 'bool'
+        True if we were able to create our zip file, otherwise false
+    """
+
+    # Check if the file actually exists
+    if not log_file_name:
+        return False, file_name
+    if not check_if_file_exists(file_name=log_file_name):
+        return False, None
+
+    # get a UTC time stamp as reference and create the file name
+    _utc = datetime.datetime.utcnow()
+    zip_file_name = datetime.datetime.strftime(
+        _utc, "mpad_crash_dump_%Y-%m-%d_%H-%M-%S%z.zip"
+    )
+
+    # write the zip file to disk
+    with zipfile.ZipFile(zip_file_name, mode="w") as archive:
+        archive.write(log_file_name)
+
+    # and return the file name
+    return True, zip_file_name
 
 
 if __name__ == "__main__":

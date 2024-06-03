@@ -13,9 +13,9 @@ Dependent on your OS' flavor, you may be required to install the following addit
 - [aprs.fi](https://aprs.fi/page/api) - thank you Hessu!
 - [aprs-is](http://www.aprs-is.net/Default.aspx) - thank you Steve Loveall!
 - [findu.com](https://www.findu.com) - thank you Steve Dimse!
-- [openweathermap.org](https://www.openweathermap.org)
+- [met.no](https://developer.yr.no/featured-products/forecast/) - thank you Meterologisk institutt!
 
-Both aprs.fi and openweathermap.org require an API access key which needs to be added to the program's configuration file - see [installation instructions](INSTALLATION.md)
+aprs.fi requires an API access key which needs to be added to the program's configuration file - see [installation instructions](INSTALLATION.md)
 
 ## Additional external data dependencies
 

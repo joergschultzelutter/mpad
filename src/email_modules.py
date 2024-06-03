@@ -34,7 +34,6 @@ from geo_conversion_modules import (
     convert_latlon_to_mgrs,
 )
 from staticmap import render_png_map
-from utility_modules import read_program_config
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -569,15 +568,4 @@ def send_message_via_snmp(
 
 
 if __name__ == "__main__":
-    (
-        success,
-        aprsdotfi_api_key,
-        openweathermap_api_key,
-        aprsis_callsign,
-        aprsis_passcode,
-        dapnet_callsign,
-        dapnet_passcode,
-        smtpimap_email_address,
-        smtpimap_email_password,
-    ) = read_program_config()
-    imap_garbage_collector(smtpimap_email_address, smtpimap_email_password)
+    pass

@@ -820,14 +820,4 @@ def read_hearham_raw_data_from_disk(
 
 
 if __name__ == "__main__":
-    update_local_repeatermap_file()
-
-    logger.info(
-        get_nearest_repeater(
-            latitude=51.8458575,
-            longitude=8.2997425,
-            mode="fm",
-            units="metric",
-            number_of_results=5,
-        )
-    )
+    pass

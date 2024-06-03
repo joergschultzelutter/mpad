@@ -37,7 +37,7 @@ from datetime import datetime
 import mpad_config
 from pprint import pformat
 
-aprsdotfi_api_key = openweathermap_api_key = None
+aprsdotfi_api_key = None
 
 errmsg_cannot_find_coords_for_address: str = (
     "Cannot find coordinates for requested address"
@@ -896,7 +896,7 @@ def parse_when(aprs_message: str):
                 found_when = False
                 date_offset = -1
 
-    # OWM supports hourly wx forecasts for up to 47h, let's get that value
+    # WX supports hourly wx forecasts for up to 47h, let's get that value
     if not found_when:
         regex_string = r"\b(4[0-7]|3[0-9]|2[0-9]|1[0-9]|[1-9])h\b"
         matches = re.findall(
@@ -959,7 +959,7 @@ def parse_when_daytime(aprs_message: str):
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
         if matches:
-            when_daytime = "morning"
+            when_daytime = mpad_config.mpad_str_morning
             found_when_daytime = True
             regex_match = regex_string
 
@@ -969,7 +969,7 @@ def parse_when_daytime(aprs_message: str):
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
         if matches:
-            when_daytime = "daytime"
+            when_daytime = mpad_config.mpad_str_daytime
             found_when_daytime = True
             regex_match = regex_string
 
@@ -979,7 +979,7 @@ def parse_when_daytime(aprs_message: str):
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
         if matches:
-            when_daytime = "evening"
+            when_daytime = mpad_config.mpad_str_evening
             found_when_daytime = True
             regex_match = regex_string
 
@@ -989,7 +989,7 @@ def parse_when_daytime(aprs_message: str):
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
         if matches:
-            when_daytime = "night"
+            when_daytime = mpad_config.mpad_str_night
             found_when_daytime = True
             regex_match = regex_string
 
@@ -1482,8 +1482,8 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
     if matches:
         (city, state, country_code) = matches[0]
         city = string.capwords(city).strip()
-        country_code = country_code.upper().strip
-        state = state.upper().strip  # in theory, this could also be a non-US state
+        country_code = country_code.upper().strip()
+        state = state.upper().strip()  # in theory, this could also be a non-US state
         aprs_message = re.sub(
             pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
         ).strip()
@@ -2720,8 +2720,6 @@ def parse_keyword_language(aprs_message: str):
     language = "en"
 
     # check if the user wants to change the language
-    # for openweathermap.com (currently fix for 'en' but
-    # might change in the future
     # hint: setting is not tied to the program's duty roster
     regex_string = r"\b(lang|lng)\s*([a-zA-Z]{2})\b"
     matches = re.search(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
@@ -2993,12 +2991,12 @@ if __name__ == "__main__":
     (
         success,
         aprsdotfi_api_key,
-        openweathermap_api_key,
         aprsis_callsign,
         aprsis_passcode,
         dapnet_callsign,
         dapnet_passcode,
         smtpimap_email_address,
         smtpimap_email_password,
+        apprise_config_file,
     ) = read_program_config()
     logger.info(pformat(parse_input_message("taf eddf", "df1jsl-1", aprsdotfi_api_key)))

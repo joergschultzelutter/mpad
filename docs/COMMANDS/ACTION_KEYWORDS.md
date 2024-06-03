@@ -32,11 +32,9 @@ Spaces between the various parts of the message and the separators are permitted
 
 A wx response consists of 1..n lines, The actual content as well as the message lenght is dependent on how much data is actually available. Here is an example for a wx report in metric format:
 
-```10-Jan-21 San Francisco,CA overcast clouds morn:10c day:13c eve:12c```
+```saturday Schorborn,37627;DE LightRain Nite:11C Morn:12C Day:18C```
 
-```nite:11c sunrise/set 16:24/02:09UTC clouds:90% uvi:1.9 hPa:1026```
-
-```hum:57% dewpt:4c wndspd:2m/s wnddeg:52```
+```Eve:17C avghum:87% rain:2mm wind:3-6m/s NW-NNW cld:100% prs:1017hPa```
 
 Glossary:
 
@@ -44,14 +42,13 @@ Glossary:
 - ```day``` - daytime temperature
 - ```eve``` - evening temperature
 - ```nite``` - nighttime temperature
-- ```sunrise/set``` sunrise and sunset in UTC time zone format
-- ```clouds```
+- ```cld``` cloud coverage in percent
 - ```uvi``` - UV index
-- ```hPa``` - air pressure
-- ```hum``` - humidity
+- ```hPa``` - air pressure in hectopascal
+- ```hum``` - humidity (non-full-day requests only)
+- ```avghum``` - Average humidity (full day requests only)
 - ```dewpt``` - dew point
-- ```wndspd``` - wind speed
-- ```wnddeg``` - wind degrees
+- ```wind``` - wind speed and degrees
   
 ### Zip Codes
 
@@ -636,7 +633,7 @@ Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME
 By default, the program will automatically switch from the metric system (default) to the imperial system if the __sender's__ call sign is from Liberia, Myanmar or the United States (per Wikipedia, these are the only three countries which still use the imperial system over the metric system).
 
 - metric system (__default__): temperatures in degrees Celsius, speed in km/h, rain levels in cm etc.
-- imperial system: temperatures in degress Fahrenheit, speed in mph, rain levels in inch etc.
+- imperial system: temperatures in degress Fahrenheit, speed in mph etc.
 
 If you don't want to rely on the automatic mode, you can always override this automated setting by specifying one of the following keywords:
 
@@ -669,7 +666,7 @@ Now let's request the same wx report - but this time, we want it to be delivered
 
 ```hum:68% dewpt:43f wndspd:2mph wnddeg:50```
 
-MPAD does not perform an imperial-to-metric calculation (or vice versa) but requests the desired format as part of its REST requests to e.g. Openweathermap and other services. Apart from rounding these values in order to limit the message length, all data is displayed 'as is'.
+MPAD then performs an imperial-to-metric calculation in case the user has requested imperial format. Apart from rounding these values in order to limit the message length, all data is displayed 'as is'.
 
 ## Language
 
@@ -677,7 +674,7 @@ Allows you to specify a language in a (somewhat) ISO639-1 format. Default langua
 
 Action Keyword can be combined with [date](DATE_KEYWORDS.md) / [daytime](DAYTIME_KEYWORDS.md) keyword parameters: __YES__
 
-Currently, this keyword is __only__ used for WX reports from Openweathermap. In addition, it only provides a localised version of the wx free text, e.g. en=```snow```, de=```Schnee```, pl=```Snieg```. If you enable your MPAD instance for UTF-8 support, those parts of the nessage may contain e.g. cyrillic characters.
+Currently, this keyword is __only__ used for the Fortuneteller /Magic8Ball keyword. If you enable your MPAD instance for UTF-8 support, those parts of the nessage may contain e.g. cyrillic characters.
 
 #### Formats
 
@@ -686,8 +683,7 @@ Currently, this keyword is __only__ used for WX reports from Openweathermap. In 
 
 #### Example requests
 
-- ```lang de```
-- ```Erding;de lng pl``` returns a wx report for the city of Erding in Germany where the wx report's free text part will be in Polish.
+- ```m8b lang de```
 
 #### Supported languages
 

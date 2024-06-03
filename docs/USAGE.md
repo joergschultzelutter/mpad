@@ -12,7 +12,7 @@
 
 - Although both ```date``` or ```daytime``` settings can be specified at all times, any provided information in this matter may be partially or fully ignored by the program, dependent on the keyword (e.g. sunrise/set and moonrise/set will ignore the ```daytime``` argument)
 
-- All __time stamps__ are __always returned in reference to the UTC time zone__. If time-specific inquiries (keywords) are issued (e.g. 'give me the wx report for tomorrow afternoon'), __those keywords__ (e.g. ```afternoon```) __also abide to UTC time zone settings__. Dependent on where you are located in the world, that setting might be a different experience for you. Limiting the output to UTC may or may not change in future versions of this program but in general, time zones are a mess. And taking into consideration that daylight saving times may or may not be applicable to the user's position, sticking to UTC is the safest option for now. Therefore, all times reported by the program are provided with a UTC time qualifier, e.g. 12:03UTC.
+- Starting with MPAD version 0.60, WX reports use local time stamps. For everything else, __time stamps__ are __always returned in UTC (unless otherwise mentioned). Rule of thunb: if you see a "Z" or "UTC" qualifier, assume that all values are in UTC.
 
 - Certain action command keywords can be specified in combination with a date setting and a daytime setting, e.g. request a wx report for the next day. The respective keyword documentation settings state if the keyword can be used in conjunction with a date/daytime keyword. All restrictions wrt UTC time settings do apply - see previous paragraph.
 
@@ -55,8 +55,6 @@ In reference to the European Union's GDPR regulations and other legal rules and 
 - If you intend to host your own instance of MPAD, you need to provide API access keys to the following services:
 
   - aprs.fi
-
-  - openweathermap.org
 
   - optional: DAPNET / hampager.de
   

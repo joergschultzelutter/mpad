@@ -438,17 +438,53 @@ def haversine(
     return distance, bearing, heading
 
 
+def convert_wind_direction_to_human_text(degrees: int):
+    """
+    Helper method for mapping an integer degrees value to
+    a human readable text (e.g. SSW)
+
+    Parameters
+    ==========
+    degrees: 'int'
+        Degrees value, 0..360
+
+    Returns
+    =======
+    degrees: 'str'
+        or None if not found
+    """
+
+    if degrees < 0 or degrees > 360:
+        logger.debug(msg="invalid degree value received")
+        return None
+
+    directions = [
+        "N",
+        "NNE",
+        "NE",
+        "ENE",
+        "E",
+        "ESE",
+        "SE",
+        "SSE",
+        "S",
+        "SSW",
+        "SW",
+        "WSW",
+        "W",
+        "WNW",
+        "NW",
+        "NNW",
+    ]
+
+    # Degrees per cardinal direction (including intermediate)
+    cardinal_wind_step = 360 / len(directions)
+    index = int((degrees % 360) / cardinal_wind_step)
+    return directions[index]
+
+    logger.debug(msg="Unable to retrieve wind direction value")
+    return None
+
+
 if __name__ == "__main__":
-    logger.info(convert_latlon_to_utm(48, -122))
-    logger.info(convert_utm_to_latlon(10, "U", 574595, 5316784))
-
-    logger.info(convert_latlon_to_maidenhead(51.838720, 08.326819))
-    logger.info(convert_maidenhead_to_latlon("JO41du91"))
-
-    #logger.info(convert_latlon_to_mgrs(51.838720, 08.326819))
-    logger.info(convert_mgrs_to_latlon("32UMC5362043315"))
-
-    logger.info(convert_latlon_to_dms(51.838720, 08.326819))
-    logger.info(convert_dms_to_latlon(48, 0, 0, "N", 122, 0, 0, "W"))
-
-    logger.info(haversine(51.8458575, 8.2997425, 51.96564, 9.79817, "metric"))
+    pass

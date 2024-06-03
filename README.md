@@ -34,10 +34,13 @@ Python implementation of a multi-purpose APRS daemon (WX/METAR/TAF/CWOP reports,
 - Automatic detection of incoming duplicate / delayed APRS message requests
 - Full UTF-8 support for incoming messages. For outgoing APRS messages, the configuration can be set to either 'plain ASCII' (default) or UTF-8. Email messages are not affected by this restriction
 
-## MPAD on YouTube
+## MPAD in the media
 
 Thank you Jason/KM4ACK for your kind video review!
 [![MPAD on YouTube](https://img.youtube.com/vi/75W0UTL5eOY/0.jpg)](https://www.youtube.com/watch?v=75W0UTL5eOY)
+
+MPAD has been added to KC2SAH's off-grid radio reference (thank you!). [Order yours here!](https://offgridweather.com/)
+[![Great Off-Grid Radio Reference Solution!](https://img.youtube.com/vi/65AeOBy7fDM/0.jpg)](https://www.youtube.com/watch?v=65AeOBy7fDM)
 
 ## Sample dialogue with MPAD
 

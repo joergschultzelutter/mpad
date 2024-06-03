@@ -21,7 +21,7 @@
 import logging
 import re
 import json
-from utility_modules import read_program_config, convert_text_to_plain_ascii
+from utility_modules import convert_text_to_plain_ascii
 import requests
 from requests.auth import HTTPBasicAuth
 import mpad_config
@@ -100,23 +100,4 @@ def send_dapnet_message(
 
 
 if __name__ == "__main__":
-    (
-        success,
-        aprsdotfi_api_key,
-        openweathermap_api_key,
-        aprsis_callsign,
-        aprsis_passcode,
-        dapnet_login_callsign,
-        dapnet_login_passcode,
-    ) = read_program_config()
-    if success:
-        logger.info(
-            send_dapnet_message(
-                from_callsign="DF1JSL-1",
-                to_callsign="DF1JSL-8",
-                message="00000000001111111111222222222233333333334444444444555555555566666666667777777777",
-                dapnet_login_callsign=dapnet_login_callsign,
-                dapnet_login_passcode=dapnet_login_passcode,
-                dapnet_high_priority_message=False,
-            )
-        )
+    pass

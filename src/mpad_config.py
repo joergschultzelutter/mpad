@@ -22,7 +22,7 @@ import os
 #
 # Program version
 #
-mpad_version: str = "0.51"
+mpad_version: str = "0.60"
 #
 ###########################
 # Constants, do not change#
@@ -299,3 +299,45 @@ mpad_hearham_raw_data_filename = "hearham_raw_data.json"
 mpad_repeatermap_raw_data_filename = "repeatermap_raw_data.json"
 mpad_repeater_data_filename = "mpad_repeater_data.json"
 mpad_satellite_data_filename = "mpad_satellite_data.json"
+
+# definitions for the various day times (e.g. "noon"), used by the wx forecast process
+# Each definition represents the hour in LOCAL TIME format, e.g. 12 = 12h local time
+mpad_int_morning = 6
+mpad_int_daytime = 12
+mpad_int_evening = 18
+mpad_int_night = 0
+
+# These are the internal keywords for the various day times
+mpad_str_morning = "morning"
+mpad_str_daytime = "daytime"
+mpad_str_evening = "evening"
+mpad_str_night = "night"
+mpad_str_full = "full"
+
+# hour-to-string mapper for daytimes
+mpad_daytime_mapper = {
+    mpad_int_morning: mpad_str_morning,
+    mpad_int_daytime: mpad_str_daytime,
+    mpad_int_evening: mpad_str_evening,
+    mpad_int_night: mpad_str_night,
+}
+
+# This is the file name for the file that we use for our nohup
+# stdout content. We use this name in order to send the log file
+# to mpad's host in case the program has crashed.
+#
+# Only used if you activate the Apprise messaging option.
+#
+# Example: assume that you have started MPAD via
+#
+#       nohup python aprs_listener & 2>nohup.out
+#
+# Now, the program crashes because its author messed up things :-)
+# Assuming that you have activated the Apprise messaging option,
+# MPAD will look up the file associated with mpad_nohup_filename and
+# is going to send you a copy prior to the actual program crash
+# Note that the call stack is always included as message attachment
+# and not as message content - the call stack might be rather large, thus
+# getting potentially truncated in the message body
+#
+mpad_nohup_filename = "nohup.out"

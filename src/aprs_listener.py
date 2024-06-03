@@ -27,6 +27,7 @@ from airport_data_modules import update_local_airport_stations_file
 from repeater_modules import update_local_repeatermap_file
 from skyfield_modules import update_local_mpad_satellite_data
 from deutscher_wetterdienst_modules import send_dwd_bulletins
+from messaging_modules import send_apprise_message
 from utility_modules import (
     read_program_config,
     read_number_of_served_packages,
@@ -37,6 +38,7 @@ from utility_modules import (
     write_aprs_message_counter,
     check_and_create_data_directory,
     make_pretty_aprs_messages,
+    create_zip_file_from_log,
 )
 from aprs_communication import (
     parse_aprs_data,
@@ -56,6 +58,14 @@ import aprslib
 import time
 import mpad_config
 from expiringdict import ExpiringDict
+import atexit
+
+# These are global variables which will be used
+# in case of an uncaught exception where we send
+# the host a final Apprise message along with the
+# program's stack trace
+exception_occurred = False
+ex_type = ex_value = ex_traceback = None
 
 ########################################
 
@@ -79,6 +89,79 @@ def signal_term_handler(signal_number, frame):
 
     logger.info(msg="Received SIGTERM; forcing clean program exit")
     sys.exit(0)
+
+
+def mpad_exception_handler():
+    """
+    This function will be called in case of a regular program exit OR
+    an uncaught exception. If an exception has occurred, we will try to
+    send out an Apprise message along with the stack trace to the user
+
+    Parameters
+    ==========
+
+    Returns
+    =======
+    """
+
+    if not exception_occurred:
+        return
+
+    # Send a message before we hit the bucket
+    message_body = f"The MPAD process has crashed. Reason: {ex_value}"
+
+    # Try to zip the log file if possible
+    success, log_file_name = create_zip_file_from_log(mpad_config.mpad_nohup_filename)
+
+    # check if we can spot a 'nohup' file which already contains our status
+    if log_file_name and check_if_file_exists(log_file_name):
+        message_body = message_body + " (log file attached)"
+
+    # send_apprise_message will check again if the file exists or not
+    # Therefore, we can skip any further detection steps here
+    send_apprise_message(
+        message_header="MPAD process has crashed",
+        message_body=message_body,
+        apprise_config_file=apprise_config_file,
+        message_attachment=log_file_name,
+    )
+
+
+def handle_exception(exc_type, exc_value, exc_traceback):
+    """
+    Custom exception handler which is installed by the
+    main process. We only do a few things:
+    - remember that there has been an uncaught exception
+    - save the exception type / value / tracebace
+
+    Parameters
+    ==========
+    exc_type:
+        exception type object
+    exc_value:
+        exception value object
+    exc_traceback:
+        exception traceback object
+
+    Returns
+    =======
+    """
+
+    global exception_occurred
+    global ex_type
+    global ex_value
+    global ex_traceback
+
+    # set some global values so that we know why the program has crashed
+    exception_occurred = True
+    ex_type = exc_type
+    ex_value = exc_value
+    ex_traceback = exc_traceback
+
+    logger.info(f"Core process has received uncaught exception: {exc_value}")
+
+    # and continue with the regular flow of things
+    sys.__excepthook__(exc_type, exc_value, exc_traceback)
 
 
 # APRSlib callback
@@ -291,7 +374,6 @@ def mycallback(raw_aprs_packet: dict):
                         response_parameters.update(
                             {
                                 "aprsdotfi_api_key": aprsdotfi_api_key,
-                                "openweathermapdotorg_api_key": openweathermapdotorg_api_key,
                                 "dapnet_login_callsign": dapnet_login_callsign,
                                 "dapnet_login_passcode": dapnet_login_passcode,
                                 "smtpimap_email_address": smtpimap_email_address,
@@ -360,6 +442,9 @@ def mycallback(raw_aprs_packet: dict):
 
 
 if __name__ == "__main__":
+    # This variable has to be global as we are going to
+    # use it as part of our 'uncaught exception' crash handler
+    global apprise_config_file
     #
     # MPAD main
     # Start by setting the logger parameters
@@ -370,10 +455,20 @@ if __name__ == "__main__":
     )
     logger = logging.getLogger(__name__)
     #
-    # Get the API access keys for OpenWeatherMap and APRS.fi. If we don't have those
+    # Get the API access keys for APRS.fi et al. If we don't have those
     # then there is no point in continuing
     #
     logger.info(msg="Program startup ...")
+
+    # Install our custom exception handler, thus allowing us to signal the
+    # user who hosts MPAD with a message whenever the program is prone to crash
+    # OR has ended. In any case, we will then send the file to the host
+    #
+    # if you are not interested in a post-mortem call stack, remove the following
+    # two lines
+    logger.info(msg=f"Activating MPAD exception handler")
+    atexit.register(mpad_exception_handler)
+    sys.excepthook = handle_exception
 
     # Check whether the data directory exists
     success = check_and_create_data_directory()
@@ -385,13 +480,13 @@ if __name__ == "__main__":
     (
         success,
         aprsdotfi_api_key,
-        openweathermapdotorg_api_key,
         aprsis_login_callsign,
         aprsis_login_passcode,
         dapnet_login_callsign,
         dapnet_login_passcode,
         smtpimap_email_address,
         smtpimap_email_password,
+        apprise_config_file,
     ) = read_program_config()
     if not success:
         logging.error(msg="Error while reading the program config file; aborting")

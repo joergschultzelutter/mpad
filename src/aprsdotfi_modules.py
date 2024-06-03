@@ -21,7 +21,6 @@
 
 import requests
 from datetime import datetime
-from utility_modules import read_program_config
 import logging
 import mpad_config
 
@@ -164,16 +163,4 @@ def get_position_on_aprsfi(
 
 
 if __name__ == "__main__":
-    (
-        success,
-        aprsdotfi_api_key,
-        openweathermapdotorg_api_key,
-        aprsis_callsign,
-        aprsis_passcode,
-        dapnet_callsign,
-        dapnet_passcode,
-        smtpimap_email_address,
-        smtpimap_email_password,
-    ) = read_program_config()
-    if success:
-        logger.info(get_position_on_aprsfi("vriendschap", aprsdotfi_api_key))
+    pass

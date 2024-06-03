@@ -340,19 +340,4 @@ def get_osm_special_phrase_data(
 
 
 if __name__ == "__main__":
-
-    #    logger.info(get_reverse_geopy_data(latitude=37.7790262, longitude=-122.4199061))
-    #    city = "Mountain View"
-    #    state = "CA"
-    #    country = "US"
-    #    geopy_query = {"city": city, "state": state, "country": country}
-    #    logger.info(get_geocode_geopy_data(query_data=geopy_query))
-
-    logger.info(
-        get_osm_special_phrase_data(
-            latitude=51.82467,
-            longitude=9.451,
-            special_phrase="supermarket",
-            number_of_results=3,
-        )
-    )
+    pass
