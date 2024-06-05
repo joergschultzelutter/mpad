@@ -39,6 +39,7 @@ from utility_modules import (
     check_and_create_data_directory,
     make_pretty_aprs_messages,
     create_zip_file_from_log,
+    check_if_file_exists,
 )
 from aprs_communication import (
     parse_aprs_data,
