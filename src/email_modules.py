@@ -34,6 +34,7 @@ from geo_conversion_modules import (
     convert_latlon_to_mgrs,
 )
 from staticmap import render_png_map
+import socket
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -541,9 +542,15 @@ def send_message_via_snmp(
                 code, resp = smtp.login(
                     user=smtpimap_email_address, password=smtpimap_email_password
                 )
-            except (smtplib.SMTPException, smtplib.SMTPAuthenticationError) as e:
+            except (smtplib.SMTPException, smtplib.SMTPAuthenticationError,socket.gaierror, smtplib.SMTPConnectError) as e:
                 output_message = (
                     "Cannot connect to SMTP server or other issue; cannot send mail"
+                )
+                logger.info(msg=output_message)
+                return False, output_message
+            except Exception as e:
+                output_message = (
+                    f"Exception {e.__cause__} occurred; cannot send mail"
                 )
                 logger.info(msg=output_message)
                 return False, output_message
