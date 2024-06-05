@@ -461,37 +461,39 @@ def imap_garbage_collector(smtpimap_email_address: str, smtpimap_email_password:
             host=mpad_config.mpad_imap_server_address,
             port=mpad_config.mpad_imap_server_port,
         ) as imap:
-            logger.info(msg="Starting IMAP garbage collector process")
-            typ, dat = imap.login(
-                user=smtpimap_email_address, password=smtpimap_email_password
-            )
-            if typ == "OK":
-                logger.info(msg="IMAP login successful")
-                # typ, dat = imap.list()     # get list of mailboxes
-                typ, dat = imap.select(mailbox=mpad_config.mpad_imap_mailbox_name)
+            try:
+                logger.info(msg="Starting IMAP garbage collector process")
+                typ, dat = imap.login(
+                    user=smtpimap_email_address, password=smtpimap_email_password
+                )
                 if typ == "OK":
-                    logger.info(
-                        msg=f"IMAP folder SELECT for {mpad_config.mpad_imap_mailbox_name} successful"
-                    )
-                    typ, msgnums = imap.search(None, "ALL", query_parms)
+                    logger.info(msg="IMAP login successful")
+                    # typ, dat = imap.list()     # get list of mailboxes
+                    typ, dat = imap.select(mailbox=mpad_config.mpad_imap_mailbox_name)
                     if typ == "OK":
-                        for num in msgnums[0].split():
-                            imap.store(num, "+FLAGS", "\\Deleted")
-                        imap.expunge()
                         logger.info(
-                            msg=f"Have executed IMAP cleanup with params '{query_parms}'"
+                            msg=f"IMAP folder SELECT for {mpad_config.mpad_imap_mailbox_name} successful"
                         )
-                    imap.close()
+                        typ, msgnums = imap.search(None, "ALL", query_parms)
+                        if typ == "OK":
+                            for num in msgnums[0].split():
+                                imap.store(num, "+FLAGS", "\\Deleted")
+                            imap.expunge()
+                            logger.info(
+                                msg=f"Have executed IMAP cleanup with params '{query_parms}'"
+                            )
+                        imap.close()
+                    else:
+                        logger.info(
+                            msg=f"IMAP mailbox {mpad_config.mpad_imap_mailbox_name} does not exist"
+                        )
+                    imap.logout()
                 else:
                     logger.info(
-                        msg=f"IMAP mailbox {mpad_config.mpad_imap_mailbox_name} does not exist"
+                        msg=f"Cannot perform IMAP login; user={smtpimap_email_address}, server={mpad_config.mpad_imap_server_address}, port={mpad_config.mpad_imap_server_port}"
                     )
-                imap.logout()
-            else:
-                logger.info(
-                    msg=f"Cannot perform IMAP login; user={smtpimap_email_address}, server={mpad_config.mpad_imap_server_address}, port={mpad_config.mpad_imap_server_port}"
-                )
-
+            except Exception as ex:
+                logger.debug(msg=f"IMAP handler has thrown exception. Cause: {ex.__cause__}")
 
 def send_message_via_snmp(
     smtpimap_email_address: str,
