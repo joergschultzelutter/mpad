@@ -10,7 +10,7 @@ if __name__ == "__main__":
     testcall(message_text="deensen;de tomorrow", from_callsign="df1jsl-8")
 ```
 
-Finally, run ```aprs_parser.py``` which will start your local MPAD instance.
+Finally, run ```aprs_listener.py``` which will start your local MPAD instance.
 
 ## Configuration
 
