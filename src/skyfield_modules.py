@@ -36,6 +36,7 @@ from mpad_config import (
     mpad_satellite_frequencies_filename,
     mpad_satellite_data_filename,
 )
+from messaging_modules import send_apprise_message
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -45,6 +46,7 @@ logger = logging.getLogger(__name__)
 
 def download_and_write_local_tle_file(
     tle_filename: str = mpad_tle_amateur_satellites_filename,
+    apprise_config_file: str = None,
 ):
     """
     Download the amateur radio satellite TLE data
@@ -56,6 +58,10 @@ def download_and_write_local_tle_file(
         This local file will hold the content
         from http://www.celestrak.com/NORAD/elements/amateur.txt
         Default is "tle_amateur_satellites.txt"
+    apprise_config_file: 'str'
+        Optional Apprise config file name which will be used in case
+        of errors, telling MPAD's host that the file could not get downloaded
+        (e.g. URL change, URL down, ...)
 
     Returns
     =======
@@ -64,15 +70,15 @@ def download_and_write_local_tle_file(
     """
 
     # This is the fixed name of the file that we are going to download
-    tle_data_file_url = "http://www.celestrak.com/NORAD/elements/amateur.txt"
+    file_url = "http://www.celestrak.com/NORAD/elements/amateur.txt"
     absolute_path_filename = build_full_pathname(file_name=tle_filename)
     success: bool = False
 
     # try to get the file
     try:
-        r = requests.get(tle_data_file_url)
+        r = requests.get(file_url)
     except:
-        logger.info(msg=f"Cannot download TLE data from {tle_data_file_url}")
+        logger.info(msg=f"Cannot download TLE data from {file_url}")
         r = None
     if r:
         if r.status_code == 200:
@@ -85,11 +91,23 @@ def download_and_write_local_tle_file(
                 logger.info(
                     msg=f"Cannot update TLE data to file {absolute_path_filename}"
                 )
+
+    # Generate an Apprise message in case we were unable to download the file
+    if not success and apprise_config_file:
+        # send_apprise_message will check again if the file exists or not
+        # Therefore, we can skip any further detection steps here
+        send_apprise_message(
+            message_header="MPAD External Dependency Error",
+            message_body=f"Unable to download TLE file file from '{file_url}'",
+            apprise_config_file=apprise_config_file,
+            message_attachment=None,
+        )
     return success
 
 
 def download_and_write_local_satfreq_file(
     satfreq_filename: str = mpad_satellite_frequencies_filename,
+    apprise_config_file: str = None,
 ):
     """
     Download the amateur radio satellite frequency data
@@ -101,6 +119,10 @@ def download_and_write_local_satfreq_file(
         This local CSV file will hold the content
         from http://www.ne.jp/asahi/hamradio/je9pel/satslist.csv
         Default name is "satellite_frequencies.csv"
+    apprise_config_file: 'str'
+        Optional Apprise config file name which will be used in case
+        of errors, telling MPAD's host that the file could not get downloaded
+        (e.g. URL change, URL down, ...)
 
     Returns
     =======
@@ -128,6 +150,18 @@ def download_and_write_local_satfreq_file(
                 logger.info(
                     msg=f"Cannot write satellite frequency csv file {absolute_path_filename} to disc"
                 )
+
+    # Generate an Apprise message in case we were unable to download the file
+    if not success and apprise_config_file:
+        # send_apprise_message will check again if the file exists or not
+        # Therefore, we can skip any further detection steps here
+        send_apprise_message(
+            message_header="MPAD External Dependency Error",
+            message_body=f"Unable to download satellite frequency csv file from '{file_url}'",
+            apprise_config_file=apprise_config_file,
+            message_attachment=None,
+        )
+
     return success
 
 
@@ -330,7 +364,7 @@ def read_local_satfreq_file(
     return success, satellite_dictionary
 
 
-def update_local_mpad_satellite_data():
+def update_local_mpad_satellite_data(apprise_config_file: str = None):
     """
     Wrapper method for importing both TLE and Satellite Frequency data,
     blending the data records (whereas possible) and write the JSON content
@@ -352,9 +386,9 @@ def update_local_mpad_satellite_data():
     """
 
     logger.info(msg="Generating local satellite frequencies database")
-    download_and_write_local_satfreq_file()
+    download_and_write_local_satfreq_file(apprise_config_file=apprise_config_file)
     logger.info(msg="Generating local TLE database")
-    download_and_write_local_tle_file()
+    download_and_write_local_tle_file(apprise_config_file=apprise_config_file)
     logger.info(msg="Creating blended satellite database version")
     success, json_satellite_data = create_native_satellite_data()
     if success:

@@ -529,15 +529,15 @@ if __name__ == "__main__":
     #
     # Refresh the local "airport stations" file
     logger.info(msg="Updating airport database ...")
-    update_local_airport_stations_file()
+    update_local_airport_stations_file(apprise_config_file=apprise_config_file)
     #
     # Refresh the local "repeatermap" file
     logger.info(msg="Updating repeater database ...")
-    update_local_repeatermap_file()
+    update_local_repeatermap_file(apprise_config_file=apprise_config_file)
     #
     # Update the satellite TLE file
     logger.info(msg="Updating satellite TLE and frequency database ...")
-    update_local_mpad_satellite_data()
+    update_local_mpad_satellite_data(apprise_config_file=apprise_config_file)
 
     # Now let's set up schedulers for the refresh process
     # These schedulers will download the file(s) every x days
@@ -553,6 +553,7 @@ if __name__ == "__main__":
         id="airport_data",
         days=30,
         args=[],
+        kwargs={"apprise_config_file": apprise_config_file},
     )
 
     # Set up task for repeater data download every 7 days
@@ -562,6 +563,7 @@ if __name__ == "__main__":
         id="repeatermap_data",
         days=7,
         args=[],
+        kwargs={"apprise_config_file": apprise_config_file},
     )
 
     # Set up task for satellite TLE / frequency data
@@ -572,6 +574,7 @@ if __name__ == "__main__":
         id="tle_and_satfreq_data",
         days=2,
         args=[],
+        kwargs={"apprise_config_file": apprise_config_file},
     )
 
     # Set up task for the IMAP garbage collector - which will delete
