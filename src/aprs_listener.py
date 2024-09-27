@@ -552,7 +552,6 @@ if __name__ == "__main__":
         "interval",
         id="airport_data",
         days=30,
-        args=[],
         kwargs={"apprise_config_file": apprise_config_file},
     )
 
@@ -562,7 +561,6 @@ if __name__ == "__main__":
         "interval",
         id="repeatermap_data",
         days=7,
-        args=[],
         kwargs={"apprise_config_file": apprise_config_file},
     )
 
@@ -573,7 +571,6 @@ if __name__ == "__main__":
         "interval",
         id="tle_and_satfreq_data",
         days=2,
-        args=[],
         kwargs={"apprise_config_file": apprise_config_file},
     )
 
