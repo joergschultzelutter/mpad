@@ -21,7 +21,7 @@ Currently, MPAD uses various APIs and access keys for its purposes:
 - aprs.fi
 - DAPNET API
 - SMTP/IMAP username and password
-- optional: file name reference to an [Apprise](https://github.com/caronc/apprise) YAML config [file](https://github.com/caronc/apprise/wiki/config_yaml). If a reference to an Apprise YML config file is specified and a program crash occurs, MPAD will send a message (along with the stack trace) to the user hosting the program.
+- optional: file name reference to an [Apprise](https://github.com/caronc/apprise) YAML config [file](https://github.com/caronc/apprise/wiki/config_yaml). If a reference to an Apprise YML config file is specified and a program crash occurs, MPAD will send a message (along with the stack trace) to the user hosting the program. Additionally, your local MPAD installation will send you notifications whenever external resources (e.g. TLE database, repeater data etc) cannot be downloaded. This will make it easier for MPAD admins to identify deprecated / changed resource URLs.
 
 If you want to host your own MPAD instance, you need to acquire your personal API access keys (e.g. for aprs.fi) and add these to MPAD's API config file (```mpad_api_access_keys.cfg```). An empty config template file is part of the repository. If you are not a registered DAPNET user, set the DAPNET callsign in the config file to N0CALL. When MPAD encounters this DAPNET user, it will refrain from sending content to DAPNET.
 
