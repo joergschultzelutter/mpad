@@ -27,6 +27,7 @@ import math
 import logging
 from utility_modules import check_if_file_exists, build_full_pathname
 from mpad_config import mpad_airport_stations_filename
+from messaging_modules import send_apprise_message
 
 # icao https://www.aviationweather.gov/docs/metar/stations.txt
 
@@ -327,6 +328,7 @@ def validate_icao(icao_code: str):
 
 def update_local_airport_stations_file(
     airport_stations_filename: str = mpad_airport_stations_filename,
+    apprise_config_file: str = None,
 ):
     """
     Imports the ICAO/IATA data from the web and saves it to a local file.
@@ -336,6 +338,10 @@ def update_local_airport_stations_file(
     airport_stations_filename : 'str'
         This local file will hold the content
         from https://www.aviationweather.gov/docs/metar/stations.txt.
+    apprise_config_file: 'str'
+        Optional Apprise config file name which will be used in case
+        of errors, telling MPAD's host that the file could not get downloaded
+        (e.g. URL change, URL down, ...)
 
     Returns
     =======
@@ -366,6 +372,18 @@ def update_local_airport_stations_file(
                 logger.debug(
                     msg=f"Cannot update airport data to local file '{absolute_path_filename}'"
                 )
+
+    # Generate an Apprise message in case we were unable to download the file
+    if not success and apprise_config_file:
+        # send_apprise_message will check again if the file exists or not
+        # Therefore, we can skip any further detection steps here
+        send_apprise_message(
+            message_header="MPAD External Dependency Error",
+            message_body=f"Unable to download airport data file from '{file_url}'",
+            apprise_config_file=apprise_config_file,
+            message_attachment=None,
+        )
+
     return success
 
 

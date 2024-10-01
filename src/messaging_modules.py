@@ -60,7 +60,7 @@ def send_apprise_message(
     logger.debug(msg="Starting Apprise message processing")
 
     if not apprise_config_file or apprise_config_file == "NOT_CONFIGURED":
-        logger.debug(msg="Skipping post-mortem dump; message file is not configured")
+        logger.debug(msg="Skipping Apprise messaging; message file is not configured")
         return success
 
     if not check_if_file_exists(apprise_config_file):
@@ -69,7 +69,7 @@ def send_apprise_message(
         )
         return success
 
-    if not check_if_file_exists(message_attachment):
+    if message_attachment and not check_if_file_exists(message_attachment):
         logger.debug("Attachment file missing; disabling attachments")
         message_attachment = None
 

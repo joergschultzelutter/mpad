@@ -32,6 +32,7 @@ from utility_modules import check_if_file_exists, build_full_pathname
 from geo_conversion_modules import haversine
 import logging
 import operator
+from messaging_modules import send_apprise_message
 
 from mpad_config import (
     mpad_hearham_raw_data_filename,
@@ -46,8 +47,9 @@ logger = logging.getLogger(__name__)
 
 
 def download_repeatermap_raw_data_to_local_file(
-    url: str = "http://www.repeatermap.de/apinew.php",
+    file_url: str = "http://www.repeatermap.de/apinew.php",
     repeatermap_raw_data_file: str = mpad_repeatermap_raw_data_filename,
+    apprise_config_file: str = None,
 ):
     """
     Downloads the repeatermap.de data and write it to a file 'as is'
@@ -59,6 +61,10 @@ def download_repeatermap_raw_data_to_local_file(
         Source URL where we will get the data from.
     repeatermap_raw_data_file: 'str'
         Filename of the target file which will hold the raw data
+    apprise_config_file: 'str'
+        Optional Apprise config file name which will be used in case
+        of errors, telling MPAD's host that the file could not get downloaded
+        (e.g. URL change, URL down, ...)
 
     Returns
     =======
@@ -68,7 +74,7 @@ def download_repeatermap_raw_data_to_local_file(
     success = False
     absolute_path_filename = build_full_pathname(file_name=repeatermap_raw_data_file)
     try:
-        resp = requests.get(url)
+        resp = requests.get(file_url)
     except requests.exceptions.RequestException as e:
         logger.error(msg="{e}")
         resp = None
@@ -84,6 +90,18 @@ def download_repeatermap_raw_data_to_local_file(
                 logger.info(
                     msg=f"Cannot write repeatermap.de data to local disc file '{absolute_path_filename}'"
                 )
+
+    # Generate an Apprise message in case we were unable to download the file
+    if not success and apprise_config_file:
+        # send_apprise_message will check again if the file exists or not
+        # Therefore, we can skip any further detection steps here
+        send_apprise_message(
+            message_header="MPAD External Dependency Error",
+            message_body=f"Unable to download repeatermap.de data file from '{file_url}'",
+            apprise_config_file=apprise_config_file,
+            message_attachment=None,
+        )
+
     return success
 
 
@@ -528,7 +546,7 @@ def read_mpad_repeatermap_data_from_disc(
     return success, mpad_repeatermap
 
 
-def update_local_repeatermap_file():
+def update_local_repeatermap_file(apprise_config_file: str = None):
     """
     Wrapper method for importing the raw data from repeatermap.de,
     postprocessing the the data and finally writing the enriched data
@@ -536,6 +554,10 @@ def update_local_repeatermap_file():
 
     Parameters
     ==========
+    apprise_config_file: 'str'
+        Optional Apprise config file name which will be used in case
+        of errors, telling MPAD's host that the file could not get downloaded
+        (e.g. URL change, URL down, ...)
 
     Returns
     =======
@@ -543,8 +565,8 @@ def update_local_repeatermap_file():
         True if request was successful
     """
 
-    download_repeatermap_raw_data_to_local_file()
-    download_hearham_raw_data_to_local_file()
+    download_repeatermap_raw_data_to_local_file(apprise_config_file=apprise_config_file)
+    download_hearham_raw_data_to_local_file(apprise_config_file=apprise_config_file)
     success, local_repeatermap_json = create_native_mpad_repeater_data()
     if success:
         success = write_mpad_repeater_data_to_disc(
@@ -740,8 +762,9 @@ def get_nearest_repeater(
 
 
 def download_hearham_raw_data_to_local_file(
-    url: str = "https://hearham.com/api/repeaters/v1",
+    file_url: str = "https://hearham.com/api/repeaters/v1",
     hearham_raw_data_file: str = mpad_hearham_raw_data_filename,
+    apprise_config_file: str = None,
 ):
     """
     Downloads the repeatermap.de data and write it to a file 'as is'
@@ -762,7 +785,7 @@ def download_hearham_raw_data_to_local_file(
     success = False
     absolute_path_filename = build_full_pathname(file_name=hearham_raw_data_file)
     try:
-        resp = requests.get(url)
+        resp = requests.get(file_url)
     except requests.exceptions.RequestException as e:
         logger.error(msg="{e}")
         resp = None
@@ -778,6 +801,18 @@ def download_hearham_raw_data_to_local_file(
                 logger.info(
                     msg=f"Cannot write hearham.com data to local disc file '{absolute_path_filename}'"
                 )
+
+    # Generate an Apprise message in case we were unable to download the file
+    if not success and apprise_config_file:
+        # send_apprise_message will check again if the file exists or not
+        # Therefore, we can skip any further detection steps here
+        send_apprise_message(
+            message_header="MPAD External Dependency Error",
+            message_body=f"Unable to download HearHam data file from '{file_url}'",
+            apprise_config_file=apprise_config_file,
+            message_attachment=None,
+        )
+
     return success
 
 

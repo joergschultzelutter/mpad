@@ -88,35 +88,65 @@ def testcall(message_text: str, from_callsign: str):
         logger.info(msg=pformat(response_parameters))
 
 
-def download_data_files_if_missing():
+def download_data_files_if_missing(force_download: bool = False):
     # if the user has never ever run the actual bot, some files might be missing, thus preventing us from
     # simulating the bot's actual behavior in real life. As a workaround, check if the files are missing
     # and download them, if necessary
     #
+
+    # Read the config
+    # we only need the Apprise file name
+    (
+        success,
+        aprsdotfi_api_key,
+        aprsis_callsign,
+        aprsis_passcode,
+        dapnet_login_callsign,
+        dapnet_login_passcode,
+        smtpimap_email_address,
+        smtpimap_email_password,
+        apprise_config_file,
+    ) = read_program_config()
+    assert success
+
     # check if airport data file is present
-    if not check_if_file_exists(
-        build_full_pathname(mpad_config.mpad_airport_stations_filename)
+    if (
+        not check_if_file_exists(
+            build_full_pathname(mpad_config.mpad_airport_stations_filename)
+        )
+        or force_download
     ):
         logger.info("Updating local airport data file")
-        update_local_airport_stations_file(mpad_config.mpad_airport_stations_filename)
+        update_local_airport_stations_file(
+            airport_stations_filename=mpad_config.mpad_airport_stations_filename,
+            apprise_config_file=apprise_config_file,
+        )
 
     # check if the satellite data is present
-    if not check_if_file_exists(
-        build_full_pathname(mpad_config.mpad_satellite_frequencies_filename)
-    ) or not check_if_file_exists(
-        build_full_pathname(mpad_config.mpad_tle_amateur_satellites_filename)
+    if (
+        not check_if_file_exists(
+            build_full_pathname(mpad_config.mpad_satellite_frequencies_filename)
+        )
+        or not check_if_file_exists(
+            build_full_pathname(mpad_config.mpad_tle_amateur_satellites_filename)
+        )
+        or force_download
     ):
         logger.info("Updating local satellite data files")
-        update_local_mpad_satellite_data()
+        update_local_mpad_satellite_data(apprise_config_file=apprise_config_file)
 
     # check if the repeater data is present
-    if not check_if_file_exists(
-        build_full_pathname(mpad_config.mpad_repeatermap_raw_data_filename)
-    ) or not check_if_file_exists(
-        build_full_pathname(mpad_config.mpad_hearham_raw_data_filename)
+    if (
+        not check_if_file_exists(
+            build_full_pathname(mpad_config.mpad_repeatermap_raw_data_filename)
+        )
+        or not check_if_file_exists(
+            build_full_pathname(mpad_config.mpad_hearham_raw_data_filename)
+        )
+        or force_download
     ):
         logger.info("Updating local repeater data files")
-        update_local_repeatermap_file()
+        update_local_repeatermap_file(apprise_config_file=apprise_config_file)
 
 
 def mpad_exception_handler():
@@ -195,7 +225,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 if __name__ == "__main__":
     # Check if the local database files exist and
     # create them, if necessary
-    download_data_files_if_missing()
+    download_data_files_if_missing(force_download=True)
 
     # Register the on_exit function to be called on program exit
     atexit.register(mpad_exception_handler)
