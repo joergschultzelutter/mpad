@@ -846,7 +846,7 @@ def create_zip_file_from_log(log_file_name: str):
 
     # Check if the file actually exists
     if not log_file_name:
-        return False, file_name
+        return False, None
     if not check_if_file_exists(file_name=log_file_name):
         return False, None
 
