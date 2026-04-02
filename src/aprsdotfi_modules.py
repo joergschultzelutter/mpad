@@ -98,6 +98,7 @@ def get_position_on_aprsfi(
         )
     except:
         resp = None
+
     if resp:
         if resp.status_code == 200:
             json_content = resp.json()
@@ -151,15 +152,15 @@ def get_position_on_aprsfi(
                     if success and "comment" in json_content["entries"][0]:
                         comment = json_content["entries"][0]["comment"]
 
-        return (
-            success,
-            latitude,
-            longitude,
-            altitude,
-            lasttime,
-            comment,
-            aprsfi_callsign,
-        )
+    return (
+        success,
+        latitude,
+        longitude,
+        altitude,
+        lasttime,
+        comment,
+        aprsfi_callsign,
+    )
 
 
 if __name__ == "__main__":
