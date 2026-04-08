@@ -22,6 +22,7 @@ from messaging_modules import send_apprise_message
 import sys
 import atexit
 import traceback
+import mpad_shared
 
 exception_occurred = False
 ex_type = ex_value = ex_traceback = None
@@ -47,6 +48,9 @@ def testcall(message_text: str, from_callsign: str):
         apprise_config_file,
     ) = read_program_config()
     assert success
+
+    # populate shared apprise message filename
+    mpad_shared.apprise_cfg_file = apprise_config_file
 
     logger.info(msg=f"parsing message '{message_text}' for callsign '{from_callsign}'")
 
@@ -225,7 +229,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 if __name__ == "__main__":
     # Check if the local database files exist and
     # create them, if necessary
-    download_data_files_if_missing(force_download=True)
+    # download_data_files_if_missing(force_download=True)
 
     # Register the on_exit function to be called on program exit
     atexit.register(mpad_exception_handler)
@@ -233,4 +237,4 @@ if __name__ == "__main__":
     # Set up the exception handler to catch unhandled exceptions
     sys.excepthook = handle_exception
 
-    testcall(message_text="saturday", from_callsign="DF1JSL-1")
+    testcall(message_text="metar eddf", from_callsign="DF1JSL-1")

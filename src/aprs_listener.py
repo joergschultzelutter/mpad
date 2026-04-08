@@ -60,6 +60,7 @@ import time
 import mpad_config
 from expiringdict import ExpiringDict
 import atexit
+import mpad_shared
 
 # These are global variables which will be used
 # in case of an uncaught exception where we send
@@ -379,6 +380,7 @@ def mycallback(raw_aprs_packet: dict):
                                 "dapnet_login_passcode": dapnet_login_passcode,
                                 "smtpimap_email_address": smtpimap_email_address,
                                 "smtpimap_email_password": smtpimap_email_password,
+                                "apprise_cfg_file": mpad_shared.apprise_cfg_file,
                             }
                         )
 
@@ -492,6 +494,9 @@ if __name__ == "__main__":
     if not success:
         logging.error(msg="Error while reading the program config file; aborting")
         sys.exit(0)
+
+    # move apprise_config_file value to shared variable
+    mpad_shared.apprise_cfg_file = apprise_config_file
 
     # Next: check our APRS-IS user credentials. If our call sign is "N0CALL", we ensure:
     #

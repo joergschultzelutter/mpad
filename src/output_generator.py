@@ -29,6 +29,7 @@ from cwop_modules import (
 
 import mpad_config
 from geopy_modules import get_osm_special_phrase_data, get_reverse_geopy_data
+from src.mpad_shared import apprise_cfg_file
 
 from utility_modules import make_pretty_aprs_messages, read_program_config
 from airport_data_modules import get_metar_data
@@ -54,6 +55,7 @@ from radiosonde_modules import get_radiosonde_landing_prediction
 import datetime
 import logging
 import math
+import mpad_shared
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -318,7 +320,10 @@ def generate_output_message_metar(response_parameters: dict):
     _full = True if when_daytime == "full" else False
 
     success, metar_response = get_metar_data(
-        icao_code=icao_code, keyword=_what, full_msg=_full
+        icao_code=icao_code,
+        keyword=_what,
+        full_msg=_full,
+        apprise_cfg_file=mpad_shared.apprise_cfg_file,
     )
     if success:
         output_list = make_pretty_aprs_messages(

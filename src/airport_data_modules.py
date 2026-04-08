@@ -135,7 +135,12 @@ def read_local_airport_data_file(
     return iata_dict, icao_dict
 
 
-def get_metar_data(icao_code: str, keyword: str = None, full_msg: bool = False):
+def get_metar_data(
+    icao_code: str,
+    keyword: str = None,
+    full_msg: bool = False,
+    apprise_cfg_file: str = None,
+):
     """
     Get METAR and TAF data for a given ICAO code.
     May need to be switched to https://api.met.no/weatherapi/ at
@@ -194,7 +199,7 @@ def get_metar_data(icao_code: str, keyword: str = None, full_msg: bool = False):
         logger.error(msg="{e}")
         resp = None
 
-    if resp:
+    if resp is not None:
         if resp.status_code == 200:
             soup = BeautifulSoup(resp.text, features="html.parser")
             if soup:
@@ -233,6 +238,14 @@ def get_metar_data(icao_code: str, keyword: str = None, full_msg: bool = False):
                             # assign either the METAR or TAF content as response
                             response = metar if keyword == "metar" else taf
                         response = response.strip()
+        elif resp.status_code in (301, 307, 308, 410):  # endpoint may have moved
+            send_apprise_message(
+                message_header="MPAD Airport Data Module Error",
+                message_body=f"Endpoint may have moved; return code: '{resp.status_code}', url: '{resp.url}', text: '{resp.text}'",
+                apprise_config_file=apprise_cfg_file,
+                message_attachment=None,
+            )
+
     return success, response
 
 
