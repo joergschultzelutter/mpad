@@ -241,7 +241,7 @@ def get_metar_data(
         elif resp.status_code in (301, 307, 308, 410):  # endpoint may have moved
             send_apprise_message(
                 message_header="MPAD Airport Data Module Error",
-                message_body=f"Endpoint may have moved; return code: '{resp.status_code}', url: '{resp.url}', text: '{resp.text}'",
+                message_body=f"Endpoint may have moved; return code: {resp.status_code}, url: {resp.url}, text: {resp.text}",
                 apprise_config_file=apprise_cfg_file,
                 message_attachment=None,
             )
