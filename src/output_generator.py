@@ -29,7 +29,7 @@ from cwop_modules import (
 
 import mpad_config
 from geopy_modules import get_osm_special_phrase_data, get_reverse_geopy_data
-from src.mpad_shared import apprise_cfg_file
+from mpad_shared import apprise_cfg_file
 
 from utility_modules import make_pretty_aprs_messages, read_program_config
 from airport_data_modules import get_metar_data

@@ -135,6 +135,69 @@ def read_local_airport_data_file(
     return iata_dict, icao_dict
 
 
+def make_aviationweather_metartaf_request(icao_code: str, mode: str):
+    """
+    Get METAR and TAF data for a given ICAO code.
+
+    Parameters
+    ==========
+    icao_code : 'str'
+        4-character ICAO code of the airport whose
+        METAR data is to be downloaded.
+    mode: 'str'
+        mode that we intend to run; value is either
+        "metar" or "taf"
+
+    Returns
+    =======
+    success: 'bool'
+        True if operation was successful
+    response: 'str'
+        METAR / TAF string for the given airport
+        (or "NOTFOUND" if no data was found)
+    """
+
+    assert mode in ("metar", "taf")
+
+    # Set our default values
+    response: str = "NOTFOUND"
+    success: bool = False
+
+    # build our query URL
+    request_url = (
+        f"https://aviationweather.gov/api/data/{mode}?format=json&ids={icao_code}"
+    )
+    try:
+        resp = requests.get(request_url)
+    except requests.exceptions.RequestException as e:
+        logger.error(msg="{e}")
+        resp = None
+
+    # Try to parse the response
+    if resp is not None:
+        if resp.status_code == 200:
+            json_content = resp.json()
+            try:
+                # extract the response from the JSON object. Unfortunately,
+                # the response structure uses different response fields for METAR and TAF
+                if mode == "metar":
+                    if "rawOb" in json_content[0]:
+                        return True, json_content[0]["rawOb"]
+                else:
+                    if "rawTAF" in json_content[0]:
+                        return True, json_content[0]["rawTAF"]
+            except Exception as e:
+                return False, "NOTFOUND"
+        elif resp.status_code in (301, 307, 308, 410):  # endpoint may have moved
+            send_apprise_message(
+                message_header="MPAD Airport Data Module Error",
+                message_body=f"Endpoint for METAR/TAF data may have moved; return code: {resp.status_code}, url: {resp.url}, text: {resp.text}",
+                apprise_config_file=apprise_cfg_file,
+                message_attachment=None,
+            )
+    return False, "NOTFOUND"
+
+
 def get_metar_data(
     icao_code: str,
     keyword: str = None,
@@ -168,85 +231,23 @@ def get_metar_data(
         (or "NOTFOUND" if no data was found)
     """
 
-    assert keyword in ("metar", "taf")
+    # User has not requested the whole data set; return either METAR or TAF data
+    if not full_msg:
+        return make_aviationweather_metartaf_request(icao_code=icao_code, mode=keyword)
 
-    # These are our default values
-    response: str = "NOTFOUND"
-    success: bool = False
+    # user wants METAR _and_ TAF data; we need to make two requests to the API
+    success, response = make_aviationweather_metartaf_request(
+        icao_code=icao_code, mode="metar"
+    )
+    full_response = response
+    success, response = make_aviationweather_metartaf_request(
+        icao_code=icao_code, mode="taf"
+    )
+    # build the metar ## taf response
+    full_response = f"{full_response} ## {response}"
+    full_response = full_response.strip()
 
-    # safety net for https://github.com/joergschultzelutter/mpad/issues/23
-    if not icao_code:
-        logger.debug(
-            msg="Tried to call 'get_metar_data' without specifying an ICAO code"
-        )
-        return success, response
-
-    # prepare the request parameters
-    # false = request METAR data but no TAF data
-
-    request_mode = "false"
-    if keyword == "taf" or full_msg == True:
-        request_mode = "true"
-
-    try:
-        resp = requests.get(
-            f"https://www.aviationweather.gov/"
-            f"cgi-bin/data/metar.php/?ids={icao_code}"
-            f"&hours=0&order=id%2C-obs&sep=false"
-            f"&taf={request_mode}"
-        )
-    except requests.exceptions.RequestException as e:
-        logger.error(msg="{e}")
-        resp = None
-
-    if resp is not None:
-        if resp.status_code == 200:
-            soup = BeautifulSoup(resp.text, features="html.parser")
-            if soup:
-                meintext = re.sub(" {2,}", " ", soup.get_text())
-
-                # Start by searching the web site for whether our request has failed
-                matches = re.search(r"\b(sorry)\b", meintext, re.IGNORECASE)
-                if not matches:
-                    # Request seems to be successful, search for the airport position in the text
-                    pos = meintext.find(icao_code)
-                    if pos != -1:
-                        remainder = meintext[pos:]
-                        # Split the resulting text up into multiple lines
-                        metar_result_array = remainder.splitlines()
-                        # start with an empty response
-                        response = ""
-                        metar = ""
-                        taf = ""
-                        # Iterate through the list. We stop at that line which starts with TAF (TAF report)
-                        # Everything else before that line is our METAR report which may consist of 1..n lines
-                        for index, metar_result_item in enumerate(metar_result_array):
-                            if index == 0:
-                                # METAR content is ALWAYS received and consists of a single line
-                                metar = metar_result_item
-                            else:
-                                # TAF content may be optional, starts at index 1 and may consist of 1..n lines
-                                taf = taf + metar_result_item.lstrip()
-                        # end of parser; construct the outgoing message
-                        success = True
-
-                        # if the user requested both METAR and TAF data,
-                        # concatenate both messages with a separator
-                        if full_msg:
-                            response = f"{metar} ## {taf}"
-                        else:
-                            # assign either the METAR or TAF content as response
-                            response = metar if keyword == "metar" else taf
-                        response = response.strip()
-        elif resp.status_code in (301, 307, 308, 410):  # endpoint may have moved
-            send_apprise_message(
-                message_header="MPAD Airport Data Module Error",
-                message_body=f"Endpoint may have moved; return code: {resp.status_code}, url: {resp.url}, text: {resp.text}",
-                apprise_config_file=apprise_cfg_file,
-                message_attachment=None,
-            )
-
-    return success, response
+    return success, full_response
 
 
 def validate_iata(iata_code: str):
@@ -363,7 +364,7 @@ def update_local_airport_stations_file(
     """
 
     # This is the fixed name of the URL Source that we are going to download
-    file_url = "https://weather.ral.ucar.edu/surface/stations.txt"
+    file_url = "https://weather.rap.ucar.edu/surface/stations.txt"
     success: bool = False
 
     absolute_path_filename = build_full_pathname(file_name=airport_stations_filename)

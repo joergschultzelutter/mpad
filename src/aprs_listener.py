@@ -380,7 +380,6 @@ def mycallback(raw_aprs_packet: dict):
                                 "dapnet_login_passcode": dapnet_login_passcode,
                                 "smtpimap_email_address": smtpimap_email_address,
                                 "smtpimap_email_password": smtpimap_email_password,
-                                "apprise_cfg_file": mpad_shared.apprise_cfg_file,
                             }
                         )
 
