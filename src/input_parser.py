@@ -36,6 +36,7 @@ import logging
 from datetime import datetime
 import mpad_config
 from pprint import pformat
+import mpad_shared
 
 aprsdotfi_api_key = None
 
@@ -1180,7 +1181,7 @@ def parse_what_keyword_metar(
     regex_string = r"\b(icao)\s*([a-zA-Z0-9]{4})\b"
     matches = re.findall(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
-        (_, icao) = matches[0]
+        _, icao = matches[0]
         aprs_message = re.sub(
             pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
         ).strip()
@@ -1215,7 +1216,7 @@ def parse_what_keyword_metar(
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
         if matches:
-            (_, iata) = matches[0]
+            _, iata = matches[0]
             aprs_message = re.sub(
                 pattern=regex_string, repl="", string=aprs_message, flags=re.IGNORECASE
             ).strip()
@@ -1480,7 +1481,7 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
     regex_string = r"\b([\D\s]+),\s*?(\w+);\s*([a-zA-Z]{2})\b"
     matches = re.findall(pattern=regex_string, string=aprs_message, flags=re.IGNORECASE)
     if matches:
-        (city, state, country_code) = matches[0]
+        city, state, country_code = matches[0]
         city = string.capwords(city).strip()
         country_code = country_code.upper().strip()
         state = state.upper().strip()  # in theory, this could also be a non-US state
@@ -1496,7 +1497,7 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
         if matches:
-            (city, state) = matches[0]
+            city, state = matches[0]
             country_code = "US"
             country = "United States"
             city = string.capwords(city).strip()
@@ -1513,7 +1514,7 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
         if matches:
-            (city, country_code) = matches[0]
+            city, country_code = matches[0]
             city = string.capwords(city).strip()
             country_code = country_code.upper().strip()
             state = None
@@ -1557,7 +1558,7 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
         if matches:
-            (_, zipcode, country_code) = matches[0]
+            _, zipcode, country_code = matches[0]
             zipcode = zipcode.strip()
             state = None
             country_code = country_code.upper().strip()
@@ -1575,7 +1576,7 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
                 pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
             )
             if matches:
-                (_, zipcode) = matches[0]
+                _, zipcode = matches[0]
                 state = None
                 country_code = "US"
                 country = "United States"
@@ -1598,7 +1599,7 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
                 pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
             )
             if matches:
-                (zipcode, country_code) = matches[0]
+                zipcode, country_code = matches[0]
                 zipcode = zipcode.strip()
                 state = None
                 country_code = country_code.upper().strip()
@@ -1717,7 +1718,7 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
         if matches:
-            (latitude, longitude) = maidenhead.to_location(matches[2].strip())
+            latitude, longitude = maidenhead.to_location(matches[2].strip())
             found_my_keyword = True
             human_readable_message = f"{matches[2]}"
             what = "wx"
@@ -1732,7 +1733,7 @@ def parse_what_keyword_wx(aprs_message: str, users_callsign: str, language: str)
             pattern=regex_string, string=aprs_message, flags=re.IGNORECASE
         )
         if matches:
-            (latitude, longitude) = maidenhead.to_location(matches[0].strip())
+            latitude, longitude = maidenhead.to_location(matches[0].strip())
             found_my_keyword = True
             human_readable_message = f"{matches[0]}"
             what = "wx"
@@ -2988,15 +2989,4 @@ def parse_what_keyword_email_position_report(
 
 
 if __name__ == "__main__":
-    (
-        success,
-        aprsdotfi_api_key,
-        aprsis_callsign,
-        aprsis_passcode,
-        dapnet_callsign,
-        dapnet_passcode,
-        smtpimap_email_address,
-        smtpimap_email_password,
-        apprise_config_file,
-    ) = read_program_config()
-    logger.info(pformat(parse_input_message("taf eddf", "df1jsl-1", aprsdotfi_api_key)))
+    pass
