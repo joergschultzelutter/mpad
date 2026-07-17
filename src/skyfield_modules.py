@@ -70,7 +70,7 @@ def download_and_write_local_tle_file(
     """
 
     # This is the fixed name of the file that we are going to download
-    file_url = "http://www.celestrak.com/NORAD/elements/amateur.txt"
+    file_url = "http://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle"
     absolute_path_filename = build_full_pathname(file_name=tle_filename)
     success: bool = False
 
@@ -91,6 +91,13 @@ def download_and_write_local_tle_file(
                 logger.info(
                     msg=f"Cannot update TLE data to file {absolute_path_filename}"
                 )
+        elif resp.status_code in (301, 307, 308, 410):  # endpoint may have moved
+            send_apprise_message(
+                message_header="MPAD Celestrak TLE Module Error",
+                message_body=f"Endpoint for Celestrak TLE data may have moved; return code: {resp.status_code}, url: {resp.url}, text: {resp.text}",
+                apprise_config_file=apprise_config_file,
+                message_attachment=None,
+            )
 
     # Generate an Apprise message in case we were unable to download the file
     if not success and apprise_config_file:
@@ -150,6 +157,13 @@ def download_and_write_local_satfreq_file(
                 logger.info(
                     msg=f"Cannot write satellite frequency csv file {absolute_path_filename} to disc"
                 )
+        elif resp.status_code in (301, 307, 308, 410):  # endpoint may have moved
+            send_apprise_message(
+                message_header="MPAD SatFreq Module Error",
+                message_body=f"Endpoint for SatFreq data may have moved; return code: {resp.status_code}, url: {resp.url}, text: {resp.text}",
+                apprise_config_file=apprise_config_file,
+                message_attachment=None,
+            )
 
     # Generate an Apprise message in case we were unable to download the file
     if not success and apprise_config_file:
