@@ -96,7 +96,10 @@ def get_position_on_aprsfi(
             url=f"https://api.aprs.fi/api/get?name={aprsfi_callsign}&what=loc&apikey={aprsdotfi_api_key}&format=json",
             headers=headers,
         )
-    except:
+    except requests.exceptions.RequestException as e:
+        logger.error(e.args[0].reason)
+        success = False
+        latitude = longitude = altitude = 0.0
         resp = None
 
     if resp:
