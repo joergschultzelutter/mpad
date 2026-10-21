@@ -39,6 +39,8 @@ from mpad_config import (
     mpad_repeatermap_raw_data_filename,
     mpad_repeater_data_filename,
 )
+import re
+
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
@@ -792,9 +794,27 @@ def download_hearham_raw_data_to_local_file(
 
     if resp:
         if resp.status_code == 200:
+
+            # Regex für alte BrandMeister-URLs
+            pattern = (
+                r"https?:(?:\\/|/){2}"
+                r"brandmeister\.network(?:\\/|/)"
+                r"\?page=(?:repeater|hotspot)"
+                r"&id=(\d+)"
+            )
+
+            old_content = resp.text
+
+            # Alle passenden URLs ersetzen
+            new_content = re.sub(
+                pattern,
+                r"https:\\/\\/brandmeister.network\\/#/device/\1",
+                old_content,
+            )
+
             try:
                 with open(f"{absolute_path_filename}", "w") as f:
-                    f.write(resp.text)
+                    f.write(new_content)
                     f.close()
                 success = True
             except:
